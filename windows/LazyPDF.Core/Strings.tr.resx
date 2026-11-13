@@ -6052,6 +6052,9 @@
   <data name="Tables without header cells: {0}{1}. Mark the header row or column." xml:space="preserve">
     <value>Başlık hücresi olmayan tablolar: {0}{1}. Başlık satırını ya da sütununu işaretleyin.</value>
   </data>
+  <data name="Tag the file" xml:space="preserve">
+    <value>Dosyayı etiketle</value>
+  </data>
   <data name="Tag tree" xml:space="preserve">
     <value>Etiket ağacı</value>
   </data>
@@ -8715,6 +8718,9 @@
   </data>
   <data name="{0} needs a password to open." xml:space="preserve">
     <value>{0} dosyasını açmak için parola gerekir.</value>
+  </data>
+  <data name="{0} needs a tagged file, and this one is not tagged well enough yet. Tag the file first, then run this again." xml:space="preserve">
+    <value>{0} etiketli bir dosya ister ve bu dosya henüz yeterince iyi etiketlenmemiş. Önce dosyayı etiketleyin, sonra bunu yeniden çalıştırın.</value>
   </data>
   <data name="{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again." xml:space="preserve">
     <value>{0} etiketli bir dosya ister ve bu dosya yeterince iyi etiketlenmemiş: {1} Önce dosyayı etiketleyip bunları düzeltin, sonra yeniden dönüştürün.</value>

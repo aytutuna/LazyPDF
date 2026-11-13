@@ -107,6 +107,44 @@ final class StandardsModelTests: XCTestCase {
         XCTAssertFalse(rig.host.problems[0].text.isEmpty)
     }
 
+    private func taggedText(language: String?) throws -> [UInt8] {
+        let document = try PdfDocument.open(Pdfs.text())
+        _ = try AutoTagger.tag(document, AutoTagOptions(language))
+        return try document.saveRewrite(PdfSaveOptions())
+    }
+
+    func test_anUntaggedFileAtALevelAIsToldToBeTaggedFirstAndTheButtonOpensAccessibility() async throws {
+        let (model, rig) = try attached()
+        XCTAssertFalse(model.needsTagging)
+        XCTAssertEqual(model.tagHint, "")
+
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a2a)!)
+        await waitUntil { model.needsTagging }
+
+        XCTAssertEqual(model.tagHint, "PDF/A-2a needs a tagged file, and this one is not tagged well enough yet. Tag the file first, then run this again.")
+        XCTAssertEqual(model.tagButton, "Tag the file")
+        model.tagFile()
+        XCTAssertEqual(rig.host.openedTools, ["accessibility"])
+
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a2b)!)
+        XCTAssertFalse(model.needsTagging)
+        XCTAssertEqual(model.tagHint, "")
+    }
+
+    func test_theHintGoesWhenTheFileIsTaggedWellEnoughAndStaysWhenItIsNot() async throws {
+        let (model, _) = try attached(try taggedText(language: "en-US"))
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a1a)!)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertFalse(model.needsTagging)
+
+        // Tagged, but with no language to name, so the level's own check rejects the tagging.
+        let weak = try SecurityRig(try taggedText(language: nil))
+        model.detach()
+        weak.attach(model)
+        await waitUntil { model.needsTagging }
+        XCTAssertTrue(model.needsTagging)
+    }
+
     func test_aRuleThatNamesPagesTakesTheViewerThereInTurn() async throws {
         let (model, rig) = try attached()
         let row = try XCTUnwrap(IssueRow.group([

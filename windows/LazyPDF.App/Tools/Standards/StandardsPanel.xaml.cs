@@ -22,6 +22,7 @@ public partial class StandardsPanel : ToolPanel
     private ToolAction _check = null!;
     private ToolAction _convert = null!;
     private int _ticket;
+    private int _probe;
     private bool _working;
 
     public StandardsPanel()
@@ -45,6 +46,8 @@ public partial class StandardsPanel : ToolPanel
     {
         Tab!.Changed -= Tab_Changed;
         _ticket++;
+        _probe++;
+        TagRow.Visibility = Visibility.Collapsed;
         Result.Visibility = Visibility.Collapsed;
         IssueList.ItemsSource = null;
     }
@@ -59,7 +62,32 @@ public partial class StandardsPanel : ToolPanel
         IssueList.ItemsSource = null;
         ShowLosses();
         RaiseActionChanged();
+        _ = FindTaggingAsync();
     }
+
+    // Read off the UI thread from a copy; a change, another level or leaving the panel before it ends drops the answer.
+    private async Task FindTaggingAsync()
+    {
+        int probe = ++_probe;
+        TagRow.Visibility = Visibility.Collapsed;
+        if (Tab is not { } tab || !_level.NeedsTags()) return;
+        var level = _level;
+        var open = OpenCopy.Of(tab);
+        bool needs;
+        try
+        {
+            needs = await Task.Run(() => StandardsText.NeedsTagging(open, level));
+        }
+        catch (Exception e) when (e is PdfReadException or InvalidOperationException)
+        {
+            return;
+        }
+        if (probe != _probe) return;
+        TagNote.Text = StandardsText.TagHint(level);
+        TagRow.Visibility = needs ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void TagFile_Click(object sender, RoutedEventArgs e) => Host?.OpenTool("accessibility");
 
     private void Mode_Checked(object sender, RoutedEventArgs e)
     {

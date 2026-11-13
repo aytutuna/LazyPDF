@@ -25,6 +25,15 @@
             <TextBlock x:Name="WarnNote" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
         </DockPanel>
 
+        <StackPanel x:Name="TagRow" Margin="0,12,0,0" Visibility="Collapsed">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
+                <TextBlock x:Name="TagNote" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
+            </DockPanel>
+            <Button Content="{loc:T Tag the file}" AutomationProperties.Name="{loc:T Tag the file}" HorizontalAlignment="Left" Margin="0,6,0,0"
+                    Click="TagFile_Click" />
+        </StackPanel>
+
         <StackPanel x:Name="Result" Margin="0,16,0,0" Visibility="Collapsed">
             <TextBlock x:Name="Verdict" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
             <TextBlock x:Name="Caveat" Style="{StaticResource ReasonText}" Margin="0,2,0,0" />

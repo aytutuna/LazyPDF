@@ -9047,5 +9047,11 @@
   },
   "The PDF/UA check stopped at 1000 findings.": {
     "tr": "PDF/UA denetimi 1000 bulguda durdu."
+  },
+  "{0} needs a tagged file, and this one is not tagged well enough yet. Tag the file first, then run this again.": {
+    "tr": "{0} etiketli bir dosya ister ve bu dosya henüz yeterince iyi etiketlenmemiş. Önce dosyayı etiketleyin, sonra bunu yeniden çalıştırın."
+  },
+  "Tag the file": {
+    "tr": "Dosyayı etiketle"
   }
 }

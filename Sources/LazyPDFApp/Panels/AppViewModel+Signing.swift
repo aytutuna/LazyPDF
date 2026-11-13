@@ -5,6 +5,10 @@ import LazyPDFKit
 // (windows/LazyPDF.App/Tools/IToolHost.cs).
 
 extension AppViewModel {
+    public func openTool(_ id: String) {
+        if activeToolId != id { selectTool(id) }
+    }
+
     public func openSigning(_ field: String) {
         signingField = field
         if activeToolId != "certificates" { selectTool("certificates") }
