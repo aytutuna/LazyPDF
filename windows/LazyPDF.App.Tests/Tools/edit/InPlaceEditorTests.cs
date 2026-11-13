@@ -42,6 +42,50 @@ public sealed class InPlaceEditorTests
         return Task.CompletedTask;
     });
 
+    private static TextBox OpenedWith(string text, LazyPDF.Core.TextAlignment? alignment)
+    {
+        var viewer = ViewerStandIn.Create(out var stand);
+        var look = new EditorLook(new System.Windows.Media.FontFamily("Arial"), 12, System.Windows.Media.Colors.Black, false, false, alignment);
+        new InPlaceEditor(viewer).Open(0, new System.Windows.Rect(10, 10, 100, 20), text, look, wrap: true);
+        return Assert.IsType<TextBox>(Assert.Single(stand.Overlays[0].Children));
+    }
+
+    [Fact]
+    public Task HebrewTextReadsRightToLeftAndKeepsTheRightEdge() => Sta.Run(() =>
+    {
+        var box = OpenedWith("אבג", LazyPDF.Core.TextAlignment.Right);
+        Assert.Equal(System.Windows.FlowDirection.RightToLeft, box.FlowDirection);
+        Assert.Equal(System.Windows.TextAlignment.Left, box.TextAlignment);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task LatinTextStaysLeftToRight() => Sta.Run(() =>
+    {
+        var box = OpenedWith("abc", LazyPDF.Core.TextAlignment.Right);
+        Assert.Equal(System.Windows.FlowDirection.LeftToRight, box.FlowDirection);
+        Assert.Equal(System.Windows.TextAlignment.Right, box.TextAlignment);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TypingHebrewIntoALeftAlignedBoxTurnsItAroundAndKeepsTheLeftEdge() => Sta.Run(() =>
+    {
+        var box = OpenedWith("abc", LazyPDF.Core.TextAlignment.Left);
+        box.Text = "אבג";
+        Assert.Equal(System.Windows.FlowDirection.RightToLeft, box.FlowDirection);
+        Assert.Equal(System.Windows.TextAlignment.Right, box.TextAlignment);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AnAlignmentThatIsNotSetStartsTheLine() => Sta.Run(() =>
+    {
+        var box = OpenedWith("אבג", null);
+        Assert.Equal(System.Windows.TextAlignment.Left, box.TextAlignment);
+        return Task.CompletedTask;
+    });
+
     [Fact]
     public Task ARotatedViewTurnsTheBoxBack() => Sta.Run(() =>
     {

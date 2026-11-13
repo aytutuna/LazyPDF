@@ -4,7 +4,7 @@ using LazyPDF.Core;
 namespace LazyPDF.App.Tools.EditContent;
 
 /// <summary>How the text being typed looks on the page: the font of the run it replaces as near as Windows has it.</summary>
-internal sealed record EditorLook(FontFamily Family, double Size, Color Color, bool Bold, bool Italic, TextAlignment Alignment)
+internal sealed record EditorLook(FontFamily Family, double Size, Color Color, bool Bold, bool Italic, TextAlignment? Alignment)
 {
     public static EditorLook Of(TextObject text) => new(
         FamilyOf(text.Font), text.Size, Color.FromRgb(text.Color.R, text.Color.G, text.Color.B),

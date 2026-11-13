@@ -28,7 +28,7 @@ public sealed partial class EditContentPanel
 
     private EditorLook NewLook() => new(
         new System.Windows.Media.FontFamily(_newStyle.Family), _newStyle.Size, Palette.Brush(_newStyle.Color),
-        _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Bold), _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Italic), _newStyle.Alignment ?? TextAlignment.Left);
+        _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Bold), _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Italic), _newStyle.Alignment);
 
     private void FillText(TextObject? text)
     {
