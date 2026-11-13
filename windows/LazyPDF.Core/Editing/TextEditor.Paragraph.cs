@@ -16,7 +16,7 @@ internal sealed partial class TextEditor
         var (ux, uy) = anchor.Direction;
         foreach (var line in block.Lines)
         {
-            var glyphs = model.GlyphsIn(line.Range);
+            var glyphs = Ordered(line.Range);
             if (glyphs.Count == 0) continue;
             var first = glyphs[0];
             double start = first.Origin.X * ux + first.Origin.Y * uy;
@@ -50,12 +50,15 @@ internal sealed partial class TextEditor
         }
 
         var laid = new List<(List<EditPiece> Pieces, bool Last)>();
+        bool blockRtl = model.Text.Lines[block.Block.Lines.Start].IsRtl;
         foreach (string paragraph in text.ReplaceLineEndings("\n").Split('\n'))
         {
+            // A line takes the direction of its paragraph, which the first strong character sets, or the block's when there is none.
+            bool rtl = Scripts.NeedsBidi(paragraph) ? new BidiParagraph(paragraph).Level == 1 : blockRtl;
             var wrapped = Wrap(builder.Build(place, anchor, paragraph), room, laid.Count, Width);
-            for (int i = 0; i < wrapped.Count; i++) laid.Add((wrapped[i], i == wrapped.Count - 1));
+            for (int i = 0; i < wrapped.Count; i++) laid.Add((TextBuilder.Shape(wrapped[i], anchor, null, rtl), i == wrapped.Count - 1));
         }
-        var alignment = multi ? block.Alignment : TextAlignment.Left;
+        var alignment = block.Alignment;
         double Target(int k, double width) => alignment switch
         {
             TextAlignment.Center => (left + right) / 2 - width / 2,
