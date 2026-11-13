@@ -131,6 +131,20 @@ final class StandardsModelTests: XCTestCase {
         XCTAssertEqual(model.tagHint, "")
     }
 
+    func test_levelsPickedInQuickSuccessionEndOnTheAnswerForTheLastOne() async throws {
+        let (model, _) = try attached()
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a1a)!)
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a2a)!)
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a3a)!)
+        await waitUntil { model.needsTagging }
+        XCTAssertTrue(model.needsTagging)
+
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a3a)!)
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a2b)!)
+        try await Task.sleep(nanoseconds: 500_000_000)
+        XCTAssertFalse(model.needsTagging)
+    }
+
     func test_theHintGoesWhenTheFileIsTaggedWellEnoughAndStaysWhenItIsNot() async throws {
         let (model, _) = try attached(try taggedText(language: "en-US"))
         model.setLevel(StandardsModel.levels.firstIndex(of: .a1a)!)

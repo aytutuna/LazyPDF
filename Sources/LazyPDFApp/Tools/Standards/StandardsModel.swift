@@ -39,6 +39,7 @@ public final class StandardsModel: ToolPanelModel {
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var ticket = 0
     @ObservationIgnored private var probe = 0
+    @ObservationIgnored private var probing = false
     @ObservationIgnored private var convertedTitle: String?
     @ObservationIgnored private let fonts: FontSource?
 
@@ -135,7 +136,9 @@ public final class StandardsModel: ToolPanelModel {
     private func findTagging() {
         probe += 1
         needsTagging = false
-        guard let tab, let host, level.needsTags() else { return }
+        // One read at a time: a change meanwhile is picked up when it ends, so quick edits don't pile up full validations.
+        guard !probing, let tab, let host, level.needsTags() else { return }
+        probing = true
         let mine = probe
         let level = self.level
         let open = OpenCopy.of(tab, host)
@@ -144,7 +147,9 @@ public final class StandardsModel: ToolPanelModel {
                 guard let copy = try? open() else { return false }
                 return !PdfAValidator.taggingIssues(copy, level).isEmpty
             }.value
-            guard let self, mine == probe else { return }
+            guard let self else { return }
+            probing = false
+            if mine != probe { findTagging(); return }
             needsTagging = found
         }
     }
