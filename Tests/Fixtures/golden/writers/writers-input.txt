@@ -1,6 +1,7 @@
 # One line is "<writer> <text>". The font is ../shaping/script.ttf for every family. Text is UTF-8.
 # freetext: a text box annotation. textbox: PageEditor.AddTextBox (Fill and sign text). watermark and header: PdfStamper.
 # field: a text field; multiline: a multiline field with /Q 0; comb: an 8 cell comb field; combo: a combo box value.
+# bates: a footer {bates} with the text as prefix and suffix. redact and redactrepeat: a redaction overlay text. sign: the text of a signature appearance.
 # plain: PdfFromText. edit: Edit text replacing "world" in a Helvetica line.
 freetext abc def
 freetext אבג דהו
@@ -27,3 +28,14 @@ plain אבג\nabc def\nדהו (זח) 12
 edit abc def
 edit אבג דהו
 edit שלום עולם abc 12
+bates abc
+bates אבג
+bates אב abc
+redact abc def
+redact אבג דהו
+redact שלום עולם abc 12
+redactrepeat אבג
+redactrepeat abc אב
+sign abc def
+sign אבג דהו
+sign שלום עולם abc 12

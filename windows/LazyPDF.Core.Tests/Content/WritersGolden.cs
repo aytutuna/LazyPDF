@@ -52,6 +52,21 @@ internal static class WritersGolden
             case "header":
                 new PdfStamper(document, fonts).AddHeaderFooter(new HeaderFooterSpec { Header = new("", text, ""), Footer = new(text, "", ""), FontFamily = "Script Sans" });
                 break;
+            case "bates":
+                new PdfStamper(document, fonts).AddHeaderFooter(new HeaderFooterSpec
+                {
+                    Footer = new("", "{bates}", ""), FontFamily = "Script Sans", Bates = new BatesSpec(text, " " + text, 3),
+                });
+                break;
+            case "redact" or "redactrepeat":
+                var marked = new PdfRedactor(document, fonts).Apply([RedactionMark.FromRect(0, new PdfRect(100, 690, 300, 720))],
+                    new RedactionOptions { OverlayText = text, RepeatOverlay = op == "redactrepeat", FontFamily = "Script Sans" });
+                return PdfDocument.Open(marked.Bytes);
+            case "sign":
+                var embedder = new PdfFontEmbedder(document, fonts);
+                var draw = embedder.Add("Script Sans", FontStyles.Regular, [text])!;
+                SignatureAppearance.Draw(document, new PdfRect(0, 0, 200, 60), 0, new SignatureLook(), text, draw);
+                break;
             case "field" or "multiline" or "comb" or "combo":
                 Field(document, fonts, op, text);
                 break;
