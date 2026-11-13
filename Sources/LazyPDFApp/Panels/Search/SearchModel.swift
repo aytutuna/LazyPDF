@@ -37,7 +37,7 @@ public final class SearchModel: ToolPanelModel {
         let slow = TimedOutText.forPages(search.timedOut)
         if search.hits.isEmpty { return slow ?? L10n.t("No results for {0}", search.query) }
         var found = L10n.plural(search.hits.count, one: "{0} result for {1}", other: "{0} results for {1}", search.query)
-        if search.capped { found += " " + L10n.t("First {0} shown. Narrow the search to see the rest.", ViewerSearch.maxHits) }
+        if search.capped { found += " " + L10n.t("More were found. Narrow the search to see the rest.") }
         return slow.map { "\(found) \($0)" } ?? found
     }
 

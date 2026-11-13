@@ -654,7 +654,6 @@
 "First number" = "İlk numara";
 "First page" = "İlk sayfa";
 "First page number" = "İlk sayfa numarası";
-"First {0} shown. Narrow the search to see the rest." = "İlk {0} sonuç gösteriliyor. Gerisini görmek için aramayı daraltın.";
 "Fit" = "Sığdır";
 "Fit inside the page" = "Sayfanın içine sığdır";
 "Fit page" = "Sayfaya sığdır";
@@ -942,6 +941,7 @@
 "Mode" = "Kip";
 "More" = "Daha fazla";
 "More ways to save" = "Diğer kaydetme yolları";
+"More were found. Narrow the search to see the rest." = "Daha fazlası bulundu. Gerisini görmek için aramayı daraltın.";
 "Move" = "Taşı";
 "Move down" = "Aşağı taşı";
 "Move earlier" = "Öne al";

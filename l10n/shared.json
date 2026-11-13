@@ -2520,8 +2520,8 @@
   "Stop searching": {
     "tr": "Aramayı durdur"
   },
-  "First {0} shown. Narrow the search to see the rest.": {
-    "tr": "İlk {0} sonuç gösteriliyor. Gerisini görmek için aramayı daraltın."
+  "More were found. Narrow the search to see the rest.": {
+    "tr": "Daha fazlası bulundu. Gerisini görmek için aramayı daraltın."
   },
   "{0} of {1}": {
     "tr": "{0} / {1}"
