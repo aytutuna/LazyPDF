@@ -4,7 +4,7 @@ import XCTest
 // Mirrors windows/LazyPDF.Core.Tests/Office/OfficeFontSourceTests.cs. The input format is at the top of chain-input.txt.
 
 final class OfficeFontSourceTests: XCTestCase {
-    private final class FakeSource: FontSource {
+    private class FakeSource: FontSource {
         let families: Set<String>
 
         init(_ families: [String]) {
@@ -41,6 +41,17 @@ final class OfficeFontSourceTests: XCTestCase {
     func test_installedFontComesBeforeTheBundledOne() {
         let found = OfficeFontSource(installed: FakeSource(["Calibri"]), bundled: FakeSource(["Carlito"])).find("Calibri", .regular)
         XCTAssertEqual(String(decoding: found!.data, as: UTF8.self), "Calibri/0")
+    }
+
+    private final class FakeShaper: FakeSource, Shaper {
+        func shape(_ text: String, _ font: FontFile, rightToLeft: Bool, language: String?) -> [ShapedGlyph]? { nil }
+    }
+
+    func test_theInstalledSourcesShaperIsPassedOn() {
+        let installed = FakeShaper(["Calibri"])
+        XCTAssertTrue(OfficeFontSource(installed: installed, bundled: FakeSource(["Carlito"])).shaper === installed)
+        XCTAssertNil(OfficeFontSource(installed: FakeSource(["Calibri"]), bundled: nil).shaper)
+        XCTAssertNil(OfficeFontSource(installed: nil, bundled: nil).shaper)
     }
 
     private final class CarlitoOnly: FontSource {

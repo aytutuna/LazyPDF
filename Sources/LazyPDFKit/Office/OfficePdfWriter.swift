@@ -23,7 +23,7 @@ enum OfficePdfWriter {
     /// Writes pages that are already laid out.
     static func create(_ layout: LayoutResult, _ fonts: FontSource?, contents: ((Int, [UInt8]) -> Void)? = nil, images: ImageCodec? = nil) throws -> OfficePdf {
         let pdf = try ExportPdf.newDocument()
-        let embedder = PdfFontEmbedder(pdf, fonts)
+        let embedder = PdfFontEmbedder(pdf, fonts, (fonts as? OfficeFontSource)?.shaper)
 
         var order: [FontKey] = []
         var texts: [FontKey: [String]] = [:]

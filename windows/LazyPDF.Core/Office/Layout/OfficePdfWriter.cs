@@ -21,7 +21,7 @@ internal static class OfficePdfWriter
     public static OfficePdf Create(LayoutResult layout, IFontSource? fonts, CancellationToken cancellation = default, List<byte[]>? contents = null, IImageCodec? images = null)
     {
         var pdf = ExportPdf.NewDocument();
-        var embedder = new PdfFontEmbedder(pdf, fonts);
+        var embedder = new PdfFontEmbedder(pdf, fonts, (fonts as OfficeFontSource)?.Shaper);
 
         var texts = new Dictionary<(string, FontStyles), List<string>>();
         foreach (var page in layout.Pages)

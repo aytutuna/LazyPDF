@@ -33,6 +33,9 @@ public final class OfficeFontSource: FontSource {
         self.bundled = bundled
     }
 
+    /// The installed source's shaper, if it has one; its files are the ones it can shape.
+    public var shaper: Shaper? { installed as? Shaper }
+
     public func find(_ family: String, _ style: FontStyles) -> FontFile? {
         if let file = installed?.find(family, style) { return file }
         guard let bundled else { return nil }

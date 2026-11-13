@@ -31,6 +31,9 @@ public sealed class OfficeFontSource : IFontSource
         _bundled = bundled;
     }
 
+    /// <summary>The installed source's shaper, if it has one; its files are the ones it can shape.</summary>
+    public IShaper? Shaper => _installed as IShaper;
+
     public FontFile? Find(string family, FontStyles style)
     {
         if (_installed?.Find(family, style) is { } installed) return installed;

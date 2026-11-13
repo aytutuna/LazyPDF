@@ -8,7 +8,7 @@ namespace LazyPDF.Core.Tests;
 public class OfficeFontSourceTests
 {
     // Mirrored by Tests/LazyPDFKitTests/Office/OfficeFontSourceTests.swift. The input format is at the top of chain-input.txt.
-    private sealed class FakeSource(IEnumerable<string> families) : IFontSource
+    private class FakeSource(IEnumerable<string> families) : IFontSource
     {
         private readonly HashSet<string> _families = new(families, StringComparer.OrdinalIgnoreCase);
 
@@ -45,6 +45,22 @@ public class OfficeFontSourceTests
     {
         var found = new OfficeFontSource(new FakeSource(["Calibri"]), new FakeSource(["Carlito"])).Find("Calibri", FontStyles.Regular);
         Assert.Equal("Calibri/0", Encoding.UTF8.GetString(found!.Data));
+    }
+
+    private sealed class FakeShaper(IEnumerable<string> families) : IFontSource, IShaper
+    {
+        public FontFile? Find(string family, FontStyles style) => new FakeSource(families).Find(family, style);
+
+        public IReadOnlyList<ShapedGlyph>? Shape(string text, FontFile font, bool rightToLeft, string? language) => null;
+    }
+
+    [Fact]
+    public void TheInstalledSourcesShaperIsPassedOn()
+    {
+        var installed = new FakeShaper(["Calibri"]);
+        Assert.Same(installed, new OfficeFontSource(installed, new FakeSource(["Carlito"])).Shaper);
+        Assert.Null(new OfficeFontSource(new FakeSource(["Calibri"]), null).Shaper);
+        Assert.Null(new OfficeFontSource(null, null).Shaper);
     }
 
     private sealed class CarlitoOnly : IFontSource
