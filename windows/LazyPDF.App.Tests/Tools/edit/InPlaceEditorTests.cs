@@ -87,6 +87,34 @@ public sealed class InPlaceEditorTests
     });
 
     [Fact]
+    public Task AClickNearTheLeftOfAHebrewBoxIsMeasuredFromItsRightEdge() => Sta.Run(() =>
+    {
+        var box = OpenedWith("אבג", null);
+        box.Measure(new System.Windows.Size(100, 20));
+        box.Arrange(new System.Windows.Rect(0, 0, 100, 20));
+        var area = new System.Windows.Rect(10, 10, 100, 20);
+
+        var point = InPlaceEditor.InBox(box, new System.Windows.Point(15, 12), area);
+
+        Assert.Equal(95, point.X);
+        Assert.Equal(2, point.Y);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AClickInALatinBoxIsMeasuredFromItsLeftEdge() => Sta.Run(() =>
+    {
+        var box = OpenedWith("abc", null);
+        box.Measure(new System.Windows.Size(100, 20));
+        box.Arrange(new System.Windows.Rect(0, 0, 100, 20));
+
+        var point = InPlaceEditor.InBox(box, new System.Windows.Point(15, 12), new System.Windows.Rect(10, 10, 100, 20));
+
+        Assert.Equal(5, point.X);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task ARotatedViewTurnsTheBoxBack() => Sta.Run(() =>
     {
         var viewer = ViewerStandIn.Create(out var stand);
