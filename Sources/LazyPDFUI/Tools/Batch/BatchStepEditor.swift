@@ -23,6 +23,7 @@ struct BatchStepEditor: View {
             case .watermark: watermark
             case .bates: bates
             case .pdfA: level
+            case .pdfUa: Toggle(L10n.t("Mark as PDF/UA when the check passes"), isOn: binding(\.markPdfUa))
             }
         }
     }

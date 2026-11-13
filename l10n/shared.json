@@ -9028,5 +9028,21 @@
   },
   "Check the file against PDF/UA and mark it.": {
     "tr": "Dosyayı PDF/UA'ya göre denetleyin ve işaretleyin."
+  },
+  "Checks and marks": {
+    "tr": "Denetler ve işaretler"
+  },
+  "Checks only": {
+    "tr": "Yalnızca denetler"
+  },
+  "Mark as PDF/UA when the check passes": {
+    "tr": "Denetimden geçerse PDF/UA olarak işaretle"
+  },
+  "{0} PDF/UA condition is not met.": {
+    "other": "{0} PDF/UA conditions are not met.",
+    "tr": "{0} PDF/UA koşulu karşılanmıyor."
+  },
+  "The PDF/UA check stopped at 1000 findings.": {
+    "tr": "PDF/UA denetimi 1000 bulguda durdu."
   }
 }

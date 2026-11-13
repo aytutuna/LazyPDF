@@ -416,6 +416,93 @@ public sealed class BatchRunnerTests
         Assert.Contains("PDF/A rule", result.Detail);
     }
 
+    // A tagged one-page file that fails PDF/UA only on what marking writes: no identifier, no packet.
+    private static byte[] TaggedFile()
+    {
+        string[] bodies =
+        [
+            "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 5 0 R /MarkInfo <</Marked true>> /Lang (en-US) /ViewerPreferences <</DisplayDocTitle true>>>>",
+            "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>",
+            "<</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <<>> /StructParents 0>>",
+            "<</Length 55>>\nstream\n/Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC\nendstream",
+            "<</Type /StructTreeRoot /K 6 0 R /ParentTree 8 0 R>>",
+            "<</Type /StructElem /S /Document /P 5 0 R /K 7 0 R>>",
+            "<</Type /StructElem /S /Figure /P 6 0 R /Pg 3 0 R /K 0 /Alt (A blue square)>>",
+            "<</Nums [0 [7 0 R]]>>",
+            "<</Title (Square) /Creator (Test) /Producer (Test)>>",
+        ];
+        var text = new System.Text.StringBuilder("%PDF-1.7\n");
+        var offsets = new List<int>();
+        for (int i = 0; i < bodies.Length; i++)
+        {
+            offsets.Add(text.Length);
+            text.Append($"{i + 1} 0 obj\n{bodies[i]}\nendobj\n");
+        }
+        int xref = text.Length;
+        text.Append($"xref\n0 {bodies.Length + 1}\n0000000000 65535 f \n");
+        foreach (int offset in offsets) text.Append($"{offset:D10} 00000 n \n");
+        text.Append($"trailer\n<</Size {bodies.Length + 1} /Root 1 0 R /Info 9 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <0102030405060708090A0B0C0D0E0F10>]>>\nstartxref\n{xref}\n%%EOF\n");
+        return System.Text.Encoding.Latin1.GetBytes(text.ToString());
+    }
+
+    [Fact]
+    public async Task APdfUaStepWithMarkingMarksAFileThatFailsOnlyOnTheMarks()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", TaggedFile());
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa, MarkPdfUa = true });
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal("Done", result.Title);
+        using var made = PdfDocument.Open(File.ReadAllBytes(result.Output!));
+        Assert.True(PdfUaValidator.Validate(made).IsValid);
+    }
+
+    [Fact]
+    public async Task APdfUaStepWithoutMarkingOnlyReportsWhatIsBroken()
+    {
+        using var dir = new TempDir();
+        byte[] original = TaggedFile();
+        string file = dir.File("a.pdf", original);
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa });
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal("Done, with notes", result.Title);
+        Assert.Contains("PDF/UA condition", result.Detail);
+        using var made = PdfDocument.Open(File.ReadAllBytes(result.Output!));
+        Assert.Contains("06-001", PdfUaValidator.Validate(made).Issues.Select(i => i.Condition));
+    }
+
+    [Fact]
+    public async Task APdfUaStepReportsAFileThatCannotBeMarked()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa, MarkPdfUa = true });
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Contains("PDF/UA conditions are not met", result.Detail);
+    }
+
+    [Fact]
+    public async Task APdfUaStepBeforeProtectIsCheckedBeforeTheLock()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", TaggedFile());
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa, MarkPdfUa = true }, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" });
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal("Done", result.Title);
+    }
+
     [Fact]
     public async Task CommentsAndFormsStayOnlyWhereTheStepKeepsThem()
     {

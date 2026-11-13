@@ -165,6 +165,74 @@ final class BatchRunnerTests: XCTestCase {
     }
     #endif
 
+    // A tagged one-page file that fails PDF/UA only on what marking writes: no identifier, no packet.
+    private func taggedFile() -> [UInt8] {
+        let bodies = [
+            "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 5 0 R /MarkInfo <</Marked true>> /Lang (en-US) /ViewerPreferences <</DisplayDocTitle true>>>>",
+            "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>",
+            "<</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <<>> /StructParents 0>>",
+            "<</Length 55>>\nstream\n/Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC\nendstream",
+            "<</Type /StructTreeRoot /K 6 0 R /ParentTree 8 0 R>>",
+            "<</Type /StructElem /S /Document /P 5 0 R /K 7 0 R>>",
+            "<</Type /StructElem /S /Figure /P 6 0 R /Pg 3 0 R /K 0 /Alt (A blue square)>>",
+            "<</Nums [0 [7 0 R]]>>",
+            "<</Title (Square) /Creator (Test) /Producer (Test)>>",
+        ]
+        var text = "%PDF-1.7\n"
+        var offsets: [Int] = []
+        for (i, body) in bodies.enumerated() {
+            offsets.append(text.utf8.count)
+            text += "\(i + 1) 0 obj\n\(body)\nendobj\n"
+        }
+        let xref = text.utf8.count
+        text += "xref\n0 \(bodies.count + 1)\n0000000000 65535 f \n"
+        for offset in offsets { text += String(repeating: "0", count: 10 - String(offset).count) + "\(offset) 00000 n \n" }
+        text += "trailer\n<</Size \(bodies.count + 1) /Root 1 0 R /Info 9 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <0102030405060708090A0B0C0D0E0F10>]>>\nstartxref\n\(xref)\n%%EOF\n"
+        return Array(text.utf8)
+    }
+
+    func test_aPdfUaStepWithMarkingMarksAFileThatFailsOnlyOnTheMarks() async throws {
+        let dir = TempDir(self)
+        let file = dir.file("a.pdf", taggedFile())
+        var marking = BatchStep(.pdfUa)
+        marking.markPdfUa = true
+        var set = BatchSet(steps: [marking])
+
+        let result = try await run(runner(), file, &set, into: dir.sub("out"))
+
+        XCTAssertTrue(result.ok, result.detail)
+        XCTAssertEqual(result.title, "Done")
+        let made = try PdfDocument.open([UInt8](try Data(contentsOf: try XCTUnwrap(result.output))))
+        XCTAssertTrue(try PdfUaValidator.validate(made).isValid)
+    }
+
+    func test_aPdfUaStepWithoutMarkingOnlyReportsWhatIsBroken() async throws {
+        let dir = TempDir(self)
+        let file = dir.file("a.pdf", taggedFile())
+        var set = BatchSet(steps: [BatchStep(.pdfUa)])
+
+        let result = try await run(runner(), file, &set, into: dir.sub("out"))
+
+        XCTAssertTrue(result.ok, result.detail)
+        XCTAssertEqual(result.title, "Done, with notes")
+        XCTAssertTrue(result.detail.contains("PDF/UA condition"))
+        let made = try PdfDocument.open([UInt8](try Data(contentsOf: try XCTUnwrap(result.output))))
+        XCTAssertTrue(try PdfUaValidator.validate(made).issues.contains { $0.condition == "06-001" })
+    }
+
+    func test_aPdfUaStepReportsAFileThatCannotBeMarked() async throws {
+        let dir = TempDir(self)
+        let file = dir.file("a.pdf", Pdfs.text())
+        var marking = BatchStep(.pdfUa)
+        marking.markPdfUa = true
+        var set = BatchSet(steps: [marking])
+
+        let result = try await run(runner(), file, &set, into: dir.sub("out"))
+
+        XCTAssertTrue(result.ok, result.detail)
+        XCTAssertTrue(result.detail.contains("PDF/UA conditions are not met"))
+    }
+
     func test_aFileThatNeedsAPasswordIsReportedAndTheRunGoesOn() async throws {
         let dir = TempDir(self)
         let locked = dir.file("locked.pdf", Pdfs.fixture("locked.pdf"))

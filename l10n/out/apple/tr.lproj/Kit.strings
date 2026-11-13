@@ -319,6 +319,8 @@
 "Checking the files" = "Dosyalar denetleniyor";
 "Checking the signatures" = "İmzalar denetleniyor";
 "Checking {0}" = "{0} denetleniyor";
+"Checks and marks" = "Denetler ve işaretler";
+"Checks only" = "Yalnızca denetler";
 "Choices" = "Seçenekler";
 "Choose Edit fields to add some, or to find the blanks of a form." = "Alan eklemek veya formun boşluklarını bulmak için Alanları düzenle sekmesini seçin.";
 "Choose a certificate" = "Sertifika seçin";
@@ -919,6 +921,7 @@
 "Mark" = "İşaretle";
 "Mark all of this kind" = "Bu türdekilerin hepsini işaretle";
 "Mark as PDF/UA" = "PDF/UA olarak işaretle";
+"Mark as PDF/UA when the check passes" = "Denetimden geçerse PDF/UA olarak işaretle";
 "Mark every match" = "Tüm eşleşmeleri işaretle";
 "Mark removed" = "İşaret kaldırıldı";
 "Mark selected text" = "Seçili metni işaretle";
@@ -1747,6 +1750,7 @@
 "The /Order of a configuration leaves out some groups." = "Bir yapılandırmanın /Order değeri bazı grupları dışarıda bırakıyor.";
 "The CIDFont has no /CIDSystemInfo." = "CIDFont'ta /CIDSystemInfo yok.";
 "The Note /ID {0} is used twice." = "Note /ID değeri {0} iki kez kullanılmış.";
+"The PDF/UA check stopped at 1000 findings." = "PDF/UA denetimi 1000 bulguda durdu.";
 "The Print flag of the annotation is not set." = "Ek açıklamanın Print bayrağı ayarlı değil.";
 "The XFA data was removed. The form now uses its normal fields." = "XFA verisi kaldırıldı. Form artık normal alanlarını kullanıyor.";
 "The XFA data was removed; the form keeps its normal fields." = "XFA verisi kaldırıldı; form normal alanlarını koruyor.";
@@ -2317,6 +2321,8 @@
 "{0} Not available: {1}" = "{0} Kullanılamıyor: {1}";
 "{0} PDF/A rule is left.|one" = "{0} PDF/A kuralı kaldı.";
 "{0} PDF/A rule is left.|other" = "{0} PDF/A kuralı kaldı.";
+"{0} PDF/UA condition is not met.|one" = "{0} PDF/UA koşulu karşılanmıyor.";
+"{0} PDF/UA condition is not met.|other" = "{0} PDF/UA koşulu karşılanmıyor.";
 "{0} actions or scripts were removed." = "{0} eylem ya da betik kaldırıldı.";
 "{0} and {1}" = "{0} ve {1}";
 "{0} annotations of a kind this level does not allow were removed." = "Bu düzeyin izin vermediği türden {0} ek açıklama kaldırıldı.";
