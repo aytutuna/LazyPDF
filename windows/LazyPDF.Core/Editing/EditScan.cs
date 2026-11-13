@@ -69,6 +69,9 @@ internal sealed class EditGlyph
     public RgbColor Color { get; init; }
     public bool HasActualText { get; init; }
 
+    /// <summary>The /ActualText span the glyph is in, when the editor can take it as a unit: the span and the glyph are in the same stream.</summary>
+    public ActualSpan? Span { get; init; }
+
     /// <summary>Glyphs drawn again at the same place, which go with it.</summary>
     public List<EditGlyph> Twins { get; } = [];
 
@@ -91,6 +94,18 @@ internal sealed class EditGlyph
     }
 }
 
+/// <summary>Marked content with /ActualText: its glyphs stand for the text of the span, so they are cut and restyled together.</summary>
+internal sealed class ActualSpan(ContentUnit unit, FormVisit? visit, int op)
+{
+    public ContentUnit Unit { get; } = unit;
+    public FormVisit? Visit { get; } = visit;
+
+    /// <summary>The operation that opens the span.</summary>
+    public int Op { get; } = op;
+
+    public List<EditGlyph> Members { get; } = [];
+}
+
 internal sealed record ImageRecord(ContentUnit Unit, FormVisit? Visit, int Op, ImageInfo Info, double Opacity, int Sequence, PdfRect Clip);
 
 internal sealed record PathRecord(ContentUnit Unit, FormVisit? Visit, int FirstOp, int PaintOp, PathInfo Info, PathStyle Style, int Sequence);
@@ -106,6 +121,7 @@ internal sealed class EditScan : ContentVisitor
     private readonly List<FormVisit> _visits = [];
     private int _inPattern;
     private int _sequence;
+    private readonly Dictionary<MarkedContent, ActualSpan> _spans = new(ReferenceEqualityComparer.Instance);
 
     public EditScan(PdfDocument document, PdfPage page)
     {
@@ -190,9 +206,16 @@ internal sealed class EditScan : ContentVisitor
         _visits.RemoveAt(_visits.Count - 1);
     }
 
+    public override void BeginMarked(ContentContext context, MarkedContent marked)
+    {
+        if (_inPattern == 0 && marked.Properties is not null && marked.Properties.ContainsKey("ActualText")) _spans[marked] = new ActualSpan(Current, Visit, context.OperatorIndex);
+    }
+
     public override void ShowGlyph(ContentContext context, in GlyphInfo glyph)
     {
         if (_inPattern > 0) return;
+        var span = context.Marked.Select(x => _spans.GetValueOrDefault(x)).FirstOrDefault(s => s is not null);
+        if (span is not null && (span.Unit != Current || span.Visit != Visit)) span = null;
         var state = context.State;
         var m = glyph.Matrix;
         double ascent = glyph.Font.Ascent > 0 ? Math.Min(glyph.Font.Ascent / 1000, 1.1) : 0.8;
@@ -203,7 +226,7 @@ internal sealed class EditScan : ContentVisitor
         var (x1, y1) = m.Transform(width, descent);
         var (x2, y2) = m.Transform(width, ascent);
         var (x3, y3) = m.Transform(0, ascent);
-        Glyphs.Add(new EditGlyph
+        var shown = new EditGlyph
         {
             Unit = Current,
             Visit = Visit,
@@ -231,7 +254,10 @@ internal sealed class EditScan : ContentVisitor
             RenderMode = state.RenderMode,
             Color = (state.RenderMode == 1 ? state.StrokeColor : state.FillColor).Rgb,
             HasActualText = context.Marked.Any(x => x.Properties is not null && x.Properties.ContainsKey("ActualText")),
-        });
+            Span = span,
+        };
+        span?.Members.Add(shown);
+        Glyphs.Add(shown);
     }
 
     public override void PaintImage(ContentContext context, ImageInfo image)

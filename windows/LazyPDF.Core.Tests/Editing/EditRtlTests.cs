@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace LazyPDF.Core.Tests;
@@ -127,5 +128,27 @@ public class EditRtlTests
         Assert.True(editor.ReplaceText(Assert.Single(editor.Objects.OfType<TextObject>()).Range, "אב (גד)").Done);
         Assert.Contains("/ActualText", Content(session));
         Assert.Equal("אב (גד)", Read(session).Text.Trim());
+    }
+
+    [Fact]
+    public void TextWithMirroredBracketsCanBeEditedAgain()
+    {
+        var session = Page("abc");
+        var editor = new PageEditor(session, 0, Fonts);
+        Assert.True(editor.ReplaceText(Assert.Single(editor.Objects.OfType<TextObject>()).Range, "אב (גד)").Done);
+
+        var fix = new PageEditor(session, 0, Fonts);
+        var result = fix.ReplaceText(Assert.Single(fix.Objects.OfType<TextObject>()).Range, "אב (הד)");
+        Assert.True(result.Done, result.Problem);
+        Assert.Equal("אב (הד)", Read(session).Text.Trim());
+        Assert.Equal(1, Regex.Count(Content(session), "/ActualText"));
+
+        var color = new PageEditor(session, 0, Fonts);
+        Assert.True(color.SetTextStyle([Assert.Single(color.Objects.OfType<TextObject>()).Range], new TextStyleChange(Color: new RgbColor(1, 0, 0))).Done);
+        Assert.Equal("אב (הד)", Read(session).Text.Trim());
+
+        var delete = new PageEditor(session, 0, Fonts);
+        Assert.True(delete.DeleteText(Assert.Single(delete.Objects.OfType<TextObject>()).Range).Done);
+        Assert.Equal("", Read(session).Text.Trim());
     }
 }

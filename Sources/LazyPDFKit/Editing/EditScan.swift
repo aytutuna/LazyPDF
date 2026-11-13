@@ -76,6 +76,23 @@ final class FormVisit: Hashable {
     func hash(into hasher: inout Hasher) { hasher.combine(ObjectIdentifier(self)) }
 }
 
+/// Marked content with /ActualText: its glyphs stand for the text of the span, so they are cut and restyled together.
+final class ActualSpan {
+    let unit: ContentUnit
+    let visit: FormVisit?
+
+    /// The operation that opens the span.
+    let op: Int
+
+    var members: [EditGlyph] = []
+
+    init(_ unit: ContentUnit, _ visit: FormVisit?, _ op: Int) {
+        self.unit = unit
+        self.visit = visit
+        self.op = op
+    }
+}
+
 /// A shown glyph with everything needed to find and rewrite its bytes.
 final class EditGlyph: Hashable {
     let unit: ContentUnit
@@ -113,6 +130,9 @@ final class EditGlyph: Hashable {
     var renderMode = 0
     var color = RgbColor(0, 0, 0)
     var hasActualText = false
+
+    /// The /ActualText span the glyph is in, when the editor can take it as a unit: the span and the glyph are in the same stream.
+    var span: ActualSpan?
 
     /// Glyphs drawn again at the same place, which go with it.
     var twins: [EditGlyph] = []
@@ -169,6 +189,7 @@ final class EditScan: ContentVisitor {
     private var visits: [FormVisit] = []
     private var inPattern = 0
     private var sequence = 0
+    private var spans: [ObjectIdentifier: ActualSpan] = [:]
 
     init(_ document: PdfDocument, _ page: PdfPage) {
         self.document = document
@@ -258,6 +279,12 @@ final class EditScan: ContentVisitor {
         visits.removeLast()
     }
 
+    override func beginMarked(_ context: ContentContext, _ marked: MarkedContent) {
+        if inPattern == 0, marked.properties?.containsKey("ActualText") == true {
+            spans[ObjectIdentifier(marked)] = ActualSpan(current, visit, context.operatorIndex)
+        }
+    }
+
     override func showGlyph(_ context: ContentContext, _ glyph: GlyphInfo) {
         if inPattern > 0 { return }
         let state = context.state
@@ -295,6 +322,10 @@ final class EditScan: ContentVisitor {
         g.renderMode = state.renderMode
         g.color = (state.renderMode == 1 ? state.strokeColor : state.fillColor).rgb
         g.hasActualText = context.marked.contains { $0.properties?.containsKey("ActualText") == true }
+        if let span = context.marked.lazy.compactMap({ self.spans[ObjectIdentifier($0)] }).first, span.unit === current, span.visit === visit {
+            g.span = span
+            span.members.append(g)
+        }
         glyphs.append(g)
     }
 
