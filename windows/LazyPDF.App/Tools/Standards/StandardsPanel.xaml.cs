@@ -16,7 +16,7 @@ public partial class StandardsPanel : ToolPanel
     // The most rows listed; the rest are counted.
     private const int RowsShown = 100;
 
-    private static readonly PdfALevel[] Levels = Enum.GetValues<PdfALevel>();
+    private static readonly PdfALevel[] Levels = [.. Enum.GetValues<PdfALevel>().OrderBy(l => l.Part()).ThenBy(l => l.Conformance())];
 
     private PdfALevel _level = PdfALevel.A2b;
     private ToolAction _check = null!;

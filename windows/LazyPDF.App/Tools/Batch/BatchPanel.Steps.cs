@@ -11,7 +11,7 @@ namespace LazyPDF.App.Tools.Batch;
 
 public partial class BatchPanel
 {
-    private static readonly PdfALevel[] Levels = Enum.GetValues<PdfALevel>();
+    private static readonly PdfALevel[] Levels = [.. Enum.GetValues<PdfALevel>().OrderBy(l => l.Part()).ThenBy(l => l.Conformance())];
     private static readonly int[] Dpis = [72, 96, 150, 300, 600];
     private OcrLanguageState? _languages;
 

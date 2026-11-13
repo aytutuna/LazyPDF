@@ -12,6 +12,9 @@ internal static class StandardsText
         PdfALevel.A2u => Loc.T("Like 2b, and every character keeps its text."),
         PdfALevel.A3b => Loc.T("Like 2b, and other files may be attached."),
         PdfALevel.A3u => Loc.T("Like 3b, and every character keeps its text."),
+        PdfALevel.A1a => Loc.T("Like 1b, and the file must be tagged for screen readers. Untagged files need a language set first."),
+        PdfALevel.A2a => Loc.T("Like 2u, and the file must be tagged for screen readers. Untagged files need a language set first."),
+        PdfALevel.A3a => Loc.T("Like 3u, and the file must be tagged for screen readers. Untagged files need a language set first."),
         _ => Loc.T("The newest, based on PDF 2.0."),
     };
 
