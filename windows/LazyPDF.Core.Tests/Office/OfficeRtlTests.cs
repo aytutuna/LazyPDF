@@ -115,6 +115,14 @@ public class OfficeRtlTests
     }
 
     [Fact]
+    public void ThaanaAndSyriacInALeftToRightParagraphAreLaidOutRightToLeft()
+    {
+        var layout = new Paginator(Document(Paragraph("abc ހށނ def ܐܒܓ", rtl: false)), new LayoutFonts(ScriptFonts()), default).Run();
+        var texts = layout.Pages[0].Boxes.OfType<PlacedText>().ToList();
+        Assert.Equal(["ހށނ", "ܐܒܓ"], texts.Where(t => t.RightToLeft).Select(t => t.Text.Trim()));
+    }
+
+    [Fact]
     public void RightToLeftLayoutGoldenFile()
     {
         var output = new StringBuilder();

@@ -106,6 +106,13 @@ final class OfficeLayoutTests: XCTestCase {
         XCTAssertEqual(texts[0].x, 20)
     }
 
+    func test_thaanaAndSyriacInALeftToRightParagraphAreLaidOutRightToLeft() throws {
+        let layout = try Paginator(rtlDocument("abc \u{0780}\u{0781}\u{0782} def \u{0710}\u{0712}\u{0713}", rtl: false), LayoutFonts(OfficeLayoutSpec.scriptFonts())).run()
+        var texts: [PlacedText] = []
+        for case .text(let t) in layout.pages[0].boxes { texts.append(t) }
+        XCTAssertEqual(texts.filter { $0.rightToLeft }.map { $0.text.trimmingCharacters(in: .whitespaces) }, ["\u{0780}\u{0781}\u{0782}", "\u{0710}\u{0712}\u{0713}"])
+    }
+
     // Raises and nudges every glyph, as a platform shaper places marks.
     private final class OffsetScriptFont: FontSource, Shaper {
         private let font = OfficeLayoutSpec.ScriptFont()

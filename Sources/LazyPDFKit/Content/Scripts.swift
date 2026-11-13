@@ -17,7 +17,12 @@ enum Scripts {
         text.unicodeScalars.contains { needsBidi(Int($0.value)) }
     }
 
-    static func needsBidi(_ cp: Int) -> Bool { isHebrew(cp) || isArabic(cp) || isBidiControl(cp) }
+    static func needsBidi(_ cp: Int) -> Bool {
+        if isHebrew(cp) || isArabic(cp) || isBidiControl(cp) { return true }
+        guard cp >= 0x0700 else { return false }
+        let type = BidiData.typeOf(cp)
+        return type == .r || type == .al || type == .an
+    }
 
     /// A direction mark or embedding control: it sets a direction but has no glyph.
     static func isBidiControl(_ cp: Int) -> Bool {

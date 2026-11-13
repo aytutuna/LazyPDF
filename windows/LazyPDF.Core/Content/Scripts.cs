@@ -23,7 +23,7 @@ internal static class Scripts
     }
 
     public static bool NeedsBidi(int cp) =>
-        IsHebrew(cp) || IsArabic(cp) || cp is 0x200E or 0x200F or 0x061C or >= 0x202A and <= 0x202E or >= 0x2066 and <= 0x2069;
+        IsHebrew(cp) || IsArabic(cp) || IsBidiControl(cp) || cp >= 0x0700 && BidiData.TypeOf(cp) is BidiType.R or BidiType.AL or BidiType.AN;
 
     /// <summary>A direction mark or embedding control: it sets a direction but has no glyph.</summary>
     public static bool IsBidiControl(int cp) => cp is 0x200E or 0x200F or 0x061C or >= 0x202A and <= 0x202E or >= 0x2066 and <= 0x2069;
