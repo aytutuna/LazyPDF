@@ -70,8 +70,9 @@ final class CoreTextShaperTests: XCTestCase {
     func test_bracketsAreNotMirroredASecondTime() throws {
         let geeza = try file("Geeza Pro")
         let glyphs = try shape(geeza, ")" + alef + "(")
-        let open = try shape(geeza, "(")[0].glyph
-        let close = try shape(geeza, ")")[0].glyph
+        let font = try XCTUnwrap(TrueTypeFont.tryParse(geeza.data, geeza.collectionIndex))
+        let open = font.glyphForCodePoint(0x28)
+        let close = font.glyphForCodePoint(0x29)
 
         // Core hands over the run with its brackets already swapped, and they are drawn as they are given.
         XCTAssertEqual(glyphs[0].glyph, open)
