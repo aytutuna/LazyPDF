@@ -83,6 +83,8 @@ public final class AppViewModel {
 
     /// Asked before the window saves, undoes, closes or exits: the open tool's `handIn`. The window sets it.
     @ObservationIgnored public var handInTyping: (@MainActor () -> Bool)?
+    /// Asked when the window only moves to another tab or tool; without it `handInTyping` is asked.
+    @ObservationIgnored public var handInOnSwitch: (@MainActor () -> Bool)?
 
     /// Home tiles a shell cannot answer yet.
     @ObservationIgnored public var hiddenTiles: Set<String> = []
@@ -156,7 +158,7 @@ public final class AppViewModel {
 
     public func select(_ tab: any StripTab) {
         if activeTab === tab || index(of: tab) == nil { return }
-        if !handIn() { return }
+        if !handInForSwitch() { return }
         activeTab = tab
         dropAction()
         if let document = tab as? DocumentTab { lastDocument = document }
@@ -202,7 +204,7 @@ public final class AppViewModel {
     /// Opens the tool whose panel the inspector shows, or closes it when it is the open one.
     public func selectTool(_ id: String?) {
         if let id, ToolCatalog.find(id) == nil { return }
-        if !handIn() { return }
+        if !handInForSwitch() { return }
         activeToolId = id == activeToolId ? nil : id
         returnTool = nil
         dropAction()

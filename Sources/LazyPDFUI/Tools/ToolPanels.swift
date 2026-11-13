@@ -73,5 +73,9 @@ public final class ToolPanels {
     public func handIn() -> Bool {
         current?.panel.model.handIn() ?? true
     }
+
+    public func handInOnSwitch() -> Bool {
+        current?.panel.model.handInOnSwitch() ?? true
+    }
 }
 #endif

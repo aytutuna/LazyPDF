@@ -24,7 +24,7 @@ public partial class MainWindow
     {
         _tabPanel?.InvalidateArrange();
         if (_refreshing || TabList.SelectedItem is not ITab tab) return;
-        if (!HandedIn())
+        if (!HandedInOnSwitch())
         {
             _refreshing = true;
             try { TabList.SelectedItem = _vm.ActiveTab; }
@@ -66,7 +66,7 @@ public partial class MainWindow
             var picked = tab;
             item.Click += (_, _) =>
             {
-                if (HandedIn()) _vm.ActiveTab = picked;
+                if (HandedInOnSwitch()) _vm.ActiveTab = picked;
             };
             menu.Items.Add(item);
         }

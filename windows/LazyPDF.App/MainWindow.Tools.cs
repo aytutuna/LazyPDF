@@ -40,6 +40,8 @@ public partial class MainWindow
     // False while typed text waits for an answer; the side panel may hold some as well as the inspector.
     private bool HandedIn() => _inspectorPanel?.HandIn() != false && _sidePanel?.HandIn() != false;
 
+    private bool HandedInOnSwitch() => _inspectorPanel?.HandInOnSwitch() != false && _sidePanel?.HandInOnSwitch() != false;
+
     private void BuildToolStrip()
     {
         foreach (var group in Enum.GetValues<ToolGroup>())
@@ -197,7 +199,7 @@ public partial class MainWindow
     // The side pane has no room beside an open tool on a narrow window, so the tool gives way.
     private void ShowSidePanel(string? id)
     {
-        if (!HandedIn()) return;
+        if (!HandedInOnSwitch()) return;
         if (_narrow && _vm.ActiveTool is not null) _vm.SelectTool(_vm.ActiveToolId);
         if (id is null) _vm.ToggleSidePanel();
         else _vm.SetSidePanel(id);
@@ -205,7 +207,7 @@ public partial class MainWindow
 
     private void SidePaneClose_Click(object sender, RoutedEventArgs e)
     {
-        if (HandedIn()) _vm.SetSidePanel(_vm.SidePanelId);
+        if (HandedInOnSwitch()) _vm.SetSidePanel(_vm.SidePanelId);
     }
 
     private void RefreshSidePane()
@@ -248,7 +250,7 @@ public partial class MainWindow
         if (_vm.ActiveTool is not { } tool)
         {
             // Closing the tool does not go through Place, so words still being typed go in here.
-            if (_inspectorTab is not null && _vm.Strip.Contains(_inspectorTab) && !_vm.IsBusy && _inspectorPanel?.HandIn() == false)
+            if (_inspectorTab is not null && _vm.Strip.Contains(_inspectorTab) && !_vm.IsBusy && _inspectorPanel?.HandInOnSwitch() == false)
                 _vm.DropAction();
             _inspectorPanel?.Detach();
             _inspectorPanel = null;
@@ -283,7 +285,7 @@ public partial class MainWindow
         if (ReferenceEquals(current, panel) && ReferenceEquals(attached, tab)) return;
         // The tab can change under the panel (open, close, Save all), so words still being typed go in before it lets go.
         // A running job edits the session on another thread, so nothing is written to it from here.
-        if (attached is not null && _vm.Strip.Contains(attached) && !_vm.IsBusy && current?.HandIn() == false)
+        if (attached is not null && _vm.Strip.Contains(attached) && !_vm.IsBusy && current?.HandInOnSwitch() == false)
         {
             // A signed file asked before taking the words. On the same tab the panel keeps them and its button still works.
             if (!ReferenceEquals(attached, tab)) _vm.DropAction();

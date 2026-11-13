@@ -140,6 +140,9 @@ public partial class MeasurePanel : ToolPanel
         return Add(tab);
     }
 
+    // Moving to another tab, tool or panel is no decision about the readings; they stay in the list of their tab.
+    public override bool HandInOnSwitch() => true;
+
     private MeasureScale ScaleOf(int page) => _scales.For(Tab!.Document, page);
 
     private List<MeasureItem> Items => [.. _waiting.Select(p => p.Item)];

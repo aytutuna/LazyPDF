@@ -241,10 +241,14 @@ public protocol ToolPanelModel: AnyObject {
     /// Puts text that is still being typed into the document; the window calls it before it saves, undoes, closes or asks
     /// about unsaved changes. False when the text waits for an answer and the caller must not go on as if it were kept.
     func handIn() -> Bool
+
+    /// The same when the user only moves on (another tab or tool) and nothing is saved or closed.
+    func handInOnSwitch() -> Bool
 }
 
 extension ToolPanelModel {
     public func handIn() -> Bool { true }
+    public func handInOnSwitch() -> Bool { handIn() }
 }
 
 extension AppViewModel: ToolHost {

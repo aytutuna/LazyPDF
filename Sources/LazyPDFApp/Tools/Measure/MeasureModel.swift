@@ -286,6 +286,9 @@ public final class MeasureModel: ToolPanelModel {
         return write(tab, host)
     }
 
+    // Moving to another tab or tool is no decision about the readings; they stay in the list of their tab.
+    public func handInOnSwitch() -> Bool { true }
+
     private func add() {
         guard let tab, let host else { return }
         if !CommentExchange.canComment(tab.document) {
