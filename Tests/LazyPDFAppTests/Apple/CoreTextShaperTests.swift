@@ -56,6 +56,14 @@ final class CoreTextShaperTests: XCTestCase {
         XCTAssertTrue(glyphs.allSatisfy { $0.glyph > 0 })
     }
 
+    func test_noDeletedGlyphIdsComeThrough() throws {
+        let geeza = try file("Geeza Pro")
+        let glyphs = try shape(geeza, lam + alef + beh + lam + alef + "\u{064E}")
+
+        XCTAssertFalse(glyphs.isEmpty)
+        XCTAssertTrue(glyphs.allSatisfy { $0.glyph > 0 && $0.glyph != 0xFFFF })
+    }
+
     func test_aMarkFollowsItsBaseInReadingOrderAndIsPlacedAbove() throws {
         let geeza = try file("Geeza Pro")
         let glyphs = try shape(geeza, beh + "\u{064E}" + beh)

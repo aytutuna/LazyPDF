@@ -46,6 +46,7 @@ final class CoreTextShaper: Shaper {
         guard let runs = CTLineGetGlyphRuns(line) as? [CTRun] else { return nil }
 
         let postScriptName = CTFontCopyPostScriptName(ctFont) as String
+        let glyphCount = CTFontGetGlyphCount(ctFont)
         var result: [ShapedGlyph] = []
         var pen = 0.0
         for run in runs {
@@ -74,6 +75,12 @@ final class CoreTextShaper: Shaper {
                 if Self.isInvisible(scalar.value) { continue }
                 var glyph = glyphs[i]
                 var advance = Double(advances[i].width)
+                // A morx ligature leaves 0xFFFF (kCGFontIndexInvalid) for the letters it absorbed. Such a glyph is not drawn,
+                // but its advance still moves the pen.
+                if glyph == 0xFFFF || Int(glyph) >= glyphCount {
+                    pen += advance
+                    continue
+                }
                 // Core has mirrored the brackets for the right-to-left run; CoreText would mirror them again.
                 if scalar.properties.isBidiMirrored, scalar.value <= 0xFFFF {
                     var unit = UniChar(scalar.value)
