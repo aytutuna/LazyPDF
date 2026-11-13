@@ -1,5 +1,5 @@
 import XCTest
-import LazyPDFKit
+@testable import LazyPDFKit
 @testable import LazyPDFApp
 
 // Mirrors windows/LazyPDF.App.Tests/ViewerSearchTests.cs: the search the find bar and the Search panel share, over the text
@@ -168,7 +168,10 @@ final class ViewerSearchTests: XCTestCase {
     func test_aPatternThatRunsOutOfTimeNamesThePagesAndClearsOnTheNextSearch() async throws {
         let search = searching(try TestPdfs.text(pages: 2, line: String(repeating: "a", count: 40) + "!"))
 
+        TextSearch.regexTimeout = 0.01
+        defer { TextSearch.regexTimeout = 2 }
         await search.start("^(a+)+$", TextSearchOptions(regex: true)).value
+        TextSearch.regexTimeout = 2
 
         XCTAssertTrue(search.hits.isEmpty)
         XCTAssertEqual(search.timedOut, [0, 1])

@@ -70,8 +70,12 @@ final class RedactFinderTests: XCTestCase {
         let document = try lines(String(repeating: "a", count: 40) + "!")
         let cache = TextCache(document)
         let timeouts = SearchTimeouts()
+        // Some ICU builds give up on this pattern in under a second, so the limit is made shorter than any of them takes.
+        TextSearch.regexTimeout = 0.01
+        defer { TextSearch.regexTimeout = 2 }
         XCTAssertTrue(try RedactionFinder.findRegex(cache, "^(a+)+$", timeouts: timeouts).isEmpty)
         XCTAssertEqual(timeouts.pages, [0])
+        TextSearch.regexTimeout = 2
         let quiet = SearchTimeouts()
         XCTAssertEqual(try RedactionFinder.findRegex(cache, "a+!", timeouts: quiet).count, 1)
         XCTAssertTrue(quiet.pages.isEmpty)
