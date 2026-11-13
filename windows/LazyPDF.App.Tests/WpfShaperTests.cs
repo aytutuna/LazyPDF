@@ -131,6 +131,17 @@ public sealed class WpfShaperTests
     }
 
     [Fact]
+    public void AVeryLongRunIsShapedWholeOrLeftToCore()
+    {
+        var (file, _) = Load("Segoe UI");
+        string text = string.Concat(Enumerable.Repeat(Meem + Reh + Hah + Beh + Alef + " ", 6000));
+
+        var glyphs = Source.Shape(text, file, true, null);
+
+        if (glyphs is not null) Assert.Equal(text.Length - 1, glyphs.Max(g => g.Cluster));
+    }
+
+    [Fact]
     public void AnEmbeddedFontDrawsTheJoinedGlyphs()
     {
         var document = PdfDocument.Open(Pdfs.Text());

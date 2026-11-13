@@ -37,9 +37,13 @@ internal static class WpfShaper
         using var line = TextFormatter.Create(TextFormattingMode.Ideal).FormatLine(new Source(sent.ToString(), properties), 0, 1e6,
             new Paragraph(properties, rightToLeft ? FlowDirection.RightToLeft : FlowDirection.LeftToRight), null);
 
+        // WPF caps the width of a line and breaks a very long run early; a prefix would leave the rest without glyphs.
+        var indexedRuns = (line.GetIndexedGlyphRuns() ?? []).OrderBy(r => r.TextSourceCharacterIndex).ToList();
+        if (line.Length < sent.Length || indexedRuns.Sum(r => r.TextSourceLength) < sent.Length) return null;
+
         // The glyphs of a run are in logical order, with offsets along the writing direction.
         var logical = new List<ShapedGlyph>();
-        foreach (var indexed in (line.GetIndexedGlyphRuns() ?? []).OrderBy(r => r.TextSourceCharacterIndex))
+        foreach (var indexed in indexedRuns)
         {
             var run = indexed.GlyphRun;
             // A font fallback or a direction switch inside the run is something this path does not place.
