@@ -20,11 +20,13 @@ internal sealed partial class PdfAChecker
     /// <summary>The issues of the level A rules, which the converter turns into a refusal when tagging could not settle them.</summary>
     internal List<PdfAIssue> StructureIssues { get; } = [];
 
+    private readonly HashSet<string> _structureSeen = new(StringComparer.Ordinal);
+
     private void AddStructure(string clause, string where, string message)
     {
-        int before = _issues.Count;
+        // Kept even past the report cap, or the converter would not see that tagging cannot settle these.
+        if (_structureSeen.Add($"{clause}|{where}|{message}")) StructureIssues.Add(new PdfAIssue(clause, where, message));
         Add(clause, where, message);
-        if (_issues.Count > before) StructureIssues.Add(_issues[^1]);
     }
 
     private void CheckStructure()

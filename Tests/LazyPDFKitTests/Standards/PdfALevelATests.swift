@@ -135,6 +135,18 @@ final class PdfALevelATests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(chart.refusal).contains(PdfAText.nonStandardType("Chart")))
     }
 
+    func test_conversionStillRefusesWhenOtherIssuesFillTheReport() throws {
+        let pages = 1001
+        let pdf = TestPdf()
+        pdf.obj(1, "<</Type /Catalog /Pages 2 0 R>>")
+        pdf.obj(2, "<</Type /Pages /Kids [\((0..<pages).map { "\(10 + $0) 0 R" }.joined(separator: " "))] /Count \(pages) /MediaBox [0 0 200 300]>>")
+        pdf.stream(3, "", "1 0 0 rg 10 10 50 50 re f")
+        for i in 0..<pages { pdf.obj(10 + i, "<</Type /Page /Parent 2 0 R /Contents 3 0 R>>") }
+        let result = try convert(pdf.finish("/Root 1 0 R"), .a2a)
+        XCTAssertNil(result.bytes)
+        XCTAssertTrue(try XCTUnwrap(result.refusal).hasSuffix(PdfAText.setLanguageToTag))
+    }
+
     func test_conversionTagsAnUntaggedFileThatNamesItsLanguage() throws {
         let pdf = TestPdf()
         pdf.obj(1, "<</Type /Catalog /Pages 2 0 R /Lang (en-US)>>")

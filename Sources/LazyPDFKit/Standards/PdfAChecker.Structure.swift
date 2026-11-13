@@ -17,9 +17,10 @@ private let types17 = types14.union(nameSet(["THead", "TBody", "TFoot", "Annot",
 
 extension PdfAChecker {
     private func addStructure(_ clause: String, _ place: @autoclosure () -> String, _ message: @autoclosure () -> String) {
-        let before = issues.count
-        add(clause, place(), message())
-        if issues.count > before { structureIssues.append(issues[issues.count - 1]) }
+        // Kept even past the report cap, or the converter would not see that tagging cannot settle these.
+        let at = place(), text = message()
+        if structureSeen.insert("\(clause)|\(at)|\(text)").inserted { structureIssues.append(PdfAIssue(clause, at, text)) }
+        add(clause, at, text)
     }
 
     func checkStructure() {

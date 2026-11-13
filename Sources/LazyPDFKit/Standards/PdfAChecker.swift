@@ -46,6 +46,7 @@ final class PdfAChecker {
 
     /// The issues of the level A rules, which the converter turns into a refusal when tagging could not settle them.
     var structureIssues: [PdfAIssue] = []
+    var structureSeen = Set<String>()
 
     // Annotations
     var nextLists = Set<ObjectIdentifier>()

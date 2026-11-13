@@ -172,6 +172,20 @@ public class PdfALevelATests
     }
 
     [Fact]
+    public void ConversionStillRefusesWhenOtherIssuesFillTheReport()
+    {
+        const int pages = 1001;
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R>>");
+        pdf.Obj(2, $"<</Type /Pages /Kids [{string.Join(' ', Enumerable.Range(0, pages).Select(i => $"{10 + i} 0 R"))}] /Count {pages} /MediaBox [0 0 200 300]>>");
+        pdf.Stream(3, "", "1 0 0 rg 10 10 50 50 re f");
+        for (int i = 0; i < pages; i++) pdf.Obj(10 + i, "<</Type /Page /Parent 2 0 R /Contents 3 0 R>>");
+        var result = new PdfAConverter().Convert(pdf.Finish("/Root 1 0 R"), PdfALevel.A2a, StandardsKit.Date);
+        Assert.Null(result.Bytes);
+        Assert.EndsWith(PdfAText.SetLanguageToTag, result.Refusal);
+    }
+
+    [Fact]
     public void ConversionTagsAnUntaggedFileThatNamesItsLanguage()
     {
         var pdf = new TestPdf();
