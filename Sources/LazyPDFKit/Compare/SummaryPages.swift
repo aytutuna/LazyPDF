@@ -68,7 +68,7 @@ enum SummaryPages {
                     x += 32
                 }
                 writer.beginText().fillGray(0).font(line.heading ? boldName : regularName, size).moveText(x, top)
-                    .show(font.encode(line.text)).endText()
+                    .show(font, line.text, size).endText()
             }
             page.dictionary["Contents"] = try document.add(PdfStream(PdfDictionary(), data: writer.toArray()))
         }

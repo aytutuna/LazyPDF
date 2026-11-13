@@ -149,8 +149,9 @@ final class FormAppearance {
         c.color(look.textColor, stroke: false)
         c.w.beginText().font(name, size)
         for (text, x, y) in lines {
-            let encoded = font.encode(text)
-            if !encoded.isEmpty { c.w.textMatrix(PdfMatrix(1, 0, 0, 1, x, y)).show(encoded) }
+            if text.isEmpty { continue }
+            c.w.textMatrix(PdfMatrix(1, 0, 0, 1, x, y))
+            font.show(c.w, text, size)
         }
         c.w.endText().restore().endMarked()
     }

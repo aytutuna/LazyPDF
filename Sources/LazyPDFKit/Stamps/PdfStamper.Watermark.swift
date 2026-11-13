@@ -42,7 +42,7 @@ extension PdfStamper {
                 for (i, line) in lines.enumerated() {
                     let baseline = height - font.ascent * size - Double(i) * font.lineHeight(size)
                     let left = (width - font.width(line, size)) / 2
-                    canvas.writer.textMatrix(PdfMatrix.translate(left, baseline)).show(font.encode(line))
+                    canvas.writer.textMatrix(PdfMatrix.translate(left, baseline)).show(font, line, size)
                 }
                 canvas.writer.endText()
             } else {

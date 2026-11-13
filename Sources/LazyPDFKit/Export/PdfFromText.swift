@@ -59,10 +59,14 @@ public enum PdfFromText {
             let name = ContentResources.add(document, ContentResources.forEdit(document, page), "Font", font.reference, "F")
             let content = ContentWriter().beginText().font(name, size).moveText(setup.margin, height - setup.margin - font.ascent * size)
             var first = true
+            var at = 0.0
             for line in pages[i] {
-                if !first { _ = content.moveText(0, -lineHeight) }
+                // Right-to-left lines end at the right margin; each move is relative to the start of the line before.
+                let x = font.isRightToLeft(line) ? box - font.width(line, size) : 0
+                if x != at || !first { _ = content.moveText(x - at, first ? 0 : -lineHeight) }
+                at = x
                 first = false
-                if !line.isEmpty { _ = content.show(font.encode(line)) }
+                if !line.isEmpty { _ = content.show(font, line, size) }
             }
             _ = content.endText()
             page.dictionary["Contents"] = try document.add(PdfStream(PdfDictionary(), data: content.toArray()))

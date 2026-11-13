@@ -10,11 +10,12 @@ public struct TextBoxStyle {
     public var style: FontStyles
     public var size: Double
     public var color: RgbColor
-    public var alignment: TextAlignment
+    /// Nil is left, or right for a right-to-left line.
+    public var alignment: TextAlignment?
     public var lineSpacing: Double
 
     public init(family: String = "Helvetica", style: FontStyles = [], size: Double = 12, color: RgbColor = RgbColor(0, 0, 0),
-                alignment: TextAlignment = .left, lineSpacing: Double = 1) {
+                alignment: TextAlignment? = nil, lineSpacing: Double = 1) {
         self.family = family
         self.style = style
         self.size = size
@@ -69,8 +70,10 @@ extension PageEditor {
         w.beginText().font(name, style.size)
         for i in 0..<lines.count {
             let width = draw.width(lines[i], style.size)
+            // No alignment set: text starts where its paragraph does, on the right for right-to-left text.
+            let alignment = style.alignment ?? (draw.isRightToLeft(lines[i]) ? .right : .left)
             let x: Double
-            switch style.alignment {
+            switch alignment {
             case .center: x = shown.x + (shown.width - width) / 2
             case .right: x = shown.x + shown.width - width
             default: x = shown.x
@@ -78,10 +81,10 @@ extension PageEditor {
             let y = shown.y + draw.ascent * style.size + Double(i) * height
             let (ux, uy) = geometry.toUser(x, y)
             let spaces = lines[i].unicodeScalars.filter { $0 == " " }.count
-            let justify = style.alignment == .justify && !draw.isEmbedded && i < lines.count - 1 && spaces > 0
+            let justify = alignment == .justify && !draw.isEmbedded && i < lines.count - 1 && spaces > 0
             if justify { w.wordSpacing((shown.width - width) / Double(spaces) / (ax * ax + ay * ay).squareRoot()) }
             w.textMatrix(PdfMatrix(ax, ay, bx, by, ux, uy))
-            w.show(draw.encode(lines[i]))
+            w.show(draw, lines[i], style.size)
             if justify { w.wordSpacing(0) }
         }
         w.endText().restore()

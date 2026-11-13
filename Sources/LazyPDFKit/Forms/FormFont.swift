@@ -71,6 +71,13 @@ final class FormFont {
         return true
     }
 
+    /// Shows the text in display order, shaped when the font was added for it.
+    @discardableResult
+    func show(_ writer: ContentWriter, _ text: String, _ size: Double) -> ContentWriter {
+        if let added { return writer.show(added, text, size) }
+        return text.isEmpty ? writer : writer.show(encode(text))
+    }
+
     func encode(_ text: String) -> [UInt8] {
         if let added { return added.encode(text) }
         var bytes: [UInt8] = []

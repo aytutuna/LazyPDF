@@ -50,10 +50,11 @@ extension AppearanceBuilder {
             if y < box.bottom { break }
             let baseline = y - line.ascent
             var x: Double
+            // Left is the default alignment, and the default of a right-to-left paragraph is the right.
             switch a.alignment {
             case 1: x = textBox.left + (textBox.width - line.width) / 2
             case 2: x = textBox.right - line.width
-            default: x = textBox.left
+            default: x = line.rightToLeft ? textBox.right - line.width : textBox.left
             }
             for piece in line.pieces {
                 drawPiece(c, piece, x, baseline, &names)
@@ -76,7 +77,7 @@ extension AppearanceBuilder {
             names[piece.font.reference.number] = name
         }
         c.color(format.color, stroke: false)
-        c.w.beginText().font(name, format.size).moveText(c.x(x), c.y(baseline)).show(piece.font.encode(piece.text)).endText()
+        c.w.beginText().font(name, format.size).moveText(c.x(x), c.y(baseline)).showRun(piece.font, piece.text, piece.rightToLeft, format.size).endText()
         if format.underline {
             c.color(format.color, stroke: true)
             c.w.lineWidth(max(0.5, format.size / 18))
@@ -175,7 +176,7 @@ extension AppearanceBuilder {
         let baseline = (h - (font.ascent + font.descent) * size) / 2
         let fontName = c.addFont(font.reference)
         c.color(color, stroke: false)
-        c.w.beginText().font(fontName, size).moveText((w - textWidth) / 2, baseline).show(font.encode(label)).endText()
+        c.w.beginText().font(fontName, size).moveText((w - textWidth) / 2, baseline).show(font, label, size).endText()
         return c
     }
 

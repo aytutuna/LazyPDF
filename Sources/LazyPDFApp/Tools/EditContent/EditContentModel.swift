@@ -429,7 +429,7 @@ public final class EditContentModel: ToolPanelModel {
         sizeText = Self.number(text?.size ?? newStyle.size)
         bold = text.map { $0.font?.isBold ?? false } ?? newStyle.style.contains(.bold)
         italic = text.map { $0.font?.isItalic ?? false } ?? newStyle.style.contains(.italic)
-        alignment = text?.alignment ?? newStyle.alignment
+        alignment = text?.alignment ?? newStyle.alignment ?? .left
         shown.spacing = (text?.lines.count ?? 0) > 1
         if let text { spacingText = Self.number(text.lineSpacing) }
         shown.paragraph = text != nil

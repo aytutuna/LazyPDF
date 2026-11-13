@@ -83,7 +83,7 @@ enum SignatureAppearance {
         canvas.w.beginText().font(name, size).fillGray(0).moveText(left, top)
         for (i, line) in lines.enumerated() {
             if i > 0 { canvas.w.moveText(0, -lineHeight) }
-            canvas.w.show(font.encode(line))
+            canvas.w.show(font, line, size)
         }
         canvas.w.endText()
     }

@@ -8,7 +8,7 @@ extension EditContentModel {
     func newLook() -> OverlayTextLook {
         OverlayTextLook(family: newStyle.family, size: newStyle.size, bold: newStyle.style.contains(.bold),
                         italic: newStyle.style.contains(.italic), color: EditorLook.color(newStyle.color),
-                        alignment: EditorLook.alignment(newStyle.alignment))
+                        alignment: EditorLook.alignment(newStyle.alignment ?? .left))
     }
 
     // MARK: The editor on the page

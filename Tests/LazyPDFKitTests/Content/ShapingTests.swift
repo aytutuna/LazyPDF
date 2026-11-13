@@ -224,4 +224,22 @@ final class ShapingTests: XCTestCase {
         _ = try PdfFontEmbedder(try blank(), source).add("Script Sans", [], ["abc"])
         XCTAssertEqual(source.requests, ["Script Sans"])
     }
+
+    func test_aRightToLeftParagraphIsLaidOutInDisplayOrder() throws {
+        let text = "אבג דהו"
+        let font = try embed(text)
+        let laid = try TextLayout.layout([[TextRun(text, TextFormat.default)]], 1000, TextFormat.default) { _ in font }
+        XCTAssertEqual(laid.count, 1)
+        XCTAssertTrue(laid[0].rightToLeft)
+        XCTAssertTrue(laid[0].pieces.allSatisfy { $0.rightToLeft })
+        XCTAssertEqual(laid[0].pieces.map { $0.text }, ["דהו", "אבג "])
+    }
+
+    func test_aLatinParagraphKeepsItsPieces() throws {
+        let font = try embed("abc def")
+        let laid = try TextLayout.layout([[TextRun("abc def", TextFormat.default)]], 1000, TextFormat.default) { _ in font }
+        XCTAssertEqual(laid.count, 1)
+        XCTAssertFalse(laid[0].rightToLeft)
+        XCTAssertEqual(laid[0].pieces.map { $0.text }, ["abc ", "def"])
+    }
 }
