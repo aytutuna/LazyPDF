@@ -184,6 +184,28 @@ final class CreateWebPageTests: XCTestCase {
         XCTAssertEqual(model.webPage?.url.lastPathComponent, "story.html")
     }
 
+    func test_aWebPageDroppedOnThePanelBecomesTheSource() {
+        let f = ViewModelFixture(self)
+        let model = CreateModel(host: f.vm, codec: FakeCodec(), fonts: FakeFonts(), web: FakeWebRenderer())
+        XCTAssertTrue(model.from == .blank)
+
+        model.drop([ToolFile(url: page(f, "Report 1.HTM"))])
+
+        XCTAssertTrue(model.from == .webPage)
+        XCTAssertTrue(model.canRun)
+        XCTAssertEqual(model.request()?.title, "Report 1.pdf")
+    }
+
+    func test_aWebPageIsNotTakenWithoutARenderer() {
+        let f = ViewModelFixture(self)
+        let model = CreateModel(host: f.vm, codec: FakeCodec(), fonts: FakeFonts())
+
+        model.drop([ToolFile(url: page(f))])
+
+        XCTAssertTrue(model.from == .blank)
+        XCTAssertNil(model.webPage)
+    }
+
     func test_aMarginThatLeavesNoRoomIsSaidAsAMargin() async throws {
         let f = ViewModelFixture(self)
         let renderer = FakeWebRenderer()

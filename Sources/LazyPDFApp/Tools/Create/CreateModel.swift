@@ -170,8 +170,17 @@ public final class CreateModel {
         fileProblem = nil
     }
 
-    /// The files dropped on the panel: the pictures are added to the list.
+    /// The files dropped on the panel: a web page becomes the source, otherwise the pictures are added to the list.
     public func drop(_ files: [ToolFile]) {
+        if offersWebPage, let page = files.first(where: { FileKinds.isWebPage($0.url) }) {
+            for file in files where file.url != page.url { file.access?.stop() }
+            webPage?.access?.stop()
+            webPage = page
+            fileProblem = nil
+            from = .webPage
+            fitPaper()
+            return
+        }
         let kinds = ["jpg", "jpeg", "png", "tif", "tiff", "bmp", "gif", "heic", "heif"]
         let pictures = files.filter { kinds.contains($0.url.pathExtension.lowercased()) }
         for file in files where !pictures.contains(where: { $0.url == file.url }) { file.access?.stop() }

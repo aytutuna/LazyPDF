@@ -8609,9 +8609,6 @@
   "Windows does not let Lazy PDF read the web page. Check who may open it.": {
     "tr": "Windows, Lazy PDF'nin web sayfasını okumasına izin vermiyor. Dosyayı kimlerin açabildiğini kontrol edin."
   },
-  "Web page": {
-    "tr": "Web sayfası"
-  },
   "Scripts do not run and nothing is loaded from the internet.": {
     "tr": "Betikler çalışmaz ve internetten hiçbir şey yüklenmez."
   },

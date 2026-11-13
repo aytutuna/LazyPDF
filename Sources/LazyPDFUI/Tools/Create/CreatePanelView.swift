@@ -21,9 +21,9 @@ struct CreatePanelView: View {
                     Text(L10n.t("Blank pages")).tag(CreateFrom.blank)
                     Text(L10n.t("Pictures")).tag(CreateFrom.pictures)
                     Text(L10n.t("Text")).tag(CreateFrom.text)
+                    if model.offersWebPage { Text(L10n.t("Web page file (.html or .htm)")).tag(CreateFrom.webPage) }
                     Text(L10n.t("A Word, Excel or PowerPoint file")).tag(CreateFrom.office)
                     Text(L10n.t("Clipboard")).tag(CreateFrom.clipboard)
-                    if model.offersWebPage { Text(L10n.t("Web page")).tag(CreateFrom.webPage) }
                 }
                 .labelsHidden()
             }

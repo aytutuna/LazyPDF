@@ -2138,8 +2138,8 @@
 "Watermark text" = "Filigran metni";
 "Weak. Try 12 or more characters." = "Zayıf. En az 12 karakter deneyin.";
 "Web address" = "Web adresi";
-"Web page" = "Web sayfası";
 "Web page (.html)" = "Web sayfası (.html)";
+"Web page file (.html or .htm)" = "Web sayfası dosyası (.html veya .htm)";
 "Website" = "Web sitesi";
 "What was found" = "Bulunanlar";
 "What was typed into the form. Off unless you tick it." = "Forma yazılanlar. İşaretlemezseniz kapalıdır.";
