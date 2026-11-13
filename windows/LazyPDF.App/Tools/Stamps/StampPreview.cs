@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 using FontStyles = LazyPDF.Core.FontStyles;
 using TextBlock = System.Windows.Controls.TextBlock;
@@ -73,6 +74,7 @@ public static partial class StampPreview
         FontStyle = style.HasFlag(FontStyles.Italic) ? System.Windows.FontStyles.Italic : System.Windows.FontStyles.Normal,
         Foreground = Paint(color),
         TextAlignment = System.Windows.TextAlignment.Center,
+        FlowDirection = TextDirection.Of(text),
     };
 
     private static Size Measured(UIElement element)

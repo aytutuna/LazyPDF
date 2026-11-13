@@ -2,6 +2,7 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:svc="clr-namespace:LazyPDF.App.Services"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:batch="clr-namespace:LazyPDF.App.Tools.Batch"
                  AllowDrop="True" PreviewDragOver="Panel_DragOver" PreviewDrop="Panel_Drop" Unloaded="Panel_Unloaded">
@@ -92,7 +93,7 @@
                 </StackPanel>
                 <StackPanel x:Name="WatermarkEditor">
                     <TextBlock Text="{loc:T Text}" Style="{StaticResource FieldLabelText}" />
-                    <TextBox x:Name="WatermarkBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Watermark text}" TextChanged="Setting_Changed" />
+                    <TextBox x:Name="WatermarkBox" svc:TextDirection.Follows="True" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Watermark text}" TextChanged="Setting_Changed" />
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -140,7 +141,7 @@
                 </StackPanel>
                 <StackPanel x:Name="PageNumbersEditor">
                     <TextBlock Text="{loc:T Text}" Style="{StaticResource FieldLabelText}" />
-                    <TextBox x:Name="PageTextBox" AutomationProperties.Name="{loc:T Page number text}" TextChanged="Setting_Changed" />
+                    <TextBox x:Name="PageTextBox" svc:TextDirection.Follows="True" AutomationProperties.Name="{loc:T Page number text}" TextChanged="Setting_Changed" />
                     <TextBlock x:Name="PageTextHint" Style="{StaticResource ReasonText}" Margin="0,4,0,8" />
                     <TextBlock Text="{loc:T Size}" Style="{StaticResource FieldLabelText}" />
                     <TextBox x:Name="PageSizeBox" AutomationProperties.Name="{loc:T Size in points}" TextChanged="Setting_Changed" />

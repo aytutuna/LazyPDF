@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Forms;
@@ -57,12 +58,25 @@ internal sealed partial class FillLayer
             Style = FieldStyles.Text,
             Text = field.Value ?? "",
             FontSize = FontSizeOf(field, box, multiline),
-            TextAlignment = field.Alignment switch { 1 => System.Windows.TextAlignment.Center, 2 => System.Windows.TextAlignment.Right, _ => System.Windows.TextAlignment.Left },
             MaxLength = field.MaxLength,
             AcceptsReturn = multiline,
             TextWrapping = multiline ? TextWrapping.Wrap : TextWrapping.NoWrap,
             VerticalScrollBarVisibility = multiline ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled,
         };
+        // A mirrored box puts Left at the right edge, so an unset or right alignment is Left there, as the saved appearance starts such a line at the right edge.
+        void Flow()
+        {
+            bool rtl = TextDirection.IsRightToLeft(text.Text);
+            text.FlowDirection = rtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+            text.TextAlignment = field.Alignment switch
+            {
+                1 => System.Windows.TextAlignment.Center,
+                2 => rtl ? System.Windows.TextAlignment.Left : System.Windows.TextAlignment.Right,
+                _ => System.Windows.TextAlignment.Left,
+            };
+        }
+        Flow();
+        text.TextChanged += (_, _) => Flow();
         string last = text.Text;
         var slot = new Slot(field.Name, index, box, text, (f, _) =>
         {

@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
+using LazyPDF.App.Services;
 using LazyPDF.App.Viewer;
 
 namespace LazyPDF.App.Tools.Comment;
@@ -36,6 +37,7 @@ public sealed class TextEditor
             TextWrapping = TextWrapping.Wrap,
             Padding = new Thickness(2),
         };
+        TextDirection.SetFollows(_box, true);
         AutomationProperties.SetName(_box, Loc.T("Text of the mark"));
         PageOverlay.KeepUpright(_box, rotation);
         Canvas.SetLeft(_box, left);
