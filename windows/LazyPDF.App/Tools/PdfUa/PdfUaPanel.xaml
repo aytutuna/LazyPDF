@@ -1,0 +1,36 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.PdfUa.PdfUaPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:standards="clr-namespace:LazyPDF.App.Tools.Standards">
+    <StackPanel Margin="12,4,12,12">
+        <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap"
+                   Text="{loc:T Lists the PDF/UA-1 conditions the file breaks. Nothing is changed until you mark it.}" />
+        <TextBlock x:Name="PersonNote" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
+
+        <StackPanel x:Name="Result" Margin="0,16,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="Verdict" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+            <TextBlock x:Name="Caveat" Style="{StaticResource ReasonText}" Margin="0,2,0,0" />
+            <StackPanel x:Name="MarkRow" Margin="0,12,0,0" Visibility="Collapsed">
+                <TextBlock x:Name="MarkNote" Style="{StaticResource ReasonText}" />
+                <Button x:Name="MarkButton" Content="{loc:T Mark as PDF/UA}" AutomationProperties.Name="{loc:T Mark as PDF/UA}"
+                        HorizontalAlignment="Left" Margin="0,6,0,0" Click="Mark_Click" />
+            </StackPanel>
+            <ItemsControl x:Name="IssueList" KeyboardNavigation.TabNavigation="Continue">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type standards:IssueRow}">
+                        <StackPanel Margin="0,12,0,0" AutomationProperties.Name="{Binding Summary}">
+                            <TextBlock Text="{Binding Message}" Style="{StaticResource BodyText}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Where}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Clause}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextWrapping="Wrap" />
+                            <Button Content="{Binding PlaceText}" AutomationProperties.Name="{Binding PlaceText}" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                    Click="Place_Click" Visibility="{Binding HasPlaces, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock x:Name="Rest" Style="{StaticResource ReasonText}" Margin="0,12,0,0" />
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>

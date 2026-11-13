@@ -21,6 +21,7 @@ using LazyPDF.App.Tools.Metadata;
 using LazyPDF.App.Tools.Ocr;
 using LazyPDF.App.Tools.Optimize;
 using LazyPDF.App.Tools.Pages;
+using LazyPDF.App.Tools.PdfUa;
 using LazyPDF.App.Tools.Protect;
 using LazyPDF.App.Tools.Redact;
 using LazyPDF.App.Tools.Sanitize;
@@ -81,6 +82,7 @@ public static class ToolCatalog
         new("metadata", ToolGroup.Check, Loc.T("Properties"), "\uE946", Loc.T("Title, author and the other facts stored in the file."), () => new MetadataPanel()),
         new("accessibility", ToolGroup.Check, Loc.T("Accessibility"), "\uE776", Loc.T("Check the file for screen readers and fix what is missing."), () => new AccessibilityPanel()),
         new("standards", ToolGroup.Check, Loc.T("PDF/A"), "\uE7C4", Loc.T("Check the file against PDF/A and convert it."), () => new StandardsPanel()),
+        new("pdfua", ToolGroup.Check, Loc.T("PDF/UA"), "", Loc.T("Check the file against PDF/UA and mark it."), () => new PdfUaPanel()),
     ];
 
     public static IReadOnlyList<SidePanelInfo> SidePanels { get; } =

@@ -8,18 +8,20 @@ public sealed class IssueRow
     private readonly int[] _pages;
     private readonly PdfAIssue _first;
     private readonly int _count;
+    private readonly string? _clause;
     private int _next;
 
-    private IssueRow(PdfAIssue first, int count, int[] pages)
+    private IssueRow(PdfAIssue first, int count, int[] pages, string? clause)
     {
         _first = first;
         _count = count;
         _pages = pages;
+        _clause = clause;
     }
 
     public string Message => _first.Message;
 
-    public string Clause => Loc.T("ISO 19005 clause {0}", _first.Clause);
+    public string Clause => _clause ?? Loc.T("ISO 19005 clause {0}", _first.Clause);
 
     /// <summary>The first place, and how many more there are.</summary>
     public string Where => _count > 1 ? Loc.T("{0}, and {1} more", _first.Where, _count - 1) : _first.Where;
@@ -38,12 +40,18 @@ public sealed class IssueRow
     }
 
     /// <summary>The issues with the same rule and sentence made into one row each, in the order they were found.</summary>
-    public static IReadOnlyList<IssueRow> Group(IEnumerable<PdfAIssue> issues)
+    public static IReadOnlyList<IssueRow> Group(IEnumerable<PdfAIssue> issues) => Group(issues.Select(i => (i, (string?)null)));
+
+    /// <summary>The same for the PDF/UA check, whose rows name the Matterhorn condition and the clause of ISO 14289-1.</summary>
+    public static IReadOnlyList<IssueRow> Group(IEnumerable<PdfUaIssue> issues) =>
+        Group(issues.Select(i => (new PdfAIssue(i.Condition, i.Where, i.Message), (string?)Loc.T("Matterhorn {0}, ISO 14289-1 clause {1}", i.Condition, i.Clause))));
+
+    private static IReadOnlyList<IssueRow> Group(IEnumerable<(PdfAIssue Issue, string? Clause)> issues)
     {
         string prefix = PdfAText.PageName(0)[..^1];
         return issues
-            .GroupBy(i => (i.Clause, i.Message))
-            .Select(g => new IssueRow(g.First(), g.Count(), g.Select(i => PageOf(i.Where, prefix)).Where(p => p >= 0).Distinct().Order().ToArray()))
+            .GroupBy(i => (i.Issue.Clause, i.Issue.Message))
+            .Select(g => new IssueRow(g.First().Issue, g.Count(), g.Select(i => PageOf(i.Issue.Where, prefix)).Where(p => p >= 0).Distinct().Order().ToArray(), g.First().Clause))
             .ToList();
     }
 

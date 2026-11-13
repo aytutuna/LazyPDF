@@ -1102,6 +1102,9 @@
   <data name="Check the file against PDF/A and convert it." xml:space="preserve">
     <value>Dosyayı PDF/A'ya göre denetleyin ve dönüştürün.</value>
   </data>
+  <data name="Check the file against PDF/UA and mark it." xml:space="preserve">
+    <value>Dosyayı PDF/UA'ya göre denetleyin ve işaretleyin.</value>
+  </data>
   <data name="Check the file for screen readers and fix what is missing." xml:space="preserve">
     <value>Dosyayı ekran okuyucular için denetleyin ve eksikleri giderin.</value>
   </data>
@@ -1116,6 +1119,9 @@
   </data>
   <data name="Checked with the certificate servers just now. The file is not changed." xml:space="preserve">
     <value>Az önce sertifika sunucularıyla denetlendi. Dosya değiştirilmez.</value>
+  </data>
+  <data name="Checking PDF/UA-1" xml:space="preserve">
+    <value>PDF/UA-1 denetleniyor</value>
   </data>
   <data name="Checking the file" xml:space="preserve">
     <value>Dosya denetleniyor</value>
@@ -1780,6 +1786,9 @@
   <data name="Document is tagged" xml:space="preserve">
     <value>Belge etiketli</value>
   </data>
+  <data name="Does not pass the checks for PDF/UA-1. Conditions broken: {0}." xml:space="preserve">
+    <value>PDF/UA-1 denetimlerinden geçmiyor. Bozulan koşullar: {0}.</value>
+  </data>
   <data name="Does not pass the checks for {0}. Rules broken: {1}." xml:space="preserve">
     <value>{0} denetimlerini geçmiyor. Bozulan kurallar: {1}.</value>
   </data>
@@ -2109,6 +2118,9 @@
   </data>
   <data name="Failed" xml:space="preserve">
     <value>Başarısız</value>
+  </data>
+  <data name="Fails PDF/UA-1 checks." xml:space="preserve">
+    <value>PDF/UA-1 denetimlerinden geçmiyor.</value>
   </data>
   <data name="Fails {0} checks." xml:space="preserve">
     <value>{0} denetimlerini geçmiyor.</value>
@@ -3205,6 +3217,9 @@
   <data name="Lists are well formed" xml:space="preserve">
     <value>Listeler düzgün biçimlenmiş</value>
   </data>
+  <data name="Lists the PDF/UA-1 conditions the file breaks. Nothing is changed until you mark it." xml:space="preserve">
+    <value>Dosyanın bozduğu PDF/UA-1 koşullarını listeler. Siz işaretleyene kadar hiçbir şey değişmez.</value>
+  </data>
   <data name="Lists the rules the file breaks. Nothing is changed." xml:space="preserve">
     <value>Dosyanın bozduğu kuralları listeler. Hiçbir şey değişmez.</value>
   </data>
@@ -3325,6 +3340,9 @@
   <data name="Mark all of this kind" xml:space="preserve">
     <value>Bu türdekilerin hepsini işaretle</value>
   </data>
+  <data name="Mark as PDF/UA" xml:space="preserve">
+    <value>PDF/UA olarak işaretle</value>
+  </data>
   <data name="Mark every match" xml:space="preserve">
     <value>Tüm eşleşmeleri işaretle</value>
   </data>
@@ -3346,6 +3364,9 @@
   <data name="Marked" xml:space="preserve">
     <value>İşaretli</value>
   </data>
+  <data name="Marked as PDF/UA-1" xml:space="preserve">
+    <value>PDF/UA-1 olarak işaretlendi</value>
+  </data>
   <data name="Marks" xml:space="preserve">
     <value>İşaretler</value>
   </data>
@@ -3357,6 +3378,9 @@
   </data>
   <data name="Match case" xml:space="preserve">
     <value>Büyük/küçük harfe duyarlı</value>
+  </data>
+  <data name="Matterhorn {0}, ISO 14289-1 clause {1}" xml:space="preserve">
+    <value>Matterhorn {0}, ISO 14289-1 madde {1}</value>
   </data>
   <data name="May be the text layer of a scan. Off unless you tick it." xml:space="preserve">
     <value>Bir taramanın metin katmanı olabilir. İşaretlemezseniz kapalıdır.</value>
@@ -3757,6 +3781,9 @@
   <data name="Not imported" xml:space="preserve">
     <value>İçe aktarılamadı</value>
   </data>
+  <data name="Not marked" xml:space="preserve">
+    <value>İşaretlenmedi</value>
+  </data>
   <data name="Not opened" xml:space="preserve">
     <value>Açılamadı</value>
   </data>
@@ -3792,6 +3819,9 @@
   </data>
   <data name="Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it." xml:space="preserve">
     <value>Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır.</value>
+  </data>
+  <data name="Nothing else is wrong. Marking writes the PDF/UA-1 identifier into the file." xml:space="preserve">
+    <value>Başka bir sorun yok. İşaretleme, PDF/UA-1 tanımlayıcısını dosyaya yazar.</value>
   </data>
   <data name="Nothing exported" xml:space="preserve">
     <value>Dışa aktarılan bir şey yok</value>
@@ -4144,6 +4174,9 @@
   <data name="PDF/A-1 does not allow transparency and it cannot be flattened here. {0} Convert to PDF/A-2 or later instead." xml:space="preserve">
     <value>PDF/A-1 saydamlığa izin vermez ve burada düzleştirilemez. {0} Bunun yerine PDF/A-2 ya da daha yenisine dönüştürün.</value>
   </data>
+  <data name="PDF/UA" xml:space="preserve">
+    <value>PDF/UA</value>
+  </data>
   <data name="PDFs that appear in the folder are run through the steps." xml:space="preserve">
     <value>Klasörde beliren PDF'ler adımlardan geçirilir.</value>
   </data>
@@ -4389,6 +4422,12 @@
   </data>
   <data name="Passed" xml:space="preserve">
     <value>Geçti</value>
+  </data>
+  <data name="Passes Lazy PDF's PDF/UA-1 checks." xml:space="preserve">
+    <value>Lazy PDF'nin PDF/UA-1 denetimlerinden geçiyor.</value>
+  </data>
+  <data name="Passes Lazy PDF's checks for PDF/UA-1." xml:space="preserve">
+    <value>Lazy PDF'nin PDF/UA-1 denetimlerinden geçiyor.</value>
   </data>
   <data name="Passes Lazy PDF's checks for {0}." xml:space="preserve">
     <value>{0} için Lazy PDF denetimlerini geçiyor.</value>
@@ -4812,6 +4851,9 @@
   </data>
   <data name="Reading order" xml:space="preserve">
     <value>Okuma sırası</value>
+  </data>
+  <data name="Reading order, what alt text says and contrast need a person. The Accessibility tool lists them." xml:space="preserve">
+    <value>Okuma sırası, alternatif metnin ne dediği ve karşıtlık bir insanın bakmasını gerektirir. Erişilebilirlik aracı bunları listeler.</value>
   </data>
   <data name="Reading page {0} of {1}" xml:space="preserve">
     <value>Sayfa {0}/{1} okunuyor</value>
@@ -6532,6 +6574,9 @@
   <data name="The file does not end with %%EOF." xml:space="preserve">
     <value>Dosya %%EOF ile bitmiyor.</value>
   </data>
+  <data name="The file does not pass the checks, or its metadata cannot be changed. Check it again." xml:space="preserve">
+    <value>Dosya denetimlerden geçmiyor ya da üst verisi değiştirilemiyor. Yeniden denetleyin.</value>
+  </data>
   <data name="The file embeds another file, which this level does not allow." xml:space="preserve">
     <value>Dosya başka bir dosya gömüyor; bu düzey buna izin vermiyor.</value>
   </data>
@@ -6585,6 +6630,9 @@
   </data>
   <data name="The file needs a password." xml:space="preserve">
     <value>Dosya bir parola gerektiriyor.</value>
+  </data>
+  <data name="The file now names PDF/UA-1. It passes Lazy PDF's checks; a person still has to judge the reading order and the alt text." xml:space="preserve">
+    <value>Dosya artık PDF/UA-1 olduğunu bildiriyor. Lazy PDF'nin denetimlerinden geçiyor; okuma sırasına ve alternatif metne yine de bir insan bakmalı.</value>
   </data>
   <data name="The file says it is tagged but holds no tags. Lazy PDF cannot add them to it." xml:space="preserve">
     <value>Dosya etiketli olduğunu söylüyor ama hiç etiket içermiyor. Lazy PDF ona etiket ekleyemez.</value>
@@ -8628,6 +8676,9 @@
   </data>
   <data name="{0} more" xml:space="preserve">
     <value>{0} tane daha</value>
+  </data>
+  <data name="{0} more conditions are not listed." xml:space="preserve">
+    <value>{0} koşul daha listelenmedi.</value>
   </data>
   <data name="{0} more rules are not listed." xml:space="preserve">
     <value>{0} kural daha listelenmedi.</value>

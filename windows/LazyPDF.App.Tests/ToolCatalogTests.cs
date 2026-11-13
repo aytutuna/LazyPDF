@@ -10,7 +10,7 @@ public sealed class ToolCatalogTests
     private static readonly string[] Expected =
     [
         "comment", "editcontent", "pages", "combine", "stamps", "forms", "fillsign", "certificates", "protect", "redact",
-        "optimize", "sanitize", "compare", "export", "create", "ocr", "accessibility", "standards", "measure", "batch", "metadata",
+        "optimize", "sanitize", "compare", "export", "create", "ocr", "accessibility", "standards", "pdfua", "measure", "batch", "metadata",
     ];
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class ToolCatalogTests
     public void ToolsFollowTheGroupsInOrder() =>
         Assert.Equal(
             ["comment", "measure", "compare", "editcontent", "stamps", "pages", "combine", "batch", "forms", "fillsign", "certificates",
-             "protect", "redact", "sanitize", "create", "export", "optimize", "ocr", "metadata", "accessibility", "standards"],
+             "protect", "redact", "sanitize", "create", "export", "optimize", "ocr", "metadata", "accessibility", "standards", "pdfua"],
             ToolCatalog.Tools.Select(t => t.Id));
 
     [Fact]

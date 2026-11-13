@@ -8974,5 +8974,56 @@
   },
   "{0} is not allowed at the top of the tree.": {
     "tr": "{0}, ağacın tepesinde kullanılamaz."
+  },
+  "Lists the PDF/UA-1 conditions the file breaks. Nothing is changed until you mark it.": {
+    "tr": "Dosyanın bozduğu PDF/UA-1 koşullarını listeler. Siz işaretleyene kadar hiçbir şey değişmez."
+  },
+  "Mark as PDF/UA": {
+    "tr": "PDF/UA olarak işaretle"
+  },
+  "Reading order, what alt text says and contrast need a person. The Accessibility tool lists them.": {
+    "tr": "Okuma sırası, alternatif metnin ne dediği ve karşıtlık bir insanın bakmasını gerektirir. Erişilebilirlik aracı bunları listeler."
+  },
+  "Checking PDF/UA-1": {
+    "tr": "PDF/UA-1 denetleniyor"
+  },
+  "Nothing else is wrong. Marking writes the PDF/UA-1 identifier into the file.": {
+    "tr": "Başka bir sorun yok. İşaretleme, PDF/UA-1 tanımlayıcısını dosyaya yazar."
+  },
+  "{0} more conditions are not listed.": {
+    "tr": "{0} koşul daha listelenmedi."
+  },
+  "Not marked": {
+    "tr": "İşaretlenmedi"
+  },
+  "The file does not pass the checks, or its metadata cannot be changed. Check it again.": {
+    "tr": "Dosya denetimlerden geçmiyor ya da üst verisi değiştirilemiyor. Yeniden denetleyin."
+  },
+  "Marked as PDF/UA-1": {
+    "tr": "PDF/UA-1 olarak işaretlendi"
+  },
+  "The file now names PDF/UA-1. It passes Lazy PDF's checks; a person still has to judge the reading order and the alt text.": {
+    "tr": "Dosya artık PDF/UA-1 olduğunu bildiriyor. Lazy PDF'nin denetimlerinden geçiyor; okuma sırasına ve alternatif metne yine de bir insan bakmalı."
+  },
+  "Passes Lazy PDF's checks for PDF/UA-1.": {
+    "tr": "Lazy PDF'nin PDF/UA-1 denetimlerinden geçiyor."
+  },
+  "Does not pass the checks for PDF/UA-1. Conditions broken: {0}.": {
+    "tr": "PDF/UA-1 denetimlerinden geçmiyor. Bozulan koşullar: {0}."
+  },
+  "Passes Lazy PDF's PDF/UA-1 checks.": {
+    "tr": "Lazy PDF'nin PDF/UA-1 denetimlerinden geçiyor."
+  },
+  "Fails PDF/UA-1 checks.": {
+    "tr": "PDF/UA-1 denetimlerinden geçmiyor."
+  },
+  "Matterhorn {0}, ISO 14289-1 clause {1}": {
+    "tr": "Matterhorn {0}, ISO 14289-1 madde {1}"
+  },
+  "PDF/UA": {
+    "tr": "PDF/UA"
+  },
+  "Check the file against PDF/UA and mark it.": {
+    "tr": "Dosyayı PDF/UA'ya göre denetleyin ve işaretleyin."
   }
 }
