@@ -60,6 +60,37 @@ public sealed class SearchPanelTests
     });
 
     [Fact]
+    public Task StopShowsWhileSearchingAndTheCapIsSaid() => Sta.Run(async () =>
+    {
+        var (panel, search, tab) = Open(Pdfs.Text(ViewerSearch.MaxHits + 20, "fox"));
+        using var _ = tab;
+        var stop = (Button)panel.FindName("StopButton");
+        var summary = (System.Windows.Controls.TextBlock)panel.FindName("Summary");
+
+        var run = search.Start("fox", new TextSearchOptions());
+        Assert.Equal(Visibility.Visible, stop.Visibility);
+        await run;
+        await Sta.Until(() => !search.Running);
+
+        Assert.Equal(Visibility.Collapsed, stop.Visibility);
+        Assert.EndsWith(Loc.T("First {0} shown. Narrow the search to see the rest.", ViewerSearch.MaxHits), summary.Text);
+    });
+
+    [Fact]
+    public Task StoppingSaysSoInTheSummary() => Sta.Run(async () =>
+    {
+        var (panel, search, tab) = Open(Pdfs.Text(2, "fox"));
+        using var _ = tab;
+        var summary = (System.Windows.Controls.TextBlock)panel.FindName("Summary");
+
+        var run = search.Start("fox", new TextSearchOptions());
+        ((Button)panel.FindName("StopButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal(Loc.T("Stopped"), summary.Text);
+        await run;
+    });
+
+    [Fact]
     public Task AShownPageSaysNothing() => Sta.Run(() =>
     {
         var bytes = Pdfs.Text(1, "fox");
