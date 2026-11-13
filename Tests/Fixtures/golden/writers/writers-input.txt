@@ -1,0 +1,26 @@
+# One line is "<writer> <text>". The font is ../shaping/script.ttf for every family. Text is UTF-8.
+# freetext: a text box annotation. textbox: PageEditor.AddTextBox (Fill and sign text). watermark and header: PdfStamper.
+# field: a text field; multiline: a multiline field with /Q 0; comb: an 8 cell comb field; combo: a combo box value.
+# plain: PdfFromText.
+freetext abc def
+freetext אבג דהו
+freetext שלום עולם abc 12
+freetext אב (גד) abc
+textbox abc def
+textbox אבג דהו
+textbox שלום עולם abc 12
+textbox אב (גד) abc
+watermark אבג
+watermark abc אבג
+header אבג
+header abc אב 12
+field אבג
+field abc אבג 12
+multiline אבג דהו זחט יכל מנס אבג דהו זחט יכל מנס
+multiline abc אבג דהו זחט יכל מנס abc def ghi
+comb אבג
+comb abc
+combo אבג
+plain abc def
+plain אבג דהו
+plain אבג\nabc def\nדהו (זח) 12
