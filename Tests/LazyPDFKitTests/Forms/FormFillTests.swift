@@ -102,6 +102,29 @@ final class FormFillTests: XCTestCase {
         XCTAssertEqual(form.document.name(used, "Subtype"), "Type0")
     }
 
+    private final class ScriptSource: FontSource {
+        private let data: [UInt8]
+
+        init() throws { data = try ShapingGolden.font() }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? { FontFile(data) }
+    }
+
+    func test_hebrewIsNotShownInASimpleFormFontThatEncodesIt() throws {
+        let form = try open(fonts: try ScriptSource())
+        let helv = try XCTUnwrap(form.document.resolve(try XCTUnwrap(form.document.dict(form.document.dict(form.acroForm, "DR"), "Font"))["Helv"]) as? PdfDictionary)
+        let encoding = PdfDictionary()
+        encoding["Differences"] = PdfArray([PdfNumber(224), PdfName("uni05E9"), PdfName("uni05DC"), PdfName("uni05D5"), PdfName("uni05DD")])
+        helv["Encoding"] = encoding
+
+        try form.setValue("name", "\u{05E9}\u{05DC}\u{05D5}\u{05DD}")
+
+        let stream = try normal(form, try widget(form, "name"))
+        let fonts = try XCTUnwrap(form.document.dict(form.document.dict(stream.dictionary, "Resources"), "Font"))
+        let used = try XCTUnwrap(form.document.resolve(try XCTUnwrap(fonts.entries.first).value) as? PdfDictionary)
+        XCTAssertEqual(form.document.name(used, "Subtype"), "Type0")
+    }
+
     func test_charactersNoFontHasAreReportedAndTheFillSucceeds() throws {
         let form = try open(fonts: try CjkSource(covering: false))
 

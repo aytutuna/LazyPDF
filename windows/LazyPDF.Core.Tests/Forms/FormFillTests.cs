@@ -72,6 +72,27 @@ public class FormFillTests
         Reopen(form.Document);
     }
 
+    private sealed class ScriptSource : IFontSource
+    {
+        private static readonly byte[] Data = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "golden", "shaping", "script.ttf"));
+
+        public FontFile? Find(string family, FontStyles style) => new(Data);
+    }
+
+    [Fact]
+    public void HebrewIsNotShownInASimpleFormFontThatEncodesIt()
+    {
+        var form = Open(fonts: new ScriptSource());
+        var helv = (PdfDictionary)form.Document.Resolve(form.Document.Dict(form.Document.Dict(form.AcroForm, "DR"), "Font")!["Helv"])!;
+        helv["Encoding"] = new PdfDictionary { ["Differences"] = new PdfArray([new PdfNumber(224), new PdfName("uni05E9"), new PdfName("uni05DC"), new PdfName("uni05D5"), new PdfName("uni05DD")]) };
+
+        form.SetValue("name", "שלום");
+
+        var stream = Normal(form, Widget(form, "name"));
+        var used = form.Document.Dict(form.Document.Dict(stream.Dictionary, "Resources"), "Font")!.Entries.Single().Value;
+        Assert.Equal("Type0", form.Document.Name((PdfDictionary)form.Document.Resolve(used)!, "Subtype"));
+    }
+
     private sealed class CjkSource(bool covering) : IFontSource
     {
         public FontFile? Find(string family, FontStyles style)

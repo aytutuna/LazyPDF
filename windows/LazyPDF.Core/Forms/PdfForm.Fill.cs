@@ -352,7 +352,8 @@ public sealed partial class PdfForm
         foreach (var (name, texts) in needs)
         {
             var current = FormFont.FromResource(_document, name, resources);
-            if (current is not null && texts.All(current.CanShow))
+            // A kept simple font would show right-to-left text in logical order, so it goes to an added, shaped font.
+            if (current is not null && texts.All(t => current.CanShow(t) && !LazyPDF.Core.Scripts.NeedsBidi(t)))
             {
                 result[name] = (current, false);
                 continue;

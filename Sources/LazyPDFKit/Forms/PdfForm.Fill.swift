@@ -372,7 +372,8 @@ extension PdfForm {
         for name in needs.names {
             let texts = needs.texts(for: name)
             let current = try FormFont.fromResource(document, name, resources)
-            if let current, texts.allSatisfy({ current.canShow($0) }) {
+            // A kept simple font would show right-to-left text in logical order, so it goes to an added, shaped font.
+            if let current, texts.allSatisfy({ current.canShow($0) && !Scripts.needsBidi($0) }) {
                 result[name] = (current, false)
                 continue
             }
