@@ -23,6 +23,7 @@ public partial class StandardsPanel : ToolPanel
     private ToolAction _convert = null!;
     private int _ticket;
     private int _probe;
+    private bool _probing;
     private bool _working;
 
     public StandardsPanel()
@@ -68,23 +69,41 @@ public partial class StandardsPanel : ToolPanel
     // Read off the UI thread from a copy; a change, another level or leaving the panel before it ends drops the answer.
     private async Task FindTaggingAsync()
     {
-        int probe = ++_probe;
+        _probe++;
         TagRow.Visibility = Visibility.Collapsed;
-        if (Tab is not { } tab || !_level.NeedsTags()) return;
-        var level = _level;
-        var open = OpenCopy.Of(tab);
-        bool needs;
+        // One read at a time: a change meanwhile is picked up when it ends, so quick edits don't pile up full validations.
+        if (_probing) return;
+        _probing = true;
         try
         {
-            needs = await Task.Run(() => StandardsText.NeedsTagging(open, level));
+            while (true)
+            {
+                int probe = _probe;
+                if (Tab is not { } tab || !_level.NeedsTags()) return;
+                var level = _level;
+                var open = OpenCopy.Of(tab);
+                bool? needs;
+                try
+                {
+                    needs = await Task.Run(() => StandardsText.NeedsTagging(open, level));
+                }
+                catch (Exception e) when (e is PdfReadException or InvalidOperationException)
+                {
+                    needs = null;
+                }
+                if (probe != _probe) continue;
+                if (needs is { } found)
+                {
+                    TagNote.Text = StandardsText.TagHint(level);
+                    TagRow.Visibility = found ? Visibility.Visible : Visibility.Collapsed;
+                }
+                return;
+            }
         }
-        catch (Exception e) when (e is PdfReadException or InvalidOperationException)
+        finally
         {
-            return;
+            _probing = false;
         }
-        if (probe != _probe) return;
-        TagNote.Text = StandardsText.TagHint(level);
-        TagRow.Visibility = needs ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void TagFile_Click(object sender, RoutedEventArgs e) => Host?.OpenTagging();
