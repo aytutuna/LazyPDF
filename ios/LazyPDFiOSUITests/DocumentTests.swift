@@ -96,7 +96,7 @@ final class DocumentTests: XCTestCase {
     func testClosingTheDocumentGoesBackToHome() throws {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
-        tap(app.buttons["Settings"].firstMatch)
+        tap(app.buttons["More"].firstMatch)
         tap(app.buttons["Close"].firstMatch)
         XCTAssertTrue(app.staticTexts["What would you like to do?"].firstMatch.waitForExistence(timeout: 10))
     }
