@@ -106,6 +106,36 @@ final class OfficeLayoutTests: XCTestCase {
         XCTAssertEqual(texts[0].x, 20)
     }
 
+    // Raises and nudges every glyph, as a platform shaper places marks.
+    private final class OffsetScriptFont: FontSource, Shaper {
+        private let font = OfficeLayoutSpec.ScriptFont()
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? { font.find(family, style) }
+
+        func shape(_ text: String, _ font: FontFile, rightToLeft: Bool, language: String?) -> [ShapedGlyph]? {
+            CmapShaper().shape(text, font, rightToLeft: rightToLeft, language: language)!.map {
+                ShapedGlyph(glyph: $0.glyph, advance: $0.advance, xOffset: 50, yOffset: 100, cluster: $0.cluster)
+            }
+        }
+    }
+
+    private func drawn(_ align: LayoutAlign, _ text: String) throws -> String {
+        var contents: [[UInt8]] = []
+        let fonts = OfficeFontSource(installed: OffsetScriptFont(), bundled: nil)
+        _ = try OfficePdfWriter.create(rtlDocument(text, rtl: false, align: align), fonts) { _, bytes in contents.append(bytes) }
+        return String(decoding: contents[0], as: UTF8.self)
+    }
+
+    func test_shaperOffsetsReachTheTextWrittenForALeftToRightLine() throws {
+        XCTAssertTrue(try drawn(.left, "abc def").contains(" Ts"))
+    }
+
+    func test_shaperOffsetsReachJustifiedLinesToo() throws {
+        let content = try drawn(.justify, "abc def abc def abc def abc def abc def abc def abc def abc def")
+        XCTAssertTrue(content.contains(" Ts"))
+        XCTAssertTrue(content.contains("TJ"))
+    }
+
     func test_tablesGoldenFile() throws {
         var output = ""
         for (name, document) in try OfficeLayoutSpec.read(try Golden.input("office-layout", "tables-input.txt")) {

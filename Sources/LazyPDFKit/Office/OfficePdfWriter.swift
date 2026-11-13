@@ -120,7 +120,7 @@ enum OfficePdfWriter {
                 writer.beginText().font(names[key]!, round2(text.size)).moveText(round2(text.x), round2(layout.height - text.baseline))
                 if text.spaceExtra > 0 { justified(writer, font, text) }
                 else if text.rightToLeft { writer.showRun(font, text.text, true, round2(text.size)) }
-                else { writer.show(font.encode(text.text)) }
+                else { writer.show(font, text.text, round2(text.size)) }
                 writer.endText()
             }
         }
@@ -182,19 +182,23 @@ enum OfficePdfWriter {
         writer.restore()
     }
 
-    // Tw only works on one-byte codes, so the gap after each space is a TJ adjustment.
+    // Tw only works on one-byte codes, so the gap after each space is a TJ adjustment between the shown pieces.
     private static func justified(_ writer: ContentWriter, _ font: PdfDrawFont, _ text: PlacedText) {
-        var items: [PdfObject] = []
-        let adjust = round2(-text.spaceExtra * 1000 / text.size)
+        var pieces: [String] = []
         let scalars = Array(text.text.unicodeScalars)
         var start = 0
-        for k in 0..<scalars.count {
-            if scalars[k] != " " || k == scalars.count - 1 { continue }
-            items.append(PdfString(bytes: font.encode(String(String.UnicodeScalarView(scalars[start...k]))), isHex: true))
-            items.append(PdfNumber(adjust))
+        for k in 0..<max(scalars.count - 1, 0) where scalars[k] == " " {
+            pieces.append(String(String.UnicodeScalarView(scalars[start...k])))
             start = k + 1
         }
-        items.append(PdfString(bytes: font.encode(String(String.UnicodeScalarView(scalars[start...]))), isHex: true))
-        writer.op("TJ", [PdfArray(items)])
+        pieces.append(String(String.UnicodeScalarView(scalars[start...])))
+        if text.rightToLeft { pieces.reverse() }
+        let gap = PdfArray([PdfNumber(round2(-text.spaceExtra * 1000 / text.size))])
+        let size = round2(text.size)
+        for (k, piece) in pieces.enumerated() {
+            if k > 0 { writer.op("TJ", [gap]) }
+            if text.rightToLeft { writer.showRun(font, piece, true, size) }
+            else { writer.show(font, piece, size) }
+        }
     }
 }

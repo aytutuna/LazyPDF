@@ -59,6 +59,6 @@ enum RedactionOverlay {
         let dx = (width - drawn) / 2, dy = height / 2 - size * (font.ascent + font.descent) / 2
         w.beginText().font(fontName, size)
         if onDark { w.fillGray(1) } else { w.fillGray(0) }
-        w.textMatrix(PdfMatrix(ux, uy, -uy, ux, q.x0 + dx * ux - dy * uy, q.y0 + dx * uy + dy * ux)).show(font.encode(line)).endText()
+        w.textMatrix(PdfMatrix(ux, uy, -uy, ux, q.x0 + dx * ux - dy * uy, q.y0 + dx * uy + dy * ux)).show(font, line, size).endText()
     }
 }

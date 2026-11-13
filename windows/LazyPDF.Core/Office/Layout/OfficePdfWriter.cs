@@ -123,7 +123,7 @@ internal static class OfficePdfWriter
                 writer.BeginText().Font(name, R(text.Size)).MoveText(R(text.X), R(layout.Height - text.Baseline));
                 if (text.SpaceExtra > 0) Justified(writer, font, text);
                 else if (text.RightToLeft) writer.ShowRun(font, text.Text, true, R(text.Size));
-                else writer.Show(font.Encode(text.Text));
+                else writer.Show(font, text.Text, R(text.Size));
                 writer.EndText();
             }
         }
@@ -192,20 +192,26 @@ internal static class OfficePdfWriter
         writer.Restore();
     }
 
-    // Tw only works on one-byte codes, so the gap after each space is a TJ adjustment.
+    // Tw only works on one-byte codes, so the gap after each space is a TJ adjustment between the shown pieces.
     private static void Justified(ContentWriter writer, PdfDrawFont font, PlacedText text)
     {
-        var items = new List<PdfObject>();
-        double adjust = R(-text.SpaceExtra * 1000 / text.Size);
+        var pieces = new List<string>();
         int start = 0;
-        for (int k = 0; k < text.Text.Length; k++)
+        for (int k = 0; k < text.Text.Length - 1; k++)
         {
-            if (text.Text[k] != ' ' || k == text.Text.Length - 1) continue;
-            items.Add(new PdfString(font.Encode(text.Text[start..(k + 1)]), isHex: true));
-            items.Add(new PdfNumber(adjust));
+            if (text.Text[k] != ' ') continue;
+            pieces.Add(text.Text[start..(k + 1)]);
             start = k + 1;
         }
-        items.Add(new PdfString(font.Encode(text.Text[start..]), isHex: true));
-        writer.Op("TJ", [new PdfArray(items)]);
+        pieces.Add(text.Text[start..]);
+        if (text.RightToLeft) pieces.Reverse();
+        var gap = new PdfArray([new PdfNumber(R(-text.SpaceExtra * 1000 / text.Size))]);
+        double size = R(text.Size);
+        for (int k = 0; k < pieces.Count; k++)
+        {
+            if (k > 0) writer.Op("TJ", [gap]);
+            if (text.RightToLeft) writer.ShowRun(font, pieces[k], true, size);
+            else writer.Show(font, pieces[k], size);
+        }
     }
 }

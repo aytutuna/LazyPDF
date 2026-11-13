@@ -18,6 +18,37 @@ public class OfficeRtlTests
         }
     }
 
+    // Raises and nudges every glyph, as a platform shaper places marks.
+    private sealed class OffsetScriptFont(byte[] data) : IFontSource, IShaper
+    {
+        public FontFile? Find(string family, FontStyles style) => new(data);
+
+        public IReadOnlyList<ShapedGlyph>? Shape(string text, FontFile font, bool rightToLeft, string? language) =>
+            [.. new CmapShaper().Shape(text, font, rightToLeft, language)!.Select(g => g with { XOffset = 50, YOffset = 100 })];
+    }
+
+    private static string Drawn(LayoutAlign align, string text)
+    {
+        var data = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "golden", "shaping", "script.ttf"));
+        var contents = new List<byte[]>();
+        OfficePdfWriter.Create(Document(Paragraph(text, rtl: false, align)), new OfficeFontSource(new OffsetScriptFont(data), null), default, contents);
+        return Encoding.Latin1.GetString(contents[0]);
+    }
+
+    [Fact]
+    public void ShaperOffsetsReachTheTextWrittenForALeftToRightLine()
+    {
+        Assert.Contains(" Ts", Drawn(LayoutAlign.Left, "abc def"));
+    }
+
+    [Fact]
+    public void ShaperOffsetsReachJustifiedLinesToo()
+    {
+        string content = Drawn(LayoutAlign.Justify, "abc def abc def abc def abc def abc def abc def abc def abc def");
+        Assert.Contains(" Ts", content);
+        Assert.Contains("TJ", content);
+    }
+
     internal static IFontSource ScriptFonts() =>
         new OfficeFontSource(null, new ScriptFont(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "golden", "shaping", "script.ttf"))));
 
