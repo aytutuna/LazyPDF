@@ -136,7 +136,8 @@ enum TableLayout {
     // than its room is narrowed to fit instead of running into the margin.
     private static func columns(_ table: LayoutTable, _ areaWidth: Double) -> [Double] {
         var widths = table.columns.map { max(0, $0) }
-        let indent = table.align == .left ? min(max(table.indent, 0), max(0, areaWidth - 36)) : 0
+        // The indent belongs to the edge the table starts from: the left, or the right when the table runs right to left.
+        let indent = table.align == (table.rightToLeft ? .right : .left) ? min(max(table.indent, 0), max(0, areaWidth - 36)) : 0
         let room = max(36, areaWidth - indent)
         let free = widths.filter { $0 == 0 }.count
         if free > 0 {
@@ -151,8 +152,8 @@ enum TableLayout {
         let start: Double
         switch table.align {
         case .center: start = (areaWidth - total) / 2
-        case .right: start = areaWidth - total
-        default: start = table.indent
+        case .right: start = areaWidth - total - (table.rightToLeft ? table.indent : 0)
+        default: start = table.rightToLeft ? 0 : table.indent
         }
         var edges = [Double](repeating: 0, count: widths.count + 1)
         edges[0] = start

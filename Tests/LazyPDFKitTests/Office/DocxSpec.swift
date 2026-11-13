@@ -139,7 +139,7 @@ enum DocxSpec {
         case .right: align = "right"
         case .justify: align = "justify"
         }
-        o += "table \(t.columns.map { num($0) }.joined(separator: ",")) indent=\(num(t.indent)) \(align)\n"
+        o += "table \(t.columns.map { num($0) }.joined(separator: ",")) indent=\(num(t.indent)) \(align)\(t.rightToLeft ? " rtl" : "")\n"
         for row in t.rows {
             o += "row"
             if row.header { o += " header" }

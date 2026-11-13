@@ -163,6 +163,7 @@ enum OfficeLayoutSpec {
                 case "right": table.align = .right
                 default: table.align = .left
                 }
+                table.rightToLeft = t["rtl"] != nil
                 section!.blocks.append(table)
                 cell = nil
                 nextColumn = 0
@@ -205,6 +206,7 @@ enum OfficeLayoutSpec {
                 table.rows[table.rows.count - 1].cells.append(made)
             case "endtable":
                 flush()
+                if let mirrored = section!.blocks.last as? LayoutTable, mirrored.rightToLeft { mirrored.mirror() }
                 cell = nil
             case "pagebreak":
                 flush()
