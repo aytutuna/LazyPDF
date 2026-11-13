@@ -143,6 +143,66 @@ public sealed class ContentWriter
     /// <summary>Shows text already encoded for the current font, as a hex string.</summary>
     public ContentWriter Show(ReadOnlySpan<byte> encoded) => Op("Tj", [new PdfString(encoded.ToArray(), isHex: true)]);
 
+    /// <summary>
+    /// Shows the line of text in <paramref name="font"/> set in <paramref name="size"/>, in display order. A shaper's offsets and
+    /// advances that differ from the font's become <c>TJ</c> adjustments and <c>Ts</c> rises; a line whose glyphs do not map
+    /// one to one to its characters is wrapped in marked content with /ActualText, so that copying gives the logical text.
+    /// </summary>
+    public ContentWriter Show(PdfDrawFont font, string text, double size)
+    {
+        if (font.Shaped(text) is not { } line) return Show(font.Encode(text));
+        if (line.NeedsActualText)
+        {
+            var bytes = new List<byte> { 0xFE, 0xFF };
+            bytes.AddRange(System.Text.Encoding.BigEndianUnicode.GetBytes(line.ActualText));
+            Op("BDC", [new PdfName("Span"), new PdfDictionary { ["ActualText"] = new PdfString([.. bytes], isHex: true) }]);
+        }
+
+        var items = new List<PdfObject>();
+        var codes = new List<byte>();
+        bool adjusted = false;
+        double carry = 0, rise = 0;
+        void Adjust()
+        {
+            carry = Math.Round(carry, 3);
+            if (carry == 0) return;
+            if (codes.Count > 0) items.Add(new PdfString([.. codes], isHex: true));
+            codes.Clear();
+            items.Add(new PdfNumber(carry));
+            carry = 0;
+            adjusted = true;
+        }
+        void Close()
+        {
+            if (codes.Count > 0) items.Add(new PdfString([.. codes], isHex: true));
+            codes.Clear();
+            if (items.Count > 0) Op(adjusted ? "TJ" : "Tj", [adjusted ? new PdfArray(items) : items[0]]);
+            items = [];
+            adjusted = false;
+        }
+
+        foreach (var entry in line.Glyphs)
+        {
+            var glyph = entry.Shaped;
+            double lift = Math.Round(glyph.YOffset * size / 1000, 3);
+            if (lift != rise)
+            {
+                Close();
+                Op("Ts", lift);
+                rise = lift;
+            }
+            // A TJ number moves the pen left by that much, so the glyph is drawn after -XOffset and the pen then put where the shaper wants it.
+            carry -= glyph.XOffset;
+            Adjust();
+            codes.AddRange(font.CodeOf(glyph.Glyph));
+            double drift = font.CodeWidth(glyph.Glyph) - glyph.Advance;
+            carry += glyph.XOffset + (Math.Abs(drift) > 0.5 ? drift : 0);
+        }
+        Close();
+        if (rise != 0) Op("Ts", 0);
+        return line.NeedsActualText ? EndMarked() : this;
+    }
+
     /// <summary>Paints the /XObject resource <paramref name="name"/>.</summary>
     public ContentWriter Paint(string name) => Op("Do", [new PdfName(name)]);
 
