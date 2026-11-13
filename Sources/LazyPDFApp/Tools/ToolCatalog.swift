@@ -73,6 +73,8 @@ public enum ToolCatalog {
                      summary: L10n.t("Check the file for screen readers and fix what is missing.")),
             ToolInfo(id: "standards", group: .check, title: L10n.t("PDF/A"), symbol: "checkmark.shield",
                      summary: L10n.t("Check the file against PDF/A and convert it.")),
+            ToolInfo(id: "pdfua", group: .check, title: L10n.t("PDF/UA"), symbol: "figure.stand",
+                     summary: L10n.t("Check the file against PDF/UA and mark it.")),
         ]
     }
 

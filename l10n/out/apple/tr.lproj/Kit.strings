@@ -306,11 +306,13 @@
 "Check stopped. Press Check to run it again." = "Denetim durduruldu. Yeniden çalıştırmak için Denetle'ye basın.";
 "Check the date on the signature and the certificate." = "İmzanın ve sertifikanın tarihini denetleyin.";
 "Check the file against PDF/A and convert it." = "Dosyayı PDF/A'ya göre denetleyin ve dönüştürün.";
+"Check the file against PDF/UA and mark it." = "Dosyayı PDF/UA'ya göre denetleyin ve işaretleyin.";
 "Check the file for screen readers and fix what is missing." = "Dosyayı ekran okuyucular için denetleyin ve eksikleri giderin.";
 "Check the file with the program that signed it." = "Dosyayı imzalayan programla denetleyin.";
 "Check the name and the size of the field, then try again." = "Alanın adını ve boyutunu kontrol edin, sonra yeniden deneyin.";
 "Check the password, and that the file holds a certificate with its private key." = "Parolayı ve dosyanın özel anahtarlı bir sertifika içerdiğini denetleyin.";
 "Checked with the certificate servers just now. The file is not changed." = "Az önce sertifika sunucularıyla denetlendi. Dosya değiştirilmez.";
+"Checking PDF/UA-1" = "PDF/UA-1 denetleniyor";
 "Checking the file" = "Dosya denetleniyor";
 "Checking the files" = "Dosyalar denetleniyor";
 "Checking the signatures" = "İmzalar denetleniyor";
@@ -480,6 +482,7 @@
 "Document information and metadata" = "Belge bilgileri ve üst veri";
 "Document information changed" = "Belge bilgileri değişti";
 "Document is tagged" = "Belge etiketli";
+"Does not pass the checks for PDF/UA-1. Conditions broken: {0}." = "PDF/UA-1 denetimlerinden geçmiyor. Bozulan koşullar: {0}.";
 "Does not pass the checks for {0}. Rules broken: {1}." = "{0} denetimlerini geçmiyor. Bozulan kurallar: {1}.";
 "Don't save" = "Kaydetme";
 "Done" = "Bitti";
@@ -569,6 +572,7 @@
 "FDF file" = "FDF dosyası";
 "FDF, XFDF, CSV and JSON files." = "FDF, XFDF, CSV ve JSON dosyaları.";
 "Failed" = "Başarısız";
+"Fails PDF/UA-1 checks." = "PDF/UA-1 denetimlerinden geçmiyor.";
 "Fails {0} checks." = "{0} denetimlerini geçmiyor.";
 "Fair. A longer one is safer." = "Orta. Daha uzun olan daha güvenli.";
 "Fast web view" = "Hızlı web görünümü";
@@ -878,6 +882,7 @@
 "Links without tags or text: {0}{1}. Tag each link and give it text." = "Etiketi ya da metni olmayan bağlantılar: {0}{1}. Her bağlantıyı etiketleyin ve metin verin.";
 "List box" = "Liste kutusu";
 "Lists are well formed" = "Listeler düzgün biçimlenmiş";
+"Lists the PDF/UA-1 conditions the file breaks. Nothing is changed until you mark it." = "Dosyanın bozduğu PDF/UA-1 koşullarını listeler. Siz işaretleyene kadar hiçbir şey değişmez.";
 "Lists the rules the file breaks. Nothing is changed." = "Dosyanın bozduğu kuralları listeler. Hiçbir şey değişmez.";
 "Lists with items in the wrong place: {0}{1}. Put labels and bodies inside list items." = "Öğeleri yanlış yerde olan listeler: {0}{1}. Etiketleri ve gövdeleri liste öğelerinin içine koyun.";
 "Long document has bookmarks" = "Uzun belgede yer imleri var";
@@ -911,14 +916,17 @@
 "Margin is too wide" = "Kenar boşluğu çok geniş";
 "Mark" = "İşaretle";
 "Mark all of this kind" = "Bu türdekilerin hepsini işaretle";
+"Mark as PDF/UA" = "PDF/UA olarak işaretle";
 "Mark every match" = "Tüm eşleşmeleri işaretle";
 "Mark removed" = "İşaret kaldırıldı";
 "Mark selected text" = "Seçili metni işaretle";
 "Mark up text" = "Metni işaretle";
 "Marked" = "İşaretli";
+"Marked as PDF/UA-1" = "PDF/UA-1 olarak işaretlendi";
 "Marks on this page" = "Bu sayfadaki işaretler";
 "Marks removed" = "İşaretler kaldırıldı";
 "Match case" = "Büyük/küçük harfe duyarlı";
+"Matterhorn {0}, ISO 14289-1 clause {1}" = "Matterhorn {0}, ISO 14289-1 madde {1}";
 "May be the text layer of a scan. Off unless you tick it." = "Bir taramanın metin katmanı olabilir. İşaretlemezseniz kapalıdır.";
 "Measure" = "Ölç";
 "Measure distances, perimeters and areas on a page." = "Bir sayfada uzaklıkları, çevreleri ve alanları ölçün.";
@@ -1028,6 +1036,7 @@
 "Not found" = "Bulunamadı";
 "Not fully searched" = "Tam aranmadı";
 "Not imported" = "İçe aktarılamadı";
+"Not marked" = "İşaretlenmedi";
 "Not opened" = "Açılamadı";
 "Not printed" = "Yazdırılmadı";
 "Not protected" = "Korumalı değil";
@@ -1038,6 +1047,7 @@
 "Not visible" = "Görünmez";
 "Note" = "Not";
 "Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it." = "Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır.";
+"Nothing else is wrong. Marking writes the PDF/UA-1 identifier into the file." = "Başka bir sorun yok. İşaretleme, PDF/UA-1 tanımlayıcısını dosyaya yazar.";
 "Nothing exported" = "Dışa aktarılan bir şey yok";
 "Nothing found to replace." = "Değiştirilecek bir şey bulunamadı.";
 "Nothing found." = "Hiçbir şey bulunamadı.";
@@ -1138,6 +1148,7 @@
 "PDF/A" = "PDF/A";
 "PDF/A level" = "PDF/A düzeyi";
 "PDF/A-1 does not allow transparency and it cannot be flattened here. {0} Convert to PDF/A-2 or later instead." = "PDF/A-1 saydamlığa izin vermez ve burada düzleştirilemez. {0} Bunun yerine PDF/A-2 ya da daha yenisine dönüştürün.";
+"PDF/UA" = "PDF/UA";
 "PDFs that appear in the folder are run through the steps." = "Klasörde beliren PDF'ler adımlardan geçirilir.";
 "Pack objects" = "Nesneleri paketle";
 "Page" = "Sayfa";
@@ -1212,6 +1223,8 @@
 "Part of this page could not be drawn sharply." = "Bu sayfanın bir kısmı net çizilemedi.";
 "Parts of the pages that can be shown or hidden." = "Sayfaların gösterilebilen ya da gizlenebilen parçaları.";
 "Passed" = "Geçti";
+"Passes Lazy PDF's PDF/UA-1 checks." = "Lazy PDF'nin PDF/UA-1 denetimlerinden geçiyor.";
+"Passes Lazy PDF's checks for PDF/UA-1." = "Lazy PDF'nin PDF/UA-1 denetimlerinden geçiyor.";
 "Passes Lazy PDF's checks for {0}." = "{0} için Lazy PDF denetimlerini geçiyor.";
 "Passes Lazy PDF's {0} checks." = "Lazy PDF'in {0} denetimlerini geçiyor.";
 "Password" = "Parola";
@@ -1323,6 +1336,7 @@
 "Reading file" = "Dosya okunuyor";
 "Reading mode" = "Okuma modu";
 "Reading order" = "Okuma sırası";
+"Reading order, what alt text says and contrast need a person. The Accessibility tool lists them." = "Okuma sırası, alternatif metnin ne dediği ve karşıtlık bir insanın bakmasını gerektirir. Erişilebilirlik aracı bunları listeler.";
 "Reading page {0} of {1}" = "Sayfa {0}/{1} okunuyor";
 "Reading pages" = "Sayfalar okunuyor";
 "Reading stopped" = "Okuma durduruldu";
@@ -1825,6 +1839,7 @@
 "The file did not take that change. Pick other pages and try again." = "Dosya bu değişikliği kabul etmedi. Başka sayfalar seçip yeniden deneyin.";
 "The file does not allow this layer to be shown or hidden." = "Dosya bu katmanın gösterilmesine ya da gizlenmesine izin vermiyor.";
 "The file does not end with %%EOF." = "Dosya %%EOF ile bitmiyor.";
+"The file does not pass the checks, or its metadata cannot be changed. Check it again." = "Dosya denetimlerden geçmiyor ya da üst verisi değiştirilemiyor. Yeniden denetleyin.";
 "The file embeds another file, which this level does not allow." = "Dosya başka bir dosya gömüyor; bu düzey buna izin vermiyor.";
 "The file has a PostScript XObject." = "Dosyada bir PostScript XObject var.";
 "The file has no figures." = "Dosyada şekil yok.";
@@ -1843,6 +1858,7 @@
 "The file is signed. The new file loses the signatures." = "Dosya imzalı. Yeni dosya imzaları kaybeder.";
 "The file is too large to export." = "Dosya dışa aktarılamayacak kadar büyük.";
 "The file needs a password." = "Dosya bir parola gerektiriyor.";
+"The file now names PDF/UA-1. It passes Lazy PDF's checks; a person still has to judge the reading order and the alt text." = "Dosya artık PDF/UA-1 olduğunu bildiriyor. Lazy PDF'nin denetimlerinden geçiyor; okuma sırasına ve alternatif metne yine de bir insan bakmalı.";
 "The file says it is tagged but holds no tags. Lazy PDF cannot add them to it." = "Dosya etiketli olduğunu söylüyor ama hiç etiket içermiyor. Lazy PDF ona etiket ekleyemez.";
 "The file uses a cross-reference stream, which PDF 1.4 does not have." = "Dosya, PDF 1.4'te bulunmayan bir çapraz başvuru akışı kullanıyor.";
 "The file uses object streams, which PDF 1.4 does not have." = "Dosya, PDF 1.4'te bulunmayan nesne akışları kullanıyor.";
@@ -2411,6 +2427,7 @@
 "{0} match was left as it was: {1}|one" = "{0} eşleşme olduğu gibi bırakıldı: {1}";
 "{0} match was left as it was: {1}|other" = "{0} eşleşme olduğu gibi bırakıldı: {1}";
 "{0} more" = "{0} tane daha";
+"{0} more conditions are not listed." = "{0} koşul daha listelenmedi.";
 "{0} more rules are not listed." = "{0} kural daha listelenmedi.";
 "{0} name matches no field: {1}.|one" = "Hiçbir alanla eşleşmeyen ad: {0} ({1}).";
 "{0} name matches no field: {1}.|other" = "Hiçbir alanla eşleşmeyen ad: {0} ({1}).";

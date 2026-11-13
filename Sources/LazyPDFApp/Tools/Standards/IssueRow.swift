@@ -11,17 +11,19 @@ public final class IssueRow: Identifiable {
     private let pages: [Int]
     private let first: PdfAIssue
     private let count: Int
+    private let clauseText: String?
     private var next = 0
 
-    private init(_ first: PdfAIssue, count: Int, pages: [Int]) {
+    private init(_ first: PdfAIssue, count: Int, pages: [Int], clause: String?) {
         self.first = first
         self.count = count
         self.pages = pages
+        clauseText = clause
     }
 
     public var message: String { first.message }
 
-    public var clause: String { L10n.t("ISO 19005 clause {0}", first.clause) }
+    public var clause: String { clauseText ?? L10n.t("ISO 19005 clause {0}", first.clause) }
 
     /// The first place, and how many more there are.
     public var place: String { count > 1 ? L10n.t("{0}, and {1} more", first.where, count - 1) : first.where }
@@ -40,18 +42,29 @@ public final class IssueRow: Identifiable {
 
     /// The issues with the same rule and sentence made into one row each, in the order they were found.
     public static func group(_ issues: [PdfAIssue]) -> [IssueRow] {
+        group(issues.map { ($0, nil) })
+    }
+
+    /// The same for the PDF/UA check, whose rows name the Matterhorn condition and the clause of ISO 14289-1.
+    public static func group(_ issues: [PdfUaIssue]) -> [IssueRow] {
+        group(issues.map {
+            (PdfAIssue($0.condition, $0.where, $0.message), L10n.t("Matterhorn {0}, ISO 14289-1 clause {1}", $0.condition, $0.clause))
+        })
+    }
+
+    private static func group(_ issues: [(issue: PdfAIssue, clause: String?)]) -> [IssueRow] {
         let prefix = String(PdfAText.pageName(0).dropLast())
         var order: [Key] = []
-        var groups: [Key: [PdfAIssue]] = [:]
-        for issue in issues {
-            let key = Key(clause: Array(issue.clause.utf8), message: Array(issue.message.utf8))
+        var groups: [Key: [(issue: PdfAIssue, clause: String?)]] = [:]
+        for entry in issues {
+            let key = Key(clause: Array(entry.issue.clause.utf8), message: Array(entry.issue.message.utf8))
             if groups[key] == nil { order.append(key) }
-            groups[key, default: []].append(issue)
+            groups[key, default: []].append(entry)
         }
         return order.map { key in
             let members = groups[key] ?? []
-            let pages = Set(members.map { pageOf($0.where, prefix) }.filter { $0 >= 0 }).sorted()
-            return IssueRow(members[0], count: members.count, pages: pages)
+            let pages = Set(members.map { pageOf($0.issue.where, prefix) }.filter { $0 >= 0 }).sorted()
+            return IssueRow(members[0].issue, count: members.count, pages: pages, clause: members[0].clause)
         }
     }
 

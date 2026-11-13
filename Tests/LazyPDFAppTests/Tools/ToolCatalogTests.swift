@@ -6,7 +6,7 @@ import XCTest
 final class ToolCatalogTests: XCTestCase {
     private let expected = [
         "comment", "editcontent", "pages", "combine", "stamps", "forms", "fillsign", "certificates", "protect", "redact",
-        "optimize", "sanitize", "compare", "export", "create", "ocr", "accessibility", "standards", "measure", "batch", "metadata",
+        "optimize", "sanitize", "compare", "export", "create", "ocr", "accessibility", "standards", "pdfua", "measure", "batch", "metadata",
     ]
 
     func test_everyToolOfTheShellIsListed() {
@@ -48,7 +48,7 @@ final class ToolCatalogTests: XCTestCase {
     func test_toolsFollowTheGroupsInOrder() {
         XCTAssertEqual(ToolCatalog.tools.map(\.id), [
             "comment", "measure", "compare", "editcontent", "stamps", "pages", "combine", "batch", "forms", "fillsign", "certificates",
-            "protect", "redact", "sanitize", "create", "export", "optimize", "ocr", "metadata", "accessibility", "standards",
+            "protect", "redact", "sanitize", "create", "export", "optimize", "ocr", "metadata", "accessibility", "standards", "pdfua",
         ])
         var seen: [ToolGroup] = []
         for tool in ToolCatalog.tools where seen.last != tool.group { seen.append(tool.group) }

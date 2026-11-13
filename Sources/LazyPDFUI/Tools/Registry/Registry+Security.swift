@@ -3,7 +3,7 @@ import SwiftUI
 import LazyPDFApp
 import LazyPDFKit
 
-// The tools of the security group: protect, redact, certificates, standards.
+// The tools of the security group: protect, redact, certificates, standards, pdfua.
 
 // What the engine needs of the system for fonts and pictures; the shells hand the same ones to the window.
 private enum SystemKit {
@@ -30,6 +30,7 @@ extension ToolRegistry {
         case "protect": return ToolPanel(ProtectModel()) { ProtectPanelView(model: $0) }
         case "redact": return ToolPanel(RedactModel(fonts: SystemKit.fonts, images: SystemKit.images)) { RedactPanelView(model: $0) }
         case "standards": return ToolPanel(StandardsModel(fonts: SystemKit.fonts)) { StandardsPanelView(model: $0) }
+        case "pdfua": return ToolPanel(PdfUaModel()) { PdfUaPanelView(model: $0) }
         case "certificates":
             return ToolPanel(CertificatesModel(trust: SignatureTrust(directory: context.folders.settings), fonts: SystemKit.fonts,
                                                transport: { UrlSessionTransport() }, importIdentity: { try PdfDigitalId.importPfx($0, $1) })) {
