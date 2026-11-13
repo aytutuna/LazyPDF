@@ -63,8 +63,9 @@ public struct OverlayStyle: Equatable, Sendable {
     }
 }
 
+/// `leading` starts the line, which for a right-to-left line is its right edge; `left` is the left edge whatever the direction.
 public enum TextAlign: Sendable {
-    case leading, center, trailing, justified
+    case leading, left, center, trailing, justified
 }
 
 /// The face, size and colour of text on the page, as the Windows tools set them on a TextBlock or a TextBox. `size` is points
