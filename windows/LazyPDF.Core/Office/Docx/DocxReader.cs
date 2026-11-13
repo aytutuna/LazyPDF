@@ -166,14 +166,17 @@ internal sealed partial class DocxReader
         double width = Points(size, "w") ?? 612, height = Points(size, "h") ?? 792;
         if (size?.Attribute(W, "orient") == "landscape" && width < height) (width, height) = (height, width);
         var margin = sectPr.Child(W, "pgMar");
+        // The gutter binds the pages on the left; a right-to-left section binds them on the right.
+        double gutter = Points(margin, "gutter") ?? 0;
+        bool rtl = sectPr.Child(W, "bidi") is { } bidi && On(bidi);
         return new LayoutGeometry
         {
             Width = width,
             Height = height,
             Top = Math.Abs(Points(margin, "top") ?? 72),
-            Right = Points(margin, "right") ?? 72,
+            Right = (Points(margin, "right") ?? 72) + (rtl ? gutter : 0),
             Bottom = Math.Abs(Points(margin, "bottom") ?? 72),
-            Left = (Points(margin, "left") ?? 72) + (Points(margin, "gutter") ?? 0),
+            Left = (Points(margin, "left") ?? 72) + (rtl ? 0 : gutter),
             HeaderDistance = Points(margin, "header") ?? 36,
             FooterDistance = Points(margin, "footer") ?? 36,
         };
