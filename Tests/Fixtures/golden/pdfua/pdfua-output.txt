@@ -44,9 +44,9 @@
 <   20-003 | 7.10 | Catalog | An optional content configuration has /AS.
 <   21-001 | 7.11 | Catalog | A file specification of an embedded file lacks /F or /UF.
 <   25-001 | 7.15 | Form | The form is a dynamic XFA form.
-<   28-002 | 7.18.1 | Page 1, annotation 1 | A Link annotation is not part of the structure tree.
-<   28-004 | 7.18.5 | Page 1, annotation 1 | A Link annotation has no /Contents.
 <   28-008 | 7.18.3 | Page 1 | The page has annotations and its tab order does not follow the structure.
+<   28-011 | 7.18.5 | Page 1, annotation 1 | A Link annotation is not part of the structure tree.
+<   28-012 | 7.18.5 | Page 1, annotation 1 | A Link annotation has no /Contents.
 <   30-001 | 7.20 | Page 1 | A form XObject has a /Ref entry.
 > check text
 < issues 2 truncated false
@@ -102,8 +102,8 @@
 <   20-003 | 7.10 | Catalog | An optional content configuration has /AS.
 <   21-001 | 7.11 | Catalog | A file specification of an embedded file lacks /F or /UF.
 <   25-001 | 7.15 | Form | The form is a dynamic XFA form.
-<   28-002 | 7.18.1 | Page 1, annotation 1 | A Link annotation is not part of the structure tree.
-<   28-004 | 7.18.5 | Page 1, annotation 1 | A Link annotation has no /Contents.
 <   28-008 | 7.18.3 | Page 1 | The page has annotations and its tab order does not follow the structure.
+<   28-011 | 7.18.5 | Page 1, annotation 1 | A Link annotation is not part of the structure tree.
+<   28-012 | 7.18.5 | Page 1, annotation 1 | A Link annotation has no /Contents.
 <   30-001 | 7.20 | Page 1 | A form XObject has a /Ref entry.
 < after 16

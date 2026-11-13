@@ -41,12 +41,14 @@ extension PdfUaChecker {
         default: expected = "Annot"
         }
         if let tree {
+            let id = subtype == "Widget" ? "28-010" : subtype == "Link" ? "28-011" : "28-002"
+            let clause = subtype == "Widget" ? "7.18.4" : subtype == "Link" ? "7.18.5" : "7.18.1"
             if let owner {
                 if tree.standardType(owner.type) != expected {
-                    add(subtype == "Widget" ? "28-010" : subtype == "Link" ? "28-011" : "28-003", subtype == "Widget" ? "7.18.4" : subtype == "Link" ? "7.18.5" : "7.18.1", place, PdfUaText.annotationTag(subtype, expected, tree.standardType(owner.type)))
+                    add(id, clause, place, PdfUaText.annotationTag(subtype, expected, tree.standardType(owner.type)))
                 }
             } else {
-                add("28-002", "7.18.1", place, PdfUaText.annotationUntagged(subtype))
+                add(id, clause, place, PdfUaText.annotationUntagged(subtype))
             }
         }
         // The structure element's /Alt stands in for the missing key, except on a Link, whose /Contents 7.18.5 requires itself.
@@ -54,7 +56,7 @@ extension PdfUaChecker {
         if subtype == "Widget" {
             if !described && !hasTooltip(annotation) { add("28-005", "7.18.1", place, PdfUaText.widgetTooltip) }
         } else if DotNetText.isNullOrWhiteSpace(PdfText.read(document, annotation, "Contents")) && (subtype == "Link" || !described) {
-            add("28-004", subtype == "Link" ? "7.18.5" : "7.18.1", place, PdfUaText.annotationContents(subtype))
+            add(subtype == "Link" ? "28-012" : "28-004", subtype == "Link" ? "7.18.5" : "7.18.1", place, PdfUaText.annotationContents(subtype))
         }
         if subtype == "FileAttachment" { checkFileSpec(annotation["FS"]) }
     }

@@ -274,10 +274,10 @@ public class PdfUaCheckerTests
         const string link = "<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Contents (Home)>>";
         Passes(WithAnnotation(link));
 
-        Fails("28-002", WithAnnotation(link, tagged: false));
+        Fails("28-011", WithAnnotation(link, tagged: false));
         Fails("28-011", WithAnnotation(link, elementType: "Annot"));
-        Fails("28-003", WithAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>"));
-        Fails("28-004", WithAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>"));
+        Fails("28-002", WithAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>"));
+        Fails("28-012", WithAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>"));
         Fails("28-004", WithAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10]>>", "Annot"));
         Passes(WithAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>", "Annot"));
     }
@@ -287,7 +287,7 @@ public class PdfUaCheckerTests
     {
         Passes(WithAnnotation("<</Type /Annot /Subtype /Stamp /Rect [0 0 10 10]>>", "Annot /Alt (Approved)"));
         Passes(WithAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt (Name)"));
-        Fails("28-004", WithAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>", "Link /Alt (Home)"));
+        Fails("28-012", WithAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>", "Link /Alt (Home)"));
         Fails("28-004", WithAnnotation("<</Type /Annot /Subtype /Stamp /Rect [0 0 10 10]>>", "Annot /Alt ( )"));
         Fails("28-005", WithAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt ( )"));
     }
