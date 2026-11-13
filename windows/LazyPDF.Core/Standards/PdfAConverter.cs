@@ -14,7 +14,9 @@ public sealed record PdfAConversion(byte[]? Bytes, string? Refusal, IReadOnlyLis
 /// Takes a PDF to a PDF/A level by rewriting it. It embeds or replaces fonts from the font source, corrects widths,
 /// drops encryption, actions, JavaScript and forbidden annotations, draws missing appearances, rewrites LZW, adds the
 /// sRGB output intent and writes the XMP identification with /Info in step, but only when nothing remains broken: a file
-/// that still fails gets the same metadata without the pdfaid claim. It refuses what it cannot do honestly
+/// that still fails gets the same metadata without the pdfaid claim. For level A it tags an untagged file with
+/// <see cref="AutoTagger"/> when the file names its language, and it refuses a file whose structure still breaks the
+/// level-A rules. It refuses what it cannot do honestly
 /// (transparency for part 1, an encrypted file whose permissions forbid changes, a dynamic XFA form); what it leaves
 /// broken it reports in <see cref="PdfAConversion.Remaining"/>.
 /// </summary>
@@ -48,8 +50,10 @@ internal sealed partial class PdfAConversionRun(IFontSource? fonts, PdfALevel le
         {
             if (_doc.Security is { } security && !security.OpenedAsOwner && !security.Permissions.HasFlag(PdfPermissions.Modify)) return Refused(PdfAText.NoRights);
             if (PdfForm.Read(_doc).Xfa == XfaKind.Dynamic) return Refused(PdfAText.DynamicXfa);
+            string? hint = level.NeedsTags() ? PrepareTags() : null;
             var before = new PdfAChecker(_doc, level);
             before.Run();
+            if (before.StructureIssues.Count > 0) return Refused(PdfAText.TagFirst(level, before.StructureIssues.Select(i => i.Message).Distinct().Take(5), hint));
             var needed = before.Report().Issues.Where(i => i.Clause == "6.4" && i.Message != PdfAText.TransparencyGroup).Select(i => i.Message).Distinct().ToList();
             if (Part == 1 && needed.Count > 0) return Refused(PdfAText.Transparency(needed));
             try

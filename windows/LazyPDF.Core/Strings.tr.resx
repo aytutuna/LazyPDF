@@ -199,6 +199,9 @@
   <data name="A {0} action is used." xml:space="preserve">
     <value>Bir {0} eylemi kullanılıyor.</value>
   </data>
+  <data name="A {0} element has neither /Alt nor /ActualText." xml:space="preserve">
+    <value>Bir {0} öğesinde ne /Alt ne de /ActualText var.</value>
+  </data>
   <data name="AES 128-bit, for older readers" xml:space="preserve">
     <value>AES 128 bit, eski okuyucular için</value>
   </data>
@@ -1407,6 +1410,9 @@
   </data>
   <data name="Content" xml:space="preserve">
     <value>İçerik</value>
+  </data>
+  <data name="Content is neither in the structure tree nor marked as an artifact." xml:space="preserve">
+    <value>İçerik ne yapı ağacında ne de artifact olarak işaretli.</value>
   </data>
   <data name="Content left out" xml:space="preserve">
     <value>İçerik dışarıda bırakıldı</value>
@@ -3082,14 +3088,23 @@
   <data name="Light pages" xml:space="preserve">
     <value>Açık sayfalar</value>
   </data>
+  <data name="Like 1b, and the file must be tagged for screen readers. Untagged files need a language set first." xml:space="preserve">
+    <value>1b gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı.</value>
+  </data>
   <data name="Like 2b, and every character keeps its text." xml:space="preserve">
     <value>2b gibi; ayrıca her karakter metnini korur.</value>
   </data>
   <data name="Like 2b, and other files may be attached." xml:space="preserve">
     <value>2b gibi; ayrıca başka dosyalar eklenebilir.</value>
   </data>
+  <data name="Like 2u, and the file must be tagged for screen readers. Untagged files need a language set first." xml:space="preserve">
+    <value>2u gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı.</value>
+  </data>
   <data name="Like 3b, and every character keeps its text." xml:space="preserve">
     <value>3b gibi; ayrıca her karakter metnini korur.</value>
+  </data>
+  <data name="Like 3u, and the file must be tagged for screen readers. Untagged files need a language set first." xml:space="preserve">
+    <value>3u gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı.</value>
   </data>
   <data name="Limit what people can do" xml:space="preserve">
     <value>Kişilerin yapabileceklerini sınırla</value>
@@ -3576,6 +3591,9 @@
   </data>
   <data name="No installed font has these characters, so they are left blank: {0}" xml:space="preserve">
     <value>Yüklü hiçbir yazı tipinde bu karakterler yok, bu yüzden boş bırakıldı: {0}</value>
+  </data>
+  <data name="No natural language is set in the catalog or on the top structure elements." xml:space="preserve">
+    <value>Katalogda da üst yapı öğelerinde de doğal dil belirtilmemiş.</value>
   </data>
   <data name="No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged." xml:space="preserve">
     <value>Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez.</value>
@@ -5470,6 +5488,9 @@
   <data name="Set status" xml:space="preserve">
     <value>Durumu ayarla</value>
   </data>
+  <data name="Set the document language first and Lazy PDF can tag the file itself." xml:space="preserve">
+    <value>Önce belge dilini ayarlayın; Lazy PDF dosyayı kendisi etiketleyebilir.</value>
+  </data>
   <data name="Set the tab order" xml:space="preserve">
     <value>Sekme sırasını ayarla</value>
   </data>
@@ -5908,6 +5929,9 @@
   <data name="Structure" xml:space="preserve">
     <value>Yapı</value>
   </data>
+  <data name="Structure element {0}" xml:space="preserve">
+    <value>Yapı öğesi {0}</value>
+  </data>
   <data name="Style" xml:space="preserve">
     <value>Stil</value>
   </data>
@@ -6268,6 +6292,9 @@
   <data name="The catalog has an /AA entry." xml:space="preserve">
     <value>Katalogda /AA girdisi var.</value>
   </data>
+  <data name="The catalog has no /MarkInfo with /Marked true." xml:space="preserve">
+    <value>Katalogda /Marked değeri true olan bir /MarkInfo yok.</value>
+  </data>
   <data name="The catalog has no /Metadata stream." xml:space="preserve">
     <value>Katalogda /Metadata akışı yok.</value>
   </data>
@@ -6466,6 +6493,9 @@
   <data name="The file has no signature to add validation data to." xml:space="preserve">
     <value>Dosyada doğrulama verisi eklenecek bir imza yok.</value>
   </data>
+  <data name="The file has no structure tree." xml:space="preserve">
+    <value>Dosyada yapı ağacı yok.</value>
+  </data>
   <data name="The file has no tags, so it has no reading order. Add tags first." xml:space="preserve">
     <value>Dosyada etiket olmadığından okuma sırası yok. Önce etiket ekleyin.</value>
   </data>
@@ -6514,8 +6544,14 @@
   <data name="The file uses object streams, which PDF 1.4 does not have." xml:space="preserve">
     <value>Dosya, PDF 1.4'te bulunmayan nesne akışları kullanıyor.</value>
   </data>
+  <data name="The file was marked as tagged." xml:space="preserve">
+    <value>Dosya etiketli olarak işaretlendi.</value>
+  </data>
   <data name="The file was signed; its signatures no longer verify." xml:space="preserve">
     <value>Dosya imzalıydı; imzaları artık doğrulanmıyor.</value>
+  </data>
+  <data name="The file was tagged automatically ({0} pages). Check the reading order and the descriptions." xml:space="preserve">
+    <value>Dosya otomatik olarak etiketlendi ({0} sayfa). Okuma sırasını ve açıklamaları kontrol edin.</value>
   </data>
   <data name="The file would not read back with that change. Save a copy and try again." xml:space="preserve">
     <value>Dosya bu değişiklikle yeniden okunamadı. Bir kopya kaydedip yeniden deneyin.</value>
@@ -6847,8 +6883,17 @@
   <data name="The stream keyword must be followed by CRLF or LF." xml:space="preserve">
     <value>stream anahtar sözcüğünden sonra CRLF ya da LF gelmeli.</value>
   </data>
+  <data name="The structure tree has no elements." xml:space="preserve">
+    <value>Yapı ağacında öğe yok.</value>
+  </data>
+  <data name="The structure tree is too large to check in full." xml:space="preserve">
+    <value>Yapı ağacı tamamen denetlenemeyecek kadar büyük.</value>
+  </data>
   <data name="The structure tree is too large to edit." xml:space="preserve">
     <value>Yapı ağacı düzenlenemeyecek kadar büyük.</value>
+  </data>
+  <data name="The structure type {0} is not a standard type and the role map does not lead to one." xml:space="preserve">
+    <value>{0} yapı türü standart bir tür değil ve rol eşlemesi standart bir türe çıkmıyor.</value>
   </data>
   <data name="The system cannot draw these pages. Try another format." xml:space="preserve">
     <value>Sistem bu sayfaları çizemiyor. Başka bir biçim deneyin.</value>
@@ -8511,6 +8556,9 @@
   </data>
   <data name="{0} needs a password to open." xml:space="preserve">
     <value>{0} dosyasını açmak için parola gerekir.</value>
+  </data>
+  <data name="{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again." xml:space="preserve">
+    <value>{0} etiketli bir dosya ister ve bu dosya yeterince iyi etiketlenmemiş: {1} Önce dosyayı etiketleyip bunları düzeltin, sonra yeniden dönüştürün.</value>
   </data>
   <data name="{0} note|plural" xml:space="preserve">
     <value>{0} not</value>

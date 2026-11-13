@@ -8839,5 +8839,53 @@
   },
   "cell comments": {
     "tr": "hücre açıklamaları"
+  },
+  "Like 1b, and the file must be tagged for screen readers. Untagged files need a language set first.": {
+    "tr": "1b gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı."
+  },
+  "Like 2u, and the file must be tagged for screen readers. Untagged files need a language set first.": {
+    "tr": "2u gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı."
+  },
+  "Like 3u, and the file must be tagged for screen readers. Untagged files need a language set first.": {
+    "tr": "3u gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı."
+  },
+  "The catalog has no /MarkInfo with /Marked true.": {
+    "tr": "Katalogda /Marked değeri true olan bir /MarkInfo yok."
+  },
+  "The file has no structure tree.": {
+    "tr": "Dosyada yapı ağacı yok."
+  },
+  "The structure tree has no elements.": {
+    "tr": "Yapı ağacında öğe yok."
+  },
+  "The structure tree is too large to check in full.": {
+    "tr": "Yapı ağacı tamamen denetlenemeyecek kadar büyük."
+  },
+  "Content is neither in the structure tree nor marked as an artifact.": {
+    "tr": "İçerik ne yapı ağacında ne de artifact olarak işaretli."
+  },
+  "The structure type {0} is not a standard type and the role map does not lead to one.": {
+    "tr": "{0} yapı türü standart bir tür değil ve rol eşlemesi standart bir türe çıkmıyor."
+  },
+  "A {0} element has neither /Alt nor /ActualText.": {
+    "tr": "Bir {0} öğesinde ne /Alt ne de /ActualText var."
+  },
+  "No natural language is set in the catalog or on the top structure elements.": {
+    "tr": "Katalogda da üst yapı öğelerinde de doğal dil belirtilmemiş."
+  },
+  "Structure element {0}": {
+    "tr": "Yapı öğesi {0}"
+  },
+  "{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again.": {
+    "tr": "{0} etiketli bir dosya ister ve bu dosya yeterince iyi etiketlenmemiş: {1} Önce dosyayı etiketleyip bunları düzeltin, sonra yeniden dönüştürün."
+  },
+  "The file was tagged automatically ({0} pages). Check the reading order and the descriptions.": {
+    "tr": "Dosya otomatik olarak etiketlendi ({0} sayfa). Okuma sırasını ve açıklamaları kontrol edin."
+  },
+  "The file was marked as tagged.": {
+    "tr": "Dosya etiketli olarak işaretlendi."
+  },
+  "Set the document language first and Lazy PDF can tag the file itself.": {
+    "tr": "Önce belge dilini ayarlayın; Lazy PDF dosyayı kendisi etiketleyebilir."
   }
 }

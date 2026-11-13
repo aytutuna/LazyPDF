@@ -53,6 +53,20 @@ internal static class StandardsKit
         return pdf.Finish($"/Root 1 0 R /Info 8 0 R {Ids}");
     }
 
+    /// <summary>
+    /// <see cref="Compliant"/> with a structure tree: a Document holding one Figure that draws the blue square, with a
+    /// description, the language and /MarkInfo. The arguments replace the parts a test breaks.
+    /// </summary>
+    public static byte[] Tagged(PdfALevel level, string marked = "/MarkInfo <</Marked true>>", string lang = "/Lang (en-US)", string roleMap = "",
+        string figureType = "Figure", string alt = "/Alt (A blue square)", string content = "/Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC") =>
+        Compliant(level, catalog: $"/StructTreeRoot 9 0 R {marked} {lang}", page: "/StructParents 0", content: content, extra: pdf =>
+        {
+            pdf.Obj(9, $"<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R {roleMap}>>");
+            pdf.Obj(10, "<</Type /StructElem /S /Document /P 9 0 R /K 11 0 R>>");
+            pdf.Obj(11, $"<</Type /StructElem /S /{figureType} /P 10 0 R /Pg 3 0 R /K 0 {alt}>>");
+            pdf.Obj(12, "<</Nums [0 [11 0 R]]>>");
+        });
+
     /// <summary>The XMP packet that goes with the info dictionary of <see cref="Compliant"/>.</summary>
     public static string Packet(PdfALevel level)
     {

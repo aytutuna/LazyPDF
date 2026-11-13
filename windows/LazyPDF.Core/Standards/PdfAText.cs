@@ -142,6 +142,21 @@ public static class PdfAText
     public static string AutoState => Loc.T("An optional content configuration has /AS.");
     public static string OrderIncomplete => Loc.T("The /Order of a configuration leaves out some groups.");
 
+    public static string NoMarkInfo => Loc.T("The catalog has no /MarkInfo with /Marked true.");
+    public static string NoStructTree => Loc.T("The file has no structure tree.");
+    public static string EmptyStructTree => Loc.T("The structure tree has no elements.");
+    public static string StructTreeTooBig => Loc.T("The structure tree is too large to check in full.");
+    public static string ContentOutsideTree => Loc.T("Content is neither in the structure tree nor marked as an artifact.");
+    public static string NonStandardType(string type) => Loc.T("The structure type {0} is not a standard type and the role map does not lead to one.", type);
+    public static string NoAlternateText(string type) => Loc.T("A {0} element has neither /Alt nor /ActualText.", type);
+    public static string NoLanguage => Loc.T("No natural language is set in the catalog or on the top structure elements.");
+    public static string StructureElement(int number) => Loc.T("Structure element {0}", number);
+    public static string SetLanguageToTag => Loc.T("Set the document language first and Lazy PDF can tag the file itself.");
+    public static string TagFirst(PdfALevel level, IEnumerable<string> problems, string? hint = null) =>
+        string.Join(' ', [Loc.T("{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again.", level.Name(), string.Join(' ', problems)), .. hint is null ? [] : new[] { hint }]);
+    public static string Tagged(int pages) => Loc.T("The file was tagged automatically ({0} pages). Check the reading order and the descriptions.", pages);
+    public static string Marked => Loc.T("The file was marked as tagged.");
+
     public const string Producer = "Lazy PDF";
     public static string NeedsPassword => Loc.T("The file needs a password.");
     public static string Unreadable => Loc.T("The file could not be read.");

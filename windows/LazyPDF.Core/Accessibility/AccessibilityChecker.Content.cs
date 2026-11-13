@@ -53,6 +53,9 @@ public static partial class AccessibilityChecker
         }
     }
 
+    /// <summary>The tagged-content rule alone, for the PDF/A level A checks.</summary>
+    internal static AccessibilityItem TaggedContent(PdfDocument document, StructureTree tree) => ReadContent(document, tree, default).TaggedContent;
+
     private static ContentChecks ReadContent(PdfDocument document, StructureTree? tree, CancellationToken cancel)
     {
         var inPage = new Dictionary<int, HashSet<int>>();

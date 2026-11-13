@@ -1700,3 +1700,229 @@
 < \xef\xbf\xbd\xef\xbf\xbd bad utf-8
 > profile
 < 000002e06c636d73021000006d6e74725247422058595a2007e2000300140009000e001d616373704d53465400000000736177736374726c0000000000000000000000000000f6d6000100000000d32d68616e6493b234a90eb0228a98fd9aafa367899b000000000000000000000000000000000000000000000000000000000000000964657363000000f00000005f637072740000010c0000000c7774707400000118000000147258595a0000012c000000146758595a00000140000000146258595a00000154000000147254524300000168000001786754524300000168000001786254524300000168000001786465736300000000000000057352474200000000000000000000000074657874000000004343300058595a20000000000000f35400010000000116c958595a200000000000006fa0000038f20000038f58595a2000000000000062960000b789000018da58595a2000000000000024a000000f850000b6c46375727600000000000000b60000001c003800540070008c00a800c400e1010001220146016d019501c101f002200255028b02c40301033f038203c6040e045904a704f9054c05a405fe065c06be0721078a07f4086308d5094909c30a3f0abf0b420bc90c540ce10d740e090ea20f400fe01085112d11da128a133e13f614b21571163616fd17ca1899196e1a461b221c031ce71dd01ebd1fae20a4219e229c239f24a525b126c027d528ed2a0a2b2b2c512d7c2eaa2fde31163252339434d93624377338c63a203b7c3cdf3e453fb0412142964410458f4712489b4a284bbb4d514eee508f523553e05590574559005abe5c845e4c601b61ef63c765a6678969716b5f6d516f4a7146734a7551775e79717b887da67fc881f0841e865088898ac58d098f51919f93f3964b98ab9b0e9d789fe7a25ba4d6a756a9dbac67aef7b18fb42ab6ccb974bc21bed5c18dc44cc710c9daccabcf7fd25cd53dd824db12de04e0fee3fce701ea0ced1cf034f350f673f99bfccaffff
+> check A1a a-good
+< issues 0 truncated false
+> check A2a a-good
+< issues 0 truncated false
+> check A3a a-good
+< issues 0 truncated false
+> check A1a a-unmarked
+< issues 1 truncated false
+<   6.8.2.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
+> check A2a a-unmarked
+< issues 1 truncated false
+<   6.7.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
+> check A3a a-unmarked
+< issues 1 truncated false
+<   6.7.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
+> check A1a a-nolang
+< issues 1 truncated false
+<   6.8.5 | Catalog | No natural language is set in the catalog or on the top structure elements.
+> check A2a a-nolang
+< issues 1 truncated false
+<   6.7.4 | Catalog | No natural language is set in the catalog or on the top structure elements.
+> check A3a a-nolang
+< issues 1 truncated false
+<   6.7.4 | Catalog | No natural language is set in the catalog or on the top structure elements.
+> check A1a a-loose
+< issues 1 truncated false
+<   6.8.3.3 | Page 1 | Content is neither in the structure tree nor marked as an artifact.
+> check A2a a-loose
+< issues 1 truncated false
+<   6.7.3.1 | Page 1 | Content is neither in the structure tree nor marked as an artifact.
+> check A3a a-loose
+< issues 1 truncated false
+<   6.7.3.1 | Page 1 | Content is neither in the structure tree nor marked as an artifact.
+> check A1a a-noalt
+< issues 1 truncated false
+<   6.8.4 | Structure element 11 | A Figure element has neither /Alt nor /ActualText.
+> check A2a a-noalt
+< issues 1 truncated false
+<   6.7.5 | Structure element 11 | A Figure element has neither /Alt nor /ActualText.
+> check A3a a-noalt
+< issues 1 truncated false
+<   6.7.5 | Structure element 11 | A Figure element has neither /Alt nor /ActualText.
+> check A1a a-rolemap
+< issues 1 truncated false
+<   6.8.3.4 | Structure element 11 | The structure type Chart is not a standard type and the role map does not lead to one.
+> check A2a a-rolemap
+< issues 1 truncated false
+<   6.7.3.2 | Structure element 11 | The structure type Chart is not a standard type and the role map does not lead to one.
+> check A3a a-rolemap
+< issues 1 truncated false
+<   6.7.3.2 | Structure element 11 | The structure type Chart is not a standard type and the role map does not lead to one.
+> check A1a a-rolemap-ok
+< issues 0 truncated false
+> check A2a a-rolemap-ok
+< issues 0 truncated false
+> check A3a a-rolemap-ok
+< issues 0 truncated false
+> check A1a a-part2-type
+< issues 1 truncated false
+<   6.8.3.4 | Structure element 11 | The structure type Annot is not a standard type and the role map does not lead to one.
+> check A2a a-part2-type
+< issues 0 truncated false
+> check A3a a-part2-type
+< issues 0 truncated false
+> check A1a compliant
+< issues 2 truncated false
+<   6.8.2.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
+<   6.8.3.1 | Catalog | The file has no structure tree.
+> check A2a compliant
+< issues 2 truncated false
+<   6.7.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
+<   6.7.2 | Catalog | The file has no structure tree.
+> check A3a compliant
+< issues 2 truncated false
+<   6.7.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
+<   6.7.2 | Catalog | The file has no structure tree.
+> convert A1a a-good
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-1a.
+< remaining 0 clean true
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /StructTreeRoot 6 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>A</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /StructTreeRoot /K 9 0 R /ParentTree 10 0 R>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /StructParents 0>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: <</Type /StructElem /S /Document /P 6 0 R /K 12 0 R>>
+<   10: <</Nums [0 [12 0 R]]>>
+<   11: stream <<>> | /Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC
+<   12: <</Type /StructElem /S /Figure /P 9 0 R /Pg 7 0 R /K 0 /Alt (A blue square)>>
+> convert A1a compliant
+< refusal PDF/A-1a needs a tagged file, and this one is not tagged well enough: The catalog has no /MarkInfo with /Marked true. The file has no structure tree. Tag the file and fix these first, then convert again. Set the document language first and Lazy PDF can tag the file itself.
+< remaining 0 clean false
+> convert A1a a-rolemap
+< refusal PDF/A-1a needs a tagged file, and this one is not tagged well enough: The structure type Chart is not a standard type and the role map does not lead to one. Tag the file and fix these first, then convert again.
+< remaining 0 clean false
+> convert A1a a-loose
+< refusal PDF/A-1a needs a tagged file, and this one is not tagged well enough: Content is neither in the structure tree nor marked as an artifact. Tag the file and fix these first, then convert again.
+< remaining 0 clean false
+> convert A1a plain-lang
+< refusal none
+< change The file was tagged automatically (1 pages). Check the reading order and the descriptions.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-1a, because rules are still broken.
+< remaining 2 clean false
+<   6.7.11 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.3.4 | Font Helvetica | The font is not embedded.
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Lang (en-US) /StructTreeRoot 4 0 R /MarkInfo <</Marked true>> /OutputIntents [5 0 R] /Metadata 6 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /StructTreeRoot /K 8 0 R /ParentTree 9 0 R /ParentTreeNextKey 1>>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 10 0 R>>
+<   6: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   7: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <</Font <</F1 12 0 R>>>> /Tabs /S /StructParents 0>>
+<   8: <</Type /StructElem /S /Document /P 4 0 R /K 13 0 R>>
+<   9: <</Nums [0 [13 0 R]]>>
+<   10: stream <</N 3>> | 736 bytes
+<   11: stream <<>> | BT /F1 12 Tf 20 100 Td /P <</MCID 0>> BDC (Hello world) Tj EMC ET
+<   12: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+<   13: <</Type /StructElem /S /P /P 8 0 R /Pg 7 0 R /K 0>>
+> convert A2a a-good
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-2a.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /StructTreeRoot 6 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>A</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /StructTreeRoot /K 9 0 R /ParentTree 10 0 R>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /StructParents 0>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: <</Type /StructElem /S /Document /P 6 0 R /K 12 0 R>>
+<   10: <</Nums [0 [12 0 R]]>>
+<   11: stream <<>> | /Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC
+<   12: <</Type /StructElem /S /Figure /P 9 0 R /Pg 7 0 R /K 0 /Alt (A blue square)>>
+> convert A2a compliant
+< refusal PDF/A-2a needs a tagged file, and this one is not tagged well enough: The catalog has no /MarkInfo with /Marked true. The file has no structure tree. Tag the file and fix these first, then convert again. Set the document language first and Lazy PDF can tag the file itself.
+< remaining 0 clean false
+> convert A2a a-rolemap
+< refusal PDF/A-2a needs a tagged file, and this one is not tagged well enough: The structure type Chart is not a standard type and the role map does not lead to one. Tag the file and fix these first, then convert again.
+< remaining 0 clean false
+> convert A2a a-loose
+< refusal PDF/A-2a needs a tagged file, and this one is not tagged well enough: Content is neither in the structure tree nor marked as an artifact. Tag the file and fix these first, then convert again.
+< remaining 0 clean false
+> convert A2a plain-lang
+< refusal none
+< change The file was tagged automatically (1 pages). Check the reading order and the descriptions.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-2a, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Lang (en-US) /StructTreeRoot 4 0 R /MarkInfo <</Marked true>> /OutputIntents [5 0 R] /Metadata 6 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /StructTreeRoot /K 8 0 R /ParentTree 9 0 R /ParentTreeNextKey 1>>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 10 0 R>>
+<   6: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   7: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <</Font <</F1 12 0 R>>>> /Tabs /S /StructParents 0>>
+<   8: <</Type /StructElem /S /Document /P 4 0 R /K 13 0 R>>
+<   9: <</Nums [0 [13 0 R]]>>
+<   10: stream <</N 3>> | 736 bytes
+<   11: stream <<>> | BT /F1 12 Tf 20 100 Td /P <</MCID 0>> BDC (Hello world) Tj EMC ET
+<   12: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+<   13: <</Type /StructElem /S /P /P 8 0 R /Pg 7 0 R /K 0>>
+> convert A3a a-good
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-3a.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /StructTreeRoot 6 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>A</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /StructTreeRoot /K 9 0 R /ParentTree 10 0 R>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /StructParents 0>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: <</Type /StructElem /S /Document /P 6 0 R /K 12 0 R>>
+<   10: <</Nums [0 [12 0 R]]>>
+<   11: stream <<>> | /Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC
+<   12: <</Type /StructElem /S /Figure /P 9 0 R /Pg 7 0 R /K 0 /Alt (A blue square)>>
+> convert A3a compliant
+< refusal PDF/A-3a needs a tagged file, and this one is not tagged well enough: The catalog has no /MarkInfo with /Marked true. The file has no structure tree. Tag the file and fix these first, then convert again. Set the document language first and Lazy PDF can tag the file itself.
+< remaining 0 clean false
+> convert A3a a-rolemap
+< refusal PDF/A-3a needs a tagged file, and this one is not tagged well enough: The structure type Chart is not a standard type and the role map does not lead to one. Tag the file and fix these first, then convert again.
+< remaining 0 clean false
+> convert A3a a-loose
+< refusal PDF/A-3a needs a tagged file, and this one is not tagged well enough: Content is neither in the structure tree nor marked as an artifact. Tag the file and fix these first, then convert again.
+< remaining 0 clean false
+> convert A3a plain-lang
+< refusal none
+< change The file was tagged automatically (1 pages). Check the reading order and the descriptions.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-3a, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Lang (en-US) /StructTreeRoot 4 0 R /MarkInfo <</Marked true>> /OutputIntents [5 0 R] /Metadata 6 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /StructTreeRoot /K 8 0 R /ParentTree 9 0 R /ParentTreeNextKey 1>>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 10 0 R>>
+<   6: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   7: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <</Font <</F1 12 0 R>>>> /Tabs /S /StructParents 0>>
+<   8: <</Type /StructElem /S /Document /P 4 0 R /K 13 0 R>>
+<   9: <</Nums [0 [13 0 R]]>>
+<   10: stream <</N 3>> | 736 bytes
+<   11: stream <<>> | BT /F1 12 Tf 20 100 Td /P <</MCID 0>> BDC (Hello world) Tj EMC ET
+<   12: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+<   13: <</Type /StructElem /S /P /P 8 0 R /Pg 7 0 R /K 0>>
+> packet A1a true
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>A</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A2a true
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>A</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A3a false
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>

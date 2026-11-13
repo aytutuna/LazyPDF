@@ -1,5 +1,5 @@
 # One line is "<op> <words>". Bytes are escaped (\n \r \t \\ \xHH); a strip line holds the text as UTF-8.
-# check <level> <file>: the issues the validator finds in a file made from the name, for the level (A1b A2b A2u A3b A3u A4).
+# check <level> <file>: the issues the validator finds in a file made from the name, for the level (A1b A2b A2u A3b A3u A4 A1a A2a A3a).
 # convert <level> <file>: the conversion of the file with no font source: refusal, changes, what remains, and every object of the result.
 # packet <level> <declare>: the XMP packet for a fixed set of properties, byte for byte.
 # strip <text>: PdfAPacket.Strip of the text.
@@ -179,3 +179,48 @@ strip \xc3\xa7\xc4\x9f
 strip &<>"
 strip \xff\xfe bad utf-8
 profile
+check A1a a-good
+check A2a a-good
+check A3a a-good
+check A1a a-unmarked
+check A2a a-unmarked
+check A3a a-unmarked
+check A1a a-nolang
+check A2a a-nolang
+check A3a a-nolang
+check A1a a-loose
+check A2a a-loose
+check A3a a-loose
+check A1a a-noalt
+check A2a a-noalt
+check A3a a-noalt
+check A1a a-rolemap
+check A2a a-rolemap
+check A3a a-rolemap
+check A1a a-rolemap-ok
+check A2a a-rolemap-ok
+check A3a a-rolemap-ok
+check A1a a-part2-type
+check A2a a-part2-type
+check A3a a-part2-type
+check A1a compliant
+check A2a compliant
+check A3a compliant
+convert A1a a-good
+convert A1a compliant
+convert A1a a-rolemap
+convert A1a a-loose
+convert A1a plain-lang
+convert A2a a-good
+convert A2a compliant
+convert A2a a-rolemap
+convert A2a a-loose
+convert A2a plain-lang
+convert A3a a-good
+convert A3a compliant
+convert A3a a-rolemap
+convert A3a a-loose
+convert A3a plain-lang
+packet A1a true
+packet A2a true
+packet A3a false

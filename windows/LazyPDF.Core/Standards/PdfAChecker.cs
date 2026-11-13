@@ -26,6 +26,7 @@ internal sealed partial class PdfAChecker(PdfDocument document, PdfALevel level)
         CheckPages();
         CheckObjects();
         CheckFonts();
+        CheckStructure();
     }
 
     /// <summary>The clause for part 1, or for the later parts.</summary>

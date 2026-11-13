@@ -117,8 +117,26 @@ internal static class StandardsGolden
                     content: string.Concat(Enumerable.Repeat("q ", 29)) + string.Concat(Enumerable.Repeat("Q ", 29)) + "0 0 1 rg 20 20 40000.5 100 re f");
             case "inline":
                 return StandardsKit.Compliant(level, content: "q BI /W 1 /H 1 /BPC 8 /CS /G /I true /F /Crypt ID x EI Q BI /W 1 /H 1 /BPC 8 /CS /RGB ID abc EI Q");
+            case "a-good":
+                return StandardsKit.Tagged(level);
+            case "a-unmarked":
+                return StandardsKit.Tagged(level, marked: "");
+            case "a-nolang":
+                return StandardsKit.Tagged(level, lang: "");
+            case "a-loose":
+                return StandardsKit.Tagged(level, content: "/Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC 1 0 0 rg 130 20 50 50 re f");
+            case "a-noalt":
+                return StandardsKit.Tagged(level, alt: "");
+            case "a-rolemap":
+                return StandardsKit.Tagged(level, roleMap: "/RoleMap <</Chart /Graph>>", figureType: "Chart");
+            case "a-rolemap-ok":
+                return StandardsKit.Tagged(level, roleMap: "/RoleMap <</Chart /Figure>>", figureType: "Chart");
+            case "a-part2-type":
+                return StandardsKit.Tagged(level, figureType: "Annot");
             case "plain":
                 return Plain();
+            case "plain-lang":
+                return Plain(catalog: "/Lang (en-US)");
             case "transparency":
                 return Plain("/GS gs 0 g 0 0 50 50 re f", resources: "/ExtGState <</GS <</ca 0.5>>>>");
             case "lzw":
