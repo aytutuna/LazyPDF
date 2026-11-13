@@ -29,6 +29,17 @@ extension AppViewModel {
         return returnTool
     }
 
+    public func openTagging() {
+        taggingRequested = true
+        if activeToolId != "accessibility" { selectTool("accessibility") }
+        if activeToolId != "accessibility" { taggingRequested = false }
+    }
+
+    public func takeTaggingRequest() -> Bool {
+        defer { taggingRequested = false }
+        return taggingRequested
+    }
+
     public func markSelection(_ mark: SelectionMark) {
         let id = mark == .redact ? "redact" : "comment"
         if activeToolId == id, let markHandler {

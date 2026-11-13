@@ -113,6 +113,7 @@ public final class AppViewModel {
     @ObservationIgnored var exiting = false
     @ObservationIgnored var signingField: String?
     @ObservationIgnored var returnTool: String?
+    @ObservationIgnored var taggingRequested = false
     @ObservationIgnored var pendingMark: SelectionMark?
     @ObservationIgnored var markHandler: (@MainActor (SelectionMark) async -> Void)?
     public internal(set) var closeQuestion: DocumentTab?

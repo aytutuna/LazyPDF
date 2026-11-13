@@ -225,6 +225,16 @@ final class SigningHostTests: XCTestCase {
         XCTAssertNil(fixture.vm.takeSigningField())
     }
 
+    func test_openingTaggingOpensAccessibilityAndAsksOnce() async {
+        let fixture = ViewModelFixture(self)
+
+        fixture.vm.openTagging()
+
+        XCTAssertEqual(fixture.vm.activeToolId, "accessibility")
+        XCTAssertTrue(fixture.vm.takeTaggingRequest())
+        XCTAssertFalse(fixture.vm.takeTaggingRequest())
+    }
+
     func test_theToolStaysOpenWhenAskedAgain() async {
         let fixture = ViewModelFixture(self)
 

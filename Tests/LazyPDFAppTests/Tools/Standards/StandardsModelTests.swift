@@ -124,7 +124,7 @@ final class StandardsModelTests: XCTestCase {
         XCTAssertEqual(model.tagHint, "PDF/A-2a needs a tagged file, and this one is not tagged well enough yet. Tag the file first, then run this again.")
         XCTAssertEqual(model.tagButton, "Tag the file")
         model.tagFile()
-        XCTAssertEqual(rig.host.openedTools, ["accessibility"])
+        XCTAssertTrue(rig.host.taggingRequested)
 
         model.setLevel(StandardsModel.levels.firstIndex(of: .a2b)!)
         XCTAssertFalse(model.needsTagging)

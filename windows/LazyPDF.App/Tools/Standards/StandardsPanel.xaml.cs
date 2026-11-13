@@ -87,7 +87,7 @@ public partial class StandardsPanel : ToolPanel
         TagRow.Visibility = needs ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void TagFile_Click(object sender, RoutedEventArgs e) => Host?.OpenTool("accessibility");
+    private void TagFile_Click(object sender, RoutedEventArgs e) => Host?.OpenTagging();
 
     private void Mode_Checked(object sender, RoutedEventArgs e)
     {

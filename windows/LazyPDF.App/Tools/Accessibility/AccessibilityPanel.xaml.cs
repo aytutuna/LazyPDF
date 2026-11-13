@@ -44,7 +44,8 @@ public partial class AccessibilityPanel : ToolPanel
         Tab!.Changed += Tab_Changed;
         _state = States.GetValue(Tab, tab => new FigureState { Rewrites = tab.Rewrites });
         _checkStale = _treeStale = _readStale = true;
-        ShowCheck.IsChecked = true;
+        if (Host!.TakeTaggingRequest()) ShowTags.IsChecked = true;
+        else ShowCheck.IsChecked = true;
         Refresh();
     }
 
