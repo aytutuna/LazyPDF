@@ -48,9 +48,10 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
 
     // Glyphs sit in the stream in display order, which for right-to-left characters is not the order of the characters; a range
     // with such characters is taken left to right so that its first glyph is where the range starts on the page.
-    private List<EditGlyph> Ordered(TextRange range)
+    private List<EditGlyph> Ordered(TextRange range) => Ordered(range, model.GlyphsIn(range));
+
+    private List<EditGlyph> Ordered(TextRange range, List<EditGlyph> glyphs)
     {
-        var glyphs = model.GlyphsIn(range);
         var chars = model.Text.Chars;
         bool rtl = false;
         for (int i = Math.Max(range.Start, 0); i < Math.Min(range.End, model.CharGlyphs.Length) && !rtl; i++) rtl = model.CharGlyphs[i] is not null && chars[i].IsRtl;
@@ -65,10 +66,11 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     /// <summary>Replaces the glyphs of a range of characters with <paramref name="text"/> in their font, at the place of the first of them.</summary>
     public void Replace(TextRange range, string text, TextStyleChange? style = null)
     {
-        var glyphs = Ordered(range);
+        var logical = model.GlyphsIn(range);
+        var glyphs = Ordered(range, logical);
         if (glyphs.Count == 0) throw new EditConflictException(EditingText.NoText);
         Check(glyphs);
-        if (style is null && StyleGroups(glyphs) is { Count: > 1 } groups)
+        if (style is null && StyleGroups(logical) is { Count: > 1 } groups)
         {
             ReplaceByStyle(range, glyphs, groups, text);
             return;
@@ -84,6 +86,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     }
 
     // A word set partly in another size, font or colour (a drop cap, a changed letter) takes its new letters in the same parts.
+    // The groups are in logical order, like the new text; each is put at its own left edge on the page.
     private void ReplaceByStyle(TextRange range, List<EditGlyph> glyphs, List<List<EditGlyph>> groups, string text)
     {
         var runes = text.EnumerateRunes().Select(r => r.ToString()).ToList();
@@ -100,6 +103,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
                 CutAll(group, null);
                 continue;
             }
+            group = Ordered(range, group);
             var anchor = AnchorOf(group);
             var pieces = TextBuilder.Shape(builder.Build(PlaceOf(group[0]), anchor, part), anchor);
             PutText(group[0], false, pieces, default, 0);

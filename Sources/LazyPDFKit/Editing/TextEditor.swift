@@ -107,8 +107,9 @@ final class TextEditor {
 
     // Glyphs sit in the stream in display order, which for right-to-left characters is not the order of the characters; a range
     // with such characters is taken left to right so that its first glyph is where the range starts on the page.
-    func ordered(_ range: TextRange) -> [EditGlyph] {
-        let glyphs = model.glyphsIn(range)
+    func ordered(_ range: TextRange) -> [EditGlyph] { ordered(range, model.glyphsIn(range)) }
+
+    func ordered(_ range: TextRange, _ glyphs: [EditGlyph]) -> [EditGlyph] {
         let chars = model.text.chars
         var rtl = false
         var i = Swift.max(range.start, 0)
@@ -130,11 +131,12 @@ final class TextEditor {
 
     /// Replaces the glyphs of a range of characters with `text` in their font, at the place of the first of them.
     func replace(_ range: TextRange, _ text: String, _ style: TextStyleChange? = nil) throws {
-        let glyphs = ordered(range)
+        let logical = model.glyphsIn(range)
+        let glyphs = ordered(range, logical)
         if glyphs.isEmpty { throw EditConflictException(EditingText.noText) }
         try check(glyphs)
         if style == nil {
-            let groups = Self.styleGroups(glyphs)
+            let groups = Self.styleGroups(logical)
             if groups.count > 1 {
                 try replaceByStyle(range, glyphs, groups, text)
                 return
@@ -151,19 +153,21 @@ final class TextEditor {
     }
 
     // A word set partly in another size, font or colour (a drop cap, a changed letter) takes its new letters in the same parts.
+    // The groups are in logical order, like the new text; each is put at its own left edge on the page.
     private func replaceByStyle(_ range: TextRange, _ glyphs: [EditGlyph], _ groups: [[EditGlyph]], _ text: String) throws {
         let runes = text.unicodeScalars.map { String($0) }
         var next = 0
         var width = 0.0
         for i in 0..<groups.count {
-            let group = groups[i]
-            let take = i == groups.count - 1 ? runes.count - next : Swift.min(group.count, runes.count - next)
+            let logical = groups[i]
+            let take = i == groups.count - 1 ? runes.count - next : Swift.min(logical.count, runes.count - next)
             let part = runes[next..<next + take].joined()
             next += take
             if part.isEmpty {
-                try cutAll(group, nil)
+                try cutAll(logical, nil)
                 continue
             }
+            let group = ordered(range, logical)
             let anchor = anchorOf(group)
             let pieces = TextBuilder.shape(try builder.build(Self.placeOf(group[0]), anchor, part), anchor)
             try putText(group[0], false, pieces, StyleWrap(), 0)

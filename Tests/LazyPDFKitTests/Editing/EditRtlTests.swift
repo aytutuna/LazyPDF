@@ -55,6 +55,20 @@ final class EditRtlTests: XCTestCase {
         }
     }
 
+    func test_replacingAHebrewLineInTwoColorsKeepsTheWordsInOrder() throws {
+        let session = try page("אבג דהו")
+        let red = RgbColor(255, 0, 0)
+        let first = try PageEditor(session, 0, fonts)
+        let old = try XCTUnwrap(try TextSearch.find(try read(session), "אבג", TextSearchOptions(matchCase: true)).first).range
+        XCTAssertTrue(try first.setTextStyle([old], TextStyleChange(color: red)).done)
+        let editor = try PageEditor(session, 0, fonts)
+        XCTAssertTrue(try editor.replaceText(try block(editor).range, "זחט יכל").done)
+        let now = try read(session)
+        XCTAssertEqual(now.text.trimmingCharacters(in: .whitespacesAndNewlines), "זחט יכל")
+        let word = try XCTUnwrap(try TextSearch.find(now, "זחט", TextSearchOptions(matchCase: true)).first).range
+        for i in word.start..<word.end { XCTAssertEqual(now.chars[i].color, red) }
+    }
+
     func test_replacingAHebrewWordStartsTheNewTextAtTheLeftEdgeOfTheOldOne() throws {
         let session = try page("אבג דהו")
         let old = try read(session)

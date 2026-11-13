@@ -65,6 +65,21 @@ public class EditRtlTests
     }
 
     [Fact]
+    public void ReplacingAHebrewLineInTwoColorsKeepsTheWordsInOrder()
+    {
+        var session = Page("אבג דהו");
+        var red = new RgbColor(255, 0, 0);
+        var first = new PageEditor(session, 0, Fonts);
+        Assert.True(first.SetTextStyle([TextSearch.Find(Read(session), "אבג", new TextSearchOptions(MatchCase: true)).First().Range], new TextStyleChange(Color: red)).Done);
+        var editor = new PageEditor(session, 0, Fonts);
+        Assert.True(editor.ReplaceText(Assert.Single(editor.Objects.OfType<TextObject>()).Range, "זחט יכל").Done);
+        var now = Read(session);
+        Assert.Equal("זחט יכל", now.Text.Trim());
+        var word = TextSearch.Find(now, "זחט", new TextSearchOptions(MatchCase: true)).First().Range;
+        for (int i = word.Start; i < word.End; i++) Assert.Equal(red, now.Chars[i].Color);
+    }
+
+    [Fact]
     public void ReplacingAHebrewWordStartsTheNewTextAtTheLeftEdgeOfTheOldOne()
     {
         var session = Page("אבג דהו");
