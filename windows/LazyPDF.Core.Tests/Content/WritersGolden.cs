@@ -53,6 +53,12 @@ internal static class WritersGolden
                 var editor = new PageEditor(again, 0, fonts);
                 Assert.True(editor.ReplaceText(Assert.Single(editor.Objects.OfType<TextObject>()).Range, text).Done);
                 return PdfDocument.Open(again.Current.ToArray());
+            case "editpart":
+                var host = PdfEditSession.Open(AnnotationFixtures.Blank(1).SaveRewrite());
+                new PageEditor(host, 0, fonts).AddTextBox(new PdfRect(50, 600, 250, 700), "אבג דהו", new TextBoxStyle("Script Sans", Size: 14));
+                var reopened = PdfEditSession.Open(host.Current.ToArray());
+                Assert.True(new PageEditor(reopened, 0, fonts).ReplaceText(EditKit.Find(reopened, "דהו"), text).Done);
+                return PdfDocument.Open(reopened.Current.ToArray());
             case "watermark":
                 new PdfStamper(document, fonts).AddWatermark(new WatermarkSpec { Text = text, FontFamily = "Script Sans" });
                 break;
