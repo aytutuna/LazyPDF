@@ -55,6 +55,7 @@
 "A table is changed one line at a time." = "Tablo her seferinde bir satır değiştirilir.";
 "A widget has an /A entry." = "Bir parçacıkta /A girdisi var.";
 "A {0} action is used." = "Bir {0} eylemi kullanılıyor.";
+"A {0} element has neither /Alt nor /ActualText." = "Bir {0} öğesinde ne /Alt ne de /ActualText var.";
 "AES 128-bit, for older readers" = "AES 128 bit, eski okuyucular için";
 "AES 256-bit" = "AES 256 bit";
 "About Lazy PDF" = "Lazy PDF hakkında";
@@ -382,6 +383,7 @@
 "Completed" = "Tamamlandı";
 "Confidential" = "Gizli";
 "Content" = "İçerik";
+"Content is neither in the structure tree nor marked as an artifact." = "İçerik ne yapı ağacında ne de artifact olarak işaretli.";
 "Convert" = "Dönüştür";
 "Convert to grayscale" = "Gri tonlamaya çevir";
 "Convert to {0}" = "{0} biçimine dönüştür";
@@ -839,9 +841,12 @@
 "Light blue" = "Açık mavi";
 "Light gray" = "Açık gri";
 "Light pages" = "Açık sayfalar";
+"Like 1b, and the file must be tagged for screen readers. Untagged files need a language set first." = "1b gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı.";
 "Like 2b, and every character keeps its text." = "2b gibi; ayrıca her karakter metnini korur.";
 "Like 2b, and other files may be attached." = "2b gibi; ayrıca başka dosyalar eklenebilir.";
+"Like 2u, and the file must be tagged for screen readers. Untagged files need a language set first." = "2u gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı.";
 "Like 3b, and every character keeps its text." = "3b gibi; ayrıca her karakter metnini korur.";
+"Like 3u, and the file must be tagged for screen readers. Untagged files need a language set first." = "3u gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı.";
 "Limit what people can do" = "Kişilerin yapabileceklerini sınırla";
 "Line" = "Çizgi";
 "Line spacing" = "Satır aralığı";
@@ -973,6 +978,7 @@
 "No font on this computer can draw the text. Remove the letters it cannot show." = "Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri kaldırın.";
 "No imported certificates." = "İçe aktarılmış sertifika yok.";
 "No installed font has these characters, so they are left blank: {0}" = "Yüklü hiçbir yazı tipinde bu karakterler yok, bu yüzden boş bırakıldı: {0}";
+"No natural language is set in the catalog or on the top structure elements." = "Katalogda da üst yapı öğelerinde de doğal dil belirtilmemiş.";
 "No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged." = "Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez.";
 "No page has a text layer from here." = "Hiçbir sayfada buradan eklenmiş metin katmanı yok.";
 "No page in this file matches." = "Bu dosyada uyan sayfa yok.";
@@ -1502,6 +1508,7 @@
 "Set a password and decide what others may do." = "Bir parola belirleyin ve başkalarının neler yapabileceğine karar verin.";
 "Set has no name" = "Kümenin adı yok";
 "Set status" = "Durumu ayarla";
+"Set the document language first and Lazy PDF can tag the file itself." = "Önce belge dilini ayarlayın; Lazy PDF dosyayı kendisi etiketleyebilir.";
 "Set the tab order" = "Sekme sırasını ayarla";
 "Settings" = "Ayarlar";
 "Settings…" = "Ayarlar…";
@@ -1631,6 +1638,7 @@
 "Strikethrough" = "Üstü çizili";
 "Strong." = "Güçlü.";
 "Structure" = "Yapı";
+"Structure element {0}" = "Yapı öğesi {0}";
 "Style" = "Stil";
 "Subject" = "Konu";
 "Summary of {0} of {1} comments saved." = "{1} yorumdan {0} tanesinin özeti kaydedildi.";
@@ -1741,6 +1749,7 @@
 "The catalog has /NeedsRendering." = "Katalogda /NeedsRendering var.";
 "The catalog has /OCProperties." = "Katalogda /OCProperties var.";
 "The catalog has an /AA entry." = "Katalogda /AA girdisi var.";
+"The catalog has no /MarkInfo with /Marked true." = "Katalogda /Marked değeri true olan bir /MarkInfo yok.";
 "The catalog has no /Metadata stream." = "Katalogda /Metadata akışı yok.";
 "The certificate could not be removed." = "Sertifika kaldırılamadı.";
 "The certificate could not be shown." = "Sertifika gösterilemedi.";
@@ -1803,6 +1812,7 @@
 "The file embeds another file, which this level does not allow." = "Dosya başka bir dosya gömüyor; bu düzey buna izin vermiyor.";
 "The file has no figures." = "Dosyada şekil yok.";
 "The file has no signature to add validation data to." = "Dosyada doğrulama verisi eklenecek bir imza yok.";
+"The file has no structure tree." = "Dosyada yapı ağacı yok.";
 "The file has no tags, so it has no reading order. Add tags first." = "Dosyada etiket olmadığından okuma sırası yok. Önce etiket ekleyin.";
 "The file has no tags, so no figures are known. Add tags first." = "Dosyada etiket olmadığından şekiller bilinmiyor. Önce etiket ekleyin.";
 "The file has no tags. Add them so a screen reader can read it in order." = "Dosyada etiket yok. Ekran okuyucunun sırayla okuyabilmesi için etiket ekleyin.";
@@ -1819,7 +1829,9 @@
 "The file says it is tagged but holds no tags. Lazy PDF cannot add them to it." = "Dosya etiketli olduğunu söylüyor ama hiç etiket içermiyor. Lazy PDF ona etiket ekleyemez.";
 "The file uses a cross-reference stream, which PDF 1.4 does not have." = "Dosya, PDF 1.4'te bulunmayan bir çapraz başvuru akışı kullanıyor.";
 "The file uses object streams, which PDF 1.4 does not have." = "Dosya, PDF 1.4'te bulunmayan nesne akışları kullanıyor.";
+"The file was marked as tagged." = "Dosya etiketli olarak işaretlendi.";
 "The file was signed; its signatures no longer verify." = "Dosya imzalıydı; imzaları artık doğrulanmıyor.";
+"The file was tagged automatically ({0} pages). Check the reading order and the descriptions." = "Dosya otomatik olarak etiketlendi ({0} sayfa). Okuma sırasını ve açıklamaları kontrol edin.";
 "The file would not read back with that change. Save a copy and try again." = "Dosya bu değişiklikle yeniden okunamadı. Bir kopya kaydedip yeniden deneyin.";
 "The file's permissions do not allow changing it, so it cannot be converted." = "Dosyanın izinleri değiştirilmesine izin vermiyor, bu yüzden dönüştürülemez.";
 "The files could not be put into one. Try fewer pages or files." = "Dosyalar tek bir dosyada birleştirilemedi. Daha az sayfa ya da dosya deneyin.";
@@ -1915,7 +1927,10 @@
 "The signer is not trusted." = "İmzalayan güvenilir değil.";
 "The signing time is the signer's own claim. Check that the file was signed before the certificate expired." = "İmza zamanı imzalayanın kendi beyanıdır. Dosyanın sertifikanın süresi dolmadan önce imzalandığını denetleyin.";
 "The stream keyword must be followed by CRLF or LF." = "stream anahtar sözcüğünden sonra CRLF ya da LF gelmeli.";
+"The structure tree has no elements." = "Yapı ağacında öğe yok.";
+"The structure tree is too large to check in full." = "Yapı ağacı tamamen denetlenemeyecek kadar büyük.";
 "The structure tree is too large to edit." = "Yapı ağacı düzenlenemeyecek kadar büyük.";
+"The structure type {0} is not a standard type and the role map does not lead to one." = "{0} yapı türü standart bir tür değil ve rol eşlemesi standart bir türe çıkmıyor.";
 "The system cannot draw these pages. Try another format." = "Sistem bu sayfaları çizemiyor. Başka bir biçim deneyin.";
 "The system cannot draw this file, so its text cannot be read." = "Sistem bu dosyayı çizemiyor, bu yüzden metni okunamıyor.";
 "The system cannot draw this file." = "Sistem bu dosyayı çizemiyor.";
@@ -2373,6 +2388,7 @@
 "{0} needs a password or certificate that was not given." = "{0} için verilmeyen bir parola ya da sertifika gerekiyor.";
 "{0} needs a password or certificate, and Batch cannot ask for one. Take the lock off first, then add the file again." = "{0} için parola ya da sertifika gerekiyor ve Toplu işlem bunu soramaz. Önce kilidi kaldırın, sonra dosyayı yeniden ekleyin.";
 "{0} needs a password to open." = "{0} dosyasını açmak için parola gerekir.";
+"{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again." = "{0} etiketli bir dosya ister ve bu dosya yeterince iyi etiketlenmemiş: {1} Önce dosyayı etiketleyip bunları düzeltin, sonra yeniden dönüştürün.";
 "{0} note|one" = "{0} not";
 "{0} note|other" = "{0} not";
 "{0} of {1}" = "{0} / {1}";

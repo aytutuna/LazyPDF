@@ -8887,5 +8887,92 @@
   },
   "Set the document language first and Lazy PDF can tag the file itself.": {
     "tr": "Önce belge dilini ayarlayın; Lazy PDF dosyayı kendisi etiketleyebilir."
+  },
+  "The catalog says the tags are suspect (/Suspects true).": {
+    "tr": "Katalog etiketlerin şüpheli olduğunu söylüyor (/Suspects true)."
+  },
+  "The structure tree is too large to check.": {
+    "tr": "Yapı ağacı denetlenemeyecek kadar büyük."
+  },
+  "Content is neither tagged nor marked as an artifact.": {
+    "tr": "İçerik ne etiketli ne de yapıntı olarak işaretli."
+  },
+  "An artifact sits inside tagged content.": {
+    "tr": "Etiketli içeriğin içinde bir yapıntı var."
+  },
+  "Tagged content sits inside an artifact.": {
+    "tr": "Bir yapıntının içinde etiketli içerik var."
+  },
+  "The role map leads {0} in a circle or through too many steps.": {
+    "tr": "Rol eşlemesi {0} türünü bir döngüye ya da çok fazla adıma götürüyor."
+  },
+  "The standard structure type {0} is remapped to {1}.": {
+    "tr": "Standart yapı türü {0}, {1} türüne yeniden eşlenmiş."
+  },
+  "The XMP metadata does not have pdfuaid:part with the value 1.": {
+    "tr": "XMP üst verisinde değeri 1 olan pdfuaid:part yok."
+  },
+  "The XMP metadata has no dc:title.": {
+    "tr": "XMP üst verisinde dc:title yok."
+  },
+  "The viewer preferences do not set /DisplayDocTitle to true.": {
+    "tr": "Görüntüleyici tercihleri /DisplayDocTitle değerini true yapmıyor."
+  },
+  "The catalog has no valid /Lang.": {
+    "tr": "Katalogda geçerli bir /Lang yok."
+  },
+  "The language {0} is not a valid language tag.": {
+    "tr": "{0} geçerli bir dil etiketi değil."
+  },
+  "The first numbered heading is H{0}; it must be H1.": {
+    "tr": "İlk numaralı başlık H{0}; H1 olmalı."
+  },
+  "Heading H{0} follows H{1}, skipping a level.": {
+    "tr": "H{0} başlığı H{1} başlığını izliyor, bir düzey atlanmış."
+  },
+  "The document uses both H and numbered headings.": {
+    "tr": "Belge hem H hem de numaralı başlıklar kullanıyor."
+  },
+  "A Note element has no /ID.": {
+    "tr": "Bir Note öğesinde /ID yok."
+  },
+  "The Note /ID {0} is used twice.": {
+    "tr": "Note /ID değeri {0} iki kez kullanılmış."
+  },
+  "A file specification of an embedded file lacks /F or /UF.": {
+    "tr": "Gömülü bir dosyanın dosya belirtiminde /F veya /UF yok."
+  },
+  "The form is a dynamic XFA form.": {
+    "tr": "Form dinamik bir XFA formu."
+  },
+  "The security settings do not allow assistive technology to extract text.": {
+    "tr": "Güvenlik ayarları yardımcı teknolojilerin metni almasına izin vermiyor."
+  },
+  "A {0} annotation is not part of the structure tree.": {
+    "tr": "Bir {0} ek açıklaması yapı ağacının parçası değil."
+  },
+  "A {0} annotation sits in a {2} element; it needs {1}.": {
+    "tr": "Bir {0} ek açıklaması {2} öğesinin içinde; {1} gerekiyor."
+  },
+  "A {0} annotation has no /Contents.": {
+    "tr": "Bir {0} ek açıklamasında /Contents yok."
+  },
+  "A form field has no /TU.": {
+    "tr": "Bir form alanında /TU yok."
+  },
+  "The page has annotations and its tab order does not follow the structure.": {
+    "tr": "Sayfada ek açıklamalar var ve sekme sırası yapıyı izlemiyor."
+  },
+  "The file has a PostScript XObject.": {
+    "tr": "Dosyada bir PostScript XObject var."
+  },
+  "The font has characters that do not map to Unicode.": {
+    "tr": "Yazı tipinde Unicode'a eşlenmeyen karakterler var."
+  },
+  "{0} is not allowed in {1}.": {
+    "tr": "{0}, {1} içinde kullanılamaz."
+  },
+  "{0} is not allowed at the top of the tree.": {
+    "tr": "{0}, ağacın tepesinde kullanılamaz."
   }
 }

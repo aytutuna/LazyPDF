@@ -12,7 +12,7 @@ public static partial class AccessibilityChecker
     private const int LongDocument = 20;
     private const int MaxLocations = 50;
 
-    private static readonly Regex LanguageTagPattern = new(@"^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\z", RegexOptions.CultureInvariant);
+    internal static readonly Regex LanguageTagPattern = new(@"^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\z", RegexOptions.CultureInvariant);
 
     private sealed class Found
     {
