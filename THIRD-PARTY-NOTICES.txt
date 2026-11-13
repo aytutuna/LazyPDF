@@ -182,7 +182,7 @@ Encoding tables (Fonts/Tables/EncodingData.cs, Fonts/Programs/StandardNames.cs)
     'post' table from Apple's TrueType reference manual. These are lists of
     names fixed by the specifications.
 
-Unicode Character Database, bidirectional data (Text/BidiTables.cs, Tests/Fixtures/golden/bidi)
+Unicode Character Database, bidirectional data (Text/BidiTables.cs and .swift, Tests/Fixtures/golden/bidi)
     Bidi_Class, Bidi_Paired_Bracket and Bidi_Mirroring_Glyph values from
     DerivedBidiClass.txt, BidiBrackets.txt and BidiMirroring.txt, and lines of
     BidiCharacterTest.txt, all version 17.0.0 from https://www.unicode.org/Public/,
