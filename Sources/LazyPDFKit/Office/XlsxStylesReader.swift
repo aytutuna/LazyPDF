@@ -115,11 +115,13 @@ enum XlsxStylesReader {
         let a = x.child(m, "alignment")
         let horizontal = a?.attribute("horizontal").flatMap { XlsxHorizontal(rawValue: $0) } ?? .general
         let vertical = a?.attribute("vertical").flatMap { XlsxVertical(rawValue: $0) } ?? .bottom
+        let order = XlsxParse.int(a?.attribute("readingOrder")) ?? 0
         return XlsxXf(
             font: XlsxParse.int(x.attribute("fontId")) ?? 0, fill: XlsxParse.int(x.attribute("fillId")) ?? 0,
             border: XlsxParse.int(x.attribute("borderId")) ?? 0, numberFormatId: XlsxParse.int(x.attribute("numFmtId")) ?? 0,
             horizontal: horizontal, vertical: vertical, wrap: XlsxParse.flag(a?.attribute("wrapText"), false),
-            indent: min(XlsxParse.int(a?.attribute("indent")) ?? 0, 250), rotated: (XlsxParse.int(a?.attribute("textRotation")) ?? 0) != 0)
+            indent: min(XlsxParse.int(a?.attribute("indent")) ?? 0, 250), rotated: (XlsxParse.int(a?.attribute("textRotation")) ?? 0) != 0,
+            readingOrder: order == 1 || order == 2 ? order : 0)
     }
 
     private static func readColor(_ e: OfficeXmlElement?, _ theme: DocxTheme) -> Int? {

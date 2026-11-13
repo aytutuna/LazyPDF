@@ -33,7 +33,7 @@ final class XlsxLayoutTests: XCTestCase {
             for box in page.boxes {
                 switch box {
                 case .text(let t):
-                    output += "text \(num(t.x)) \(num(t.baseline)) \(t.family)/\(styleName(t.style)) \(num(t.size)) \(String(format: "%06x", t.color)) +\(num(t.spaceExtra)) \"\(OfficeLayoutSpec.escape(t.text))\"\n"
+                    output += "text \(num(t.x)) \(num(t.baseline)) \(t.family)/\(styleName(t.style)) \(num(t.size)) \(String(format: "%06x", t.color)) +\(num(t.spaceExtra))\(t.rightToLeft ? " rtl" : "") \"\(OfficeLayoutSpec.escape(t.text))\"\n"
                 case .rect(let r):
                     output += "rect \(num(r.x)) \(num(r.y)) \(num(r.width)) \(num(r.height)) \(String(format: "%06x", r.color))\n"
                 case .image, .path:
@@ -51,6 +51,15 @@ final class XlsxLayoutTests: XCTestCase {
             output += "> \(name)\n" + dump(try layout(package))
         }
         try Golden.check("office-xlsx", "xlsx-layout-output.txt", output)
+    }
+
+    func test_rightToLeftSheetGoldenFile() throws {
+        var output = ""
+        for (name, package) in try XlsxSpec.read(try Golden.input("office-xlsx", "rtl-input.txt")) {
+            let made = try XlsxLayout.run(try XlsxReader.read(package), LayoutFonts(OfficeLayoutSpec.scriptFonts()), Self.now, "Book1.xlsx")
+            output += "> \(name)\n" + dump(made)
+        }
+        try Golden.check("office-xlsx", "rtl-output.txt", output)
     }
 
     private static let oneSheet = "<sheets><sheet name=\"S\" sheetId=\"1\" r:id=\"rId1\"/></sheets>"

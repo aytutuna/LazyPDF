@@ -91,6 +91,9 @@ final class XlsxLayout {
     private var pages: [Pending] = []
     private var boxCount = 0
     private var number = 1
+    // On a right-to-left sheet the columns of a page are laid out left to right first and then turned about the middle of the
+    // columns: x becomes this number minus x. Nil for a sheet that runs the usual way.
+    private var flip: Double?
 
     private init(_ book: XlsxWorkbook, _ fonts: LayoutFonts, _ now: Date, _ file: String) {
         self.book = book
@@ -231,7 +234,8 @@ final class XlsxLayout {
                 let inner = plan.columnWidth[cell.column] - 2 * Self.pad
                 if inner > 1 && !cell.text.isEmpty {
                     var total = 0.0
-                    for line in try lines(cell.text, font, Self.align(cell, xf), inner) { total += line.height }
+                    let rtl = Self.direction(plan.sheet, cell, xf)
+                    for line in try lines(cell.text, font, Self.align(cell, xf, rtl), inner, rtl: rtl) { total += line.height }
                     pitch = total + 1.5
                 }
             }
@@ -240,8 +244,16 @@ final class XlsxLayout {
         return min(height, 409.5)
     }
 
-    private static func align(_ cell: XlsxCell, _ xf: XlsxXf) -> LayoutAlign {
-        switch horizontal(cell, xf) {
+    // Whether the text of the cell runs right to left: as the format says, else as its first letter, else as the sheet. Numbers
+    // keep their own order unless the format says otherwise.
+    private static func direction(_ sheet: XlsxSheet, _ cell: XlsxCell, _ xf: XlsxXf) -> Bool {
+        if xf.readingOrder != 0 { return xf.readingOrder == 2 }
+        if cell.kind != .text { return false }
+        return ScriptRuns.startsComplex(cell.text) ?? sheet.rightToLeft
+    }
+
+    private static func align(_ cell: XlsxCell, _ xf: XlsxXf, _ rtl: Bool) -> LayoutAlign {
+        switch horizontal(cell, xf, rtl) {
         case .right: return .right
         case .center, .centerContinuous, .distributed: return .center
         case .justify: return .justify
@@ -249,12 +261,13 @@ final class XlsxLayout {
         }
     }
 
-    private static func horizontal(_ cell: XlsxCell, _ xf: XlsxXf) -> XlsxHorizontal {
+    // General alignment puts text at the start of its direction.
+    private static func horizontal(_ cell: XlsxCell, _ xf: XlsxXf, _ rtl: Bool) -> XlsxHorizontal {
         if xf.horizontal != .general { return xf.horizontal }
         switch cell.kind {
         case .number: return .right
         case .bool, .error: return .center
-        default: return .left
+        default: return rtl ? .right : .left
         }
     }
 
@@ -271,10 +284,11 @@ final class XlsxLayout {
         return run
     }
 
-    private func lines(_ text: String, _ font: XlsxFont, _ align: LayoutAlign, _ width: Double, _ color: Int = 0) throws -> [LayoutLine] {
+    private func lines(_ text: String, _ font: XlsxFont, _ align: LayoutAlign, _ width: Double, _ color: Int = 0, rtl: Bool = false) throws -> [LayoutLine] {
         let paragraph = LayoutParagraph()
         paragraph.runs = [Self.runOf(font, text, color)]
         paragraph.align = align
+        paragraph.rightToLeft = rtl
         return try ParagraphLayout.run(paragraph, fonts, width, Self.wide).lines
     }
 
@@ -481,7 +495,7 @@ final class XlsxLayout {
             switch box {
             case .text(let t):
                 moved.append(.text(PlacedText(x: x + t.x * k, baseline: y + t.baseline * k, text: t.text, family: t.family, style: t.style,
-                                              size: t.size * k, color: t.color, spaceExtra: t.spaceExtra * k)))
+                                              size: t.size * k, color: t.color, spaceExtra: t.spaceExtra * k, rightToLeft: t.rightToLeft)))
             case .rect(let r):
                 moved.append(.rect(PlacedRect(x: x + r.x * k, y: y + r.y * k, width: r.width * k, height: r.height * k, color: r.color)))
             case .image, .path:
@@ -525,12 +539,13 @@ final class XlsxLayout {
         left[0] = g.headingWidth
         for i in 0..<columns.count { left[i + 1] = left[i] + widths[i] }
         let width = left[left.count - 1], height = top[top.count - 1]
+        flip = plan.sheet.rightToLeft ? left[0] + width : nil
         var columnAt: [Int: Int] = [:]
         for i in 0..<columns.count { columnAt[columns[i]] = i }
 
         if setup.gridlines {
             for i in 0..<top.count { boxes.append(.rect(PlacedRect(x: g.headingWidth, y: top[i] - 0.25, width: width - g.headingWidth, height: 0.5, color: 0x808080))) }
-            for i in 0..<left.count { boxes.append(.rect(PlacedRect(x: left[i] - 0.25, y: g.headingHeight, width: 0.5, height: height - g.headingHeight, color: 0x808080))) }
+            for i in 0..<left.count { boxes.append(.rect(PlacedRect(x: turn(left[i]) - 0.25, y: g.headingHeight, width: 0.5, height: height - g.headingHeight, color: 0x808080))) }
             try checkProgress(boxes)
         }
 
@@ -555,7 +570,7 @@ final class XlsxLayout {
                 if i >= bodyRow && j >= bodyColumn { content = true }
                 let xf = book.styles.xf(cell.style)
                 if xf.fill < book.styles.fills.count, let fill = book.styles.fills[xf.fill].color {
-                    boxes.append(.rect(PlacedRect(x: item.x, y: item.y, width: item.w, height: item.h, color: fill)))
+                    boxes.append(.rect(PlacedRect(x: mirror(item.x, item.w), y: item.y, width: item.w, height: item.h, color: fill)))
                 }
             }
         }
@@ -642,17 +657,23 @@ final class XlsxLayout {
         // No line of this font fits a row this short, so skip measuring and the spill scan.
         if item.h < font.size * 0.5 { return }
         let color = cell.color ?? font.color ?? 0
-        let horizontal = Self.horizontal(cell, xf)
+        let rtl = Self.direction(plan.sheet, cell, xf)
+        let horizontal = Self.horizontal(cell, xf, rtl)
+        // Spilling into the empty cells next to this one is worked out as for a sheet that runs the usual way, so left and right swap.
+        var side = horizontal
+        if flip != nil {
+            if horizontal == .left { side = .right } else if horizontal == .right { side = .left }
+        }
         var limitLeft = item.x + Self.pad, limitRight = item.x + item.w - Self.pad
         var span = item.w
         let wrap = xf.wrap && cell.kind == .text
         if !wrap && cell.kind == .text && item.merge == nil, let row = plan.rows[rows[item.row]] {
             // Text spills out of its cell on the side or sides its alignment leaves free.
-            if horizontal == .left || horizontal == .fill || horizontal == .justify {
+            if side == .left || side == .fill || side == .justify {
                 limitRight = max(limitRight, reach(plan, row, columns, left, item.column, 1, spill) - Self.pad)
-            } else if horizontal == .right {
+            } else if side == .right {
                 limitLeft = min(limitLeft, reach(plan, row, columns, left, item.column, -1, spill) + Self.pad)
-            } else if horizontal == .centerContinuous {
+            } else if side == .centerContinuous {
                 // Center Across Selection centers over the empty cells to its right, as one wide cell.
                 span = reach(plan, row, columns, left, item.column, 1, spill) - item.x
                 limitRight = item.x + span - Self.pad
@@ -663,11 +684,17 @@ final class XlsxLayout {
             }
         }
         let indent = Double(xf.indent) * Self.indentStep
-        let align = Self.align(cell, xf)
+        let align = Self.align(cell, xf, rtl)
+        var x = item.x
+        if flip != nil {
+            (limitLeft, limitRight) = (turn(limitRight), turn(limitLeft))
+            x = mirror(item.x, span)
+        }
         if wrap {
-            try wrapped(cell.text, font, color, align, xf.vertical, indent, item, &boxes)
+            let placed = flip == nil ? item : Item(cell: item.cell, rowId: item.rowId, row: item.row, column: item.column, x: mirror(item.x, item.w), y: item.y, w: item.w, h: item.h, merge: item.merge)
+            try wrapped(cell.text, font, color, align, xf.vertical, indent, rtl, placed, &boxes)
         } else {
-            try single(cell.text, font, color, horizontal, xf.vertical, indent, cell.kind == .number, item.x, item.y, span, item.h, limitLeft, limitRight, &boxes)
+            try single(cell.text, font, color, horizontal, xf.vertical, indent, cell.kind == .number, rtl, x, item.y, span, item.h, limitLeft, limitRight, &boxes)
         }
     }
 
@@ -698,13 +725,19 @@ final class XlsxLayout {
         return String(decoding: out, as: UTF16.self)
     }
 
-    private func wrapped(_ text: String, _ font: XlsxFont, _ color: Int, _ align: LayoutAlign, _ vertical: XlsxVertical, _ indent: Double, _ item: Item, _ boxes: inout [LayoutBox]) throws {
+    private func turn(_ x: Double) -> Double { flip.map { $0 - x } ?? x }
+
+    // The left edge of a stretch that starts at x and is w wide, once the sheet has been turned.
+    private func mirror(_ x: Double, _ w: Double) -> Double { flip.map { $0 - x - w } ?? x }
+
+    private func wrapped(_ text: String, _ font: XlsxFont, _ color: Int, _ align: LayoutAlign, _ vertical: XlsxVertical, _ indent: Double, _ rtl: Bool, _ item: Item, _ boxes: inout [LayoutBox]) throws {
         let shift = align == .left ? indent : 0
         let inner = item.w - 2 * Self.pad - (align == .left || align == .right ? indent : 0)
         if inner < 1 { return }
         let paragraph = LayoutParagraph()
         paragraph.runs = [Self.runOf(font, Self.lineEnds(text, 0x0A), color)]
         paragraph.align = align
+        paragraph.rightToLeft = rtl
         let lines = try ParagraphLayout.run(paragraph, fonts, inner, Self.wide).lines
         var total = 0.0
         for line in lines { total += line.height }
@@ -716,16 +749,16 @@ final class XlsxLayout {
     }
 
     private func single(
-        _ source: String, _ font: XlsxFont, _ color: Int, _ horizontal: XlsxHorizontal, _ vertical: XlsxVertical, _ indent: Double, _ number: Bool,
+        _ source: String, _ font: XlsxFont, _ color: Int, _ horizontal: XlsxHorizontal, _ vertical: XlsxVertical, _ indent: Double, _ number: Bool, _ rtl: Bool,
         _ x: Double, _ y: Double, _ w: Double, _ h: Double, _ limitLeft: Double, _ limitRight: Double, _ boxes: inout [LayoutBox]
     ) throws {
         let text = Self.lineEnds(source, 0x20)
-        var line = try lines(text, font, .left, Self.wide, color)[0]
+        var line = try oneLine(text, font, color, rtl)
         var width = Self.ink(line)
         let room = w - 2 * Self.pad
         if number && width > room + Self.tolerance {
-            let hash = Self.ink(try lines("#", font, .left, Self.wide)[0])
-            line = try lines(String(repeating: "#", count: max(1, Int((room / hash).rounded(.down)))), font, .left, Self.wide, color)[0]
+            let hash = Self.ink(try oneLine("#", font, 0, rtl))
+            line = try oneLine(String(repeating: "#", count: max(1, Int((room / hash).rounded(.down)))), font, color, rtl)
             width = Self.ink(line)
         }
         let origin: Double
@@ -741,9 +774,19 @@ final class XlsxLayout {
         Paginator.emitLine(&boxes, line, origin, top)
     }
 
+    // A right-to-left line is laid out from the right edge of a line without end, and moved to start at 0 like the others.
+    private func oneLine(_ text: String, _ font: XlsxFont, _ color: Int, _ rtl: Bool) throws -> LayoutLine {
+        let line = try lines(text, font, rtl ? .right : .left, Self.wide, color, rtl: rtl)[0]
+        let ink = line.atoms.filter { !$0.isBlank }
+        if rtl, let start = ink.map({ $0.x }).min() {
+            for a in line.atoms { a.x -= start }
+        }
+        return line
+    }
+
     private static func ink(_ line: LayoutLine) -> Double {
-        guard let ink = line.atoms.lastIndex(where: { !$0.isBlank }) else { return 0 }
-        return line.atoms[ink].x + line.atoms[ink].width
+        let ink = line.atoms.filter { !$0.isBlank }
+        return ink.map { $0.x + $0.width }.max() ?? 0
     }
 
     // Borders
@@ -793,23 +836,29 @@ final class XlsxLayout {
 
     private func border(_ plan: Plan, _ item: Item, _ rows: [Int], _ columns: [Int], _ boxes: inout [LayoutBox]) {
         guard let own = borderOf(item.cell) else { return }
-        let right = item.x + item.w, bottom = item.y + item.h
+        // The edges are those of the sides the cell shows, so on a sheet that runs right to left the left edge is at the end of the columns.
+        let turned = flip != nil
+        let x = mirror(item.x, item.w)
+        let right = x + item.w, bottom = item.y + item.h
         let row = item.rowId, column = item.cell.column
         var topEdge = own.top
         var leftEdge = own.left
         var rightEdge = own.right
         var bottomEdge = own.bottom
         if let m = item.merge {
-            rightEdge = Self.cellAt(plan, m.firstRow, m.lastColumn).flatMap { borderOf($0)?.right }
+            rightEdge = Self.cellAt(plan, m.firstRow, turned ? m.firstColumn : m.lastColumn).flatMap { borderOf($0)?.right }
+            if turned { leftEdge = Self.cellAt(plan, m.firstRow, m.lastColumn).flatMap { borderOf($0)?.left } }
             bottomEdge = Self.cellAt(plan, m.lastRow, m.firstColumn).flatMap { borderOf($0)?.bottom }
         }
         // A neighbor only hides the shared edge when it is printed right beside this cell on the same page.
-        if leftEdge != nil, item.column > 0, columns[item.column - 1] == column - 1, let l = Self.cellAt(plan, row, column - 1), borderOf(l)?.right != nil { leftEdge = nil }
+        let beside = turned ? 1 : -1
+        if leftEdge != nil, item.merge == nil, item.column + beside >= 0, item.column + beside < columns.count, columns[item.column + beside] == column + beside,
+           let neighbor = Self.cellAt(plan, row, column + beside), borderOf(neighbor)?.right != nil { leftEdge = nil }
         if topEdge != nil, item.row > 0, rows[item.row - 1] == row - 1, let t = Self.cellAt(plan, row - 1, column), borderOf(t)?.bottom != nil { topEdge = nil }
-        if let e = topEdge { edge(&boxes, true, item.y, item.x, right, e) }
-        if let e = leftEdge { edge(&boxes, false, item.x, item.y, bottom, e) }
+        if let e = topEdge { edge(&boxes, true, item.y, x, right, e) }
+        if let e = leftEdge { edge(&boxes, false, x, item.y, bottom, e) }
         if let e = rightEdge { edge(&boxes, false, right, item.y, bottom, e) }
-        if let e = bottomEdge { edge(&boxes, true, bottom, item.x, right, e) }
+        if let e = bottomEdge { edge(&boxes, true, bottom, x, right, e) }
     }
 
     private func borderOf(_ cell: XlsxCell) -> XlsxBorder? {
@@ -838,9 +887,9 @@ final class XlsxLayout {
             edge(&boxes, true, y + h, x, x + w, hair)
             edge(&boxes, false, x, y, y + h, hair)
             edge(&boxes, false, x + w, y, y + h, hair)
-            try single(text, font, 0, .center, .center, 0, false, x, y, w, h, x, x + w, &boxes)
+            try single(text, font, 0, .center, .center, 0, false, false, x, y, w, h, x, x + w, &boxes)
         }
-        for j in 0..<columns.count { try box(Self.columnName(columns[j]), left[j], 0, left[j + 1] - left[j], g.headingHeight) }
+        for j in 0..<columns.count { try box(Self.columnName(columns[j]), mirror(left[j], left[j + 1] - left[j]), 0, left[j + 1] - left[j], g.headingHeight) }
         for i in 0..<rows.count { try box(String(rows[i]), 0, top[i], g.headingWidth, top[i + 1] - top[i]) }
     }
 

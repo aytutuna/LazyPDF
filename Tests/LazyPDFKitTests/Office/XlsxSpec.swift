@@ -130,11 +130,11 @@ enum XlsxSpec {
             for (i, f) in styles.fills.enumerated() { o += "fill \(i) \(rgb(f.color))\(f.unsupported ? " unsupported" : "")\n" }
             for (i, b) in styles.borders.enumerated() { o += "border \(i) \(edge(b.left)) \(edge(b.right)) \(edge(b.top)) \(edge(b.bottom))\n" }
             for (i, x) in styles.xfs.enumerated() {
-                o += "xf \(i) font=\(x.font) fill=\(x.fill) border=\(x.border) fmt=\(x.numberFormatId) \(x.horizontal.rawValue.lowercased()) \(x.vertical.rawValue.lowercased()) indent=\(x.indent)\(x.wrap ? " wrap" : "")\(x.rotated ? " rotated" : "")\n"
+                o += "xf \(i) font=\(x.font) fill=\(x.fill) border=\(x.border) fmt=\(x.numberFormatId) \(x.horizontal.rawValue.lowercased()) \(x.vertical.rawValue.lowercased()) indent=\(x.indent)\(x.wrap ? " wrap" : "")\(x.rotated ? " rotated" : "")\(x.readingOrder != 0 ? " order=\(x.readingOrder)" : "")\n"
             }
         }
         for sheet in workbook.sheets {
-            o += "sheet \"\(OfficeLayoutSpec.escape(sheet.name))\" col=\(num(sheet.defaultColumnWidth)) row=\(num(sheet.defaultRowHeight))\n"
+            o += "sheet \"\(OfficeLayoutSpec.escape(sheet.name))\" col=\(num(sheet.defaultColumnWidth)) row=\(num(sheet.defaultRowHeight))\(sheet.rightToLeft ? " rtl" : "")\n"
             for c in sheet.columns { o += "  cols \(c.first)-\(c.last) \(num(c.width))\(c.hidden ? " hidden" : "")\n" }
             for row in sheet.rows {
                 o += "  row \(row.index)\(row.height.map { " h=" + num($0) } ?? "")\(row.hidden ? " hidden" : "")\n"

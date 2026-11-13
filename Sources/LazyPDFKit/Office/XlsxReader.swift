@@ -181,6 +181,7 @@ final class XlsxReader {
         let root = try package.xml(partName)
         if root.uri != m || root.name != "worksheet" { throw PdfReadException.damaged("The part \(partName) is not a worksheet.") }
         let sheet = XlsxSheet(name: name)
+        sheet.rightToLeft = XlsxParse.flag(root.child(m, "sheetViews")?.child(m, "sheetView")?.attribute("rightToLeft"), false)
 
         let format = root.child(m, "sheetFormatPr")
         let baseWidth = XlsxParse.double(format?.attribute("baseColWidth")) ?? 8

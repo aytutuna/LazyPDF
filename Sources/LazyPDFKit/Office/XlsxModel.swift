@@ -77,6 +77,7 @@ struct XlsxBorder {
 }
 
 /// A cell format (a cellXfs entry): the indexes into the font, fill and border lists and the alignment. Rotated text is not drawn rotated.
+/// `readingOrder` is 0 for the direction of the text itself, 1 left to right, 2 right to left.
 struct XlsxXf {
     let font: Int
     let fill: Int
@@ -87,6 +88,7 @@ struct XlsxXf {
     let wrap: Bool
     let indent: Int
     let rotated: Bool
+    var readingOrder = 0
 }
 
 /// A cell with its text already formatted. `color` is the color the number format asked for. `richFont` is the font of the
@@ -170,6 +172,8 @@ final class XlsxSheet {
     var rows: [XlsxRow] = []
     var columns: [XlsxColumns] = []
     var defaultColumnWidth = 0.0
+    /// The sheet's columns run from right to left (sheetView rightToLeft).
+    var rightToLeft = false
     var defaultRowHeight = 15.0
     var merges: [XlsxRange] = []
     var printArea: [XlsxRange] = []
