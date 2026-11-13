@@ -20,12 +20,26 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
 
     private ShowPatch PatchOf(EditGlyph g) => batch.Patch(PlaceOf(g), g.Op) ?? throw new EditConflictException(EditingText.SharedForm);
 
-    private static void Check(IEnumerable<EditGlyph> glyphs)
+    // With `whole`, glyphs under /ActualText pass: the caller has taken in every glyph of their span.
+    private static void Check(IEnumerable<EditGlyph> glyphs, bool whole = false)
     {
         foreach (var g in glyphs)
         {
             if (g.Font.IsVertical) throw new EditConflictException(EditingText.Vertical);
-            if (g.HasActualText) throw new EditConflictException(EditingText.ActualText);
+            if (g.HasActualText && !(whole && g.Span is not null)) throw new EditConflictException(EditingText.ActualText);
+        }
+    }
+
+    // A span's text is one character of the page text, so its glyphs are edited together; the glyph that carries the text comes first.
+    private static List<EditGlyph> Whole(IEnumerable<EditGlyph> glyphs) =>
+        [.. glyphs.SelectMany(g => g.Span is { } span ? span.Members.Prepend(g) : [g]).Distinct()];
+
+    // New text goes where the old was, which is inside the span, so the span stops claiming it.
+    private void Unwrap(IEnumerable<EditGlyph> glyphs)
+    {
+        foreach (var span in glyphs.Select(g => g.Span).OfType<ActualSpan>().Distinct())
+        {
+            if (!batch.ReplaceOperation(new Place(span.Unit, span.Visit), span.Op, "/Span BMC")) throw new EditConflictException(EditingText.SharedForm);
         }
     }
 
@@ -36,7 +50,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     {
         var all = glyphs.SelectMany(g => g.Twins.Prepend(g)).ToList();
         foreach (var g in all) PatchOf(g).Cut(g.Element, g.Offset, g.Offset + g.Length);
-        var flows = flow is null ? [] : flow.Twins.Prepend(flow).Except(unplaced ?? []).ToList();
+        var flows = flow is null ? [] : flow.Twins.Prepend(flow).Concat(flow.Span?.Members ?? []).Except(unplaced ?? []).ToList();
         foreach (var group in Runs([.. all.Where(g => !flows.Any(f => SameRun(f, g)))]))
         {
             var first = group[0];
@@ -66,10 +80,11 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     /// <summary>Replaces the glyphs of a range of characters with <paramref name="text"/> in their font, at the place of the first of them.</summary>
     public void Replace(TextRange range, string text, TextStyleChange? style = null)
     {
-        var logical = model.GlyphsIn(range);
+        var logical = Whole(model.GlyphsIn(range));
         var glyphs = Ordered(range, logical);
         if (glyphs.Count == 0) throw new EditConflictException(EditingText.NoText);
-        Check(glyphs);
+        Check(glyphs, true);
+        Unwrap(glyphs);
         if (style is null && StyleGroups(logical) is { Count: > 1 } groups)
         {
             ReplaceByStyle(range, glyphs, groups, text);
@@ -160,9 +175,10 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     // Removes the glyphs and moves what follows them in the same string back to where it was.
     public void Delete(TextRange range)
     {
-        var glyphs = Ordered(range);
+        var glyphs = Ordered(range, Whole(model.GlyphsIn(range)));
         if (glyphs.Count == 0) throw new EditConflictException(EditingText.NoText);
-        Check(glyphs);
+        Check(glyphs, true);
+        Unwrap(glyphs);
         CutAll(glyphs, null);
     }
 
@@ -290,9 +306,9 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     /// <summary>Changes the look of the text of a range without changing its characters where the font stays the same.</summary>
     public void Restyle(TextRange range, TextStyleChange change)
     {
-        var glyphs = model.GlyphsIn(range);
+        var glyphs = Whole(model.GlyphsIn(range));
         if (glyphs.Count == 0) throw new EditConflictException(EditingText.NoText);
-        Check(glyphs);
+        Check(glyphs, true);
         if (change.NeedsFont)
         {
             Replace(range, model.Text.GetText(range), change);
@@ -396,7 +412,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         int first = FirstChar(range);
         if (first < 0) return 0;
         var line = model.Text.Lines[model.Text.Chars[first].Line];
-        var lineGlyphs = model.GlyphsIn(line.Range);
+        var lineGlyphs = Whole(model.GlyphsIn(line.Range));
         if (lineGlyphs.Count != glyphs.Count || model.AlignmentOfLine(line.Index) is not { } alignment || alignment is TextAlignment.Left or TextAlignment.Justify) return 0;
         double oldWidth = Extent(glyphs);
         return alignment == TextAlignment.Right ? oldWidth - newWidth : (oldWidth - newWidth) / 2;

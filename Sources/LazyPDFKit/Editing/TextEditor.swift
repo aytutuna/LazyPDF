@@ -81,10 +81,29 @@ final class TextEditor {
         return patch
     }
 
-    func check(_ glyphs: [EditGlyph]) throws {
+    // With `whole`, glyphs under /ActualText pass: the caller has taken in every glyph of their span.
+    func check(_ glyphs: [EditGlyph], whole: Bool = false) throws {
         for g in glyphs {
             if g.font.isVertical { throw EditConflictException(EditingText.vertical) }
-            if g.hasActualText { throw EditConflictException(EditingText.actualText) }
+            if g.hasActualText && !(whole && g.span != nil) { throw EditConflictException(EditingText.actualText) }
+        }
+    }
+
+    // A span's text is one character of the page text, so its glyphs are edited together; the glyph that carries the text comes first.
+    static func whole(_ glyphs: [EditGlyph]) -> [EditGlyph] {
+        var result: [EditGlyph] = []
+        for g in glyphs {
+            for each in [g] + (g.span?.members ?? []) where !result.contains(where: { $0 === each }) { result.append(each) }
+        }
+        return result
+    }
+
+    // New text goes where the old was, which is inside the span, so the span stops claiming it.
+    func unwrap(_ glyphs: [EditGlyph]) throws {
+        var seen: [ActualSpan] = []
+        for case let span? in glyphs.map({ $0.span }) where !seen.contains(where: { $0 === span }) {
+            seen.append(span)
+            if !batch.replaceOperation(Place(span.unit, span.visit), span.op, "/Span BMC") { throw EditConflictException(EditingText.sharedForm) }
         }
     }
 
@@ -95,7 +114,7 @@ final class TextEditor {
         let all = glyphs.flatMap { [$0] + $0.twins }
         for g in all { try patchOf(g).cut(g.element, g.offset, g.offset + g.length) }
         var flows: [EditGlyph] = []
-        if let flow { flows = ([flow] + flow.twins).filter { f in !(unplaced ?? []).contains { $0 === f } } }
+        if let flow { flows = ([flow] + flow.twins + (flow.span?.members ?? [])).filter { f in !(unplaced ?? []).contains { $0 === f } } }
         for group in Self.runs(all.filter { g in !flows.contains { Self.sameRun($0, g) } }) {
             let first = group[0]
             let counted = unplaced != nil && group.contains { g in unplaced?.contains { $0 === g } ?? false }
@@ -131,10 +150,11 @@ final class TextEditor {
 
     /// Replaces the glyphs of a range of characters with `text` in their font, at the place of the first of them.
     func replace(_ range: TextRange, _ text: String, _ style: TextStyleChange? = nil) throws {
-        let logical = model.glyphsIn(range)
+        let logical = Self.whole(model.glyphsIn(range))
         let glyphs = ordered(range, logical)
         if glyphs.isEmpty { throw EditConflictException(EditingText.noText) }
-        try check(glyphs)
+        try check(glyphs, whole: true)
+        try unwrap(glyphs)
         if style == nil {
             let groups = Self.styleGroups(logical)
             if groups.count > 1 {
@@ -223,9 +243,10 @@ final class TextEditor {
 
     // Removes the glyphs and moves what follows them in the same string back to where it was.
     func delete(_ range: TextRange) throws {
-        let glyphs = ordered(range)
+        let glyphs = ordered(range, Self.whole(model.glyphsIn(range)))
         if glyphs.isEmpty { throw EditConflictException(EditingText.noText) }
-        try check(glyphs)
+        try check(glyphs, whole: true)
+        try unwrap(glyphs)
         try cutAll(glyphs, nil)
     }
 
@@ -340,9 +361,9 @@ final class TextEditor {
 
     /// Changes the look of the text of a range without changing its characters where the font stays the same.
     func restyle(_ range: TextRange, _ change: TextStyleChange) throws {
-        let glyphs = model.glyphsIn(range)
+        let glyphs = Self.whole(model.glyphsIn(range))
         if glyphs.isEmpty { throw EditConflictException(EditingText.noText) }
-        try check(glyphs)
+        try check(glyphs, whole: true)
         if change.needsFont {
             try replace(range, model.text.getText(range), change)
             return
@@ -451,7 +472,7 @@ final class TextEditor {
         let first = firstChar(range)
         if first < 0 { return 0 }
         let line = model.text.lines[model.text.chars[first].line]
-        let lineGlyphs = model.glyphsIn(line.range)
+        let lineGlyphs = Self.whole(model.glyphsIn(line.range))
         guard lineGlyphs.count == glyphs.count, let alignment = model.alignmentOfLine(line.index), alignment != .left, alignment != .justify else { return 0 }
         let oldWidth = Self.extent(glyphs)
         return alignment == .right ? oldWidth - newWidth : (oldWidth - newWidth) / 2

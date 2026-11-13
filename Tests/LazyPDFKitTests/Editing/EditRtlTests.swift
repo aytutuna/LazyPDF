@@ -107,4 +107,24 @@ final class EditRtlTests: XCTestCase {
         XCTAssertTrue(EditKit.latin(session).contains("/ActualText"))
         XCTAssertEqual(try read(session).text.trimmingCharacters(in: .whitespacesAndNewlines), "אב (גד)")
     }
+
+    func test_textWithMirroredBracketsCanBeEditedAgain() throws {
+        let session = try page("abc")
+        let editor = try PageEditor(session, 0, fonts)
+        XCTAssertTrue(try editor.replaceText(try block(editor).range, "אב (גד)").done)
+
+        let fix = try PageEditor(session, 0, fonts)
+        let result = try fix.replaceText(try block(fix).range, "אב (הד)")
+        XCTAssertTrue(result.done, result.problem ?? "")
+        XCTAssertEqual(try read(session).text.trimmingCharacters(in: .whitespacesAndNewlines), "אב (הד)")
+        XCTAssertEqual(EditKit.latin(session).components(separatedBy: "/ActualText").count - 1, 1)
+
+        let color = try PageEditor(session, 0, fonts)
+        XCTAssertTrue(try color.setTextStyle([try block(color).range], TextStyleChange(color: RgbColor(1, 0, 0))).done)
+        XCTAssertEqual(try read(session).text.trimmingCharacters(in: .whitespacesAndNewlines), "אב (הד)")
+
+        let delete = try PageEditor(session, 0, fonts)
+        XCTAssertTrue(try delete.deleteText(try block(delete).range).done)
+        XCTAssertEqual(try read(session).text.trimmingCharacters(in: .whitespacesAndNewlines), "")
+    }
 }
