@@ -90,11 +90,12 @@ internal sealed class LineShaper(FontFile file, IShaper shaper, TrueTypeFont mea
 
         // A glyph stands for the text from its cluster to the next cluster start, whichever way the run is drawn.
         var starts = shaped.Select(g => Math.Clamp(g.Cluster, 0, run.Length)).Distinct().Order().ToList();
+        var nextOf = new Dictionary<int, int>(starts.Count);
+        for (int i = 0; i < starts.Count; i++) nextOf[starts[i]] = i + 1 < starts.Count ? starts[i + 1] : run.Length;
         foreach (var g in shaped)
         {
             int from = Math.Clamp(g.Cluster, 0, run.Length);
-            int next = starts.IndexOf(from) + 1;
-            glyphs.Add(new LineGlyph(g, start + from, start + (next < starts.Count ? starts[next] : run.Length), mirrored && from < run.Length && run[from] != original[from]));
+            glyphs.Add(new LineGlyph(g, start + from, start + nextOf[from], mirrored && from < run.Length && run[from] != original[from]));
         }
         return mirrored;
     }

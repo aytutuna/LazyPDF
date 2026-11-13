@@ -103,6 +103,16 @@ public class ShapingTests
     }
 
     [Fact]
+    public void LongHebrewRunShapesInLinearTime()
+    {
+        var text = new string('א', 200_000);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var line = Lines().Shape(text);
+        Assert.Equal(text.Length, line.Glyphs.Count);
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), watch.Elapsed.ToString());
+    }
+
+    [Fact]
     public void LatinAndDigitsInsideHebrewKeepTheirOrder()
     {
         // Digits after Latin letters join the Latin run (W7).
