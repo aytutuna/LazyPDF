@@ -139,6 +139,7 @@ internal static class OfficeLayoutSpec
                         Columns = [.. t["cols"].Split(',').Select(w => double.Parse(w, CultureInfo.InvariantCulture))],
                         Indent = Number(t, "indent"),
                         Align = t.GetValueOrDefault("align") switch { "center" => LayoutAlign.Center, "right" => LayoutAlign.Right, _ => LayoutAlign.Left },
+                        RightToLeft = t.ContainsKey("rtl"),
                     });
                     cell = null;
                     nextColumn = 0;
@@ -178,6 +179,7 @@ internal static class OfficeLayoutSpec
                     break;
                 case "endtable":
                     Flush();
+                    if (section!.Blocks[^1] is LayoutTable { RightToLeft: true } mirrored) mirrored.Mirror();
                     cell = null;
                     break;
                 case "pagebreak":

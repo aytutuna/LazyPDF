@@ -120,7 +120,8 @@ internal static class TableLayout
     private static double[] Columns(LayoutTable table, double areaWidth)
     {
         var widths = table.Columns.Select(w => Math.Max(0, w)).ToArray();
-        double indent = table.Align == LayoutAlign.Left ? Math.Clamp(table.Indent, 0, Math.Max(0, areaWidth - 36)) : 0;
+        // The indent belongs to the edge the table starts from: the left, or the right when the table runs right to left.
+        double indent = table.Align == (table.RightToLeft ? LayoutAlign.Right : LayoutAlign.Left) ? Math.Clamp(table.Indent, 0, Math.Max(0, areaWidth - 36)) : 0;
         double room = Math.Max(36, areaWidth - indent);
         int free = widths.Count(w => w == 0);
         if (free > 0)
@@ -140,8 +141,8 @@ internal static class TableLayout
         double start = table.Align switch
         {
             LayoutAlign.Center => (areaWidth - total) / 2,
-            LayoutAlign.Right => areaWidth - total,
-            _ => table.Indent,
+            LayoutAlign.Right => areaWidth - total - (table.RightToLeft ? table.Indent : 0),
+            _ => table.RightToLeft ? 0 : table.Indent,
         };
         var edges = new double[widths.Length + 1];
         edges[0] = start;

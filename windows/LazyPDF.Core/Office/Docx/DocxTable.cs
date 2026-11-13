@@ -219,7 +219,15 @@ internal sealed partial class DocxReader
             "right" or "end" => LayoutAlign.Right,
             _ => LayoutAlign.Left,
         };
-        _blocks.Add(new LayoutTable { Columns = [.. widths], Indent = indent, Align = align, Rows = outRows });
+        // Everything above was read from the start edge: the first grid column, left and right as leading and trailing.
+        bool visualRtl = false;
+        foreach (var properties in chain.Select(style => style.Source.Child(W, "tblPr")).Append(tblPr))
+        {
+            if (properties?.Child(W, "bidiVisual") is { } visual) visualRtl = On(visual);
+        }
+        var table = new LayoutTable { Columns = [.. widths], Indent = indent, Align = visualRtl ? Mirror(align) : align, RightToLeft = visualRtl, Rows = outRows };
+        if (visualRtl) table.Mirror();
+        _blocks.Add(table);
     }
 
     private static int GridBefore(XmlElement tr) =>

@@ -143,7 +143,7 @@ internal static class DocxSpec
 
     private static void Table(StringBuilder o, LayoutTable t)
     {
-        o.Append($"table {string.Join(',', t.Columns.Select(Num))} indent={Num(t.Indent)} {t.Align.ToString().ToLowerInvariant()}\n");
+        o.Append($"table {string.Join(',', t.Columns.Select(Num))} indent={Num(t.Indent)} {t.Align.ToString().ToLowerInvariant()}{(t.RightToLeft ? " rtl" : "")}\n");
         foreach (var row in t.Rows)
         {
             o.Append("row");

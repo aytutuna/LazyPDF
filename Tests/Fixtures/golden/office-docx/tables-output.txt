@@ -181,3 +181,55 @@ cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
 cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 ""
 skipped table 2
+> table in a right to left section reads from the right
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 50.00,150.00,100.00 indent=12.00 right rtl
+row
+cell 1 2 1 fill=ffff00 margin=0.00,10.00,0.00,5.40 valign=top edges=-,1.00:ff0000,-,0.50:00ff00
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "אבג"
+cell 0 1 1 fill=- margin=0.00,10.00,0.00,5.40 valign=top edges=-,0.50:00ff00,-,2.00:0000ff
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b"
+row
+cell 1 1 1 fill=- margin=0.00,10.00,0.00,5.00 valign=top edges=-,1.50:000000,-,0.50:00ff00
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "c"
+cell 0 1 1 fill=- margin=0.00,10.00,0.00,5.40 valign=top edges=-,0.50:00ff00,-,2.00:0000ff
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "d"
+> table alignment in a right to left table
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 50.00 indent=0.00 right rtl
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "left is the start"
+table 50.00 indent=0.00 left rtl
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "end"
+table 50.00 indent=0.00 center rtl
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "center"
+> table direction from the style and switched off
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 100.00,50.00 indent=0.00 right rtl
+row
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a"
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b"
+table 50.00,100.00 indent=0.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b"
