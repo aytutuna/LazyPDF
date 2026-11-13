@@ -25,7 +25,7 @@ struct FindBar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             bar
-            if let note = TimedOutText.forPages(viewer.search.timedOut) {
+            if let note = note {
                 Text(note)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -35,6 +35,13 @@ struct FindBar: View {
                     .background(.bar)
             }
         }
+    }
+
+    private var note: String? {
+        let search = viewer.search
+        let parts = [search.capped ? L10n.t("First {0} shown. Narrow the search to see the rest.", ViewerSearch.maxHits) : nil,
+                     TimedOutText.forPages(search.timedOut)].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
     private var bar: some View {
@@ -51,6 +58,11 @@ struct FindBar: View {
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
                 .accessibilityAddTraits(.updatesFrequently)
+            if viewer.search.isRunning {
+                Button { viewer.search.stop() } label: { Image(systemName: "stop.circle") }
+                    .accessibilityLabel(L10n.t("Stop searching"))
+                    .help(L10n.t("Stop searching"))
+            }
             Button { viewer.search.previous() } label: { Image(systemName: "chevron.up") }
                 .keyboardShortcut("g", modifiers: [.command, .shift])
                 .disabled(viewer.search.hits.isEmpty)
@@ -122,6 +134,7 @@ struct FindBar: View {
         let search = viewer.search
         if search.query.isEmpty { return "" }
         if search.badPattern { return L10n.t("Not a valid pattern") }
+        if search.stopped { return search.hits.isEmpty ? L10n.t("Stopped") : L10n.t("{0} found, stopped", search.hits.count) }
         if search.hits.isEmpty {
             return search.isRunning ? L10n.t("Searching")
                 : !search.timedOut.isEmpty ? L10n.t("Not fully searched")

@@ -654,6 +654,7 @@
 "First number" = "İlk numara";
 "First page" = "İlk sayfa";
 "First page number" = "İlk sayfa numarası";
+"First {0} shown. Narrow the search to see the rest." = "İlk {0} sonuç gösteriliyor. Gerisini görmek için aramayı daraltın.";
 "Fit" = "Sığdır";
 "Fit inside the page" = "Sayfanın içine sığdır";
 "Fit page" = "Sayfaya sığdır";
@@ -1654,6 +1655,8 @@
 "Still working" = "Hâlâ çalışıyor";
 "Stop placing" = "Yerleştirmeyi bırak";
 "Stop reading" = "Okumayı durdur";
+"Stop searching" = "Aramayı durdur";
+"Stopped" = "Durduruldu";
 "Stopped after {0} page. The page was kept. Undo takes it back.|one" = "{0} sayfa okunduktan sonra durduruldu. Okunan sayfalar korundu; Geri al ile kaldırabilirsiniz.";
 "Stopped after {0} page. The page was kept. Undo takes it back.|other" = "{0} sayfa okunduktan sonra durduruldu. Okunan sayfalar korundu; Geri al ile kaldırabilirsiniz.";
 "Straight lines" = "Düz çizgiler";
@@ -2389,6 +2392,7 @@
 "{0} form field|one" = "{0} form alanı";
 "{0} form field|other" = "{0} form alanı";
 "{0} found" = "{0} bulundu";
+"{0} found, stopped" = "{0} bulundu, durduruldu";
 "{0} has a signature that these steps would break. Open it and sign it again afterwards." = "{0} imzalı; bu adımlar imzayı bozar. Dosyayı açıp adımlardan sonra yeniden imzalayın.";
 "{0} has no comments for the pages of this file." = "{0} dosyasında bu belgenin sayfalarına ait yorum yok.";
 "{0} has no pages." = "{0} dosyasında sayfa yok.";

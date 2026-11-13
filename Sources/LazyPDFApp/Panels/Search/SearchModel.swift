@@ -32,11 +32,19 @@ public final class SearchModel: ToolPanelModel {
         guard let search = viewer?.search else { return "" }
         if search.query.isEmpty { return L10n.t("Search the file to list every match here.") }
         if search.badPattern { return L10n.t("Not a valid pattern") }
-        if search.isRunning { return L10n.t("Searching for {0}", search.query) }
+        if search.isRunning { return search.hits.isEmpty ? L10n.t("Searching for {0}", search.query) : L10n.t("{0} found", search.hits.count) }
+        if search.stopped { return search.hits.isEmpty ? L10n.t("Stopped") : L10n.t("{0} found, stopped", search.hits.count) }
         let slow = TimedOutText.forPages(search.timedOut)
         if search.hits.isEmpty { return slow ?? L10n.t("No results for {0}", search.query) }
-        let found = L10n.plural(search.hits.count, one: "{0} result for {1}", other: "{0} results for {1}", search.query)
+        var found = L10n.plural(search.hits.count, one: "{0} result for {1}", other: "{0} results for {1}", search.query)
+        if search.capped { found += " " + L10n.t("First {0} shown. Narrow the search to see the rest.", ViewerSearch.maxHits) }
         return slow.map { "\(found) \($0)" } ?? found
+    }
+
+    public var isSearching: Bool { viewer?.search.isRunning ?? false }
+
+    public func stop() {
+        viewer?.search.stop()
     }
 
     public func select(_ index: Int) {
