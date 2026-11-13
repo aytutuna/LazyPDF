@@ -1,5 +1,5 @@
 # Cases of tables in the paginator. Same format as layout-input.txt, plus:
-# table cols=<w,w,...> [indent=<pt>] [align=center|right]: a table; row [header] [cantsplit] [height=<pt>] [exact]: a row;
+# table cols=<w,w,...> [indent=<pt>] [align=center|right] [rtl]: a table; row [header] [cantsplit] [height=<pt>] [exact]: a row;
 # cell [col=<n>] [span=<n>] [rowspan=<n>] [fill=RRGGBB] [margin=top,right,bottom,left] [valign=center|bottom] [top|right|bottom|left=<pt>:RRGGBB]:
 # a cell, whose paragraphs are the p lines that follow; endtable goes back to the section's body.
 case table cells, fills and borders
@@ -225,4 +225,41 @@ row height=20 exact
 cell
 p
 r | b
+endtable
+case right to left tables
+section
+page 200 200 20 20 20 20
+table cols=40,60,20 rtl
+row
+cell fill=ffff00 left=1:ff0000 margin=0,10,0,2
+p
+r | First
+cell span=2 right=1:0000ff
+p
+r | Second
+row
+cell span=2
+p
+r | x
+cell
+p
+r | y
+endtable
+table cols=50 rtl indent=10 align=right
+row
+cell
+p
+r | indent from the right
+endtable
+table cols=50 rtl indent=10
+row
+cell
+p
+r | left edge, no indent
+endtable
+table cols=50 indent=10 align=right
+row
+cell
+p
+r | left to right, no indent
 endtable

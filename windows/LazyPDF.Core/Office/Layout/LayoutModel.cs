@@ -84,7 +84,7 @@ internal enum LayoutVAlign { Top, Center, Bottom }
 /// </summary>
 internal sealed class LayoutCell
 {
-    public int Column { get; init; }
+    public int Column { get; set; }
     public int Span { get; init; } = 1;
     public int RowSpan { get; set; } = 1;
     public List<LayoutParagraph> Paragraphs { get; init; } = [];
@@ -94,9 +94,9 @@ internal sealed class LayoutCell
     public LayoutBorder? Bottom { get; set; }
     public LayoutBorder? Left { get; set; }
     public double MarginTop { get; init; }
-    public double MarginRight { get; init; } = 5.4;
+    public double MarginRight { get; set; } = 5.4;
     public double MarginBottom { get; init; }
-    public double MarginLeft { get; init; } = 5.4;
+    public double MarginLeft { get; set; } = 5.4;
     public LayoutVAlign VAlign { get; init; }
 }
 
@@ -115,10 +115,24 @@ internal sealed class LayoutRow
 internal sealed class LayoutTable : LayoutBlock
 {
     public List<double> Columns { get; init; } = [];
-    /// <summary>From the left of the text area, for a left aligned table.</summary>
+    /// <summary>From the left of the text area, for a left aligned table; from the right for a right aligned one when the table is right to left.</summary>
     public double Indent { get; init; }
     public LayoutAlign Align { get; init; }
+    /// <summary>The table's columns run right to left, so the indent belongs to the right edge. <see cref="Mirror"/> has put the cells there; this only moves the indent.</summary>
+    public bool RightToLeft { get; init; }
     public List<LayoutRow> Rows { get; init; } = [];
+
+    /// <summary>Turns a table written from its start edge into one drawn right to left: the columns, the cells' places, borders and margins swap sides.</summary>
+    public void Mirror()
+    {
+        Columns.Reverse();
+        foreach (var cell in Rows.SelectMany(r => r.Cells))
+        {
+            cell.Column = Columns.Count - cell.Column - cell.Span;
+            (cell.Left, cell.Right) = (cell.Right, cell.Left);
+            (cell.MarginLeft, cell.MarginRight) = (cell.MarginRight, cell.MarginLeft);
+        }
+    }
 }
 
 /// <summary>Sizes in points. Header and footer distances are measured from the page edge to the band.</summary>

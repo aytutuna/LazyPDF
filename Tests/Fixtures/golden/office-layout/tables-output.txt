@@ -1027,3 +1027,97 @@ rect 19.50 59.50 81.00 1.00 000000
 | ET
 | 19.5 139.5 81 1 re
 | f
+> right to left tables
+page 1 200.00 200.00
+rect 100.00 20.00 40.00 13.43 ffff00
+text 110.00 30.47 Carlito/Regular 11.00 000000 +0.00 "First"
+text 25.40 30.47 Carlito/Regular 11.00 000000 +0.00 "Second"
+rect 139.50 19.50 1.00 14.43 ff0000
+rect 19.50 19.50 1.00 14.43 0000ff
+text 45.40 43.90 Carlito/Regular 11.00 000000 +0.00 "x"
+text 25.40 43.90 Carlito/Regular 11.00 000000 +0.00 "y"
+text 125.40 57.33 Carlito/Regular 11.00 000000 +0.00 "indent"
+text 125.40 70.76 Carlito/Regular 11.00 000000 +0.00 "from the"
+text 125.40 84.18 Carlito/Regular 11.00 000000 +0.00 "right"
+text 25.40 97.61 Carlito/Regular 11.00 000000 +0.00 "left"
+text 25.40 111.04 Carlito/Regular 11.00 000000 +0.00 "edge, no"
+text 25.40 124.47 Carlito/Regular 11.00 000000 +0.00 "indent"
+text 135.40 137.90 Carlito/Regular 11.00 000000 +0.00 "left to"
+text 135.40 151.32 Carlito/Regular 11.00 000000 +0.00 "right, no"
+text 135.40 164.75 Carlito/Regular 11.00 000000 +0.00 "indent"
+| 1 1 0 rg
+| 100 166.57 40 13.43 re
+| f
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 110 169.53 Td
+| <0002000A000F00100011> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 25.4 169.53 Td
+| <000300060004000E000D0005> Tj
+| ET
+| 1 0 0 rg
+| 139.5 166.07 1 14.43 re
+| f
+| 0 0 1 rg
+| 19.5 166.07 1 14.43 re
+| f
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 45.4 156.1 Td
+| <0012> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 25.4 156.1 Td
+| <0013> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 125.4 142.67 Td
+| <000A000D00050006000D0011> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 125.4 129.24 Td
+| <0007000F000E000C0001001100090006> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 125.4 115.82 Td
+| <000F000A000800090011> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 25.4 102.39 Td
+| <0016000600070011> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 25.4 88.96 Td
+| <000600050008000600150001000D000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 25.4 75.53 Td
+| <000A000D00050006000D0011> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 135.4 62.1 Td
+| <001600060007001100010011000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 135.4 48.68 Td
+| <000F000A00080009001100150001000D000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 135.4 35.25 Td
+| <000A000D00050006000D0011> Tj
+| ET
