@@ -30,8 +30,8 @@ internal static class WebPageRules
     /// <summary>The page is laid out as a printer would; Auto is upright, since a web page is written for width.</summary>
     public static WebPageLayout Layout(PdfPageSetup setup)
     {
-        var (width, height) = setup.Paper == PdfPaper.Letter ? (8.5, 11.0) : (210 / 25.4, 297 / 25.4);
-        if (setup.Orientation == PdfOrientation.Landscape) (width, height) = (height, width);
+        var (points, tall) = ExportPdf.Paper(setup, landscape: false);
+        double width = points / 72, height = tall / 72;
         double margin = setup.Margin / 72;
         if (margin < 0 || margin * 2 >= Math.Min(width, height)) throw new ArgumentException("The margin leaves no room on the page.");
         return new(width, height, margin);

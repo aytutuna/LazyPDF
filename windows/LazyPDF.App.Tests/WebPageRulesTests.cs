@@ -57,6 +57,10 @@ public sealed class WebPageRulesTests
     [InlineData(PdfPaper.A4, PdfOrientation.Landscape, 11.6929, 8.2677)]
     [InlineData(PdfPaper.Letter, PdfOrientation.Portrait, 8.5, 11)]
     [InlineData(PdfPaper.Letter, PdfOrientation.Landscape, 11, 8.5)]
+    [InlineData(PdfPaper.A3, PdfOrientation.Auto, 11.6929, 16.5354)]
+    [InlineData(PdfPaper.A5, PdfOrientation.Landscape, 8.2677, 5.8268)]
+    [InlineData(PdfPaper.Legal, PdfOrientation.Portrait, 8.5, 14)]
+    [InlineData(PdfPaper.Legal, PdfOrientation.Landscape, 14, 8.5)]
     public void PaperIsInchesAndFollowsTheOrientation(PdfPaper paper, PdfOrientation orientation, double width, double height)
     {
         var layout = WebPageRules.Layout(new PdfPageSetup(paper, orientation, 36));
@@ -64,6 +68,19 @@ public sealed class WebPageRulesTests
         Assert.Equal(width, layout.Width, 4);
         Assert.Equal(height, layout.Height, 4);
         Assert.Equal(0.5, layout.Margin, 6);
+    }
+
+    [Theory]
+    [InlineData(PdfOrientation.Portrait, 100, 150)]
+    [InlineData(PdfOrientation.Landscape, 150, 100)]
+    public void ACustomSizeIsUsedAndTurnedByTheOrientation(PdfOrientation orientation, double widthMm, double heightMm)
+    {
+        var setup = new PdfPageSetup(PdfPaper.Custom, orientation, 0, CustomWidth: 100 / 25.4 * 72, CustomHeight: 150 / 25.4 * 72);
+
+        var layout = WebPageRules.Layout(setup);
+
+        Assert.Equal(widthMm / 25.4, layout.Width, 4);
+        Assert.Equal(heightMm / 25.4, layout.Height, 4);
     }
 
     [Fact]
