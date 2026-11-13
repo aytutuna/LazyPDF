@@ -13,6 +13,10 @@ final class XmpPacket {
     static let pdfaId = "http://www.aiim.org/pdfa/ns/id/"
     static let pdfuaId = "http://www.aiim.org/pdfua/ns/id/"
 
+    private static let extensionNs = "http://www.aiim.org/pdfa/ns/extension/"
+    private static let schemaNs = "http://www.aiim.org/pdfa/ns/schema#"
+    private static let propertyNs = "http://www.aiim.org/pdfa/ns/property#"
+
     private static let maxSize = 1 << 24
 
     private let document: XmlDocument
@@ -85,6 +89,59 @@ final class XmpPacket {
             found = found || !attributes.isEmpty || !elements.isEmpty
         }
         return found
+    }
+
+    /// The extension schema PDF/A asks for the pdfuaid namespace. It joins the file's own list of schemas when there is one,
+    /// and is not added twice.
+    func declarePdfUaSchema() {
+        let schemaName = XmlName(Self.schemaNs, "namespaceURI")
+        for description in descriptions() {
+            var work: [XmlNode] = description.children.reversed()
+            while let node = work.popLast() {
+                guard let element = node as? XmlElement else { continue }
+                if element.name == schemaName && XmlParser.same(DotNetText.trim(element.value), Self.pdfuaId) { return }
+                work.append(contentsOf: element.children.reversed())
+            }
+        }
+
+        func text(_ ns: String, _ name: String, _ value: String) -> XmlElement { XmlElement(XmlName(ns, name), text: value) }
+        func resource() -> XmlElement {
+            let item = XmlElement(XmlName(Self.rdf, "li"))
+            item.attributes.append(XmlAttribute(XmlName(Self.rdf, "parseType"), "Resource"))
+            return item
+        }
+        let part = resource()
+        part.append(text(Self.propertyNs, "name", "part"))
+        part.append(text(Self.propertyNs, "valueType", "Integer"))
+        part.append(text(Self.propertyNs, "category", "internal"))
+        part.append(text(Self.propertyNs, "description", "Indicates which part of ISO 14289 the file follows"))
+        let seq = XmlElement(XmlName(Self.rdf, "Seq"))
+        seq.append(part)
+        let property = XmlElement(XmlName(Self.schemaNs, "property"))
+        property.append(seq)
+        let entry = resource()
+        entry.append(text(Self.schemaNs, "schema", "PDF/UA identification schema"))
+        entry.append(text(Self.schemaNs, "namespaceURI", Self.pdfuaId))
+        entry.append(text(Self.schemaNs, "prefix", "pdfuaid"))
+        entry.append(property)
+
+        let schemas = XmlName(Self.extensionNs, "schemas")
+        let bag = descriptions().flatMap { $0.elements(schemas) }.compactMap { $0.element(XmlName(Self.rdf, "Bag")) }.first
+        if let bag {
+            bag.append(entry)
+            return
+        }
+        let newBag = XmlElement(XmlName(Self.rdf, "Bag"))
+        newBag.append(entry)
+        let list = XmlElement(schemas)
+        list.append(newBag)
+        let description = XmlElement(XmlName(Self.rdf, "Description"))
+        description.attributes.append(XmlAttribute(XmlName(Self.rdf, "about"), ""))
+        description.attributes.append(XmlAttribute(XmlName(XmlNamespaces.xmlns, "pdfaExtension"), Self.extensionNs))
+        description.attributes.append(XmlAttribute(XmlName(XmlNamespaces.xmlns, "pdfaSchema"), Self.schemaNs))
+        description.attributes.append(XmlAttribute(XmlName(XmlNamespaces.xmlns, "pdfaProperty"), Self.propertyNs))
+        description.append(list)
+        rdfElement.append(description)
     }
 
     func toBytes() -> [UInt8] {

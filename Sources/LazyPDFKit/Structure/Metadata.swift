@@ -171,7 +171,7 @@ public struct DocumentMetadata: Equatable {
             .filter { !$0.isEmpty }
     }
 
-    private static func hasCryptFilter(_ document: PdfDocument, _ stream: PdfStream) -> Bool {
+    static func hasCryptFilter(_ document: PdfDocument, _ stream: PdfStream) -> Bool {
         switch document.resolve(stream.dictionary["Filter"]) {
         case let n as PdfName: return n.value == "Crypt"
         case let a as PdfArray: return a.items.contains { (document.resolve($0) as? PdfName)?.value == "Crypt" }
