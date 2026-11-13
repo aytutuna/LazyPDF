@@ -64,6 +64,11 @@ public final class DocumentTab: StripTab {
     /// Redaction marks drawn but not yet applied; they live in the Redact panel and are lost with the tab.
     public var pendingMarks = 0
 
+    /// Measurements listed but not yet added to the page; they live in the Measure panel and are lost with the tab.
+    public var pendingMeasurements = 0
+
+    public var hasUnappliedWork: Bool { pendingMarks > 0 || pendingMeasurements > 0 }
+
     /// Called when the file's bytes changed.
     @ObservationIgnored public var changed: (() -> Void)?
 

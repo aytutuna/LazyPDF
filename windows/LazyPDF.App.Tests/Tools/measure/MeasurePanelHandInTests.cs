@@ -44,6 +44,24 @@ public sealed class MeasurePanelHandInTests
     });
 
     [Fact]
+    public Task ASignedFileKeepsTheMeasurementsWaitingAndLetsTheWindowGo() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(StampsPanelTests.Signed(certified: false), (string?)null), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new MeasurePanel();
+        panel.Attach(tab, FakeViewer.Create().Viewer, host);
+        Wait(panel, tab);
+
+        Assert.True(panel.HandIn());
+
+        Assert.Empty(host.Notices);
+        Assert.False(tab.IsDirty);
+        Assert.Null(tab.Document.Array(tab.Document.Pages[0].Dictionary, "Annots"));
+        Assert.Equal(1, tab.PendingMeasurements);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task HandingInWithNothingWaitingChangesNothing() => Sta.Run(() =>
     {
         using var tab = Open();

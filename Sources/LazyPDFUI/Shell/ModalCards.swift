@@ -54,10 +54,16 @@ struct CloseCard: View {
 
     var body: some View {
         let marksOnly = !tab.isDirty
-        let lost = L10n.t("Your changes are lost if you do not save them.")
-        let marks = L10n.plural(tab.pendingMarks, one: "{0} redaction mark is not applied yet.", other: "{0} redaction marks are not applied yet.")
+        var parts: [String] = []
+        if !marksOnly { parts.append(L10n.t("Your changes are lost if you do not save them.")) }
+        if tab.pendingMarks > 0 {
+            parts.append(L10n.plural(tab.pendingMarks, one: "{0} redaction mark is not applied yet.", other: "{0} redaction marks are not applied yet."))
+        }
+        if tab.pendingMeasurements > 0 {
+            parts.append(L10n.plural(tab.pendingMeasurements, one: "{0} measurement is not added to the page yet.", other: "{0} measurements are not added to the page yet."))
+        }
         ModalCard(title: marksOnly ? L10n.t("Close {0}?", tab.title) : L10n.t("Save changes to {0}?", tab.title),
-                  text: marksOnly ? marks : tab.pendingMarks > 0 ? "\(lost) \(marks)" : lost) {
+                  text: parts.joined(separator: " ")) {
             if !marksOnly {
                 Button(L10n.t("Save"), action: save)
                     .buttonStyle(.borderedProminent)

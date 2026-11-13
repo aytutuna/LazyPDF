@@ -2432,6 +2432,8 @@
 "{0} mark|other" = "{0} işaret";
 "{0} match was left as it was: {1}|one" = "{0} eşleşme olduğu gibi bırakıldı: {1}";
 "{0} match was left as it was: {1}|other" = "{0} eşleşme olduğu gibi bırakıldı: {1}";
+"{0} measurement is not added to the page yet.|one" = "{0} ölçüm henüz sayfaya eklenmedi.";
+"{0} measurement is not added to the page yet.|other" = "{0} ölçüm henüz sayfaya eklenmedi.";
 "{0} more" = "{0} tane daha";
 "{0} more conditions are not listed." = "{0} koşul daha listelenmedi.";
 "{0} more rules are not listed." = "{0} kural daha listelenmedi.";
