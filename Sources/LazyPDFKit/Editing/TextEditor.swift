@@ -98,12 +98,30 @@ final class TextEditor {
         return result
     }
 
-    // New text goes where the old was, which is inside the span, so the span stops claiming it.
+    // New text goes where the old was, which is inside the span, so the span stops claiming it. The marked content stays
+    // with what it carried besides the text (a structure tree points at its MCID), and an inner span goes with the outer one.
     func unwrap(_ glyphs: [EditGlyph]) throws {
         var seen: [ActualSpan] = []
-        for case let span? in glyphs.map({ $0.span }) where !seen.contains(where: { $0 === span }) {
-            seen.append(span)
-            if !batch.replaceOperation(Place(span.unit, span.visit), span.op, "/Span BMC") { throw EditConflictException(EditingText.sharedForm) }
+        for g in glyphs {
+            guard let outer = g.span else { continue }
+            for span in [outer] + g.inner where !seen.contains(where: { $0 === span }) {
+                seen.append(span)
+                let place = Place(span.unit, span.visit)
+                let op = span.unit.operations[span.op]
+                let rest = span.marked.properties!.copy()
+                rest.remove("ActualText")
+                let writer = ContentWriter()
+                if rest.count == 0 {
+                    _ = writer.op("BMC", [op.operands[0]])
+                } else if op.operands.last is PdfName {
+                    guard let name = batch.addResource(place, "Properties", rest) else { throw EditConflictException(EditingText.sharedForm) }
+                    _ = writer.op("BDC", [op.operands[0], PdfName(name)])
+                } else {
+                    _ = writer.op("BDC", [op.operands[0], rest])
+                }
+                let text = (String(bytes: writer.toArray(), encoding: .isoLatin1) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                if !batch.replaceOperation(place, span.op, text) { throw EditConflictException(EditingText.sharedForm) }
+            }
         }
     }
 

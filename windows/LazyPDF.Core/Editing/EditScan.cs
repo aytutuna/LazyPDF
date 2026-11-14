@@ -72,6 +72,9 @@ internal sealed class EditGlyph
     /// <summary>The /ActualText span the glyph is in, when the editor can take it as a unit: the span and the glyph are in the same stream.</summary>
     public ActualSpan? Span { get; init; }
 
+    /// <summary>The /ActualText spans inside <see cref="Span"/> that also hold the glyph, outermost first.</summary>
+    public IReadOnlyList<ActualSpan> Inner { get; init; } = [];
+
     /// <summary>Glyphs drawn again at the same place, which go with it.</summary>
     public List<EditGlyph> Twins { get; } = [];
 
@@ -95,8 +98,9 @@ internal sealed class EditGlyph
 }
 
 /// <summary>Marked content with /ActualText: its glyphs stand for the text of the span, so they are cut and restyled together.</summary>
-internal sealed class ActualSpan(ContentUnit unit, FormVisit? visit, int op)
+internal sealed class ActualSpan(ContentUnit unit, FormVisit? visit, int op, MarkedContent marked)
 {
+    public MarkedContent Marked { get; } = marked;
     public ContentUnit Unit { get; } = unit;
     public FormVisit? Visit { get; } = visit;
 
@@ -208,14 +212,16 @@ internal sealed class EditScan : ContentVisitor
 
     public override void BeginMarked(ContentContext context, MarkedContent marked)
     {
-        if (_inPattern == 0 && marked.Properties is not null && marked.Properties.ContainsKey("ActualText")) _spans[marked] = new ActualSpan(Current, Visit, context.OperatorIndex);
+        if (_inPattern == 0 && marked.Properties is not null && marked.Properties.ContainsKey("ActualText")) _spans[marked] = new ActualSpan(Current, Visit, context.OperatorIndex, marked);
     }
 
     public override void ShowGlyph(ContentContext context, in GlyphInfo glyph)
     {
         if (_inPattern > 0) return;
-        var span = context.Marked.Select(x => _spans.GetValueOrDefault(x)).FirstOrDefault(s => s is not null);
+        var spans = context.Marked.Select(x => _spans.GetValueOrDefault(x)).OfType<ActualSpan>().ToList();
+        var span = spans.FirstOrDefault();
         if (span is not null && (span.Unit != Current || span.Visit != Visit)) span = null;
+        var inner = span is null ? [] : spans.Skip(1).Where(s => s.Unit == Current && s.Visit == Visit).ToList();
         var state = context.State;
         var m = glyph.Matrix;
         double ascent = glyph.Font.Ascent > 0 ? Math.Min(glyph.Font.Ascent / 1000, 1.1) : 0.8;
@@ -255,6 +261,7 @@ internal sealed class EditScan : ContentVisitor
             Color = (state.RenderMode == 1 ? state.StrokeColor : state.FillColor).Rgb,
             HasActualText = context.Marked.Any(x => x.Properties is not null && x.Properties.ContainsKey("ActualText")),
             Span = span,
+            Inner = inner,
         };
         span?.Members.Add(shown);
         Glyphs.Add(shown);
