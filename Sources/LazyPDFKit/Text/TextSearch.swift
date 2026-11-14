@@ -29,6 +29,9 @@ public struct SearchMatch {
     public let range: TextRange
     public let text: String
     public let quads: [TextQuad]
+
+    /// Where the hit is in the text that was searched, for a replacement that has to cut a character's own text.
+    var source: (searched: SearchText, index: Int, length: Int)? = nil
 }
 
 /// Collects the pages where a regular expression ran out of time; hits found before the limit are still given.
@@ -124,6 +127,13 @@ public enum TextSearch {
         }
     }
 
+    fileprivate struct Hit {
+        let range: TextRange
+        let searched: SearchText
+        let index: Int
+        let length: Int
+    }
+
     fileprivate final class Matcher {
         private let options: TextSearchOptions
         private let query: [UInt16]
@@ -148,23 +158,25 @@ public enum TextSearch {
         }
 
         func find(_ page: TextPage, _ timeouts: SearchTimeouts?) throws -> [SearchMatch] {
-            var found: [TextRange] = []
+            var found: [Hit] = []
             let text = SearchText.build(page, options, false)
             var timedOut = try !collect(text, &found)
             if text.hasHyphenBreak { timedOut = try !collect(SearchText.build(page, options, true), &found) || timedOut }
             if timedOut { timeouts?.pages.append(page.pageIndex) }
-            found.sort { a, b in a.start != b.start ? a.start < b.start : b.end < a.end }
+            found.sort { a, b in a.range.start != b.range.start ? a.range.start < b.range.start : b.range.end < a.range.end }
             var result: [SearchMatch] = []
             var end = -1
-            for range in found {
+            for hit in found {
+                let range = hit.range
                 if range.start < end { continue }
                 end = range.end
-                result.append(SearchMatch(page: page.pageIndex, range: range, text: page.getText(range, joinHyphens: true), quads: page.quads(range)))
+                result.append(SearchMatch(page: page.pageIndex, range: range, text: page.getText(range, joinHyphens: true), quads: page.quads(range),
+                                          source: (hit.searched, hit.index, hit.length)))
             }
             return result
         }
 
-        private func collect(_ text: SearchText, _ found: inout [TextRange]) throws -> Bool {
+        private func collect(_ text: SearchText, _ found: inout [Hit]) throws -> Bool {
             if text.text.isEmpty { return true }
             guard let regex else {
                 var from = 0
@@ -176,7 +188,7 @@ public enum TextSearch {
                         from = i + 1
                         continue
                     }
-                    found.append(TextRange(text.map[i], text.map[from - 1] + 1))
+                    found.append(Hit(range: TextRange(text.map[i], text.map[from - 1] + 1), searched: text, index: i, length: from - i))
                 }
                 return true
             }
@@ -184,7 +196,7 @@ public enum TextSearch {
             var deadline = Date().addingTimeInterval(TextSearch.regexTimeout)
             var cancelled = false
             var timedOut = false
-            var matched: [TextRange] = []
+            var matched: [Hit] = []
             regex.enumerateMatches(in: string, options: [.reportProgress], range: NSRange(location: 0, length: text.text.count)) { match, flags, stop in
                 if Task.isCancelled {
                     cancelled = true
@@ -200,7 +212,7 @@ public enum TextSearch {
                 }
                 deadline = Date().addingTimeInterval(TextSearch.regexTimeout)
                 guard let m = match?.range, m.length > 0, m.location >= 0, m.location + m.length <= text.map.count else { return }
-                matched.append(TextRange(text.map[m.location], text.map[m.location + m.length - 1] + 1))
+                matched.append(Hit(range: TextRange(text.map[m.location], text.map[m.location + m.length - 1] + 1), searched: text, index: m.location, length: m.length))
             }
             found.append(contentsOf: matched)
             if cancelled { throw CancellationError() }

@@ -73,7 +73,7 @@ public enum TextReplacer {
                     } else if options.regex && replacement.contains("$") {
                         throw EditConflictException(EditingText.nothingChanged)
                     }
-                    try editor.replace(match.range, text)
+                    try editor.replace(match.range, keepSpanText(model, match, text, options))
                     done.append(match)
                 } catch let e as EditConflictException {
                     batch.restore(mark)
@@ -95,6 +95,41 @@ public enum TextReplacer {
         }
         if replaced > 0 { try session.commit(label) }
         return ReplaceReport(replaced: replaced, failed: failures, substitutions: substitutions, pages: changed)
+    }
+
+    // A character that stands for /ActualText is the text of a whole span, and an edit takes the span's glyphs together, so
+    // what a match leaves of that text goes back around the replacement.
+    private static func keepSpanText(_ model: PageModel, _ match: SearchMatch, _ text: String, _ options: TextSearchOptions) -> String {
+        guard let source = match.source else { return text }
+        let first = match.range.start, last = match.range.end - 1
+        var before: [UInt16] = [], after: [UInt16] = []
+        if let start = inSpan(model, first) {
+            let begin = (source.searched.map.lastIndex(of: first) ?? 0) - SearchText.fold(start, options).count + 1
+            before = Array(start[..<foldedOffset(start, source.index - begin, options, false)])
+        }
+        if let end = inSpan(model, last) {
+            let end0 = source.searched.map.lastIndex(of: last) ?? 0
+            let total = SearchText.fold(end, options).count
+            after = Array(end[foldedOffset(end, total - (end0 - (source.index + source.length - 1)), options, true)...])
+        }
+        return String(units: before) + text + String(units: after)
+    }
+
+    private static func inSpan(_ model: PageModel, _ index: Int) -> [UInt16]? {
+        guard index >= 0, index < model.charGlyphs.count, model.charGlyphs[index]?.span != nil, !model.text.chars[index].isSpace else { return nil }
+        return Array(model.text.chars[index].text.utf16)
+    }
+
+    // The offset in the page's own text of a position in its folded text; a fold that makes two letters of one (or the reverse) is taken whole.
+    private static func foldedOffset(_ text: [UInt16], _ folded: Int, _ options: TextSearchOptions, _ roundUp: Bool) -> Int {
+        var offset = 0, seen = 0
+        while offset < text.count {
+            let next = SearchText.fold([text[offset]], options).count
+            if roundUp ? (seen >= folded && next > 0) : (seen + next > folded) { break }
+            seen += next
+            offset += 1
+        }
+        return offset
     }
 
     private static func linesOf(_ model: PageModel, _ range: TextRange) -> Int {

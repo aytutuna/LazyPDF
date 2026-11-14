@@ -54,7 +54,7 @@ public static class TextReplacer
                         if (options.Regex && replacement.Contains('$')) throw new EditConflictException(EditingText.NothingChanged);
                         text = replacement;
                     }
-                    editor.Replace(match.Range, text);
+                    editor.Replace(match.Range, KeepSpanText(model, match, text, options));
                     done.Add(match);
                 }
                 catch (EditConflictException e)
@@ -81,6 +81,44 @@ public static class TextReplacer
         }
         if (replaced > 0) session.Commit(label);
         return new ReplaceReport(replaced, failures, substitutions, changed);
+    }
+
+    // A character that stands for /ActualText is the text of a whole span, and an edit takes the span's glyphs together, so
+    // what a match leaves of that text goes back around the replacement.
+    private static string KeepSpanText(PageModel model, SearchMatch match, string text, TextSearchOptions options)
+    {
+        if (match.Source is not { } source) return text;
+        var (searched, index, length) = source;
+        int first = match.Range.Start, last = match.Range.End - 1;
+        string before = "", after = "";
+        if (InSpan(model, first) is { } start)
+        {
+            int begin = Array.LastIndexOf(searched.Map, first) - SearchText.Fold(start, options).Length + 1;
+            before = start[..FoldedOffset(start, index - begin, options, false)];
+        }
+        if (InSpan(model, last) is { } end)
+        {
+            int end0 = Array.LastIndexOf(searched.Map, last);
+            after = end[FoldedOffset(end, SearchText.Fold(end, options).Length - (end0 - (index + length - 1)), options, true)..];
+        }
+        return before + text + after;
+    }
+
+    private static string? InSpan(PageModel model, int index) =>
+        index >= 0 && index < model.CharGlyphs.Length && model.CharGlyphs[index]?.Span is not null && !model.Text.Chars[index].IsSpace ? model.Text.Chars[index].Text : null;
+
+    // The offset in the page's own text of a position in its folded text; a fold that makes two letters of one (or the reverse) is taken whole.
+    private static int FoldedOffset(string text, int folded, TextSearchOptions options, bool roundUp)
+    {
+        int offset = 0, seen = 0;
+        while (offset < text.Length)
+        {
+            int next = SearchText.Fold(text[offset].ToString(), options).Length;
+            if (roundUp ? seen >= folded && next > 0 : seen + next > folded) break;
+            seen += next;
+            offset++;
+        }
+        return offset;
     }
 
     private static int LinesOf(PageModel model, TextRange range)

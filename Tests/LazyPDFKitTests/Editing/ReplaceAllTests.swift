@@ -15,7 +15,7 @@ final class ReplaceAllTests: XCTestCase {
         pdf.stream(8, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /X def /CMapType 2 def " +
             "1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0041> <005A> <0041> endbfrange endcmap end end")
         for i in 0..<contents.count {
-            pdf.obj(10 + i, "<</Type /Page /Parent 2 0 R /Contents \(30 + i) 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R>>>>>>")
+            pdf.obj(10 + i, "<</Type /Page /Parent 2 0 R /Contents \(30 + i) 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R>> /Properties <</MC0 <</MCID 4 /Lang (en) /ActualText (hello world)>>>>>>>>")
             pdf.stream(30 + i, "", contents[i])
         }
         return try PdfEditSession.open(pdf.finish())
@@ -92,5 +92,85 @@ final class ReplaceAllTests: XCTestCase {
         let report = try TextReplacer.replaceAll(session, "aa", "xyz")
         XCTAssertEqual(report.replaced, 4)
         XCTAssertEqual(try page(session, 0), "xyz bb xyz bb xyz bb xyz")
+    }
+
+    private final class MarkedCollector: ContentVisitor {
+        var marked: [MarkedContent] = []
+
+        override func beginMarked(_ context: ContentContext, _ marked: MarkedContent) { self.marked.append(marked) }
+    }
+
+    private func hello(_ open: String) -> String { "BT /F1 12 Tf 50 700 Td \(open) BDC (hello world) Tj EMC ET" }
+
+    private func count(_ text: String, _ part: String) -> Int { text.components(separatedBy: part).count - 1 }
+
+    func test_aHitInsideReplacementTextKeepsTheRestOfIt() throws {
+        let session = try open(hello("/Span <</ActualText (hello world)>>"))
+        let report = try TextReplacer.replaceAll(session, "world", "globe")
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertTrue(report.failed.isEmpty)
+        XCTAssertEqual(try page(session, 0), "hello globe")
+        XCTAssertFalse(EditKit.latin(session).contains("/ActualText"))
+    }
+
+    func test_aHitOnAllOfReplacementTextReplacesIt() throws {
+        let session = try open(hello("/Span <</ActualText (hello world)>>"))
+        XCTAssertEqual(try TextReplacer.replaceAll(session, "hello world", "bye").replaced, 1)
+        XCTAssertEqual(try page(session, 0), "bye")
+    }
+
+    func test_aHitOverTwoSpansKeepsTheTextOutsideIt() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (say hello wor)>> BDC (say hello wor) Tj EMC " +
+            "/Span <</ActualText (ld again)>> BDC (ld again) Tj EMC ET")
+        let report = try TextReplacer.replaceAll(session, "world", "globe")
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(try page(session, 0), "say hello globe again")
+        XCTAssertFalse(EditKit.latin(session).contains("/ActualText"))
+    }
+
+    func test_theMatchIsFoundThroughCaseAndAccentFolding() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (caf\\351 World)>> BDC (cafe World) Tj EMC ET")
+        let report = try TextReplacer.replaceAll(session, "cafe", "tea", TextSearchOptions(foldDiacritics: true))
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(try page(session, 0), "tea World")
+    }
+
+    func test_aTaggedSpanKeepsItsTagAndPropertiesWhenReplaced() throws {
+        for open in ["/P <</MCID 3 /Lang (en) /ActualText (hello world)>>", "/P /MC0"] {
+            let session = try self.open(hello(open))
+            XCTAssertEqual(try TextReplacer.replaceAll(session, "world", "globe").replaced, 1)
+            XCTAssertEqual(try page(session, 0), "hello globe")
+            XCTAssertFalse(EditKit.latin(session).contains("/ActualText"))
+            let visitor = MarkedCollector()
+            let document = try PdfDocument.open(session.current)
+            ContentInterpreter(document).run(document.pages[0], visitor)
+            XCTAssertTrue(visitor.marked.contains { $0.tag == "P" && $0.mcid != nil && $0.properties?.containsKey("Lang") == true }, open)
+        }
+    }
+
+    func test_aSpanWithOnlyTheTextBecomesPlainMarkedContent() throws {
+        let session = try open(hello("/Span <</ActualText (hello world)>>"))
+        _ = try TextReplacer.replaceAll(session, "world", "globe")
+        XCTAssertTrue(EditKit.latin(session).contains("/Span BMC"))
+    }
+
+    func test_everyEnclosingSpanIsNeutralized() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (hello world)>> BDC /Span <</ActualText (hello)>> BDC (hello) Tj EMC ( world) Tj EMC ET")
+        XCTAssertEqual(try TextReplacer.replaceAll(session, "world", "globe").replaced, 1)
+        XCTAssertEqual(try page(session, 0), "hello globe")
+        XCTAssertEqual(count(EditKit.latin(session), "/ActualText"), 0)
+    }
+
+    func test_deletingTaggedReplacementTextKeepsItsTag() throws {
+        let session = try open(hello("/P <</MCID 3 /Lang (en) /ActualText (hello world)>>"))
+        let editor = try PageEditor(session, 0)
+        let blocks = try editor.objects.compactMap { $0 as? TextObject }
+        XCTAssertEqual(blocks.count, 1)
+        XCTAssertTrue(try editor.deleteText(blocks[0].range).done)
+        let content = EditKit.latin(session)
+        XCTAssertTrue(content.contains("/MCID 3"))
+        XCTAssertTrue(content.contains("/Lang (en)"))
+        XCTAssertFalse(content.contains("/ActualText"))
+        XCTAssertEqual(try page(session, 0), "")
     }
 }
