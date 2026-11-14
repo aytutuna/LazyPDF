@@ -54,6 +54,7 @@ internal sealed class Jbig2Decoder(long maxSize)
     private readonly Dictionary<long, Jbig2Bitmap> _intermediate = [];
     private readonly Dictionary<long, Jbig2SymbolDictionary> _dictionaries = [];
     private readonly Dictionary<long, Jbig2Huffman> _tables = [];
+    private readonly Dictionary<long, List<Jbig2Bitmap>> _patterns = [];
 
     private readonly record struct Segment(long Number, int Type, long[] Referred, long Length, int HeaderEnd, bool UnknownLength);
 
@@ -166,6 +167,12 @@ internal sealed class Jbig2Decoder(long maxSize)
                 break;
             case 4 or 6 or 7:
                 TextRegion(segment, data, start, end);
+                break;
+            case 16:
+                PatternDictionary(segment, data, start, end);
+                break;
+            case 20 or 22 or 23:
+                HalftoneRegion(segment, data, start, end);
                 break;
             case 36 or 38 or 39:
                 GenericRegion(segment, data, start, end);
@@ -408,6 +415,45 @@ internal sealed class Jbig2Decoder(long maxSize)
         var arith = new Jbig2Arith(data, position, end);
         var bitmap = Jbig2Generic.Refine(_budget, arith, region.Width, region.Height, template, reference, 0, 0, (flags & 2) != 0, at);
         Store(segment, region, bitmap);
+    }
+
+    private void PatternDictionary(Segment segment, byte[] data, int start, int end)
+    {
+        int flags = U8(data, start);
+        int width = U8(data, start + 1), height = U8(data, start + 2);
+        long maxIndex = U32(data, start + 3);
+        _patterns[segment.Number] = Jbig2Halftone.Patterns(_budget, data, start + 7, end, (flags & 1) != 0, (flags >> 1) & 3, width, height, maxIndex);
+    }
+
+    private void HalftoneRegion(Segment segment, byte[] data, int start, int end)
+    {
+        var region = ReadRegion(data, start, end);
+        int position = start + 17;
+        int flags = U8(data, position++);
+        var p = new Jbig2Halftone.Params
+        {
+            Mmr = (flags & 1) != 0,
+            Template = (flags >> 1) & 3,
+            EnableSkip = (flags & 8) != 0,
+            CombinationOperator = (flags >> 4) & 7,
+            DefaultPixel = (flags >> 7) & 1,
+            Width = region.Width,
+            Height = region.Height,
+            GridWidth = U32(data, position),
+            GridHeight = U32(data, position + 4),
+            GridX = (int)U32(data, position + 8),
+            GridY = (int)U32(data, position + 12),
+            VectorX = U16(data, position + 16),
+            VectorY = U16(data, position + 18),
+        };
+        position += 20;
+        List<Jbig2Bitmap>? patterns = null;
+        foreach (long number in segment.Referred)
+        {
+            if (_patterns.TryGetValue(number, out var found)) patterns = found;
+        }
+        if (patterns is null) throw PdfReadException.Damaged("A JBIG2 halftone region has no pattern dictionary.");
+        Store(segment, region, Jbig2Halftone.Region(_budget, data, position, end, p, patterns));
     }
 
     private static Region ReadRegion(byte[] data, int start, int end)

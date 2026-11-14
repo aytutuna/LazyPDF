@@ -55,7 +55,7 @@ internal sealed class Jbig2TextParams
 internal sealed class Jbig2Text(Jbig2Budget budget, Jbig2Arith? arith, Jbig2Reader? reader, Jbig2TextParams p, byte[]? refinementContexts)
 {
     /// <summary>The most instances a region may have, whatever its header says.</summary>
-    public const int MaxInstances = 1 << 24;
+    public const int MaxInstances = 1 << 22;
 
     /// <summary>ceil(log2(n)), the length of the codes of n symbols.</summary>
     public static int CodeLength(int n) => n <= 1 ? 0 : 32 - System.Numerics.BitOperations.LeadingZeroCount((uint)(n - 1));
