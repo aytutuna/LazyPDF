@@ -64,6 +64,42 @@ enum Ccitt {
         return output.toArray()
     }
 
+    /// The Group 4 data of a JBIG2 MMR bitmap (T.88 6.2.6): `rows` rows of packed pixels, black 1.
+    /// A bad code ends the rows and the rest is white. `used` is how many bytes were read, an EOFB
+    /// after the last row and the padding up to a byte included, for planes that follow each other in one stream.
+    static func decodeMmr(_ data: [UInt8], _ columns: Int, _ rows: Int, _ used: inout Int) -> [UInt8] {
+        let stride = (columns + 7) / 8
+        var output = [UInt8](repeating: 0, count: rows * stride)
+        var rowBytes = [UInt8](repeating: 0, count: stride)
+        // A row cannot change colour more often than the data has bits, however wide it is.
+        let changes = min(columns, data.count * 8) + 2
+        var reference = [Int](repeating: 0, count: changes)
+        var coding = [Int](repeating: 0, count: changes)
+        var referenceCount = 0
+        var bits = BitReader(data)
+        var done = 0
+        while done < rows && !bits.atEnd {
+            var count = 0
+            let ok = decodeRow2D(&bits, reference, referenceCount, &coding, &count, columns)
+            for i in 0..<stride { rowBytes[i] = 0 }
+            var i = 0
+            while i < count {
+                fillBlack(&rowBytes, coding[i], i + 1 < count ? coding[i + 1] : columns, true)
+                i += 2
+            }
+            let at = done * stride
+            for j in 0..<stride { output[at + j] = rowBytes[j] }
+            swap(&reference, &coding)
+            referenceCount = count
+            if !ok { break }
+            done += 1
+        }
+        if !bits.atEnd && bits.peek(24) == 0x001001 { bits.skip(24) }
+        bits.align()
+        used = min(data.count, bits.position / 8)
+        return output
+    }
+
     /// One-dimensional row: alternating white and black runs. The changing elements go to `changes`.
     private static func decodeRow1D(_ bits: inout BitReader, _ changes: inout [Int], _ count: inout Int, _ columns: Int) -> Bool {
         var position = 0
