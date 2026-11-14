@@ -77,16 +77,20 @@ public sealed class OcrPanelHandInTests
     });
 
     [Fact]
-    public Task ASignedFileAsksBeforeTheTypedWordIsLostToAnotherTabOrTool() => Sta.Run(() =>
+    public Task AWordKeptWaitingForASignedFileComesBackWhenTheTabIsShownAgain() => Sta.Run(() =>
     {
         var (panel, tab, box) = Picked(StampsPanelTests.Signed(certified: false, pages: 1));
         using var guard = tab;
         box.Text = "gamma";
 
-        Assert.False(panel.HandInOnSwitch());
+        Assert.True(panel.HandInOnSwitch());
+        panel.Detach();
 
-        Assert.Equal(["alpha", "beta"], Words(tab));
         Assert.Equal(1, tab.PendingWords);
+        panel.Attach(tab, FakeViewer.Create().Viewer, new RecordingHost());
+        Assert.Equal("gamma", ((TextBox)panel.FindName("WordBox")).Text);
+        Assert.Equal(1, tab.PendingWords);
+        Assert.Equal(["alpha", "beta"], Words(tab));
         return Task.CompletedTask;
     });
 }

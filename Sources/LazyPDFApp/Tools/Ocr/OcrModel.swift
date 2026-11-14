@@ -48,6 +48,13 @@ public final class OcrModel: ToolPanelModel {
     @ObservationIgnored var field: OverlayField?
     @ObservationIgnored var waiting = false
     @ObservationIgnored var keepsSigned = false
+
+    /// The word a signed file kept waiting for each tab while another tab or tool is shown, and the revision it was typed against.
+    @ObservationIgnored var keptWords: [ObjectIdentifier: (tab: WeakTab, word: WordRef, text: String, revision: Int)] = [:]
+
+    struct WeakTab {
+        weak var tab: DocumentTab?
+    }
     @ObservationIgnored var fieldSerial = 0
     @ObservationIgnored var touchStart: (word: WordRef, at: ViewPoint)?
     @ObservationIgnored var correctedRevision: Int?

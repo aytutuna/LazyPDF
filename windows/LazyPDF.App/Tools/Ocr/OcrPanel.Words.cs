@@ -1,4 +1,5 @@
 // The words of the text layer drawn over the pages in view, and the correction of the one that was clicked.
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,17 +17,48 @@ public sealed partial class OcrPanel
 
     private sealed record PageWords(IReadOnlyList<OcrLayerWord> Words, List<Border> Boxes);
 
+    // The word a signed file kept waiting while another tab or tool is shown, and the revision it was typed against.
+    private sealed record KeptWord(int Page, int Index, string Text, int Revision);
+
+    private static readonly ConditionalWeakTable<DocumentTab, KeptWord> Kept = [];
+
+    private KeptWord? _restore;
+
     private void AttachWords()
     {
         Viewer!.ViewChanged += Viewer_ViewChanged;
+        _restore = Kept.TryGetValue(Tab!, out var back) ? back : null;
+        Kept.Remove(Tab!);
         ShowWords();
     }
 
     private void DetachWords()
     {
+        var tab = Tab!;
+        var back = _restore ?? (tab.PendingWords > 0 && _picked is { } word ? new KeptWord(word.Page, word.Index, WordBox.Text, tab.Revision) : null);
+        _restore = null;
         Viewer!.ViewChanged -= Viewer_ViewChanged;
         HideWords();
         Pick(null);
+        if (back is null) return;
+        Kept.AddOrUpdate(tab, back);
+        tab.PendingWords = 1;
+    }
+
+    // The word comes back once its page is shown again, unless the file changed meanwhile.
+    private void RestoreWord()
+    {
+        if (_restore is not { } back || Tab is not { } tab) return;
+        if (back.Revision != tab.Revision)
+        {
+            _restore = null;
+            return;
+        }
+        if (!_shown.TryGetValue(back.Page, out var shown) || back.Index >= shown.Words.Count) return;
+        _restore = null;
+        Pick(back.Page, back.Index, focus: false);
+        WordBox.Text = back.Text;
+        tab.PendingWords = 1;
     }
 
     private void Viewer_ViewChanged(object? sender, EventArgs e) => ShowWords();
@@ -74,6 +106,7 @@ public sealed partial class OcrPanel
             }
         }
         FillWordList();
+        RestoreWord();
     }
 
     private void HideWords()
@@ -183,16 +216,8 @@ public sealed partial class OcrPanel
 
     // A word typed and not yet in the file goes in before the file is saved, undone or closed. A signed file keeps it in the
     // box, as Measure keeps its readings: nothing is written without the user's answer, and the close question names it.
+    // The word stays with its tab when another tab or tool is shown, so moving on loses nothing.
     public override bool HandIn()
-    {
-        HandInWord(keepSigned: true);
-        return true;
-    }
-
-    // The box is lost when another tab or tool takes the panel's place, so a signed file asks first and the switch waits.
-    public override bool HandInOnSwitch() => HandInWord(keepSigned: false);
-
-    private bool HandInWord(bool keepSigned)
     {
         if (Tab is not { } tab || Host is not { } host) return true;
         tab.PendingWords = 0;
@@ -200,17 +225,13 @@ public sealed partial class OcrPanel
         string text = WordBox.Text.Trim();
         if (text == shown.Words[word.Index].Text) return true;
         bool refused = OcrWork.Refusal(tab.Document) is not null;
-        if (keepSigned && tab.Document.IsSigned && !refused)
+        if (tab.Document.IsSigned && !refused)
         {
             tab.PendingWords = 1;
             return true;
         }
         if (OcrWork.Cleared(tab, host, () => ApplyAnyway(tab, word, text))) Apply(tab, word, text);
-        else
-        {
-            tab.PendingWords = refused ? 0 : 1;
-            return refused;
-        }
+        else tab.PendingWords = refused ? 0 : 1;
         return true;
     }
 

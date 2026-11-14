@@ -391,18 +391,25 @@ final class OcrModelTests: XCTestCase {
         XCTAssertTrue(tab.hasUnappliedWork)
     }
 
-    func test_aSignedFileAsksBeforeTheTypedWordIsLostToAnotherTabOrTool() async throws {
+    func test_aWordKeptWaitingForASignedFileComesBackWhenTheTabIsShownAgain() async throws {
         let (model, viewer, host, tab) = try await pointerRig(Pdfs.signed(certified: false, pages: 1))
         model.pick(WordRef(0, 0), edit: true)
         viewer.overlay(0).field("ocr.word")?.typed("gamma")
         host.notices.removeAll()
         let label = tab.session.undoLabel
 
-        XCTAssertFalse(model.handInOnSwitch())
+        XCTAssertTrue(model.handInOnSwitch())
+        model.detach()
 
-        XCTAssertEqual(host.notices.last?.title, "Check before going on")
-        XCTAssertEqual(tab.session.undoLabel, label)
+        XCTAssertTrue(host.notices.isEmpty)
         XCTAssertEqual(tab.pendingWords, 1)
+        model.attach(tab, viewer, host)
+        XCTAssertEqual(model.picked, WordRef(0, 0))
+        XCTAssertEqual(model.draft, "gamma")
+        XCTAssertTrue(model.inPanel)
+        XCTAssertEqual(tab.pendingWords, 1)
+        XCTAssertEqual(tab.session.undoLabel, label)
+        model.applyDraft()
         host.notices[0].action?.run()
         XCTAssertEqual(tab.session.undoLabel, "Correct word")
         XCTAssertEqual(tab.pendingWords, 0)
