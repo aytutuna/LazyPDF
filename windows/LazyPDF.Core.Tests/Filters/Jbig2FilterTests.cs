@@ -73,6 +73,15 @@ public class Jbig2FilterTests
         Assert.Equal(bm.Packed(), Decode(Jbig2Segments.Generic(bm, 0, false), null, 800));
     }
 
+    [Fact]
+    public void PageOverTheSizeLimitIsRefusedBeforeItIsMade()
+    {
+        // 30000 by 30000 is 112 MB of pixels, inside the pixel limit, but its rows are 113 MB: past a limit of a megabyte.
+        var e = Assert.Throws<PdfReadException>(() => Decode(Page(30000, 30000), null, 1 << 20));
+        Assert.Equal(PdfReadProblem.Unsupported, e.Problem);
+        Assert.Equal(FilterBuffer.TooBig().Message, e.Message);
+    }
+
     private static void Unsupported(byte[] stream) =>
         Assert.Equal(PdfReadProblem.Unsupported, Assert.Throws<PdfReadException>(() => Decode(stream)).Problem);
 

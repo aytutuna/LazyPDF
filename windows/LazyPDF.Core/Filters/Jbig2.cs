@@ -29,16 +29,20 @@ internal static class Jbig2
     /// Rows of packed pixels, each starting on a byte boundary, black 0 and white 1 (the filter inverts JBIG2's black 1).
     /// A segment that does not decode is left out; the stream is damaged only when none of its regions could be drawn.
     /// </summary>
-    public static byte[] Decode(byte[] globals, byte[] data, long maxSize)
+    public static byte[] Decode(byte[] globals, byte[] data, long maxSize, int width = 0, int height = 0)
     {
-        var decoder = new Jbig2Decoder(maxSize);
+        var decoder = new Jbig2Decoder(maxSize, width, height);
         decoder.Read(globals);
         decoder.Read(data);
         return decoder.Finish();
     }
 }
 
-internal sealed class Jbig2Decoder(long maxSize)
+/// <summary>
+/// With <paramref name="fitWidth"/> and <paramref name="fitHeight"/> (the size the image dictionary gives) the page comes out
+/// cut or padded with white to that size, so that the samples have the stride the image reads them with.
+/// </summary>
+internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight = 0)
 {
     private readonly Jbig2Budget _budget = new();
     private int _failed;
@@ -526,6 +530,8 @@ internal sealed class Jbig2Decoder(long maxSize)
         if (width == 0 || width > int.MaxValue) throw PdfReadException.Damaged("A JBIG2 page has no width.");
         _heightKnown = height != 0xffffffffL;
         if (_heightKnown && height > int.MaxValue) throw Jbig2Budget.TooBig();
+        // The page is about to be allocated: a page whose rows alone pass the limit is refused first.
+        if (_heightKnown && height * ((width + 7) / 8) > maxSize) throw FilterBuffer.TooBig();
         _defaultPixel = (byte)((flags >> 2) & 1);
         int rows = _heightKnown ? (int)height : 0;
         _page = new Jbig2Bitmap((int)width, rows, _budget);
@@ -574,14 +580,16 @@ internal sealed class Jbig2Decoder(long maxSize)
         if (_page is null) throw _firstError ?? PdfReadException.Damaged("A JBIG2 stream has no page.");
         if (_failed > 0 && _drawn == 0) throw _firstError!;
         int width = _page.Width, rows = _rows;
-        int stride = (width + 7) / 8;
-        if ((long)rows * stride > maxSize) throw FilterBuffer.TooBig();
-        var output = new byte[rows * stride];
+        bool fit = fitWidth > 0 && fitHeight > 0;
+        int outWidth = fit ? fitWidth : width, outRows = fit ? fitHeight : rows;
+        int stride = (outWidth + 7) / 8;
+        if ((long)outRows * stride > maxSize) throw FilterBuffer.TooBig();
+        var output = new byte[outRows * stride];
         Array.Fill(output, (byte)0xff);
         var pixels = _page.Pixels;
-        for (int y = 0; y < rows; y++)
+        for (int y = 0; y < Math.Min(rows, outRows); y++)
         {
-            for (int x = 0; x < width; x++)
+            for (int x = 0; x < Math.Min(width, outWidth); x++)
             {
                 if (pixels[y * width + x] != 0) output[y * stride + (x >> 3)] &= (byte)~(0x80 >> (x & 7));
             }
