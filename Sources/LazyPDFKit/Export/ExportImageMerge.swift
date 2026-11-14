@@ -8,7 +8,7 @@ import Foundation
 // would index past the buffer.
 
 final class ExportImageMerge {
-    private static let coders = ["DCTDecode", "DCT", "JPXDecode", "JBIG2Decode"]
+    private static let coders = ["DCTDecode", "DCT", "JPXDecode"]
 
     private let document: PdfDocument
     private let codec: ImageCodec?
@@ -80,10 +80,9 @@ final class ExportImageMerge {
         plain["Height"] = PdfNumber(pixels.height)
         // /Decode does not apply to JPEG 2000 data (ISO 32000-1 Table 89).
         if coder == "JPXDecode" && !imageMask { plain.remove("Decode") }
-        let bits = imageMask || coder == "JBIG2Decode"
-        if !imageMask { plain["BitsPerComponent"] = PdfNumber(bits ? 1 : 8) }
+        if !imageMask { plain["BitsPerComponent"] = PdfNumber(8) }
 
-        var converted = try PdfImageSamples.toRgba(plain, Self.pack(pixels, n, bits), resolve, data)
+        var converted = try PdfImageSamples.toRgba(plain, Self.pack(pixels, n, imageMask), resolve, data)
         if coder == "JPXDecode", let mode = document.integer(dictionary, "SMaskInData"), mode > 0 {
             var rgba = converted.rgba
             var i = 3
@@ -258,7 +257,7 @@ final class ExportImageMerge {
 
     // Nil when a codec is needed and cannot read the mask: the picture stays opaque.
     private func plane(_ mask: PdfStream, _ stencil: Bool) throws -> (width: Int, height: Int, alpha: [UInt8])? {
-        let (filter, parameters, _) = document.decodeSpec(mask)
+        let (filter, parameters, _) = try document.decodeSpec(mask, decoding: true)
         let decoded = try PdfFilters.decodeToCodec(document.rawData(mask), filter, parameters)
         var image: PdfRgbaImage?
         var inverted = false

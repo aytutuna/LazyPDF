@@ -123,7 +123,8 @@ extension PdfRedactor {
                 let isContent = content.contains(stream) || document.name(stream.dictionary, "Subtype") == "Form" || document.integer(stream.dictionary, "PatternType") == 1
                 var data: [UInt8]
                 do {
-                    data = try document.data(stream, maxStream)
+                    // A picture that JBIG2 could only partly decode is not read as what it shows.
+                    data = try PdfFilters.uses(document.decodeSpec(stream).filter, "JBIG2Decode") ? wholeJbig2(document, stream) : document.data(stream, maxStream)
                 } catch {
                     // A picture in an image codec is looked at as the codec's bytes. What else cannot be decoded, or is longer than is read, may hold the word in a form the raw bytes do not.
                     if let coded = inCodec(document, stream) {
@@ -255,10 +256,15 @@ extension PdfRedactor {
         !data.contains { $0 < 9 || $0 == 11 || ($0 > 13 && $0 < 32) || $0 == 127 }
     }
 
+    private static func wholeJbig2(_ document: PdfDocument, _ stream: PdfStream) throws -> [UInt8] {
+        let (filter, parameters, _) = try document.decodeSpec(stream, decoding: true, maxStream)
+        return try PdfFilters.decodeToCodecWhole(document.rawData(stream), filter, parameters, maxStream).data
+    }
+
     private static func inCodec(_ document: PdfDocument, _ stream: PdfStream) -> [UInt8]? {
         do {
             let (filter, parameters, _) = document.decodeSpec(stream)
-            let decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters, maxStream)
+            let decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters, maxStream, keepJbig2: true)
             return decoded.codec != nil ? decoded.data : nil
         } catch {
             return nil

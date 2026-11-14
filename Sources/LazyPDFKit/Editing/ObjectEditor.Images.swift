@@ -44,27 +44,31 @@ extension ObjectEditor {
         try replace(place, op.start, op.end, Latin1.string(drawn))
     }
 
-    /// The bytes of the picture: a JPEG or JPEG 2000 file as it is stored, anything else as a PNG.
+    /// The bytes of the picture: a JPEG or JPEG 2000 file as it is stored, anything else (a JBIG2 picture too) as a PNG.
     func extract(_ image: ImageObject) throws -> ExtractedImage {
         if let inline = image.info.inline {
-            return try encode(image.info.dictionary, inline.data)
+            return try encode(image.info.dictionary, inline.data, nil)
         }
         guard let stream = image.info.stream else { throw EditConflictException(EditingText.noImage) }
-        return try encode(stream.dictionary, document.rawData(stream))
+        return try encode(stream.dictionary, document.rawData(stream), stream)
     }
 
-    private func encode(_ dictionary: PdfDictionary, _ raw: [UInt8]) throws -> ExtractedImage {
+    private func encode(_ dictionary: PdfDictionary, _ raw: [UInt8], _ stream: PdfStream?) throws -> ExtractedImage {
         do {
-            let filter = document.resolve(dictionary["Filter"] ?? dictionary["F"])
-            let parms = document.resolve(dictionary["DecodeParms"] ?? dictionary["DP"])
+            let filter: PdfObject?, parms: PdfObject?
+            // The globals of a JBIG2 picture are a stream that the filter reads through the document.
+            if let stream {
+                (filter, parms, _) = try document.decodeSpec(stream, decoding: true)
+            } else {
+                filter = document.resolve(dictionary["Filter"] ?? dictionary["F"])
+                parms = document.resolve(dictionary["DecodeParms"] ?? dictionary["DP"])
+            }
             let decoded = try PdfFilters.decodeToCodec(raw, filter, parms)
             switch decoded.codec ?? "" {
             case "DCTDecode":
                 return ExtractedImage(decoded.data, "jpg")
             case "JPXDecode":
                 return ExtractedImage(decoded.data, "jp2")
-            case "JBIG2Decode":
-                if let bits = codec?.decode(decoded.data, "JBIG2Decode") { return ExtractedImage(try PngWriter.encode(bits), "png") }
             default:
                 let rgba = try PdfImageSamples.toRgba(dictionary, decoded.data, { self.document.resolve($0) }, { try self.document.data($0) })
                 return ExtractedImage(try PngWriter.encode(rgba), "png")

@@ -27,7 +27,7 @@ public struct ExportedImage {
 
 public enum ImageExtractor {
     /// Every image the pages paint, forms included, in painting order; one the page paints twice is listed once. JPEG
-    /// data is kept as stored, other images go to PNG with an /SMask as alpha. Without a `codec` the JPEG 2000 and JBIG2
+    /// data is kept as stored, other images go to PNG with an /SMask as alpha. Without a `codec` the JPEG 2000
     /// images, and JPEGs that need a mask, /Decode or a colour space applied, are not decoded: the first is left out, the
     /// second kept as plain JPEG. A mask stored with a codec is read through the codec; without one the picture comes out
     /// opaque. Throws `ArgumentException` when a page index is out of range.

@@ -2,7 +2,7 @@ import Foundation
 
 // Twin of windows/LazyPDF.Core/Redaction/ImageRedactor.cs: makes a private copy of an image with the pixels under the marks
 // overwritten in the samples, so the covered picture is gone rather than hidden. The copy is stored with Flate. Pictures in a
-// lossy or bilevel codec go through the system's decoder; with none, or when it fails, nothing is returned and the caller
+// lossy codec go through the system's decoder; with none, or when it fails, nothing is returned and the caller
 // removes the image.
 
 final class ImageRedactor {
@@ -47,8 +47,8 @@ final class ImageRedactor {
         // A mask has no masks of its own to speak of; a loop of them is a trap.
         if depth > Self.maxMaskDepth { return nil }
         let d = image.dictionary
-        let (filter, parameters, _) = document.decodeSpec(image)
-        let decoded = try PdfFilters.decodeToCodec(document.rawData(image), filter, parameters, Self.maxSamples)
+        let (filter, parameters, _) = try document.decodeSpec(image, decoding: true)
+        let decoded = try PdfFilters.decodeToCodecWhole(document.rawData(image), filter, parameters, Self.maxSamples)
         let copy = PdfDictionary()
         for key in Self.kept {
             if let value = d[key] { copy[key] = value }
@@ -70,6 +70,8 @@ final class ImageRedactor {
             let (padded, o3) = row.addingReportingOverflow(7)
             let (used, o4) = (padded / 8).multipliedReportingOverflow(by: height)
             if o1 || o2 || o3 || o4 || used < 0 { return nil }
+            // A JBIG2 page is fitted to the picture's size, but not to a depth or colour space it does not have; other rows would put the marks in the wrong place.
+            if PdfFilters.uses(filter, "JBIG2Decode") && samples.count != used { return nil }
             if samples.count > used { samples = Array(samples[0..<used]) }
             Self.zero(&samples, width, height, perPixel, unit)
             return try document.add(PdfStream(copy, data: PdfFilterEncoders.flate(samples)))
@@ -83,11 +85,6 @@ final class ImageRedactor {
                 let i = (row * pixels.width + x) * 4
                 (rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]) = (0, 0, 0, 255)
             }
-        }
-        if name == "JBIG2Decode" {
-            copy["Width"] = PdfNumber(pixels.width)
-            copy["Height"] = PdfNumber(pixels.height)
-            return try document.add(PdfStream(copy, data: PdfFilterEncoders.flate(Self.bilevel(rgba, pixels.width, pixels.height))))
         }
         let reference = try ContentImages.addRgba(document, pixels.width, pixels.height, rgba)
         guard let made = document.get(reference.number) as? PdfStream else { return nil }
@@ -130,18 +127,6 @@ final class ImageRedactor {
                 b += 1
             }
         }
-    }
-
-    private static func bilevel(_ rgba: [UInt8], _ width: Int, _ height: Int) -> [UInt8] {
-        let stride = (width + 7) / 8
-        var bits = [UInt8](repeating: 0, count: stride * height)
-        for y in 0..<height {
-            for x in 0..<width {
-                let i = (y * width + x) * 4
-                if Int(rgba[i]) + Int(rgba[i + 1]) + Int(rgba[i + 2]) >= 384 { bits[y * stride + x / 8] |= UInt8(0x80 >> (x % 8)) }
-            }
-        }
-        return bits
     }
 
     /// The runs of pixels, per row, that any part of a marked polygon touches. The polygons are in the unit square, y up.

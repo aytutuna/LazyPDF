@@ -231,7 +231,7 @@ extension PdfAConversionRun {
         let d = stream.dictionary
         do {
             let (filter, parameters, _) = document.decodeSpec(stream)
-            let decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters, 256 << 20)
+            let decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters, 256 << 20, keepJbig2: true)
             if let codec = decoded.codec {
                 stream.data = decoded.data
                 d["Filter"] = PdfName(codec)

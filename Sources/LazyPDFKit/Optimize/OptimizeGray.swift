@@ -471,11 +471,11 @@ final class OptimizeGray {
             left += 1
             return
         }
-        let (filter, parameters, _) = document.decodeSpec(stream)
         let pixels: PdfRgbaImage
         let coded: String?
         do {
-            let decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters)
+            let (filter, parameters, _) = try document.decodeSpec(stream, decoding: true)
+            let decoded = try PdfFilters.decodeToCodecWhole(document.rawData(stream), filter, parameters, PdfFilters.defaultMaxSize)
             coded = decoded.codec
             if coded == nil {
                 let plain = dictionary.copy()

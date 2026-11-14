@@ -91,7 +91,7 @@ final class ExportImages {
 
             let filter: PdfObject?, parameters: PdfObject?
             if let stream {
-                let spec = document.decodeSpec(stream)
+                let spec = try document.decodeSpec(stream, decoding: true)
                 filter = spec.filter
                 parameters = spec.parameters
             } else {

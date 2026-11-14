@@ -152,9 +152,9 @@ final class OptimizeImages {
 
     // The data with every filter undone; nil for an image codec, which the caller handles.
     private func samples(_ stream: PdfStream) -> [UInt8]? {
-        let (filter, parameters, _) = document.decodeSpec(stream)
         do {
-            let decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters)
+            let (filter, parameters, _) = try document.decodeSpec(stream, decoding: true)
+            let decoded = try PdfFilters.decodeToCodecWhole(document.rawData(stream), filter, parameters, PdfFilters.defaultMaxSize)
             return decoded.codec == nil ? decoded.data : nil
         } catch {
             return nil
@@ -196,10 +196,12 @@ final class OptimizeImages {
 
     private func shrink(_ stream: PdfStream, _ width: Int, _ height: Int, _ newWidth: Int, _ newHeight: Int) -> Bool {
         let dictionary = stream.dictionary
-        let (filter, parameters, _) = document.decodeSpec(stream)
+        // A bilevel picture, JBIG2 coded or not, is kept as it is; decoding it first would only be thrown away.
+        if document.integer(dictionary, "BitsPerComponent") == 1 { return false }
         let decoded: PdfDecodedStream
         do {
-            decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters)
+            let (filter, parameters, _) = try document.decodeSpec(stream, decoding: true)
+            decoded = try PdfFilters.decodeToCodecWhole(document.rawData(stream), filter, parameters, PdfFilters.defaultMaxSize)
         } catch {
             return false
         }
