@@ -135,6 +135,29 @@ public class Jbig2CallerTests
     }
 
     [Fact]
+    public void MakeSmallerSkipsAnImageWhoseGlobalsAreBroken()
+    {
+        byte[] file = OptimizeKit.Build("q 10 0 0 10 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+        {
+            pdf.Stream(5, "/Type /XObject /Subtype /Image /Width 64 /Height 40 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JBIG2Decode /DecodeParms <</JBIG2Globals 6 0 R>>",
+                Jbig2Samples.WithGlobals().Data);
+            pdf.Stream(6, "/Filter /FlateDecode", "not flate data at all");
+        });
+        foreach (var options in new[]
+        {
+            OptimizeKit.Off with { ImageDpi = 8, ImageDpiAbove = 10 },
+            OptimizeKit.Off with { BilevelTolerance = 10 },
+            OptimizeKit.Off with { Grayscale = true },
+        })
+        {
+            using var source = PdfDocument.Open(file);
+            var result = new PdfOptimizer(source).Run(options);
+            using var after = PdfDocument.Open(result.Bytes);
+            Assert.Equal("JBIG2Decode", after.Name(OptimizeKit.Image(after).Dictionary, "Filter"));
+        }
+    }
+
+    [Fact]
     public void ImageExtractionReadsTheGlobals()
     {
         var sample = Jbig2Samples.WithGlobals();

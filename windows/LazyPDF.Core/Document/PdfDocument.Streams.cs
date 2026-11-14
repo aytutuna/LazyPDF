@@ -114,21 +114,25 @@ public sealed partial class PdfDocument
         return new PdfArray(each);
     }
 
-    private sealed record GlobalsEntry(byte[]? Source, byte[] Decoded);
+    /// <summary>The most a globals stream may expand to; they hold symbols, not pictures.</summary>
+    private const long MaxGlobals = 32L << 20;
 
-    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<PdfStream, GlobalsEntry> _globals = [];
+    // The last globals stream decoded: the images of a page that share one come one after the other.
+    private PdfStream? _globalsOf;
+    private byte[]? _globalsSource;
+    private byte[]? _globalsData;
 
     /// <summary>
-    /// The data of a globals stream, decoded once for every image that uses it. Its own filters are read without any globals
-    /// of theirs (a JBIG2 stage on it is damage), so that streams that name each other cannot send this round in circles.
+    /// The data of a globals stream. Its own filters are read without any globals of theirs (a JBIG2 stage on it is damage),
+    /// so that streams that name each other cannot send this round in circles.
     /// </summary>
     private byte[] GlobalsData(PdfStream globals, long maxSize)
     {
-        if (_globals.TryGetValue(globals, out var known) && ReferenceEquals(known.Source, globals.Data) && known.Decoded.Length <= maxSize) return known.Decoded;
+        if (ReferenceEquals(_globalsOf, globals) && ReferenceEquals(_globalsSource, globals.Data) && _globalsData is { } known && known.Length <= maxSize) return known;
         var (filter, parameters, _) = DecodeSpec(globals);
         if (PdfFilters.Uses(filter, "JBIG2Decode")) throw PdfReadException.Damaged("A JBIG2 globals stream is JBIG2 coded.");
-        byte[] data = PdfFilters.Decode(RawData(globals), filter, parameters, maxSize);
-        _globals.AddOrUpdate(globals, new GlobalsEntry(globals.Data, data));
+        byte[] data = PdfFilters.Decode(RawData(globals), filter, parameters, Math.Min(maxSize, MaxGlobals));
+        (_globalsOf, _globalsSource, _globalsData) = (globals, globals.Data, data);
         return data;
     }
 

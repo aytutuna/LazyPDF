@@ -404,11 +404,11 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
             Left++;
             return;
         }
-        var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
         PdfRgbaImage pixels;
         string? coded;
         try
         {
+            var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
             var decoded = PdfFilters.DecodeToCodecWhole(document.RawData(stream), filter, parameters, PdfFilters.DefaultMaxSize);
             coded = decoded.Codec;
             if (coded is null)
