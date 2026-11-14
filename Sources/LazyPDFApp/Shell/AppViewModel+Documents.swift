@@ -284,7 +284,7 @@ extension AppViewModel {
             return (L10n.t("XFA form"), L10n.t("Lazy PDF shows the pages this file keeps for other viewers. Open it in an app that supports XFA to see the whole form."), true)
         }
         if FormScripts.list(form).contains(where: { !$0.ran }) {
-            return (L10n.t("Form scripts not run"), L10n.t("This file has scripts that Lazy PDF does not run. Only built-in format and calculate functions run."))
+            return (L10n.t("Form scripts not run"), L10n.t("This file has scripts that Lazy PDF does not run. Only built-in format and calculate functions run."), false)
         }
         return nil
     }
