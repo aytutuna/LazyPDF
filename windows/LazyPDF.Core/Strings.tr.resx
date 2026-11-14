@@ -3667,9 +3667,6 @@
   <data name="No natural language is set in the catalog or on the top structure elements." xml:space="preserve">
     <value>Katalogda da üst yapı öğelerinde de doğal dil belirtilmemiş.</value>
   </data>
-  <data name="No other app on this Mac opens PDF files." xml:space="preserve">
-    <value>Bu Mac'te PDF dosyalarını açan başka bir uygulama yok.</value>
-  </data>
   <data name="No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged." xml:space="preserve">
     <value>Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez.</value>
   </data>

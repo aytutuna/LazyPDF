@@ -332,8 +332,14 @@ public sealed partial class AppViewModel
         else if (tab.ReadOnly) ShowNotice(Loc.T("File is read-only"), Loc.T("{0} is read-only. You can work on it, but save your changes with Save as.", tab.Title));
         else if (!tab.CanDraw) ShowNotice(Loc.T("Pages cannot be shown"), Loc.T("{0} opens for editing, but Windows cannot draw its pages.", tab.Title));
         else if (pending.Replacing is null && FormEdits.OpenNotice(tab.Document, tab.Title) is var (formTitle, formText, xfa))
-            ShowNotice(formTitle, formText, xfa && path is not null ? new NoticeAction(Loc.T("Open in another app"), () => OpenWithPicker.Show(path)) : null);
+            ShowNotice(formTitle, formText, xfa && path is not null ? new NoticeAction(Loc.T("Open in another app"), () => OpenElsewhere(path)) : null);
         return true;
+    }
+
+    private void OpenElsewhere(string path)
+    {
+        if (!OpenWithPicker.Show(path))
+            ShowProblem(Problems.Open(new FileNotFoundException(), System.IO.Path.GetFileName(path)));
     }
 
     private OpenRequest Describe(PendingOpen pending) => new(

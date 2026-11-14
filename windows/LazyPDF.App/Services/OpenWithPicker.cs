@@ -8,6 +8,7 @@ namespace LazyPDF.App.Services;
 internal static class OpenWithPicker
 {
     private const uint Exec = 0x4;
+    private const int Cancelled = unchecked((int)0x800704C7);
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct OpenAsInfo
@@ -18,12 +19,14 @@ internal static class OpenWithPicker
     }
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-    private static extern int SHOpenWithDialog(IntPtr owner, ref OpenAsInfo info);
+    private static extern int SHOpenWithDialog(IntPtr owner, in OpenAsInfo info);
 
-    public static void Show(string path)
+    /// <summary>False when the dialog could not be shown; a person closing it is not a failure.</summary>
+    public static bool Show(string path)
     {
         var info = new OpenAsInfo { File = path, Class = null, Flags = Exec };
         var owner = Application.Current?.MainWindow is { } window ? new WindowInteropHelper(window).Handle : IntPtr.Zero;
-        SHOpenWithDialog(owner, ref info);
+        int result = SHOpenWithDialog(owner, in info);
+        return result >= 0 || result == Cancelled;
     }
 }

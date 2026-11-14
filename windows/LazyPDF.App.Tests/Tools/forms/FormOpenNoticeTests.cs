@@ -56,7 +56,8 @@ public sealed class FormOpenNoticeTests
         using var f = new ViewModelFixture();
         await f.Vm.OpenAsync(f.Dir.File("s.pdf", FormPdfs.Scripted()));
 
-        Assert.Null(f.Vm.Message?.Action);
+        Assert.NotNull(f.Vm.Message);
+        Assert.Null(f.Vm.Message.Action);
     }
 
     [Fact]

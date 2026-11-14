@@ -32,7 +32,7 @@ internal static class FormEdits
 {
     public static PdfForm Read(DocumentTab tab, IFontSource fonts) => PdfForm.Read(tab.Document, fonts);
 
-    // What a person should hear when the file opens; the Forms panel says the same about XFA once it is shown.
+    // What a person should hear when the file opens.
     public static (string Title, string Text, bool Xfa)? OpenNotice(PdfDocument document, string title)
     {
         PdfForm form;
