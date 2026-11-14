@@ -44,7 +44,8 @@ internal static class Jbig2
 /// </summary>
 internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight = 0)
 {
-    private readonly Jbig2Budget _budget = new();
+    private readonly Jbig2Budget _budget = new(fitWidth > 0 && fitHeight > 0 ? (long)fitWidth * fitHeight : 0);
+    private int _segments;
     private int _failed;
     private int _drawn;
     private PdfReadException? _firstError;
@@ -54,6 +55,9 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
     private bool _heightKnown;
     private int _rows;
     private byte _defaultPixel;
+
+    /// <summary>The most segments one decode reads, the globals and the image together.</summary>
+    private const int MaxSegments = 1 << 16;
 
     private readonly Dictionary<long, Jbig2Bitmap> _intermediate = [];
     private readonly Dictionary<long, Jbig2SymbolDictionary> _dictionaries = [];
@@ -80,6 +84,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
                 Fail(e);
                 return;
             }
+            if (++_segments > MaxSegments) throw Jbig2Budget.TooBig();
             int start = segment.HeaderEnd;
             int end = (int)Math.Min(start + segment.Length, data.Length);
             try
@@ -205,7 +210,8 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         {
             if (!_dictionaries.TryGetValue(number, out var dictionary)) continue;
             symbols.AddRange(dictionary.Exported);
-            if (symbols.Count > Jbig2Symbols.MaxSymbols) throw PdfReadException.Damaged("A JBIG2 segment refers to too many symbols.");
+            if (symbols.Count > Jbig2Symbols.MaxSymbols) throw Jbig2Budget.TooBig();
+            _budget.Fixed(dictionary.Exported.Count * 8L);
         }
         return symbols;
     }
@@ -253,7 +259,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         if (p.Refine && p.RefinementTemplate == 0) p.RefinementAt = ReadAt(data, ref position, end, 2);
         long exported = U32(data, position), added = U32(data, position + 4);
         position += 8;
-        if (exported > Jbig2Symbols.MaxSymbols || added > Jbig2Symbols.MaxSymbols) throw PdfReadException.Damaged("A JBIG2 symbol dictionary has too many symbols.");
+        if (exported > Jbig2Symbols.MaxSymbols || added > Jbig2Symbols.MaxSymbols) throw Jbig2Budget.TooBig();
         p.ExportedCount = (int)exported;
         p.NewCount = (int)added;
         p.Input = InputSymbols(segment);
@@ -289,7 +295,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         }
         else
         {
-            arith = new Jbig2Arith(data, position, end);
+            arith = new Jbig2Arith(data, position, end, budget: _budget);
             if (gb is not null) arith.Gb = (byte[])gb.Clone();
             if (gr is not null) arith.Gr = (byte[])gr.Clone();
         }
@@ -330,7 +336,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         if (p.Refine && p.RefinementTemplate == 0) p.RefinementAt = ReadAt(data, ref position, end, 2);
         long instances = U32(data, position);
         position += 4;
-        if (instances > Jbig2Text.MaxInstances) throw PdfReadException.Damaged("A JBIG2 text region has too many symbol instances.");
+        if (instances > Jbig2Text.MaxInstances) throw Jbig2Budget.TooBig();
         p.Instances = (int)instances;
         p.Symbols = InputSymbols(segment);
         p.SymbolCodeLength = Jbig2Text.CodeLength(p.Symbols.Count);
@@ -353,9 +359,10 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         }
         else
         {
-            arith = new Jbig2Arith(data, position, end);
+            arith = new Jbig2Arith(data, position, end, budget: _budget);
+            _budget.Fixed(2L << p.SymbolCodeLength);
         }
-        var bitmap = new Jbig2Text(_budget, arith, reader, p, new byte[1 << 13]).Decode();
+        var bitmap = new Jbig2Text(_budget, arith, reader, p, p.Huffman ? new byte[1 << 13] : null).Decode();
         Store(segment, region, bitmap);
     }
 
@@ -419,7 +426,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         {
             throw PdfReadException.Damaged("A JBIG2 refinement region is not the size of the region it refines.");
         }
-        var arith = new Jbig2Arith(data, position, end);
+        var arith = new Jbig2Arith(data, position, end, budget: _budget);
         var bitmap = Jbig2Generic.Refine(_budget, arith, region.Width, region.Height, template, reference, 0, 0, (flags & 2) != 0, at);
         Store(segment, region, bitmap);
     }
@@ -495,7 +502,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         else
         {
             var at = ReadAt(data, ref position, end, template == 0 ? 4 : 1);
-            var arith = new Jbig2Arith(data, position, end);
+            var arith = new Jbig2Arith(data, position, end, budget: _budget);
             bitmap = Jbig2Generic.Decode(_budget, arith, region.Width, region.Height, template, typicalPrediction, null, at);
         }
         Store(segment, region, bitmap);

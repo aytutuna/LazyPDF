@@ -70,7 +70,7 @@ internal sealed class Jbig2Text(Jbig2Budget budget, Jbig2Arith? arith, Jbig2Read
 
     public Jbig2Bitmap Decode()
     {
-        if (p.Instances < 0 || p.Instances > MaxInstances) throw PdfReadException.Damaged("A JBIG2 text region has too many symbol instances.");
+        if (p.Instances > MaxInstances) throw Jbig2Budget.TooBig();
         var bitmap = new Jbig2Bitmap(p.Width, p.Height, budget);
         if (p.DefaultPixel != 0) bitmap.Fill(1);
         int stripSize = 1 << p.LogStripSize;
@@ -99,7 +99,7 @@ internal sealed class Jbig2Text(Jbig2Budget budget, Jbig2Arith? arith, Jbig2Read
                 long top = p.Transposed ? currentS : t;
                 if (right) left -= w - 1;
                 if (bottom) top -= h - 1;
-                budget.Work((long)w * h + 64);
+                budget.Work((long)w * h + 256);
                 if (left > int.MinValue && left < int.MaxValue && top > int.MinValue && top < int.MaxValue)
                     bitmap.Compose(symbol, (int)left, (int)top, p.CombinationOperator);
                 // Step x

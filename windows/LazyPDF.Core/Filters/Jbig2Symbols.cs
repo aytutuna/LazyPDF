@@ -55,13 +55,13 @@ internal static class Jbig2Symbols
 
     public static List<Jbig2Bitmap> Decode(Jbig2Budget budget, Jbig2Arith? arith, Jbig2Reader? reader, Jbig2SymbolParams p)
     {
-        if (p.NewCount < 0 || p.ExportedCount < 0 || (long)p.Input.Count + p.NewCount > MaxSymbols)
-            throw PdfReadException.Damaged("A JBIG2 symbol dictionary has too many symbols.");
+        if ((long)p.Input.Count + p.NewCount > MaxSymbols) throw Jbig2Budget.TooBig();
         bool huffman = p.Huffman;
         int total = p.Input.Count + p.NewCount;
         int codeLength = Jbig2Text.CodeLength(total);
         // 6.5.8.2.3
         if (huffman) codeLength = Math.Max(codeLength, 1);
+        else budget.Fixed(2L << codeLength);
 
         // The input symbols first, then the new ones as they are decoded; aggregate symbols may use both.
         var all = new List<Jbig2Bitmap>(p.Input);

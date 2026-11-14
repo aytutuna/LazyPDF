@@ -76,8 +76,9 @@ internal sealed class Jbig2Arith
     public byte[] Gr;
 
     /// <summary>E.3.5 INITDEC: starts decoding the bytes from <paramref name="start"/> up to <paramref name="end"/>.</summary>
-    public Jbig2Arith(byte[] data, int start, int end, byte[]? refinementContexts = null)
+    public Jbig2Arith(byte[] data, int start, int end, byte[]? refinementContexts = null, Jbig2Budget? budget = null)
     {
+        budget?.Fixed(refinementContexts is null ? 80_000 : 0);
         // A decoder that only refines (Huffman coded blocks, one for each symbol) has no use for the other contexts.
         Gb = refinementContexts is null ? new byte[1 << 16] : [];
         Gr = refinementContexts ?? new byte[1 << 13];

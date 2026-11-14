@@ -74,6 +74,35 @@ public class Jbig2FilterTests
     }
 
     [Fact]
+    public void ATinyImageDoesNotGetAHugePageMadeForIt()
+    {
+        // The page says 11585 by 11585 (134 million pixels, inside the pixel limit); the image it is for is 1 by 1.
+        var bm = new Bm(8, 8);
+        var stream = Jbig2Segments.Cat(Jbig2Segments.Segment(0, 48, Jbig2Segments.PageInfo(11585, 11585)),
+            Jbig2Segments.Segment(1, 38, Jbig2Segments.GenericData(bm, [0xff, 0xac], 0, false, false, null)));
+        var parameters = new PdfDictionary();
+        parameters["Width"] = new PdfNumber(1);
+        parameters["Height"] = new PdfNumber(1);
+        var time = Stopwatch.StartNew();
+        Assert.Equal(PdfReadProblem.Unsupported, Assert.Throws<PdfReadException>(() => Decode(stream, parameters)).Problem);
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(2), time.Elapsed.ToString());
+        // A page of a normal size for its picture still decodes.
+        var page = Bm.Text(100, 100, 2);
+        parameters["Width"] = new PdfNumber(100);
+        parameters["Height"] = new PdfNumber(100);
+        Assert.Equal(page.Packed(), Decode(Jbig2Segments.Generic(page, 0, false), parameters));
+    }
+
+    [Fact]
+    public void MoreSegmentsThanTheLimitAreRefused()
+    {
+        var empty = Jbig2Segments.Segment(1, 62, []);
+        var segments = new List<byte[]> { Jbig2Segments.Segment(0, 48, Jbig2Segments.PageInfo(8, 8)) };
+        for (int i = 0; i < 70000; i++) segments.Add(empty);
+        Unsupported(Jbig2Segments.Cat([.. segments]));
+    }
+
+    [Fact]
     public void PageOverTheSizeLimitIsRefusedBeforeItIsMade()
     {
         // 30000 by 30000 is 112 MB of pixels, inside the pixel limit, but its rows are 113 MB: past a limit of a megabyte.
@@ -137,7 +166,7 @@ public class Jbig2FilterTests
     {
         // A dictionary that says it holds a billion symbols.
         byte[] dictionary = Jbig2Segments.Cat(Jbig2Segments.U16(0), Jbig2Segments.At([3, -1, -3, -1, 2, -2, -2, -2]), Jbig2Segments.U32(1000000000), Jbig2Segments.U32(1000000000), [0xff, 0xac]);
-        Damaged(Page(10, 10, Jbig2Segments.Segment(1, 0, dictionary)));
+        Unsupported(Page(10, 10, Jbig2Segments.Segment(1, 0, dictionary)));
 
         // A text region with 4 billion instances.
         var symbols = Jbig2SymbolTests.Symbols(4, 1);
@@ -145,7 +174,7 @@ public class Jbig2FilterTests
         byte[] text = Jbig2TextEncode.ArithmeticSegment(spec);
         Array.Copy(Jbig2Segments.U32(0xffffffffL), 0, text, 17 + 2, 4);
         byte[] dict = Jbig2SymbolEncode.Arithmetic([], symbols.Select(s => new NewSymbol(s)).ToList(), [true, true, true, true], 0, null, false, 0, null);
-        Damaged(Page(20, 20, Jbig2Segments.Segment(1, 0, dict), Jbig2Segments.Segment(2, 6, text, [1])));
+        Unsupported(Page(20, 20, Jbig2Segments.Segment(1, 0, dict), Jbig2Segments.Segment(2, 6, text, [1])));
     }
 
     [Fact]
@@ -225,7 +254,7 @@ public class Jbig2FilterTests
                 Try(data, globals);
             }
         }
-        Assert.True(time.Elapsed < TimeSpan.FromSeconds(60), time.Elapsed.ToString());
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(20), time.Elapsed.ToString());
     }
 
     private static void Try(byte[] data, PdfDictionary globals)
@@ -261,6 +290,6 @@ public class Jbig2FilterTests
         byte[] dict = Jbig2SymbolEncode.Arithmetic([], symbols.Select(s => new NewSymbol(s)).ToList(), [true, true], 0, null, false, 0, null);
         var time = Stopwatch.StartNew();
         Try(Page(10, 10, Jbig2Segments.Segment(1, 0, dict), Jbig2Segments.Segment(2, 6, text, [1])), new PdfDictionary());
-        Assert.True(time.Elapsed < TimeSpan.FromSeconds(30), time.Elapsed.ToString());
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(10), time.Elapsed.ToString());
     }
 }

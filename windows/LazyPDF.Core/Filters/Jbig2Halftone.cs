@@ -30,7 +30,8 @@ internal static class Jbig2Halftone
     /// <summary>6.7.5: the collective bitmap of all patterns, cut up.</summary>
     public static List<Jbig2Bitmap> Patterns(Jbig2Budget budget, byte[] data, int start, int end, bool mmr, int template, int width, int height, long maxIndex)
     {
-        if (width < 1 || height < 1 || maxIndex < 0 || maxIndex >= MaxPatterns) throw PdfReadException.Damaged("A JBIG2 pattern dictionary has a bad size.");
+        if (width < 1 || height < 1) throw PdfReadException.Damaged("A JBIG2 pattern dictionary has a bad size.");
+        if (maxIndex >= MaxPatterns) throw Jbig2Budget.TooBig();
         int count = (int)maxIndex + 1;
         budget.Keep((long)count * (width * height + 64));
         Jbig2Bitmap collective;
@@ -40,7 +41,7 @@ internal static class Jbig2Halftone
         }
         else
         {
-            var arith = new Jbig2Arith(data, start, end);
+            var arith = new Jbig2Arith(data, start, end, budget: budget);
             int[] at = template == 0 ? [-width, 0, -3, -1, 2, -2, -2, -2] : [-width, 0];
             collective = Jbig2Generic.Decode(budget, arith, count * width, height, template, false, null, at);
         }
@@ -95,7 +96,7 @@ internal static class Jbig2Halftone
         // Annex C: the gray values are coded as bit planes, the highest first, each the exclusive or of itself and the plane above.
         int planeCount = Jbig2Text.CodeLength(patterns.Count);
         var planes = new Jbig2Bitmap[planeCount];
-        Jbig2Arith? arith = p.Mmr ? null : new Jbig2Arith(data, start, end);
+        Jbig2Arith? arith = p.Mmr ? null : new Jbig2Arith(data, start, end, budget: budget);
         int[] at = p.Template == 0 ? [3, -1, -3, -1, 2, -2, -2, -2] : [p.Template == 1 ? 3 : 2, -1];
         int position = start;
         for (int j = planeCount - 1; j >= 0; j--)

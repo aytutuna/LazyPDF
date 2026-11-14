@@ -6,13 +6,25 @@ internal sealed class Jbig2Budget
     /// <summary>The pixels of every bitmap made during one decode, whether still alive or not.</summary>
     private long _total = 3 * PdfImageSamples.MaxPixels;
 
+    /// <summary>
+    /// With the pixels of the picture the page is fitted to, what a decode may make is a multiple of that and a little more:
+    /// a dictionary that says 1 by 1 does not get a page of millions of pixels made for it and cut down.
+    /// </summary>
+    public Jbig2Budget(long fitPixels = 0)
+    {
+        if (fitPixels > 0) _total = Math.Min(_total, 16 * fitPixels + (1 << 24));
+    }
+
     /// <summary>The pixels of the symbols and patterns that stay around for later segments.</summary>
     private long _kept = 1L << 26;
 
     /// <summary>The pixels that symbols and refinements may be drawn or coded over, all together.</summary>
-    private long _work = 1L << 31;
+    private long _work = 1L << 29;
 
-    public static PdfReadException TooBig() => new(PdfReadProblem.Unsupported, "A JBIG2 image needs too much memory.");
+    public static PdfReadException TooBig() => FilterBuffer.TooBig();
+
+    /// <summary>The arrays a segment makes whatever it holds, counted as pixels.</summary>
+    public void Fixed(long bytes) => Charge(bytes, 1);
 
     public void Charge(long width, long height)
     {

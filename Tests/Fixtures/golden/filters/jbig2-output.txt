@@ -43,7 +43,7 @@
 > jbig2 generic-t0.bin - 13:80 -
 < length=164160 fnv=e531cfae
 > jbig2 generic-t0.bin - 40:55,41:aa,42:0f -
-< error unsupported: A JBIG2 image needs too much memory.
+< error unsupported: A stream expands past the size limit.
 > jbig2 generic-t0.bin - - 30
 < length=320 fnv=ea417385
 > jbig2 generic-t0.bin - - 60
