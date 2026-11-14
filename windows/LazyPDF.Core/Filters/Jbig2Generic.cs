@@ -186,6 +186,7 @@ internal static class Jbig2Generic
         var bitmap = new Jbig2Bitmap(width, height, budget);
         used = 0;
         if (width == 0 || height == 0) return bitmap;
+        if (start > end) throw PdfReadException.Damaged("A JBIG2 MMR region has no data.");
         var packed = Ccitt.DecodeMmr(data.AsSpan(start, end - start).ToArray(), width, height, out used);
         int stride = (width + 7) / 8;
         for (int y = 0; y < height; y++)

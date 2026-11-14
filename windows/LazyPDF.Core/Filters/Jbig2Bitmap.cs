@@ -10,9 +10,11 @@ internal sealed class Jbig2Budget
     /// With the pixels of the picture the page is fitted to, what a decode may make is a multiple of that and a little more:
     /// a dictionary that says 1 by 1 does not get a page of millions of pixels made for it and cut down.
     /// </summary>
-    public Jbig2Budget(long fitPixels = 0)
+    public void Fit(long fitPixels)
     {
-        if (fitPixels > 0) _total = Math.Min(_total, 16 * fitPixels + (1 << 24));
+        _total = Math.Min(_total, 16 * fitPixels + (1 << 24));
+        // Enough for a page of symbols however small, and for drawing over the picture many times.
+        _work = Math.Min(_work, 32 * fitPixels + (1 << 26));
     }
 
     /// <summary>The pixels of the symbols and patterns that stay around for later segments.</summary>

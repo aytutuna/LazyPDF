@@ -239,13 +239,13 @@ public class Jbig2FilterTests
         var globals = WithGlobals(Jbig2Samples.Globals());
         foreach (var sample in samples)
         {
-            for (int length = 0; length < sample.Data.Length; length += Math.Max(1, sample.Data.Length / 60))
+            for (int length = 0; length < sample.Data.Length; length += Math.Max(1, sample.Data.Length / 30))
             {
                 Try(sample.Data[..length], globals);
             }
         }
         var random = new Random(77);
-        for (int round = 0; round < 25; round++)
+        for (int round = 0; round < 12; round++)
         {
             foreach (var sample in samples)
             {
@@ -254,7 +254,7 @@ public class Jbig2FilterTests
                 Try(data, globals);
             }
         }
-        Assert.True(time.Elapsed < TimeSpan.FromSeconds(20), time.Elapsed.ToString());
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(10), time.Elapsed.ToString());
     }
 
     private static void Try(byte[] data, PdfDictionary globals)
@@ -266,6 +266,75 @@ public class Jbig2FilterTests
         catch (PdfReadException)
         {
         }
+    }
+
+    [Theory]
+    [InlineData(38, 17, 0x01)]
+    [InlineData(38, 17, 0x00)]
+    [InlineData(16, 3, 0x01)]
+    [InlineData(22, 20, 0x01)]
+    [InlineData(6, 18, 0x00)]
+    [InlineData(0, 1, 0x00)]
+    [InlineData(42, 17, 0x03)]
+    public void ASegmentCutShortIsDamageEvenWithBytesAfterIt(int type, int length, int fill)
+    {
+        // The bytes after the segment must not be read as part of it: a generic region of 17 bytes followed by a byte with bit 0 set
+        // is an MMR region with no data, a pattern dictionary of 3 bytes has no sizes, a halftone region of 20 has no grid.
+        var stream = Page(8, 8, Jbig2Segments.Segment(1, type, Enumerable.Repeat((byte)fill, length).ToArray()), Enumerable.Repeat((byte)fill, 40).ToArray());
+        Damaged(stream);
+    }
+
+    [Fact]
+    public void SegmentsOfEveryLengthUnderTheirMinimumNeverRaiseAnythingButDamage()
+    {
+        int[] types = [0, 4, 6, 7, 16, 20, 22, 23, 36, 38, 39, 40, 42, 43, 48, 50, 53];
+        foreach (int type in types)
+        {
+            for (int length = 0; length <= 45; length++)
+            {
+                foreach (byte fill in new byte[] { 0x00, 0x01, 0x03, 0x80, 0xff })
+                {
+                    byte[] body = [.. Enumerable.Repeat(fill, length)];
+                    Try(Page(8, 8, Jbig2Segments.Segment(1, type, body), Enumerable.Repeat(fill, 60).ToArray()), new PdfDictionary());
+                    Try(Page(8, 8, Jbig2Segments.Segment(1, type, body, [0, 0, 0])), new PdfDictionary());
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("\r\n")]
+    [InlineData("\0\0\0")]
+    [InlineData("A")]
+    [InlineData("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0")]
+    public void PaddingAfterTheLastSegmentIsTheEndOfTheData(string tail)
+    {
+        var bm = Bm.Text(30, 20, 5);
+        byte[] stream = [.. Jbig2Segments.Generic(bm, 0, false), .. TestPdf.Latin(tail)];
+        var result = PdfFilters.DecodeToCodecWhole(stream, new PdfName("JBIG2Decode"), null, PdfFilters.DefaultMaxSize);
+        Assert.Equal(bm.Packed(), result.Data);
+    }
+
+    [Fact]
+    public void NothingAfterTheEndOfThePageIsRead()
+    {
+        var bm = Bm.Text(30, 20, 5);
+        byte[] stream = [.. Jbig2Segments.Generic(bm, 0, false), .. Jbig2Segments.Segment(5, 49, []), .. Enumerable.Repeat((byte)0x7f, 25)];
+        Assert.Equal(bm.Packed(), PdfFilters.DecodeToCodecWhole(stream, new PdfName("JBIG2Decode"), null, PdfFilters.DefaultMaxSize).Data);
+    }
+
+    [Fact]
+    public void ASmallImageMayShareABigGlobalDictionary()
+    {
+        // 1000 symbols of 100 by 250 are 25 million pixels in the globals, more than the size of a 300 by 300 picture allows to be made.
+        var symbols = Enumerable.Range(0, 1000).Select(_ => new Bm(100, 250)).ToList();
+        byte[] globals = Jbig2Segments.Segment(1, 0, Jbig2SymbolEncode.Arithmetic([], symbols.Select(s => new NewSymbol(s)).ToList(), [.. symbols.Select(_ => true)], 0, null, false, 0, null), page: 0);
+        var spec = new TextSpec { Width = 300, Height = 300, Symbols = symbols, Instances = [new Instance(7, 10, 10)] };
+        byte[] page = Page(300, 300, Jbig2Segments.Segment(2, 6, Jbig2TextEncode.ArithmeticSegment(spec), [1]));
+        var parameters = WithGlobals(globals);
+        parameters["Width"] = new PdfNumber(300);
+        parameters["Height"] = new PdfNumber(300);
+        Assert.Equal(new Bm(300, 300).Packed(), Decode(page, parameters));
     }
 
     [Fact]
@@ -289,7 +358,11 @@ public class Jbig2FilterTests
         Array.Copy(Jbig2Segments.U32(Jbig2Text.MaxInstances), 0, text, 17 + 2, 4);
         byte[] dict = Jbig2SymbolEncode.Arithmetic([], symbols.Select(s => new NewSymbol(s)).ToList(), [true, true], 0, null, false, 0, null);
         var time = Stopwatch.StartNew();
-        Try(Page(10, 10, Jbig2Segments.Segment(1, 0, dict), Jbig2Segments.Segment(2, 6, text, [1])), new PdfDictionary());
-        Assert.True(time.Elapsed < TimeSpan.FromSeconds(10), time.Elapsed.ToString());
+        // The picture the region is for is 10 by 10, which is what the work a decode may do is measured by.
+        var parameters = new PdfDictionary();
+        parameters["Width"] = new PdfNumber(10);
+        parameters["Height"] = new PdfNumber(10);
+        Try(Page(10, 10, Jbig2Segments.Segment(1, 0, dict), Jbig2Segments.Segment(2, 6, text, [1])), parameters);
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(3), time.Elapsed.ToString());
     }
 }

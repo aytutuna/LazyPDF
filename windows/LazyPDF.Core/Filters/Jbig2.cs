@@ -34,6 +34,7 @@ internal static class Jbig2
     {
         var decoder = new Jbig2Decoder(maxSize, width, height, whole);
         decoder.Read(globals);
+        decoder.FitBudget();
         decoder.Read(data);
         return decoder.Finish();
     }
@@ -45,7 +46,7 @@ internal static class Jbig2
 /// </summary>
 internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight = 0, bool whole = false)
 {
-    private readonly Jbig2Budget _budget = new(fitWidth > 0 && fitHeight > 0 ? (long)fitWidth * fitHeight : 0);
+    private readonly Jbig2Budget _budget = new();
     private int _segments;
     private int _failed;
     private int _drawn;
@@ -60,6 +61,9 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
     /// <summary>The most segments one decode reads, the globals and the image together.</summary>
     private const int MaxSegments = 1 << 16;
 
+    /// <summary>The shortest segment header: number, flags, referred-to flags, page association and length.</summary>
+    private const int MinHeader = 11;
+
     private readonly Dictionary<long, Jbig2Bitmap> _intermediate = [];
     private readonly Dictionary<long, Jbig2SymbolDictionary> _dictionaries = [];
     private readonly Dictionary<long, Jbig2Huffman> _tables = [];
@@ -69,12 +73,23 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
 
     private readonly record struct Region(int Width, int Height, int X, int Y, int Op);
 
+    /// <summary>
+    /// What the image's own segments may make is tied to the size of the picture (the globals, which many pictures share,
+    /// are not); this is called between the two.
+    /// </summary>
+    public void FitBudget()
+    {
+        if (fitWidth > 0 && fitHeight > 0) _budget.Fit((long)fitWidth * fitHeight);
+    }
+
     /// <summary>The segments of <paramref name="data"/> one after the other (7.2), through the end of file segment.</summary>
     public void Read(byte[] data)
     {
         int position = 0;
         while (position < data.Length)
         {
+            // Padding, a line break or a stray byte after the last segment is the end of the data, not a segment that failed.
+            if (data.Length - position < MinHeader || data.AsSpan(position).IndexOfAnyExcept((byte)0) < 0) return;
             Segment segment;
             try
             {
@@ -90,13 +105,15 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
             int end = (int)Math.Min(start + segment.Length, data.Length);
             try
             {
-                Process(segment, data, start, end);
+                // The handlers get the segment alone, so that reading past its end is damage and not the next segment's bytes.
+                Process(segment, data.AsSpan(start, end - start).ToArray());
             }
             catch (PdfReadException e) when (e.Problem == PdfReadProblem.Damaged)
             {
                 Fail(e);
             }
-            if (segment.Type == 51) return;
+            // Nothing after the end of the page or of the file is read.
+            if (segment.Type is 49 or 51) return;
             position = end;
         }
     }
@@ -164,8 +181,10 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         throw PdfReadException.Damaged("A JBIG2 segment of unknown length does not end.");
     }
 
-    private void Process(Segment segment, byte[] data, int start, int end)
+    private void Process(Segment segment, byte[] data)
     {
+        const int start = 0;
+        int end = data.Length;
         switch (segment.Type)
         {
             case 0:
@@ -486,6 +505,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         var region = ReadRegion(data, start, end, segment.UnknownLength);
         if (segment.UnknownLength)
         {
+            if (end - start < 22) throw PdfReadException.Damaged("A JBIG2 region segment is cut off.");
             // The row count the segment ends with is the height that was coded.
             region = region with { Height = (int)Math.Min(region.Height, U32(data, end - 4)) };
             end -= 4;
