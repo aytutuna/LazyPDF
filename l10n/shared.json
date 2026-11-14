@@ -1462,9 +1462,6 @@
   "Open in another app": {
     "tr": "Başka uygulamada aç"
   },
-  "No other app on this Mac opens PDF files.": {
-    "tr": "Bu Mac'te PDF dosyalarını açan başka bir uygulama yok."
-  },
   "This text includes annotation text, which the page's content does not hold. Build the page without IncludeAnnotations to edit or redact it.": {
     "tr": "Bu metin, sayfa içeriğinde bulunmayan ek açıklama metnini de içeriyor. Düzenlemek ya da karartmak için sayfayı IncludeAnnotations olmadan oluşturun."
   },

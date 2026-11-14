@@ -246,26 +246,40 @@ final class MacShell {
         return alert.runModal() == .alertFirstButtonReturn ? choice.layout : nil
     }
 
-    // The default app for PDFs may be this one, so it is skipped for the first other app that opens them.
+    // Preview, the usual default app, cannot show XFA. An Adobe reader does, so it gets the file when it is installed;
+    // otherwise the person picks the app, as Finder's Open With > Other does.
     private func openElsewhere(_ tab: DocumentTab) {
-        guard let file = tab.url else { return share(tab) }
-        let workspace = NSWorkspace.shared
-        let own = Bundle.main.bundleURL.standardizedFileURL
-        let isOther = { (app: URL) in app.standardizedFileURL != own }
-        let app = workspace.urlForApplication(toOpen: file).flatMap { isOther($0) ? $0 : nil }
-            ?? workspace.urlsForApplications(toOpen: file).first(where: isOther)
-        guard let app else {
-            vm.showNotice(L10n.t("Open in another app"), L10n.t("No other app on this Mac opens PDF files."))
+        guard let file = tab.url ?? stage(tab) else { return }
+        if let app = Self.xfaViewer() {
+            open(file, with: app)
             return
         }
-        workspace.open([file], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration()) { [weak self] _, error in
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.prompt = L10n.t("Open")
+        guard panel.runModal() == .OK, let app = panel.url else { return }
+        if let own = Bundle.main.bundleIdentifier, Bundle(url: app)?.bundleIdentifier == own { return }
+        open(file, with: app)
+    }
+
+    private static func xfaViewer() -> URL? {
+        let readers = ["com.adobe.Reader", "com.adobe.Acrobat.Pro", "com.adobe.Acrobat"]
+        // A copy left in the Trash is still known to LaunchServices.
+        return readers.lazy
+            .compactMap { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }
+            .first { !$0.path.contains("/.Trash/") }
+    }
+
+    private func open(_ file: URL, with app: URL) {
+        NSWorkspace.shared.open([file], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration()) { [weak self] _, error in
             guard let error else { return }
             Task { @MainActor in self?.vm.showProblem(Problems.open(error, file.lastPathComponent)) }
         }
     }
 
-    private func share(_ tab: DocumentTab) {
-        guard let view = window?.contentView else { return }
+    // A copy of the document as it is now, for what has no file to hand over.
+    private func stage(_ tab: DocumentTab) -> URL? {
         let folder = folders.printCopies.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let name = tab.title.lowercased().hasSuffix(".pdf") ? tab.title : tab.title + ".pdf"
         let file = folder.appendingPathComponent(name)
@@ -274,8 +288,13 @@ final class MacShell {
             try Data(tab.session.current).write(to: file)
         } catch {
             vm.showProblem(Problems.save(error, tab.title))
-            return
+            return nil
         }
+        return file
+    }
+
+    private func share(_ tab: DocumentTab) {
+        guard let view = window?.contentView, let file = stage(tab) else { return }
         NSSharingServicePicker(items: [file]).show(relativeTo: .zero, of: view, preferredEdge: .minY)
     }
 
