@@ -109,10 +109,12 @@ public static class PdfFilters
 
     /// <summary>
     /// /JBIG2Globals is a stream; it is read as the data it holds, so the caller passes one whose data is in memory
-    /// (<see cref="PdfStream.Data"/> set), as <c>PdfDocument.DecodeSpec</c> does when asked to decode.
+    /// (<see cref="PdfStream.Data"/> set), as <c>PdfDocument.DecodeSpec</c> does when asked to decode. It also adds the image's
+    /// /Width and /Height to the parameters (they are no part of the filter's own): the page is fitted to that size. Without
+    /// them, for a stream that is not an image, the page keeps its own size.
     /// </summary>
     private static byte[] DecodeJbig2(byte[] data, PdfDictionary? p, long maxSize) =>
-        Jbig2.Decode((p?["JBIG2Globals"] as PdfStream)?.Data ?? [], data, maxSize);
+        Jbig2.Decode((p?["JBIG2Globals"] as PdfStream)?.Data ?? [], data, maxSize, Math.Max(0, Int(p?["Width"], 0)), Math.Max(0, Int(p?["Height"], 0)));
 
     private static byte[] DecodeCcitt(byte[] data, PdfDictionary? p, long maxSize)
     {

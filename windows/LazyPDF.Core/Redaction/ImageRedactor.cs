@@ -64,7 +64,7 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             int components = mask ? 1 : SampleColorSpace.Parse(d["ColorSpace"], document.Resolve, s => document.Data(s)).Components;
             var samples = decoded.Data;
             long used = ((long)width * components * bits + 7) / 8 * height;
-            // A JBIG2 page has the size it says, not the picture's; rows of another width would put the marks in the wrong place.
+            // A JBIG2 page is fitted to the picture's size, but not to a depth or colour space it does not have; other rows would put the marks in the wrong place.
             if (PdfFilters.Uses(filter, "JBIG2Decode") && samples.Length != used) return null;
             if (samples.Length > used) samples = samples[..(int)used];
             Zero(samples, width, height, components * bits, unit);

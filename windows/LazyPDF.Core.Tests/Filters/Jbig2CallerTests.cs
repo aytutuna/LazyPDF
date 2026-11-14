@@ -58,13 +58,45 @@ public class Jbig2CallerTests
     }
 
     [Fact]
-    public void ARedactedPictureWhoseJbig2PageIsNotTheSizeItSaysIsRemovedWhole()
+    public void ARedactedJbig2PictureWithAnotherDepthThanOneBitIsRemovedWhole()
     {
-        using var document = RedactionKit.Page(Place, "/XObject <</Im1 6 0 R>>", pdf => pdf.Stream(6, Image(16, 16), White(8)));
+        using var document = RedactionKit.Page(Place, "/XObject <</Im1 6 0 R>>", pdf =>
+            pdf.Stream(6, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /JBIG2Decode", White(8)));
         var result = new PdfRedactor(document).Apply([TopLeft()]);
         using var output = RedactionKit.Open(result);
         Assert.Empty(RedactionKit.Images(output));
         Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
+    [Theory]
+    [InlineData(12, 8)]
+    [InlineData(5, 8)]
+    [InlineData(8, 11)]
+    [InlineData(8, 3)]
+    [InlineData(13, 2)]
+    public void APageOfAnotherSizeIsCutOrPaddedWithWhiteToTheImage(int width, int height)
+    {
+        var page = Bm.Text(8, 8, 17);
+        using var document = RedactionKit.Page(Place, "/XObject <</Im1 6 0 R>>", pdf => pdf.Stream(6, Image(width, height), Jbig2Segments.Generic(page, 0, false)));
+        var found = Assert.Single(ImageExtractor.Extract(document, [0]));
+        var (w, h, rgba) = ExportKit.PngDecode(found.Image.Data);
+        Assert.Equal((width, height), (w, h));
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++) Assert.Equal(page[x, y] != 0 ? 0 : 255, rgba[(y * w + x) * 4]);
+        }
+    }
+
+    [Fact]
+    public void ARedactedPictureWhosePageIsNotItsSizeIsCutLikeAnyOther()
+    {
+        using var document = RedactionKit.Page(Place, "/XObject <</Im1 6 0 R>>", pdf => pdf.Stream(6, Image(16, 16), White(8)));
+        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, new PdfRect(100, 100, 140, 140))]);
+        using var output = RedactionKit.Open(result);
+        var samples = output.Data(Assert.Single(ImageStreams(output)));
+        Assert.Equal(32, samples.Length);
+        Assert.Equal(0xff, samples[0]);
+        Assert.Equal(0x0f, samples[28]);
     }
 
     [Fact]

@@ -68,7 +68,7 @@ public sealed partial class PdfDocument
     {
         var filter = Flatten(stream.Dictionary["Filter"], 2);
         var parameters = Flatten(stream.Dictionary["DecodeParms"], 3);
-        if (decoding) parameters = WithGlobals(parameters);
+        if (decoding) parameters = WithImageSize(filter, WithGlobals(parameters), stream.Dictionary);
         if (_security is null) return (filter, parameters, false);
         switch (filter)
         {
@@ -81,6 +81,32 @@ public sealed partial class PdfDocument
             default:
                 return (filter, parameters, false);
         }
+    }
+
+    // The size of the image goes to its JBIG2 stage, which fits the page to it.
+    private PdfObject? WithImageSize(PdfObject? filter, PdfObject? parameters, PdfDictionary image)
+    {
+        List<PdfObject> names = filter switch
+        {
+            PdfName name => [name],
+            PdfArray array => array.Items,
+            _ => [],
+        };
+        int at = names.FindIndex(n => n is PdfName { Value: "JBIG2Decode" });
+        long width = Integer(image, "Width") ?? 0, height = Integer(image, "Height") ?? 0;
+        if (at < 0 || width < 1 || height < 1 || width > int.MaxValue || height > int.MaxValue) return parameters;
+        var each = new List<PdfObject>();
+        switch (parameters)
+        {
+            case PdfArray array: each.AddRange(array.Items); break;
+            case PdfDictionary single: each.Add(single); break;
+        }
+        while (each.Count <= at) each.Add(PdfNull.Instance);
+        var sized = (each[at] as PdfDictionary)?.Copy() ?? new PdfDictionary();
+        sized["Width"] = new PdfNumber(width);
+        sized["Height"] = new PdfNumber(height);
+        each[at] = sized;
+        return new PdfArray(each);
     }
 
     private PdfObject? WithGlobals(PdfObject? parameters) => parameters switch
