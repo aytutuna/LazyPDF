@@ -6,10 +6,6 @@ internal sealed class Jbig2Budget
     /// <summary>The pixels of every bitmap made during one decode, whether still alive or not.</summary>
     private long _total = 3 * PdfImageSamples.MaxPixels;
 
-    /// <summary>
-    /// With the pixels of the picture the page is fitted to, what a decode may make is a multiple of that and a little more:
-    /// a dictionary that says 1 by 1 does not get a page of millions of pixels made for it and cut down.
-    /// </summary>
     /// <summary>The globals of an image may be shared by many; they make symbols and tables, not pages.</summary>
     public void ForGlobals()
     {
@@ -25,6 +21,10 @@ internal sealed class Jbig2Budget
         if (fitPixels > 0) Fit(fitPixels);
     }
 
+    /// <summary>
+    /// With the pixels of the picture the page is fitted to, what a decode may make is a multiple of that and a little more:
+    /// a dictionary that says 1 by 1 does not get a page of millions of pixels made for it and cut down.
+    /// </summary>
     public void Fit(long fitPixels)
     {
         _total = Math.Min(_total, 16 * fitPixels + (1 << 24));
