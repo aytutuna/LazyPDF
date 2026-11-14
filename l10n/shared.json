@@ -9023,6 +9023,9 @@
   "Fails PDF/UA-1 checks.": {
     "tr": "PDF/UA-1 denetimlerinden geçmiyor."
   },
+  "ISO 14289-1 clause {0}": {
+    "tr": "ISO 14289-1 madde {0}"
+  },
   "Matterhorn {0}, ISO 14289-1 clause {1}": {
     "tr": "Matterhorn {0}, ISO 14289-1 madde {1}"
   },

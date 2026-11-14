@@ -762,6 +762,7 @@
 "Hits removed" = "Bulunanlar kaldırıldı";
 "Home" = "Ana sayfa";
 "IBANs" = "IBAN'lar";
+"ISO 14289-1 clause {0}" = "ISO 14289-1 madde {0}";
 "ISO 19005 clause {0}" = "ISO 19005 madde {0}";
 "Ignore capitals" = "Büyük harfleri yok say";
 "Ignore headers and footers" = "Üst ve alt bilgileri yok say";

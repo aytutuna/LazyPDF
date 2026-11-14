@@ -48,7 +48,7 @@ public final class IssueRow: Identifiable {
     /// The same for the PDF/UA check, whose rows name the Matterhorn condition and the clause of ISO 14289-1.
     public static func group(_ issues: [PdfUaIssue]) -> [IssueRow] {
         group(issues.map {
-            (PdfAIssue($0.condition, $0.where, $0.message), L10n.t("Matterhorn {0}, ISO 14289-1 clause {1}", $0.condition, $0.clause))
+            (PdfAIssue($0.condition, $0.where, $0.message), $0.condition.isEmpty ? L10n.t("ISO 14289-1 clause {0}", $0.clause) : L10n.t("Matterhorn {0}, ISO 14289-1 clause {1}", $0.condition, $0.clause))
         })
     }
 

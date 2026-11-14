@@ -154,7 +154,7 @@ public final class BatchRunner: @unchecked Sendable {
         var bytes = made
         if set.steps.contains(where: { $0.kind == .pdfUa && $0.markPdfUa }) { bytes = try markPdfUa(bytes, now) }
         let report = try PdfUaValidator.validate(try PdfDocument.open(bytes))
-        let left = Set(report.issues.map(\.condition)).count
+        let left = Set(report.issues.map { "\($0.condition)|\($0.clause)" }).count
         if left > 0 {
             notes.append(L10n.plural(left, one: "{0} PDF/UA condition is not met.", other: "{0} PDF/UA conditions are not met."))
         }

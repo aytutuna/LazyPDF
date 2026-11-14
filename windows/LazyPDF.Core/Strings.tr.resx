@@ -2797,6 +2797,9 @@
   <data name="IBANs" xml:space="preserve">
     <value>IBAN'lar</value>
   </data>
+  <data name="ISO 14289-1 clause {0}" xml:space="preserve">
+    <value>ISO 14289-1 madde {0}</value>
+  </data>
   <data name="ISO 19005 clause {0}" xml:space="preserve">
     <value>ISO 19005 madde {0}</value>
   </data>

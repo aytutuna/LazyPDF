@@ -67,17 +67,18 @@ final class PdfUaChecker {
         return -1
     }
 
+    // No Matterhorn condition covers an untagged file, so these two carry the ISO clause only.
     private func checkMarkInfo() {
         let info = document.dict(document.catalog, "MarkInfo")
-        if document.bool(info, "Marked") != true { add("01-001", "6.2", PdfAText.catalog, PdfUaText.noMarkInfo) }
+        if document.bool(info, "Marked") != true { add("", "6.2", PdfAText.catalog, PdfUaText.noMarkInfo) }
         if document.bool(info, "Suspects") == true { add("01-007", "7.1", PdfAText.catalog, PdfUaText.suspects) }
     }
 
     private func checkTree() {
         if let tree {
-            if tree.isTruncated { add("01-002", "7.1", PdfAText.catalog, PdfUaText.structTreeTooBig) }
+            if tree.isTruncated { add("", "7.1", PdfAText.catalog, PdfUaText.structTreeTooBig) }
         } else {
-            add("01-002", "7.1", PdfAText.catalog, PdfUaText.noStructTree)
+            add("", "7.1", PdfAText.catalog, PdfUaText.noStructTree)
         }
     }
 

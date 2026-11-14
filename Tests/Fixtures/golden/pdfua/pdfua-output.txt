@@ -15,8 +15,8 @@
 <   07-001 | 7.1 | Catalog | The viewer preferences do not set /DisplayDocTitle to true.
 > check untagged
 < issues 2 truncated false
-<   01-001 | 6.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
-<   01-002 | 7.1 | Catalog | The file has no structure tree.
+<    | 6.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
+<    | 7.1 | Catalog | The file has no structure tree.
 > check structure
 < issues 11 truncated false
 <   02-001 | 7.1 | Structure element 18 | The structure type Weird is not a standard type and the role map does not lead to one.
@@ -72,8 +72,8 @@
 > mark untagged
 < marked false
 < issues 2 truncated false
-<   01-001 | 6.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
-<   01-002 | 7.1 | Catalog | The file has no structure tree.
+<    | 6.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
+<    | 7.1 | Catalog | The file has no structure tree.
 < after 2
 > mark structure
 < marked false

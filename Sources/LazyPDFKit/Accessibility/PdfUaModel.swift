@@ -3,7 +3,7 @@ import Foundation
 // Twin of windows/LazyPDF.Core/Accessibility/PdfUaModel.cs.
 
 /// One failure condition the file hits. `condition` is the Matterhorn Protocol id ("06-002", whose first two digits are the
-/// checkpoint) and `clause` the clause of ISO 14289-1 behind it.
+/// checkpoint), empty when the protocol has no condition for the finding, and `clause` the clause of ISO 14289-1 behind it.
 public struct PdfUaIssue {
     public let condition: String
     public let clause: String
