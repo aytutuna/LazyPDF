@@ -407,6 +407,21 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Figure description")
     }
 
+    func test_anErrorOfAnotherKindWhileWritingADescriptionIsReported() async throws {
+        let (model, rig) = try await attached(try pictures(1))
+        await tag(model, rig)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.setAlt = { _, _, _, _ in throw ArgumentException("odd") }
+        model.typeAlt("A grey square.")
+
+        model.saveAlt()
+
+        XCTAssertEqual(rig.host.problems.first?.title, "Something went wrong")
+        XCTAssertFalse(rig.tab.session.canUndo && rig.tab.session.undoLabel == "Figure description")
+        XCTAssertEqual(model.drafts.count, 1)
+    }
+
     func test_aSignedFileAsksBeforeTheTypedDescriptionIsHandedIn() async throws {
         let (model, rig) = try await attached(try signedPictures())
         model.setView(.figures)
