@@ -42,7 +42,8 @@ public sealed class OcrPanelHandInTests
         Assert.True(panel.HandIn());
 
         Assert.Equal(["alpha", "gamma"], Words(tab));
-        Assert.True(tab.IsDirty);
+        Assert.Equal(Loc.T("Correct word"), tab.Session.UndoLabel);
+        Assert.False(tab.Document.HasChanges);
         return Task.CompletedTask;
     });
 
