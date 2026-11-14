@@ -76,6 +76,9 @@ public final class AccessibilityModel: ToolPanelModel {
         weak var tab: DocumentTab?
     }
 
+    /// How a typed description goes into the tags; a test replaces it to make the write fail.
+    @ObservationIgnored var setAlt: (PdfDocument, StructureTree, StructElement, String) throws -> Void = AccessibilityEdits.setAlt
+
     /// The figure to show when the list is built: the one that was shown, or the next one after a save.
     @ObservationIgnored var figureNumber = 0
 

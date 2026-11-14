@@ -86,7 +86,7 @@ extension AccessibilityModel {
         guard let row = selectedRow, let tab, let host else { return }
         let text = altText
         ChangeGate.run(tab, host, L10n.t("Figure description")) { [self] in
-            guard self.tab === tab, writeAlts(tab, host, [(row, text)]) else { return }
+            guard self.tab === tab, try writeAlts(tab, host, [(row, text)]) else { return }
             drafts[row.key] = nil
             figureNumber = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? row.number : nextBareAfter(row.number, row.number)
         }
@@ -100,7 +100,7 @@ extension AccessibilityModel {
         let asks = tab.document.isSigned && ChangeGate.refusal(tab.document) == nil
         // The notice can outlive the panel's attachment, so the answer writes to the tab it was asked for.
         ChangeGate.run(tab, host, L10n.t("Figure description")) { [weak self] in
-            guard let self, writeAlts(tab, host, edits) else { return }
+            guard let self, try writeAlts(tab, host, edits) else { return }
             for (row, _) in edits { self.forgetDraft(row.key, of: tab) }
         }
         return !asks
@@ -110,8 +110,8 @@ extension AccessibilityModel {
         if self.tab === tab { drafts[key] = nil } else { kept[ObjectIdentifier(tab)]?.drafts[key] = nil }
     }
 
-    // False when nothing was written; the problem is on the info bar.
-    private func writeAlts(_ tab: DocumentTab, _ host: ToolHost, _ edits: [(FigureRow, String)]) -> Bool {
+    // False when nothing was written; the problem is on the info bar. Other errors reach ChangeGate, which reports them.
+    private func writeAlts(_ tab: DocumentTab, _ host: ToolHost, _ edits: [(FigureRow, String)]) throws -> Bool {
         do {
             // The tree on the screen was read from a copy; the edit goes to the open document's own.
             let tree = StructureTree.read(tab.document)
@@ -122,15 +122,13 @@ extension AccessibilityModel {
                 return false
             }
             for (edit, figure) in zip(edits, found) {
-                try AccessibilityEdits.setAlt(tab.document, tree, figure!.element, edit.1)
+                try setAlt(tab.document, tree, figure!.element, edit.1)
             }
             if try tab.commit(L10n.t("Figure description")) { host.setStatus(L10n.t("Description saved.")) }
             return true
         } catch let error where error is InvalidOperationException || error is PdfReadException {
             try? tab.session.discard()
             host.showProblem(Problem(L10n.t("Description not saved"), L10n.t("The tags of this file are too large to change here.")))
-            return false
-        } catch {
             return false
         }
     }
