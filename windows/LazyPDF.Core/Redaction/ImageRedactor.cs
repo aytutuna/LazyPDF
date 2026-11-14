@@ -3,7 +3,7 @@ namespace LazyPDF.Core;
 /// <summary>
 /// Makes a private copy of an image with the pixels under the marks overwritten in the samples, so
 /// the covered picture is gone rather than hidden. The copy is stored with Flate. Pictures in a
-/// lossy or bilevel codec go through the system's decoder; with none, or when it fails, nothing is
+/// lossy codec go through the system's decoder; with none, or when it fails, nothing is
 /// returned and the caller removes the image.
 /// </summary>
 internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
@@ -45,7 +45,7 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         // A mask has no masks of its own to speak of; a loop of them is a trap.
         if (depth > MaxMaskDepth) return null;
         var d = image.Dictionary;
-        var (filter, parameters, _) = document.DecodeSpec(image);
+        var (filter, parameters, _) = document.DecodeSpec(image, decoding: true);
         var decoded = PdfFilters.DecodeToCodec(document.RawData(image), filter, parameters, MaxSamples);
         var copy = new PdfDictionary();
         foreach (string key in Kept)
@@ -64,6 +64,8 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             int components = mask ? 1 : SampleColorSpace.Parse(d["ColorSpace"], document.Resolve, s => document.Data(s)).Components;
             var samples = decoded.Data;
             long used = ((long)width * components * bits + 7) / 8 * height;
+            // A JBIG2 page has the size it says, not the picture's; rows of another width would put the marks in the wrong place.
+            if (PdfFilters.Uses(filter, "JBIG2Decode") && samples.Length != used) return null;
             if (samples.Length > used) samples = samples[..(int)used];
             Zero(samples, width, height, components * bits, unit);
             return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(samples)));
@@ -79,12 +81,6 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
                 int i = (row * pixels.Width + x) * 4;
                 (rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]) = (0, 0, 0, 255);
             }
-        }
-        if (decoded.Codec == "JBIG2Decode")
-        {
-            copy["Width"] = new PdfNumber(pixels.Width);
-            copy["Height"] = new PdfNumber(pixels.Height);
-            return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(Bilevel(rgba, pixels.Width, pixels.Height))));
         }
         var reference = ContentImages.AddRgba(document, pixels.Width, pixels.Height, rgba);
         var made = (PdfStream)document.Get(reference.Number)!;
@@ -126,21 +122,6 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
                 data[start + b] &= (byte)~((0xFF >> lo) & (0xFF << (8 - hi)));
             }
         }
-    }
-
-    private static byte[] Bilevel(byte[] rgba, int width, int height)
-    {
-        int stride = (width + 7) / 8;
-        var bits = new byte[stride * height];
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                int i = (y * width + x) * 4;
-                if (rgba[i] + rgba[i + 1] + rgba[i + 2] >= 384) bits[y * stride + x / 8] |= (byte)(0x80 >> (x % 8));
-            }
-        }
-        return bits;
     }
 
     /// <summary>The runs of pixels, per row, that any part of a marked polygon touches. The polygons are in the unit square, y up.</summary>

@@ -4,7 +4,7 @@ namespace LazyPDF.Core;
 public interface IImageCodec
 {
     /// <summary>
-    /// Pixels of a stream's data under <paramref name="codec"/>: DCTDecode, JPXDecode or JBIG2Decode.
+    /// Pixels of a stream's data under <paramref name="codec"/>: DCTDecode or JPXDecode.
     /// Null when the system cannot read it.
     /// </summary>
     PdfRgbaImage? Decode(byte[] data, string codec);

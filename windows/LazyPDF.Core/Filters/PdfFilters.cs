@@ -29,16 +29,28 @@ public static class PdfFilters
 
     /// <summary>With <paramref name="strict"/> a Flate stream that breaks off or does not decode cleanly is damage, not a short result.</summary>
     internal static byte[] Decode(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool strict) =>
-        Run(data, filter, parameters, maxSize, stopAtCodec: false, strict).Data;
+        Run(data, filter, parameters, maxSize, stopAtCodec: false, strict, keepJbig2: false).Data;
 
     /// <summary>
     /// Undoes the filters before an image codec and stops there: the bytes are the codec's input
     /// (a JPEG file, say), with the codec's name ("DCTDecode" or "JPXDecode") and its /DecodeParms. Without a codec in the chain the data is fully decoded and the name is null.
     /// </summary>
     public static PdfDecodedStream DecodeToCodec(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize = DefaultMaxSize) =>
-        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false);
+        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: false);
 
-    private static PdfDecodedStream Run(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool stopAtCodec, bool strict)
+    /// <summary>As <see cref="DecodeToCodec(byte[], PdfObject?, PdfObject?, long)"/> with JBIG2Decode left coded too, for a caller that changes only the filters in front of it.</summary>
+    internal static PdfDecodedStream DecodeToCodec(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool keepJbig2) =>
+        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2);
+
+    /// <summary>Whether the chain holds the filter <paramref name="name"/> (its full name).</summary>
+    internal static bool Uses(PdfObject? filter, string name) => filter switch
+    {
+        PdfName n => n.Value == name,
+        PdfArray array => array.Items.Any(i => i is PdfName n && n.Value == name),
+        _ => false,
+    };
+
+    private static PdfDecodedStream Run(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool stopAtCodec, bool strict, bool keepJbig2)
     {
         List<string> filters = filter switch
         {
@@ -81,10 +93,10 @@ public static class PdfFilters
                     if ((decodeParms?["Name"] as PdfName)?.Value is not (null or "Identity"))
                         throw new PdfReadException(PdfReadProblem.Unsupported, "A named crypt filter reached the filter layer.");
                     break;
-                case "JBIG2Decode":
+                case "JBIG2Decode" when !keepJbig2:
                     data = DecodeJbig2(data, decodeParms, maxSize);
                     break;
-                case "DCTDecode" or "DCT" or "JPXDecode":
+                case "DCTDecode" or "DCT" or "JPXDecode" or "JBIG2Decode":
                     if (!stopAtCodec) throw new PdfReadException(PdfReadProblem.Unsupported, $"The /{filters[i]} filter is an image codec.");
                     string codec = filters[i] == "DCT" ? "DCTDecode" : filters[i];
                     return new PdfDecodedStream(data, codec, decodeParms);

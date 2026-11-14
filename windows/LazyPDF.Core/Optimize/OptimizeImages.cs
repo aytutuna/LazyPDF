@@ -140,7 +140,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
     // The data with every filter undone; null for an image codec, which the caller handles.
     private byte[]? Samples(PdfStream stream)
     {
-        var (filter, parameters, _) = document.DecodeSpec(stream);
+        var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
         try
         {
             var decoded = PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters);
@@ -181,7 +181,9 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
     private bool Shrink(PdfStream stream, int width, int height, int newWidth, int newHeight)
     {
         var dictionary = stream.Dictionary;
-        var (filter, parameters, _) = document.DecodeSpec(stream);
+        // A bilevel picture, JBIG2 coded or not, is kept as it is; decoding it first would only be thrown away.
+        if (document.Integer(dictionary, "BitsPerComponent") == 1) return false;
+        var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
         PdfDecodedStream decoded;
         try
         {

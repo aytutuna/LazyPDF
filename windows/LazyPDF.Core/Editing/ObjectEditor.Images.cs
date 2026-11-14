@@ -34,7 +34,7 @@ internal sealed partial class ObjectEditor
         Replace(place, op.Start, op.End, drawn);
     }
 
-    /// <summary>The bytes of the picture: a JPEG or JPEG 2000 file as it is stored, anything else as a PNG.</summary>
+    /// <summary>The bytes of the picture: a JPEG or JPEG 2000 file as it is stored, anything else (a JBIG2 picture too) as a PNG.</summary>
     public ExtractedImage Extract(ImageObject image)
     {
         if (image.Info.Inline is { } inline)
@@ -49,8 +49,10 @@ internal sealed partial class ObjectEditor
     {
         try
         {
-            var filter = Document.Resolve(dictionary["Filter"] ?? dictionary["F"]);
-            var parms = Document.Resolve(dictionary["DecodeParms"] ?? dictionary["DP"]);
+            PdfObject? filter, parms;
+            // The globals of a JBIG2 picture are a stream that the filter reads through the document.
+            if (stream is not null) (filter, parms, _) = Document.DecodeSpec(stream, decoding: true);
+            else (filter, parms) = (Document.Resolve(dictionary["Filter"] ?? dictionary["F"]), Document.Resolve(dictionary["DecodeParms"] ?? dictionary["DP"]));
             var decoded = PdfFilters.DecodeToCodec(raw, filter, parms);
             switch (decoded.Codec)
             {
@@ -58,9 +60,6 @@ internal sealed partial class ObjectEditor
                     return new ExtractedImage(decoded.Data, "jpg");
                 case "JPXDecode":
                     return new ExtractedImage(decoded.Data, "jp2");
-                case "JBIG2Decode":
-                    if (Codec?.Decode(decoded.Data, "JBIG2Decode") is { } bits) return new ExtractedImage(PngWriter.Encode(bits), "png");
-                    break;
                 default:
                     var rgba = PdfImageSamples.ToRgba(dictionary, decoded.Data, Document.Resolve, s => Document.Data(s));
                     return new ExtractedImage(PngWriter.Encode(rgba), "png");

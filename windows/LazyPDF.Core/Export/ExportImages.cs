@@ -60,7 +60,7 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
             if (width > MaxPixels / height) return Dropped();
 
             PdfObject? filter, parameters;
-            if (stream is not null) (filter, parameters, _) = document.DecodeSpec(stream);
+            if (stream is not null) (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
             else (filter, parameters) = (dictionary["Filter"], dictionary["DecodeParms"]);
             var decoded = PdfFilters.DecodeToCodec(raw, filter, parameters, Math.Max(0, byteLimit - _total));
 

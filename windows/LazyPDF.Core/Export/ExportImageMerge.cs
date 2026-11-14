@@ -7,7 +7,7 @@ namespace LazyPDF.Core;
 /// </summary>
 internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec, long pixelBudget)
 {
-    private static readonly string[] Coders = ["DCTDecode", "DCT", "JPXDecode", "JBIG2Decode"];
+    private static readonly string[] Coders = ["DCTDecode", "DCT", "JPXDecode"];
 
     private long _pixels;
 
@@ -76,10 +76,9 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         plain["Height"] = new PdfNumber(pixels.Height);
         // /Decode does not apply to JPEG 2000 data (ISO 32000-1 Table 89).
         if (coder == "JPXDecode" && !imageMask) plain.Remove("Decode");
-        bool bits = imageMask || coder == "JBIG2Decode";
-        if (!imageMask) plain["BitsPerComponent"] = new PdfNumber(bits ? 1 : 8);
+        if (!imageMask) plain["BitsPerComponent"] = new PdfNumber(imageMask ? 1 : 8);
 
-        var converted = PdfImageSamples.ToRgba(plain, Pack(pixels, n, bits), document.Resolve, document.Data);
+        var converted = PdfImageSamples.ToRgba(plain, Pack(pixels, n, imageMask), document.Resolve, document.Data);
         if (coder == "JPXDecode" && document.Integer(dictionary, "SMaskInData") is > 0)
         {
             for (int i = 3; i < converted.Rgba.Length; i += 4) converted.Rgba[i] = (byte)(converted.Rgba[i] * pixels.Rgba[i] / 255);
@@ -252,7 +251,7 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
     // Null when a codec is needed and cannot read the mask: the picture stays opaque.
     private (int Width, int Height, byte[] Alpha)? Plane(PdfStream mask, bool stencil)
     {
-        var (filter, parameters, _) = document.DecodeSpec(mask);
+        var (filter, parameters, _) = document.DecodeSpec(mask, decoding: true);
         var decoded = PdfFilters.DecodeToCodec(document.RawData(mask), filter, parameters);
         PdfRgbaImage? image;
         bool inverted = false;

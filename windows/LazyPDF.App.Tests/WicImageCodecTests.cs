@@ -177,7 +177,7 @@ public sealed class WicImageCodecTests
         var image = Codec.Decode(jpeg, "DCTDecode");
 
         Assert.Equal((32, 32), (image!.Width, image.Height));
-        Assert.Null(Codec.Decode(jpeg, "JBIG2Decode"));
+        Assert.Null(Codec.Decode(jpeg, "CCITTFaxDecode"));
     }
 
     [Fact]

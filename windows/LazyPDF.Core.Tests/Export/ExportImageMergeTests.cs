@@ -109,18 +109,26 @@ public class ExportImageMergeTests
         Assert.Equal([10, 20, 30, 255], Rgba(Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], codec)));
     }
 
-    [Fact]
-    public void AColourKeyOnABilevelCodecImageMatchesItsOwnDepth()
+    // The first pixel black (sample 0 once the filter has made it an image), the second white.
+    private static byte[] BlackThenWhite()
     {
-        var png = Extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode /Mask [1 1]", [1], new ExportPixelCodec(2, 0, 255));
+        var bm = new Bm(2, 1);
+        bm[0, 0] = 1;
+        return Jbig2Segments.Generic(bm, 0, false);
+    }
+
+    [Fact]
+    public void AColourKeyOnABilevelJbig2ImageMatchesItsOwnDepth()
+    {
+        var png = Extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode /Mask [1 1]", BlackThenWhite(), null);
         Assert.Equal([255, 0], Rgba(png).Where((_, i) => i % 4 == 3));
     }
 
     [Fact]
-    public void AnIndexedBilevelCodecImageReadsItsPaletteByTheStoredSample()
+    public void AnIndexedBilevelJbig2ImageReadsItsPaletteByTheStoredSample()
     {
-        var png = Extract("/Width 2 /Height 1 /ColorSpace [/Indexed /DeviceRGB 3 <000000 FF0000 00FF00 0000FF>] /BitsPerComponent 1 /Filter /JBIG2Decode", [1],
-            new ExportPixelCodec(2, 0, 255));
+        var png = Extract("/Width 2 /Height 1 /ColorSpace [/Indexed /DeviceRGB 3 <000000 FF0000 00FF00 0000FF>] /BitsPerComponent 1 /Filter /JBIG2Decode", BlackThenWhite(),
+            null);
         Assert.Equal([0, 0, 0, 255, 255, 0, 0, 255], Rgba(png));
     }
 

@@ -269,7 +269,7 @@ internal sealed partial class PdfAConversionRun
         try
         {
             var (filter, parameters, _) = _doc.DecodeSpec(stream);
-            var decoded = PdfFilters.DecodeToCodec(_doc.RawData(stream), filter, parameters, 256L << 20);
+            var decoded = PdfFilters.DecodeToCodec(_doc.RawData(stream), filter, parameters, 256L << 20, keepJbig2: true);
             if (decoded.Codec is null)
             {
                 stream.Data = PdfFilterEncoders.Flate(decoded.Data);

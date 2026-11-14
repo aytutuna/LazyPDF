@@ -243,7 +243,7 @@ public sealed partial class PdfRedactor
         try
         {
             var (filter, parameters, _) = document.DecodeSpec(stream);
-            return PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters, MaxStream) is { Codec: not null } decoded ? decoded.Data : null;
+            return PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters, MaxStream, keepJbig2: true) is { Codec: not null } decoded ? decoded.Data : null;
         }
         catch (PdfReadException)
         {

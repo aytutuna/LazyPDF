@@ -88,7 +88,9 @@ public class ExportImagesTests
     [Fact]
     public void AnImageMaskKeepsItsDecodePolarityWhateverTheFilter()
     {
-        var png = Extract("/Width 2 /Height 1 /ImageMask true /BitsPerComponent 1 /Filter /JBIG2Decode /Decode [1 0]", [1], new ExportPixelCodec(2, 0, 255));
+        var stencil = new Bm(2, 1);
+        stencil[0, 0] = 1;
+        var png = Extract("/Width 2 /Height 1 /ImageMask true /BitsPerComponent 1 /Filter /JBIG2Decode /Decode [1 0]", Jbig2Segments.Generic(stencil, 0, false), null);
         Assert.Equal([0, 255], Alpha(png));
     }
 
