@@ -684,7 +684,7 @@ public sealed partial class AppViewModel
         string text = tab.IsDirty
             ? Loc.T("{0} was changed by another program. Opening that version drops your unsaved changes.", tab.Title)
             : tab.HasUnappliedWork
-            ? Loc.T("{0} was changed by another program. Opening that version drops the marks and measurements not applied yet.", tab.Title)
+            ? Loc.T("{0} was changed by another program. Opening that version drops the marks, measurements and typed text not applied yet.", tab.Title)
             : Loc.T("{0} was changed by another program.", tab.Title);
         ShowNotice(Loc.T("File changed"), text, new NoticeAction(Loc.T("Open that version"), () => _ = ReloadAsync(tab)));
     }
