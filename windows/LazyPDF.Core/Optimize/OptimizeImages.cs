@@ -143,7 +143,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
         try
         {
-            var decoded = PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters);
+            var decoded = PdfFilters.DecodeToCodecWhole(document.RawData(stream), filter, parameters, PdfFilters.DefaultMaxSize);
             return decoded.Codec is null ? decoded.Data : null;
         }
         catch (PdfReadException)
@@ -187,7 +187,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         PdfDecodedStream decoded;
         try
         {
-            decoded = PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters);
+            decoded = PdfFilters.DecodeToCodecWhole(document.RawData(stream), filter, parameters, PdfFilters.DefaultMaxSize);
         }
         catch (PdfReadException)
         {

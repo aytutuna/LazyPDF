@@ -46,7 +46,7 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         if (depth > MaxMaskDepth) return null;
         var d = image.Dictionary;
         var (filter, parameters, _) = document.DecodeSpec(image, decoding: true);
-        var decoded = PdfFilters.DecodeToCodec(document.RawData(image), filter, parameters, MaxSamples);
+        var decoded = PdfFilters.DecodeToCodecWhole(document.RawData(image), filter, parameters, MaxSamples);
         var copy = new PdfDictionary();
         foreach (string key in Kept)
         {

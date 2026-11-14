@@ -111,7 +111,8 @@ public sealed partial class PdfRedactor
                 byte[] data;
                 try
                 {
-                    data = document.Data(stream, MaxStream);
+                    // A picture that JBIG2 could only partly decode is not read as what it shows.
+                    data = PdfFilters.Uses(document.DecodeSpec(stream).Filter, "JBIG2Decode") ? WholeJbig2(document, stream) : document.Data(stream, MaxStream);
                 }
                 catch (PdfReadException)
                 {
@@ -237,6 +238,12 @@ public sealed partial class PdfRedactor
 
     // Text a reader sees as it is: no byte that a text file does not hold. Compressed and encrypted data has such bytes in the first few dozen.
     private static bool Plain(byte[] data) => data.All(b => !(b < 9 || b is 11 or (> 13 and < 32) or 127));
+
+    private static byte[] WholeJbig2(PdfDocument document, PdfStream stream)
+    {
+        var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true, MaxStream);
+        return PdfFilters.DecodeToCodecWhole(document.RawData(stream), filter, parameters, MaxStream).Data;
+    }
 
     private static byte[]? InCodec(PdfDocument document, PdfStream stream)
     {

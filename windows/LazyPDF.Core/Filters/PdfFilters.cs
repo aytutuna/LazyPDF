@@ -29,18 +29,25 @@ public static class PdfFilters
 
     /// <summary>With <paramref name="strict"/> a Flate stream that breaks off or does not decode cleanly is damage, not a short result.</summary>
     internal static byte[] Decode(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool strict) =>
-        Run(data, filter, parameters, maxSize, stopAtCodec: false, strict, keepJbig2: false).Data;
+        Run(data, filter, parameters, maxSize, stopAtCodec: false, strict, keepJbig2: false, strictJbig2: false).Data;
 
     /// <summary>
     /// Undoes the filters before an image codec and stops there: the bytes are the codec's input
     /// (a JPEG file, say), with the codec's name ("DCTDecode" or "JPXDecode") and its /DecodeParms. Without a codec in the chain the data is fully decoded and the name is null.
     /// </summary>
     public static PdfDecodedStream DecodeToCodec(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize = DefaultMaxSize) =>
-        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: false);
+        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: false, strictJbig2: false);
 
     /// <summary>As <see cref="DecodeToCodec(byte[], PdfObject?, PdfObject?, long)"/> with JBIG2Decode left coded too, for a caller that changes only the filters in front of it.</summary>
     internal static PdfDecodedStream DecodeToCodec(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool keepJbig2) =>
-        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2);
+        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2, strictJbig2: false);
+
+    /// <summary>
+    /// As <see cref="DecodeToCodec(byte[], PdfObject?, PdfObject?, long)"/>, but a JBIG2 page that could only be partly decoded is
+    /// <see cref="PdfReadProblem.Damaged"/>, for a caller that would write the missing part out as if it were white.
+    /// </summary>
+    internal static PdfDecodedStream DecodeToCodecWhole(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize) =>
+        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: false, strictJbig2: true);
 
     /// <summary>Whether the chain holds the filter <paramref name="name"/> (its full name).</summary>
     internal static bool Uses(PdfObject? filter, string name) => filter switch
@@ -50,7 +57,7 @@ public static class PdfFilters
         _ => false,
     };
 
-    private static PdfDecodedStream Run(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool stopAtCodec, bool strict, bool keepJbig2)
+    private static PdfDecodedStream Run(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool stopAtCodec, bool strict, bool keepJbig2, bool strictJbig2)
     {
         List<string> filters = filter switch
         {
@@ -94,7 +101,7 @@ public static class PdfFilters
                         throw new PdfReadException(PdfReadProblem.Unsupported, "A named crypt filter reached the filter layer.");
                     break;
                 case "JBIG2Decode" when !keepJbig2:
-                    data = DecodeJbig2(data, decodeParms, maxSize);
+                    data = DecodeJbig2(data, decodeParms, maxSize, strictJbig2);
                     break;
                 case "DCTDecode" or "DCT" or "JPXDecode" or "JBIG2Decode":
                     if (!stopAtCodec) throw new PdfReadException(PdfReadProblem.Unsupported, $"The /{filters[i]} filter is an image codec.");
@@ -113,8 +120,8 @@ public static class PdfFilters
     /// /Width and /Height to the parameters (they are no part of the filter's own): the page is fitted to that size. Without
     /// them, for a stream that is not an image, the page keeps its own size.
     /// </summary>
-    private static byte[] DecodeJbig2(byte[] data, PdfDictionary? p, long maxSize) =>
-        Jbig2.Decode((p?["JBIG2Globals"] as PdfStream)?.Data ?? [], data, maxSize, Math.Max(0, Int(p?["Width"], 0)), Math.Max(0, Int(p?["Height"], 0)));
+    private static byte[] DecodeJbig2(byte[] data, PdfDictionary? p, long maxSize, bool whole) =>
+        Jbig2.Decode((p?["JBIG2Globals"] as PdfStream)?.Data ?? [], data, maxSize, Math.Max(0, Int(p?["Width"], 0)), Math.Max(0, Int(p?["Height"], 0)), whole);
 
     private static byte[] DecodeCcitt(byte[] data, PdfDictionary? p, long maxSize)
     {

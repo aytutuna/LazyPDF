@@ -27,11 +27,12 @@ internal static class Jbig2
 {
     /// <summary>
     /// Rows of packed pixels, each starting on a byte boundary, black 0 and white 1 (the filter inverts JBIG2's black 1).
-    /// A segment that does not decode is left out; the stream is damaged only when none of its regions could be drawn.
+    /// A segment that does not decode is left out; the stream is damaged only when none of its regions could be drawn,
+    /// or at all when <paramref name="whole"/> says a partial page is no use.
     /// </summary>
-    public static byte[] Decode(byte[] globals, byte[] data, long maxSize, int width = 0, int height = 0)
+    public static byte[] Decode(byte[] globals, byte[] data, long maxSize, int width = 0, int height = 0, bool whole = false)
     {
-        var decoder = new Jbig2Decoder(maxSize, width, height);
+        var decoder = new Jbig2Decoder(maxSize, width, height, whole);
         decoder.Read(globals);
         decoder.Read(data);
         return decoder.Finish();
@@ -42,7 +43,7 @@ internal static class Jbig2
 /// With <paramref name="fitWidth"/> and <paramref name="fitHeight"/> (the size the image dictionary gives) the page comes out
 /// cut or padded with white to that size, so that the samples have the stride the image reads them with.
 /// </summary>
-internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight = 0)
+internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight = 0, bool whole = false)
 {
     private readonly Jbig2Budget _budget = new(fitWidth > 0 && fitHeight > 0 ? (long)fitWidth * fitHeight : 0);
     private int _segments;
@@ -94,10 +95,6 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
             catch (PdfReadException e) when (e.Problem == PdfReadProblem.Damaged)
             {
                 Fail(e);
-            }
-            catch (Exception e) when (e is IndexOutOfRangeException or ArgumentException or OverflowException or InvalidOperationException)
-            {
-                Fail(PdfReadException.Damaged("A JBIG2 segment does not decode."));
             }
             if (segment.Type == 51) return;
             position = end;
@@ -589,7 +586,8 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
     public byte[] Finish()
     {
         if (_page is null) throw _firstError ?? PdfReadException.Damaged("A JBIG2 stream has no page.");
-        if (_failed > 0 && _drawn == 0) throw _firstError!;
+        // A page that is not whole is wrong in the parts that failed; only some callers can use it.
+        if (_failed > 0 && (_drawn == 0 || whole)) throw _firstError!;
         int width = _page.Width, rows = _rows;
         bool fit = fitWidth > 0 && fitHeight > 0;
         int outWidth = fit ? fitWidth : width, outRows = fit ? fitHeight : rows;

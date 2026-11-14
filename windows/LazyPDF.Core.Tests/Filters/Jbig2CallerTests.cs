@@ -99,6 +99,41 @@ public class Jbig2CallerTests
         Assert.Equal(0x0f, samples[28]);
     }
 
+    // A page of which one region is drawn and another, a text region with no dictionary, is not.
+    private static byte[] Partial()
+    {
+        var symbols = Jbig2SymbolTests.Symbols(2, 2);
+        var spec = new TextSpec { Width = 8, Height = 8, Symbols = symbols, Instances = [new Instance(0, 1, 1)] };
+        var e = new ArithEncoder();
+        Jbig2Encode.Generic(e, new Bm(8, 8), 0, false);
+        return Jbig2Segments.Cat(Jbig2Segments.Segment(0, 48, Jbig2Segments.PageInfo(8, 8)),
+            Jbig2Segments.Segment(1, 6, Jbig2TextEncode.ArithmeticSegment(spec), [9]),
+            Jbig2Segments.Segment(2, 38, Jbig2Segments.GenericData(new Bm(8, 8), e.Finish(), 0, false, false, null)));
+    }
+
+    [Fact]
+    public void ARedactedPictureThatDecodedOnlyInPartIsRemovedWhole()
+    {
+        using var document = RedactionKit.Page(Place, "/XObject <</Im1 6 0 R>>", pdf => pdf.Stream(6, Image(8, 8), Partial()));
+        var result = new PdfRedactor(document).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
+    [Fact]
+    public void ExportKeepsAPartialPictureAndMakeSmallerLeavesItAsStored()
+    {
+        using var document = RedactionKit.Page(Place, "/XObject <</Im1 6 0 R>>", pdf => pdf.Stream(6, Image(8, 8), Partial()));
+        Assert.Single(ImageExtractor.Extract(document, [0]));
+        byte[] file = OptimizeKit.Build("q 10 0 0 10 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+            pdf.Stream(5, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceRGB /BitsPerComponent 1 /Filter /JBIG2Decode", Partial()));
+        using var source = PdfDocument.Open(file);
+        var result = new PdfOptimizer(source).Run(OptimizeKit.Off with { ImageDpi = 8, ImageDpiAbove = 10, BilevelTolerance = 10 });
+        using var after = PdfDocument.Open(result.Bytes);
+        Assert.Equal("JBIG2Decode", after.Name(OptimizeKit.Image(after).Dictionary, "Filter"));
+    }
+
     [Fact]
     public void ImageExtractionReadsTheGlobals()
     {
