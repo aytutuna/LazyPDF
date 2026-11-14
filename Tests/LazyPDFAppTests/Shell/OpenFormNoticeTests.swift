@@ -44,6 +44,15 @@ final class OpenFormNoticeTests: XCTestCase {
         XCTAssertNil(f.vm.message)
     }
 
+    func test_reloadingADynamicXfaFormDoesNotBringTheBannerBack() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.dir.file("x.pdf", FormPdfs.dynamicXfa()))
+        f.vm.dismissMessage()
+        await f.vm.reload(f.vm.activeDocument!)
+
+        XCTAssertNil(f.vm.message)
+    }
+
     func test_aScriptThatCannotRunIsReported() async throws {
         let document = try formPdf(#"/AA <</K <</S /JavaScript /JS (app.alert\(1\))>>>>"#)
 

@@ -269,7 +269,7 @@ extension AppViewModel {
             showNotice(L10n.t("File is read-only"), L10n.t("{0} is read-only. You can work on it, but save your changes with Save as.", tab.title))
         } else if !tab.canDraw {
             showNotice(L10n.t("Pages cannot be shown"), L10n.t("{0} opens for editing, but its pages cannot be shown here.", tab.title))
-        } else if let (title, text, xfa) = Self.formNotice(tab.document) {
+        } else if pending.replacing == nil, let (title, text, xfa) = Self.formNotice(tab.document) {
             let action = xfa ? NoticeAction(L10n.t("Open in another app")) { [weak self, weak tab] in
                 if let tab { self?.openElsewhereRequested?(tab) }
             } : nil
@@ -278,8 +278,8 @@ extension AppViewModel {
     }
 
     /// What to tell once when a file opens: a dynamic XFA form shows only the pages it keeps for other viewers (the flag says
-/// the notice offers to open it elsewhere), and scripts other than the built-in
-    /// format and calculate functions do not run. Files without an AcroForm are not read.
+    /// the notice offers to open it elsewhere), and scripts other than the built-in format and calculate functions do not
+    /// run. Files without an AcroForm are not read.
     static func formNotice(_ document: PdfDocument) -> (String, String, Bool)? {
         guard document.dict(document.catalog, "AcroForm") != nil else { return nil }
         let form = PdfForm.read(document)
