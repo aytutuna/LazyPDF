@@ -38,6 +38,7 @@ final class HandInTests: XCTestCase {
         XCTAssertEqual(f.vm.documents.count, 2)
         XCTAssertEqual(f.vm.activeDocument?.title, "b.pdf")
         XCTAssertEqual(asked, 1)
+        XCTAssertEqual(f.vm.statusFull, "Typed text was not kept.")
     }
 
     func test_closingGoesOnWhenTheToolHandedItsTextIn() async throws {
