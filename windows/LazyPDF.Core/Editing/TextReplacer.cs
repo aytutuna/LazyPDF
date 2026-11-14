@@ -88,8 +88,7 @@ public static class TextReplacer
 
     // The hits to replace, in groups that are edited together: hits in the text of one span share its character (a hit that
     // runs on into the next span shares the character it ends in), so a hit that starts where the one before ended in a span
-    // is taken in with it. Any other hit that overlaps the one before, and a second hit in a character that is not a span's
-    // (a ligature), is left out: the character is replaced once.
+    // is taken in with it. Any other hit that overlaps the one before is left out.
     private static List<List<SearchMatch>> Clusters(PageModel model, IReadOnlyList<SearchMatch> matches)
     {
         var groups = new List<List<SearchMatch>>();
@@ -100,7 +99,8 @@ public static class TextReplacer
             if (range.Start >= lastEnd) groups.Add([match]);
             else if (range.Start == lastEnd - 1 && cut.Start >= lastCut && InSpan(model, range.Start) is not null) groups[^1].Add(match);
             else continue;
-            (lastEnd, lastCut) = (range.End, cut.End);
+            // A hit that ends on the space the search adds at a line break takes nothing of the next line's first character.
+            (lastEnd, lastCut) = (cut.End == 0 ? range.End - 1 : range.End, cut.End);
         }
         return groups;
     }
@@ -121,8 +121,13 @@ public static class TextReplacer
         return sb.ToString();
     }
 
-    private static string? InSpan(PageModel model, int index) =>
-        index >= 0 && index < model.CharGlyphs.Length && model.CharGlyphs[index]?.Span is not null && !model.Text.Chars[index].IsSpace ? model.Text.Chars[index].Text : null;
+    // The text of a character that holds more than one letter (a span's replacement text, a ligature), which a hit may cut part of.
+    private static string? InSpan(PageModel model, int index)
+    {
+        if (index < 0 || index >= model.CharGlyphs.Length || model.CharGlyphs[index] is not { } glyph || model.Text.Chars[index].IsSpace) return null;
+        string text = model.Text.Chars[index].Text;
+        return glyph.Span is not null || text.EnumerateRunes().Skip(1).Any() ? text : null;
+    }
 
     private sealed class Unmappable : Exception;
 

@@ -102,8 +102,7 @@ public enum TextReplacer {
 
     // The hits to replace, in groups that are edited together: hits in the text of one span share its character (a hit that
     // runs on into the next span shares the character it ends in), so a hit that starts where the one before ended in a span
-    // is taken in with it. Any other hit that overlaps the one before, and a second hit in a character that is not a span's
-    // (a ligature), is left out: the character is replaced once.
+    // is taken in with it. Any other hit that overlaps the one before is left out.
     private static func clusters(_ model: PageModel, _ matches: [SearchMatch]) -> [[SearchMatch]] {
         var groups: [[SearchMatch]] = []
         var lastEnd = -1, lastCut = 0
@@ -116,7 +115,8 @@ public enum TextReplacer {
             } else {
                 continue
             }
-            (lastEnd, lastCut) = (range.end, cut.end)
+            // A hit that ends on the space the search adds at a line break takes nothing of the next line's first character.
+            (lastEnd, lastCut) = (cut.end == 0 ? range.end - 1 : range.end, cut.end)
         }
         return groups
     }
@@ -135,9 +135,11 @@ public enum TextReplacer {
         return String(units: out)
     }
 
+    // The text of a character that holds more than one letter (a span's replacement text, a ligature), which a hit may cut part of.
     private static func inSpan(_ model: PageModel, _ index: Int) -> [UInt16]? {
-        guard index >= 0, index < model.charGlyphs.count, model.charGlyphs[index]?.span != nil, !model.text.chars[index].isSpace else { return nil }
-        return Array(model.text.chars[index].text.utf16)
+        guard index >= 0, index < model.charGlyphs.count, let glyph = model.charGlyphs[index], !model.text.chars[index].isSpace else { return nil }
+        let text = model.text.chars[index].text
+        return glyph.span != nil || text.unicodeScalars.count > 1 ? Array(text.utf16) : nil
     }
 
     // The page text of the searched characters from `index` for `length`, where a span's character gives only the part of its text the range takes.

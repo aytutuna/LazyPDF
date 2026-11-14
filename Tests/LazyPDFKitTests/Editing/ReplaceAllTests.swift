@@ -14,8 +14,12 @@ final class ReplaceAllTests: XCTestCase {
             "/CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 600>>] /ToUnicode 8 0 R>>")
         pdf.stream(8, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /X def /CMapType 2 def " +
             "1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0041> <005A> <0041> endbfrange endcmap end end")
+        // Codes 1, 2 and 3 are the ligature glyphs ffi, ff and fi.
+        pdf.obj(6, "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 1 /LastChar 255 /Widths [" + Array(repeating: "500", count: 255).joined(separator: " ") + "] /ToUnicode 9 0 R>>")
+        pdf.stream(9, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Y def /CMapType 2 def " +
+            "1 begincodespacerange <00> <FF> endcodespacerange 3 beginbfchar <01> <006600660069> <02> <00660066> <03> <00660069> endbfchar endcmap end end")
         for i in 0..<contents.count {
-            pdf.obj(10 + i, "<</Type /Page /Parent 2 0 R /Contents \(30 + i) 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R>> /Properties <</MC0 <</MCID 4 /Lang (en) /ActualText (hello world)>>>>>>>>")
+            pdf.obj(10 + i, "<</Type /Page /Parent 2 0 R /Contents \(30 + i) 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R /F4 6 0 R>> /Properties <</MC0 <</MCID 4 /Lang (en) /ActualText (hello world)>>>>>>>>")
             pdf.stream(30 + i, "", contents[i])
         }
         return try PdfEditSession.open(pdf.finish())
@@ -225,5 +229,27 @@ final class ReplaceAllTests: XCTestCase {
         XCTAssertEqual(report.replaced, 3)
         XCTAssertTrue(report.failed.isEmpty)
         XCTAssertEqual(try page(session, 0), "xtraxe ixt")
+    }
+
+    func test_aLigatureGlyphKeepsItsOtherLettersWhenPartOfItIsReplaced() throws {
+        let cases: [(String, String, String, String, Int)] = [
+            ("o\\001ce", "f", "ph", "ophphice", 2), ("o\\001ce", "i", "x", "offxce", 1), ("\\003nd", "i", "y", "fynd", 1),
+            ("\\003nd", "fi", "g", "gnd", 1), ("a\\002b", "f", "x", "axxb", 2), ("a\\002b", "ff", "x", "axb", 1),
+        ]
+        for (shown, query, replacement, expected, count) in cases {
+            let session = try open("BT /F4 12 Tf 50 700 Td (\(shown)) Tj ET")
+            let report = try TextReplacer.replaceAll(session, query, replacement)
+            XCTAssertEqual(report.replaced, count, shown + query)
+            XCTAssertTrue(report.failed.isEmpty)
+            XCTAssertEqual(try page(session, 0), expected, shown + query)
+        }
+    }
+
+    func test_aHitThatEndsOnALineBreakDoesNotTakeTheNextHitInTheFirstCharOfTheNextLine() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td /Span <</ActualText (cd ab)>> BDC (cd ab) Tj EMC ET")
+        let report = try TextReplacer.replaceAll(session, "b ?", "Z", TextSearchOptions(regex: true))
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(try assertSingle(report.failed).reason, EditingText.crossesLines)
+        XCTAssertEqual(try page(session, 0), "ab\ncd aZ")
     }
 }

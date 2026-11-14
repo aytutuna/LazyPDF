@@ -18,9 +18,13 @@ public class ReplaceAllTests
             "/CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 600>>] /ToUnicode 8 0 R>>");
         pdf.Stream(8, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /X def /CMapType 2 def " +
             "1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0041> <005A> <0041> endbfrange endcmap end end");
+        // Codes 1, 2 and 3 are the ligature glyphs ffi, ff and fi.
+        pdf.Obj(6, "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 1 /LastChar 255 /Widths [" + string.Join(' ', Enumerable.Repeat(500, 255)) + "] /ToUnicode 9 0 R>>");
+        pdf.Stream(9, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Y def /CMapType 2 def " +
+            "1 begincodespacerange <00> <FF> endcodespacerange 3 beginbfchar <01> <006600660069> <02> <00660066> <03> <00660069> endbfchar endcmap end end");
         for (int i = 0; i < contents.Length; i++)
         {
-            pdf.Obj(10 + i, $"<</Type /Page /Parent 2 0 R /Contents {30 + i} 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R>> /Properties <</MC0 <</MCID 4 /Lang (en) /ActualText (hello world)>>>>>>>>");
+            pdf.Obj(10 + i, $"<</Type /Page /Parent 2 0 R /Contents {30 + i} 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R /F4 6 0 R>> /Properties <</MC0 <</MCID 4 /Lang (en) /ActualText (hello world)>>>>>>>>");
             pdf.Stream(30 + i, "", contents[i]);
         }
         return PdfEditSession.Open(pdf.Finish());
@@ -249,7 +253,7 @@ public class ReplaceAllTests
         var session = Open($"BT /F1 12 Tf 50 700 Td /Span <</ActualText ({text})>> BDC ({text}) Tj EMC ET");
         var document = PdfDocument.Open(session.Current.ToArray());
         var found = TextSearch.Find(TextPage.Create(document, document.Pages[0]), query);
-        Assert.Equal(1, found.Count);
+        Assert.Single(found);
         Assert.Equal(2, TextReplacer.ReplaceAll(session, query, "g").Replaced);
     }
 
@@ -271,5 +275,31 @@ public class ReplaceAllTests
         Assert.Equal(3, report.Replaced);
         Assert.Empty(report.Failed);
         Assert.Equal("xtraxe ixt", Page(session, 0));
+    }
+
+    [Theory]
+    [InlineData("o\\001ce", "f", "ph", "ophphice", 2)]
+    [InlineData("o\\001ce", "i", "x", "offxce", 1)]
+    [InlineData("\\003nd", "i", "y", "fynd", 1)]
+    [InlineData("\\003nd", "fi", "g", "gnd", 1)]
+    [InlineData("a\\002b", "f", "x", "axxb", 2)]
+    [InlineData("a\\002b", "ff", "x", "axb", 1)]
+    public void ALigatureGlyphKeepsItsOtherLettersWhenPartOfItIsReplaced(string shown, string query, string replacement, string expected, int count)
+    {
+        var session = Open($"BT /F4 12 Tf 50 700 Td ({shown}) Tj ET");
+        var report = TextReplacer.ReplaceAll(session, query, replacement);
+        Assert.Equal(count, report.Replaced);
+        Assert.Empty(report.Failed);
+        Assert.Equal(expected, Page(session, 0));
+    }
+
+    [Fact]
+    public void AHitThatEndsOnALineBreakDoesNotTakeTheNextHitInTheFirstCharOfTheNextLine()
+    {
+        var session = Open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td /Span <</ActualText (cd ab)>> BDC (cd ab) Tj EMC ET");
+        var report = TextReplacer.ReplaceAll(session, "b ?", "Z", new TextSearchOptions(Regex: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal(EditingText.CrossesLines, Assert.Single(report.Failed).Reason);
+        Assert.Equal("ab\ncd aZ", Page(session, 0));
     }
 }
