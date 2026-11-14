@@ -86,24 +86,52 @@ extension AccessibilityModel {
         guard let row = selectedRow, let tab, let host else { return }
         let text = altText
         ChangeGate.run(tab, host, L10n.t("Figure description")) { [self] in
-            guard self.tab === tab else { return }
-            do {
-                // The tree on the screen was read from a copy; the edit goes to the open document's own.
-                let tree = StructureTree.read(tab.document)
-                let list = tree.map { FigureFinder.list($0) } ?? []
-                guard let tree, let figure = list.first(where: { $0.key == row.key }), figure.alt == row.alt else {
-                    host.showProblem(Problem(L10n.t("Description not saved"), L10n.t("The figure is no longer in the file.")))
-                    return
-                }
-                try AccessibilityEdits.setAlt(tab.document, tree, figure.element, text)
-                if try tab.commit(L10n.t("Figure description")) { host.setStatus(L10n.t("Description saved.")) }
-            } catch let error where error is InvalidOperationException || error is PdfReadException {
-                try? tab.session.discard()
-                host.showProblem(Problem(L10n.t("Description not saved"), L10n.t("The tags of this file are too large to change here.")))
-                return
-            }
+            guard self.tab === tab, writeAlts(tab, host, [(row, text)]) else { return }
             drafts[row.key] = nil
             figureNumber = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? row.number : nextBareAfter(row.number, row.number)
+        }
+    }
+
+    // Typed descriptions go into the file with Save's rules, as one undo step; a signed file asks first, so the caller is told to wait.
+    public func handIn() -> Bool {
+        guard let tab, let host else { return true }
+        let edits = checkedFigures.compactMap { row in drafts[row.key].map { (row, $0) } }
+        if edits.isEmpty { return true }
+        let asks = tab.document.isSigned && ChangeGate.refusal(tab.document) == nil
+        // The notice can outlive the panel's attachment, so the answer writes to the tab it was asked for.
+        ChangeGate.run(tab, host, L10n.t("Figure description")) { [weak self] in
+            guard let self, writeAlts(tab, host, edits) else { return }
+            for (row, _) in edits { self.forgetDraft(row.key, of: tab) }
+        }
+        return !asks
+    }
+
+    private func forgetDraft(_ key: Int, of tab: DocumentTab) {
+        if self.tab === tab { drafts[key] = nil } else { kept[ObjectIdentifier(tab)]?.drafts[key] = nil }
+    }
+
+    // False when nothing was written; the problem is on the info bar.
+    private func writeAlts(_ tab: DocumentTab, _ host: ToolHost, _ edits: [(FigureRow, String)]) -> Bool {
+        do {
+            // The tree on the screen was read from a copy; the edit goes to the open document's own.
+            let tree = StructureTree.read(tab.document)
+            let list = tree.map { FigureFinder.list($0) } ?? []
+            let found = edits.map { edit in list.first { $0.key == edit.0.key } }
+            guard let tree, zip(edits, found).allSatisfy({ $1?.alt == $0.0.alt }) else {
+                host.showProblem(Problem(L10n.t("Description not saved"), L10n.t("The figure is no longer in the file.")))
+                return false
+            }
+            for (edit, figure) in zip(edits, found) {
+                try AccessibilityEdits.setAlt(tab.document, tree, figure!.element, edit.1)
+            }
+            if try tab.commit(L10n.t("Figure description")) { host.setStatus(L10n.t("Description saved.")) }
+            return true
+        } catch let error where error is InvalidOperationException || error is PdfReadException {
+            try? tab.session.discard()
+            host.showProblem(Problem(L10n.t("Description not saved"), L10n.t("The tags of this file are too large to change here.")))
+            return false
+        } catch {
+            return false
         }
     }
 
