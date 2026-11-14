@@ -137,6 +137,8 @@ public partial class MainWindow
         if (!marksOnly) parts.Add(Loc.T("Your changes are lost if you do not save them."));
         if (tab.PendingMarks > 0) parts.Add(Loc.Plural(tab.PendingMarks, "{0} redaction mark is not applied yet.", "{0} redaction marks are not applied yet."));
         if (tab.PendingMeasurements > 0) parts.Add(Loc.Plural(tab.PendingMeasurements, "{0} measurement is not added to the page yet.", "{0} measurements are not added to the page yet."));
+        if (tab.PendingWords > 0) parts.Add(Loc.T("A corrected word is not applied yet."));
+        if (tab.PendingDescriptions > 0) parts.Add(Loc.Plural(tab.PendingDescriptions, "{0} figure description is not saved yet.", "{0} figure descriptions are not saved yet."));
         CloseBody.Text = string.Join(" ", parts);
         CloseAllGroup.Visibility = _vm.IsExiting && _vm.Unsettled >= 2 && _vm.Documents.Any(d => d.IsDirty) ? Visibility.Visible : Visibility.Collapsed;
         CloseSaveButton.Visibility = marksOnly ? Visibility.Collapsed : Visibility.Visible;

@@ -111,6 +111,7 @@ public sealed partial class OcrPanel
 
     private void Pick((int Page, int Index)? word, bool focus = false)
     {
+        if (Tab is { } shownTab) shownTab.PendingWords = 0;
         if (_picked is { } old && _shown.TryGetValue(old.Page, out var before) && old.Index < before.Boxes.Count) Mark(before.Boxes[old.Index], false);
         _picked = null;
         if (word is { } next && _shown.TryGetValue(next.Page, out var shown) && next.Index < shown.Words.Count)
@@ -180,16 +181,36 @@ public sealed partial class OcrPanel
         if (OcrWork.Cleared(tab, host, () => ApplyAnyway(tab, word, text))) Apply(tab, word, text);
     }
 
-    // A word typed and not yet in the file goes in before the file is saved, undone or closed. False while a signed file waits
-    // for its answer.
+    // A word typed and not yet in the file goes in before the file is saved, undone or closed. A signed file keeps it in the
+    // box, as Measure keeps its readings: nothing is written without the user's answer, and the close question names it.
     public override bool HandIn()
     {
-        if (Tab is not { } tab || Host is not { } host || _picked is not { } word) return true;
-        if (!_shown.TryGetValue(word.Page, out var shown) || word.Index >= shown.Words.Count) return true;
+        HandInWord(keepSigned: true);
+        return true;
+    }
+
+    // The box is lost when another tab or tool takes the panel's place, so a signed file asks first and the switch waits.
+    public override bool HandInOnSwitch() => HandInWord(keepSigned: false);
+
+    private bool HandInWord(bool keepSigned)
+    {
+        if (Tab is not { } tab || Host is not { } host) return true;
+        tab.PendingWords = 0;
+        if (_picked is not { } word || !_shown.TryGetValue(word.Page, out var shown) || word.Index >= shown.Words.Count) return true;
         string text = WordBox.Text.Trim();
         if (text == shown.Words[word.Index].Text) return true;
+        bool refused = OcrWork.Refusal(tab.Document) is not null;
+        if (keepSigned && tab.Document.IsSigned && !refused)
+        {
+            tab.PendingWords = 1;
+            return true;
+        }
         if (OcrWork.Cleared(tab, host, () => ApplyAnyway(tab, word, text))) Apply(tab, word, text);
-        else return OcrWork.Refusal(tab.Document) is not null;
+        else
+        {
+            tab.PendingWords = refused ? 0 : 1;
+            return refused;
+        }
         return true;
     }
 
@@ -200,6 +221,7 @@ public sealed partial class OcrPanel
 
     private void Apply(DocumentTab tab, (int Page, int Index) word, string text)
     {
+        tab.PendingWords = 0;
         _correcting = true;
         try
         {

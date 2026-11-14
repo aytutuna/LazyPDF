@@ -411,20 +411,38 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertEqual(model.drafts.count, 1)
     }
 
-    func test_aSignedFileAsksBeforeTheTypedDescriptionIsHandedIn() async throws {
+    func test_aSignedFileKeepsTheTypedDescriptionWaitingAndLetsTheWindowGo() async throws {
         let (model, rig) = try await attached(try signedPictures())
         model.setView(.figures)
         await waitUntil { model.selectedFigure == 1 }
         model.typeAlt("A grey square.")
 
-        XCTAssertFalse(model.handIn())
+        XCTAssertTrue(model.handIn())
 
-        XCTAssertEqual(rig.host.notices.last?.title, "Check before going on")
+        XCTAssertTrue(rig.host.notices.isEmpty)
         XCTAssertFalse(rig.tab.session.canUndo)
         XCTAssertEqual(model.drafts.count, 1)
+        XCTAssertEqual(rig.tab.pendingDescriptions, 1)
+        XCTAssertTrue(rig.tab.hasUnappliedWork)
+    }
 
+    func test_aWaitingDescriptionStaysNamedWhileAnotherTabIsShownAndGoesWhenItIsWritten() async throws {
+        let (model, rig) = try await attached(try signedPictures())
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.typeAlt("A grey square.")
+        XCTAssertTrue(model.handInOnSwitch())
+
+        model.detach()
+        XCTAssertEqual(rig.tab.pendingDescriptions, 1)
+        rig.attach(model)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.saveAlt()
         rig.host.notices[0].action?.run()
+
         XCTAssertEqual(rig.tab.session.undoLabel, "Figure description")
+        XCTAssertEqual(rig.tab.pendingDescriptions, 0)
         XCTAssertTrue(model.drafts.isEmpty)
     }
 

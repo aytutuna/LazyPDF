@@ -62,6 +62,10 @@ struct CloseCard: View {
         if tab.pendingMeasurements > 0 {
             parts.append(L10n.plural(tab.pendingMeasurements, one: "{0} measurement is not added to the page yet.", other: "{0} measurements are not added to the page yet."))
         }
+        if tab.pendingWords > 0 { parts.append(L10n.t("A corrected word is not applied yet.")) }
+        if tab.pendingDescriptions > 0 {
+            parts.append(L10n.plural(tab.pendingDescriptions, one: "{0} figure description is not saved yet.", other: "{0} figure descriptions are not saved yet."))
+        }
         ModalCard(title: marksOnly ? L10n.t("Close {0}?", tab.title) : L10n.t("Save changes to {0}?", tab.title),
                   text: parts.joined(separator: " ")) {
             if !marksOnly {

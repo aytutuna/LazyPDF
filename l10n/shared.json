@@ -8147,6 +8147,13 @@
     "other": "{0} measurements are not added to the page yet.",
     "tr": "{0} ölçüm henüz sayfaya eklenmedi."
   },
+  "{0} figure description is not saved yet.": {
+    "other": "{0} figure descriptions are not saved yet.",
+    "tr": "{0} şekil açıklaması henüz kaydedilmedi."
+  },
+  "A corrected word is not applied yet.": {
+    "tr": "Düzeltilmiş bir sözcük henüz uygulanmadı."
+  },
   "Arrow keys move it. Enter places it. Escape cancels.": {
     "tr": "Ok tuşları taşır. Enter yerleştirir. Esc iptal eder."
   },

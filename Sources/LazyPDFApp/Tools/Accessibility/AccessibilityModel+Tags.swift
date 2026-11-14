@@ -53,6 +53,7 @@ extension AccessibilityModel {
             return fresh.contains { $0.key == key && $0.page == old.page && $0.alt == old.alt }
         }
         checkedFigures = fresh
+        syncPending()
     }
 
     // The copy is let go, not closed: a picture being found may still be reading it.

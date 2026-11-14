@@ -17,9 +17,9 @@ public sealed class OcrPanelHandInTests
             Task.FromResult<IReadOnlyList<OcrWord>>([]);
     }
 
-    private static (OcrPanel Panel, DocumentTab Tab, TextBox Box) Picked()
+    private static (OcrPanel Panel, DocumentTab Tab, TextBox Box) Picked(byte[]? bytes = null)
     {
-        var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1), (string?)null), new FakeRenderer(), null, "a.pdf", null);
+        var tab = new DocumentTab(PdfEditSession.Open(bytes ?? Pdfs.Text(1), (string?)null), new FakeRenderer(), null, "a.pdf", null);
         PdfOcrLayer.Add(tab.Document, [new OcrPageWords(0, [new OcrWord("alpha", new OcrBox(10, 10, 50, 20)), new OcrWord("beta", new OcrBox(70, 10, 50, 20))], 200, 300)], "en");
         tab.Session.Commit("Read");
         var panel = new OcrPanel(new NoRecognizer(), () => new OcrLanguageState([], []));
@@ -57,6 +57,36 @@ public sealed class OcrPanelHandInTests
 
         Assert.False(tab.Document.HasChanges);
         Assert.Equal("Read", tab.Session.UndoLabel);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ASignedFileKeepsTheTypedWordWaitingAndLetsTheWindowGo() => Sta.Run(() =>
+    {
+        var (panel, tab, box) = Picked(StampsPanelTests.Signed(certified: false, pages: 1));
+        using var guard = tab;
+        box.Text = "gamma";
+
+        Assert.True(panel.HandIn());
+
+        Assert.Equal(["alpha", "beta"], Words(tab));
+        Assert.Equal("Read", tab.Session.UndoLabel);
+        Assert.Equal(1, tab.PendingWords);
+        Assert.True(tab.HasUnappliedWork);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ASignedFileAsksBeforeTheTypedWordIsLostToAnotherTabOrTool() => Sta.Run(() =>
+    {
+        var (panel, tab, box) = Picked(StampsPanelTests.Signed(certified: false, pages: 1));
+        using var guard = tab;
+        box.Text = "gamma";
+
+        Assert.False(panel.HandInOnSwitch());
+
+        Assert.Equal(["alpha", "beta"], Words(tab));
+        Assert.Equal(1, tab.PendingWords);
         return Task.CompletedTask;
     });
 }
