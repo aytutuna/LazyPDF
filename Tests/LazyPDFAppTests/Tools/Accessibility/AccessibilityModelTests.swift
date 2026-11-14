@@ -1,5 +1,5 @@
 import XCTest
-import LazyPDFKit
+@testable import LazyPDFKit
 @testable import LazyPDFApp
 
 // The accessibility panel as the window drives it: the check on show and on a change, the fixes of its rows, tagging, the tag
@@ -401,7 +401,10 @@ final class AccessibilityModelTests: XCTestCase {
         await tag(model, rig)
         model.setView(.figures)
         await waitUntil { model.selectedFigure == 1 }
-        model.setAlt = { _, _, _, _ in throw ArgumentException("odd") }
+        model.setAlt = { document, tree, figure, text in
+            try AccessibilityEdits.setAlt(document, tree, figure, text)
+            throw ArgumentException("odd")
+        }
         model.typeAlt("A grey square.")
 
         model.saveAlt()
@@ -409,6 +412,7 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.first?.title, "Something went wrong")
         XCTAssertFalse(rig.tab.session.canUndo && rig.tab.session.undoLabel == "Figure description")
         XCTAssertEqual(model.drafts.count, 1)
+        XCTAssertFalse(rig.tab.document.hasChanges)
     }
 
     func test_aSignedFileKeepsTheTypedDescriptionWaitingAndLetsTheWindowGo() async throws {
