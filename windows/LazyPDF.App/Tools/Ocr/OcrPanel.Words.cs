@@ -18,13 +18,13 @@ public sealed partial class OcrPanel
     private sealed record PageWords(IReadOnlyList<OcrLayerWord> Words, List<Border> Boxes);
 
     // The word a signed file keeps waiting: where it is in the layer, what the layer says, what was typed and the revision of the file.
-    private sealed record Waiting(int Page, int Index, string Origin, DisplayRect Box, string Text, int Revision);
+    private sealed record Waiting(int Page, int Index, string Origin, PdfRect Box, string Text, int Revision);
 
     private static readonly ConditionalWeakTable<DocumentTab, Waiting> Kept = [];
 
     // What the layer says of the picked word, to tell whether the box holds a correction and to find the word again.
     private string _origin = "";
-    private DisplayRect _originBox;
+    private PdfRect _originBox;
 
     private void AttachWords()
     {
@@ -75,9 +75,14 @@ public sealed partial class OcrPanel
     private static int Find(DocumentTab tab, Waiting back)
     {
         if (back.Page >= tab.Document.Pages.Count) return -1;
-        var found = PdfOcrLayer.Words(tab.Document, tab.Document.Pages[back.Page]).FirstOrDefault(w => w.Text == back.Origin && w.Box == back.Box);
+        // In page space, which a turned page or another crop box leaves as it was.
+        var geometry = new PageGeometry(tab.Document.Pages[back.Page]);
+        var found = PdfOcrLayer.Words(tab.Document, tab.Document.Pages[back.Page]).FirstOrDefault(w => w.Text == back.Origin && Near(geometry.ToUser(w.Box), back.Box));
         return found?.Index ?? -1;
     }
+
+    private static bool Near(PdfRect a, PdfRect b) =>
+        Math.Abs(a.Left - b.Left) < 0.01 && Math.Abs(a.Bottom - b.Bottom) < 0.01 && Math.Abs(a.Right - b.Right) < 0.01 && Math.Abs(a.Top - b.Top) < 0.01;
 
     private void Viewer_ViewChanged(object? sender, EventArgs e) => ShowWords();
 
@@ -178,7 +183,7 @@ public sealed partial class OcrPanel
             _picked = next;
             Mark(shown.Boxes[next.Index], true);
             WordBox.Text = _origin = shown.Words[next.Index].Text;
-            _originBox = shown.Words[next.Index].Box;
+            _originBox = new PageGeometry(Tab!.Document.Pages[next.Page]).ToUser(shown.Words[next.Index].Box);
             WordWhere.Text = Loc.T("Page {0}", next.Page + 1);
             if (focus) EditWord();
         }

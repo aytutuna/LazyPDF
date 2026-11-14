@@ -50,10 +50,10 @@ public final class OcrModel: ToolPanelModel {
     @ObservationIgnored var keepsSigned = false
 
     /// The word a signed file kept waiting for each tab while another tab or tool is shown, and the revision it was typed against.
-    @ObservationIgnored var keptWords: [ObjectIdentifier: (tab: WeakTab, word: WordRef, origin: OcrLayerWord?, text: String, revision: Int)] = [:]
+    @ObservationIgnored var keptWords: [ObjectIdentifier: (tab: WeakTab, word: WordRef, origin: WordOrigin?, text: String, revision: Int)] = [:]
 
     /// The picked word as the layer has it, to find it again after the file changed.
-    @ObservationIgnored var pickedOrigin: OcrLayerWord?
+    @ObservationIgnored var pickedOrigin: WordOrigin?
 
     struct WeakTab {
         weak var tab: DocumentTab?
@@ -223,4 +223,11 @@ public final class OcrModel: ToolPanelModel {
             pick(nil)
         }
     }
+}
+
+/// A word as the layer had it when it was picked: its text and its box in page space, which a turned page or another crop box
+/// leaves as it was.
+struct WordOrigin {
+    let text: String
+    let place: PdfRect
 }

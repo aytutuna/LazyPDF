@@ -442,6 +442,19 @@ final class OcrModelTests: XCTestCase {
         XCTAssertEqual(tab.pendingWords, 1)
     }
 
+    func test_aWaitingWordSurvivesTheTurningOfItsPage() async throws {
+        let (model, _, host, tab) = try await waitingWord()
+
+        tab.document.pages[0].dictionary["Rotate"] = PdfNumber(90)
+        try tab.commit("Rotate")
+        await waitUntil { model.picked != nil && !model.isLoading }
+
+        XCTAssertEqual(model.picked, WordRef(0, 0))
+        XCTAssertEqual(model.draft, "gamma")
+        XCTAssertEqual(tab.pendingWords, 1)
+        XCTAssertFalse(host.statuses.contains { $0.contains("no longer in the file") })
+    }
+
     func test_aWaitingWordIsDroppedWithANoteWhenTheLayerGoesAway() async throws {
         let (model, _, host, tab) = try await waitingWord()
 

@@ -44,9 +44,19 @@ extension OcrModel {
     }
 
     // The word is looked for by its page, box and text, since the numbers of the words move with the layer.
-    private static func find(_ tab: DocumentTab, _ page: Int, _ origin: OcrLayerWord) -> Int? {
+    private static func find(_ tab: DocumentTab, _ page: Int, _ origin: WordOrigin) -> Int? {
         guard page < tab.pageCount, let words = try? PdfOcrLayer.words(tab.document, tab.document.pages[page]) else { return nil }
-        return words.first { $0.text == origin.text && $0.box == origin.box }?.index
+        let geometry = PageGeometry(tab.document.pages[page])
+        return words.first { $0.text == origin.text && near(geometry.toUser($0.box), origin.place) }?.index
+    }
+
+    private static func near(_ a: PdfRect, _ b: PdfRect) -> Bool {
+        abs(a.left - b.left) < 0.01 && abs(a.bottom - b.bottom) < 0.01 && abs(a.right - b.right) < 0.01 && abs(a.top - b.top) < 0.01
+    }
+
+    private func origin(_ page: Int, _ word: OcrLayerWord?) -> WordOrigin? {
+        guard let word, let tab, page < tab.pageCount else { return nil }
+        return WordOrigin(text: word.text, place: PageGeometry(tab.document.pages[page]).toUser(word.box))
     }
 
     private func dropWaiting(_ tab: DocumentTab) {
@@ -150,7 +160,7 @@ extension OcrModel {
         inPanel = false
         if let word, let found = shown[word.page]?.first(where: { $0.index == word.index }) {
             picked = word
-            pickedOrigin = found
+            pickedOrigin = origin(word.page, found)
             draft = found.text
             mark(word)
             if edit { editWord(word, found) }
@@ -236,7 +246,7 @@ extension OcrModel {
         if picked != word {
             if let old = picked { unmark(old) }
             picked = word
-            pickedOrigin = shown[word.page]?.first { $0.index == word.index }
+            pickedOrigin = origin(word.page, shown[word.page]?.first { $0.index == word.index })
             mark(word)
         }
         draft = text

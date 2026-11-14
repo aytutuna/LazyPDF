@@ -137,4 +137,22 @@ public sealed class OcrPanelHandInTests
         Assert.Contains("no longer in the file", host.Status);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task AWaitingWordSurvivesTheTurningOfItsPage() => Sta.Run(() =>
+    {
+        var host = new RecordingHost();
+        var (panel, tab, box) = Picked(StampsPanelTests.Signed(certified: false, pages: 1), host);
+        using var guard = tab;
+        box.Text = "gamma";
+        panel.HandIn();
+
+        tab.Document.Pages[0].Dictionary["Rotate"] = new PdfNumber(90);
+        tab.Commit("Rotate");
+
+        Assert.Equal(1, tab.PendingWords);
+        Assert.Equal("gamma", box.Text);
+        Assert.DoesNotContain("no longer in the file", host.Status);
+        return Task.CompletedTask;
+    });
 }
