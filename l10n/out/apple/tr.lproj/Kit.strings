@@ -842,6 +842,7 @@
 "Lazy PDF Help" = "Lazy PDF Yardımı";
 "Lazy PDF cannot change this form. Try an earlier copy of the file." = "Lazy PDF bu formu değiştiremiyor. Dosyanın önceki bir kopyasını deneyin.";
 "Lazy PDF closed before these were saved. Restore them to carry on where you were." = "Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin.";
+"Lazy PDF shows the pages this file keeps for other viewers. Open it in an app that supports XFA to see the whole form." = "Lazy PDF, bu dosyanın diğer görüntüleyiciler için sakladığı sayfaları gösterir. Formun tamamını görmek için XFA destekleyen bir uygulamada açın.";
 "Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent." = "Lazy PDF şu sunuculara bağlanacak: {0}. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez.";
 "Lazy Print" = "Lazy Print";
 "Lazy Scan" = "Lazy Scan";

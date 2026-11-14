@@ -16,7 +16,13 @@ final class OpenFormNoticeTests: XCTestCase {
     func test_aDynamicXfaFormIsExplained() async throws {
         let document = try PdfDocument.open(FormPdfs.dynamicXfa())
 
-        XCTAssertEqual(AppViewModel.formNotice(document)?.1, FormText.dynamicXfa)
+        XCTAssertEqual(AppViewModel.formNotice(document)?.0, L10n.t("XFA form"))
+    }
+
+    func test_aStaticXfaFormIsQuiet() async throws {
+        let document = try PdfDocument.open(try FormPdfs.staticXfa())
+
+        XCTAssertNil(AppViewModel.formNotice(document))
     }
 
     func test_aScriptThatCannotRunIsReported() async throws {
