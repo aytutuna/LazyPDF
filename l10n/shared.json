@@ -8151,6 +8151,12 @@
     "other": "{0} figure descriptions are not saved yet.",
     "tr": "{0} şekil açıklaması henüz kaydedilmedi."
   },
+  "The word you were correcting is no longer in the file, so the correction was dropped.": {
+    "tr": "Düzelttiğiniz sözcük artık dosyada değil, bu yüzden düzeltme atıldı."
+  },
+  "A description you typed was dropped because its figure changed.": {
+    "tr": "Yazdığınız açıklama atıldı, çünkü şekil değişti."
+  },
   "A corrected word is not applied yet.": {
     "tr": "Düzeltilmiş bir sözcük henüz uygulanmadı."
   },

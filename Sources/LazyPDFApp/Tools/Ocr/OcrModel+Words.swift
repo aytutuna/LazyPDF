@@ -27,20 +27,36 @@ extension OcrModel {
         showMarks()
         keptWords = keptWords.filter { $0.value.tab.tab != nil }
         guard let tab, let back = keptWords.removeValue(forKey: ObjectIdentifier(tab)) else { return }
-        if back.revision == tab.revision {
-            picked = back.word
-            draft = back.text
-            inPanel = true
-            tab.pendingWords = 1
-            mark(back.word)
-        } else {
-            tab.pendingWords = 0
+        var word = back.word
+        if back.revision != tab.revision {
+            guard let origin = back.origin, let index = Self.find(tab, word.page, origin) else {
+                dropWaiting(tab)
+                return
+            }
+            word = WordRef(word.page, index)
         }
+        picked = word
+        pickedOrigin = back.origin
+        draft = back.text
+        inPanel = true
+        tab.pendingWords = 1
+        mark(word)
+    }
+
+    // The word is looked for by its page, box and text, since the numbers of the words move with the layer.
+    private static func find(_ tab: DocumentTab, _ page: Int, _ origin: OcrLayerWord) -> Int? {
+        guard page < tab.pageCount, let words = try? PdfOcrLayer.words(tab.document, tab.document.pages[page]) else { return nil }
+        return words.first { $0.text == origin.text && $0.box == origin.box }?.index
+    }
+
+    private func dropWaiting(_ tab: DocumentTab) {
+        tab.pendingWords = 0
+        host?.setStatus(L10n.t("The word you were correcting is no longer in the file, so the correction was dropped."))
     }
 
     func detachWords() {
         if let tab, tab.pendingWords > 0, let word = picked {
-            keptWords[ObjectIdentifier(tab)] = (WeakTab(tab: tab), word, draft, tab.revision)
+            keptWords[ObjectIdentifier(tab)] = (WeakTab(tab: tab), word, pickedOrigin, draft, tab.revision)
         } else {
             tab?.pendingWords = 0
         }
@@ -52,6 +68,7 @@ extension OcrModel {
         correctedRevision = nil
         words = []
         picked = nil
+        pickedOrigin = nil
         inPanel = false
         draft = ""
         touchStart = nil
@@ -59,9 +76,19 @@ extension OcrModel {
 
     // The words and the marks are for one revision of the file; the next change builds them again.
     func refreshWords() {
+        let held = (tab?.pendingWords ?? 0) > 0
         hideMarks()
         showMarks()
-        if let now = picked, !(shown[now.page].map { now.index < $0.count } ?? false) { picked = nil }
+        guard let now = picked else { return }
+        if held, let tab, let origin = pickedOrigin, let index = Self.find(tab, now.page, origin) {
+            picked = WordRef(now.page, index)
+        } else if held || !(shown[now.page].map { now.index < $0.count } ?? false) {
+            // A word that cannot be found leaves nothing for the box to apply to.
+            picked = nil
+            pickedOrigin = nil
+            inPanel = false
+            if held, let tab { dropWaiting(tab) }
+        }
         if let now = picked { mark(now) }
     }
 
@@ -119,9 +146,11 @@ extension OcrModel {
         tab?.pendingWords = 0
         if let old = picked { unmark(old) }
         picked = nil
+        pickedOrigin = nil
         inPanel = false
         if let word, let found = shown[word.page]?.first(where: { $0.index == word.index }) {
             picked = word
+            pickedOrigin = found
             draft = found.text
             mark(word)
             if edit { editWord(word, found) }
@@ -207,6 +236,7 @@ extension OcrModel {
         if picked != word {
             if let old = picked { unmark(old) }
             picked = word
+            pickedOrigin = shown[word.page]?.first { $0.index == word.index }
             mark(word)
         }
         draft = text
