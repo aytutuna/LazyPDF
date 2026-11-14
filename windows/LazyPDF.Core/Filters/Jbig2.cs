@@ -85,7 +85,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
 
     private bool _inGlobals;
 
-    // How many segments in a row may fail before the rest of the data is given up on.
+    // How many segments in a row may fail without reading anything of their own before the rest of the data is given up on.
     private const int MaxFailedRun = 16;
 
     // The end of the segment being read: no field of it is read past that.
@@ -134,7 +134,8 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
             catch (PdfReadException e) when (e.Problem == PdfReadProblem.Damaged)
             {
                 Fail(e);
-                if (++failedRun > MaxFailedRun)
+                // A segment that carries data may fail for what an earlier one left out; only empty ones are a run.
+                if (segment.Length <= segment.HeaderEnd - position && ++failedRun > MaxFailedRun)
                 {
                     Fail(PdfReadException.Damaged("A JBIG2 stream has nothing but segments that do not decode."));
                     return;

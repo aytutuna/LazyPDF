@@ -326,6 +326,26 @@ public class Jbig2FilterTests
     }
 
     [Fact]
+    public void ManyRegionsThatFailForAFailedDictionaryDoNotEndAPartialDecode()
+    {
+        // One symbol dictionary that does not decode, 17 text regions that use it, and a region that is fine after them.
+        var bm = Bm.Text(8, 8, 3);
+        var e = new ArithEncoder();
+        Jbig2Encode.Generic(e, bm, 0, false);
+        var segments = new List<byte[]>
+        {
+            Jbig2Segments.Segment(0, 48, Jbig2Segments.PageInfo(8, 8)),
+            Jbig2Segments.Segment(1, 0, new byte[12]),
+        };
+        for (int i = 0; i < 17; i++) segments.Add(Jbig2Segments.Segment(2 + i, 6, new byte[20], [1]));
+        segments.Add(Jbig2Segments.Segment(30, 38, Jbig2Segments.GenericData(bm, e.Finish(), 0, false, false, null)));
+        byte[] stream = Jbig2Segments.Cat([.. segments]);
+        Assert.Equal(bm.Packed(), Decode(stream));
+        Assert.Equal(PdfReadProblem.Damaged, Assert.Throws<PdfReadException>(() =>
+            PdfFilters.DecodeToCodecWhole(stream, new PdfName("JBIG2Decode"), null, PdfFilters.DefaultMaxSize)).Problem);
+    }
+
+    [Fact]
     public void GlobalsHoldDictionariesAndTablesAndNothingElse()
     {
         // A region of 134 million pixels in the globals is not drawn, and costs nothing, for an image of one pixel.
