@@ -20,6 +20,7 @@ public sealed class FormOpenNoticeTests
         await f.Vm.OpenAsync(f.Dir.File("x.pdf", FormPdfs.DynamicXfa()));
 
         Assert.Equal("XFA form", f.Vm.Message?.Title);
+        Assert.Equal("Open in another app", f.Vm.Message?.Action?.Text);
     }
 
     [Fact]
@@ -47,6 +48,15 @@ public sealed class FormOpenNoticeTests
         await f.Vm.OpenAsync(f.Dir.File("x.pdf", FormPdfs.StaticXfa()));
 
         Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public async Task AFormWithScriptsOffersNoButton()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("s.pdf", FormPdfs.Scripted()));
+
+        Assert.Null(f.Vm.Message?.Action);
     }
 
     [Fact]

@@ -61,6 +61,7 @@ final class MacShell {
                                  saveCompact: { [unowned self] in self.saveCompact($0) },
                                  print: { [unowned self] in self.systemPrint($0) },
                                  share: { [unowned self] in self.share($0) },
+                                 openElsewhere: { [unowned self] in self.openElsewhere($0) },
                                  importCertificate: { [unowned self] in self.importCertificate() },
                                  openFiles: { [unowned self] in self.open($0) })
         #if LAZYPDF_UITESTS
@@ -243,6 +244,24 @@ final class MacShell {
         alert.addButton(withTitle: L10n.t("Print"))
         alert.addButton(withTitle: L10n.t("Cancel"))
         return alert.runModal() == .alertFirstButtonReturn ? choice.layout : nil
+    }
+
+    // The default app for PDFs may be this one, so it is skipped for the first other app that opens them.
+    private func openElsewhere(_ tab: DocumentTab) {
+        guard let file = tab.url else { return share(tab) }
+        let workspace = NSWorkspace.shared
+        let own = Bundle.main.bundleURL.standardizedFileURL
+        let isOther = { (app: URL) in app.standardizedFileURL != own }
+        let app = workspace.urlForApplication(toOpen: file).flatMap { isOther($0) ? $0 : nil }
+            ?? workspace.urlsForApplications(toOpen: file).first(where: isOther)
+        guard let app else {
+            vm.showNotice(L10n.t("Open in another app"), L10n.t("No other app on this Mac opens PDF files."))
+            return
+        }
+        workspace.open([file], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration()) { [weak self] _, error in
+            guard let error else { return }
+            Task { @MainActor in self?.vm.showProblem(Problems.open(error, file.lastPathComponent)) }
+        }
     }
 
     private func share(_ tab: DocumentTab) {

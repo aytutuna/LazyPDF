@@ -25,6 +25,9 @@ public struct ShellCommands {
     /// Hands the tab's current file to the share sheet; nil where the platform has none.
     public var share: (@MainActor (DocumentTab) -> Void)?
 
+    /// Offers the tab's file to an app other than this one; the XFA notice's button asks for it. Nil where the platform has none.
+    public var openElsewhere: (@MainActor (DocumentTab) -> Void)?
+
     /// Chooses a .p12 or .pfx, imports it through PdfDigitalId into the keychain and returns the identity; nil when the
     /// person gave up. The password question offers it for a file encrypted for recipients.
     public var importCertificate: (@MainActor () async -> CertificateChoice?)?
@@ -40,6 +43,7 @@ public struct ShellCommands {
                 saveCompact: @escaping @MainActor (DocumentTab) -> Void = { _ in },
                 print: @escaping @MainActor (DocumentTab) -> Void = { _ in },
                 share: (@MainActor (DocumentTab) -> Void)? = nil,
+                openElsewhere: (@MainActor (DocumentTab) -> Void)? = nil,
                 importCertificate: (@MainActor () async -> CertificateChoice?)? = nil,
                 certificateList: CertificateListModel? = nil,
                 openFiles: (@MainActor ([URL]) -> Void)? = nil) {
@@ -50,6 +54,7 @@ public struct ShellCommands {
         self.saveCompact = saveCompact
         self.print = print
         self.share = share
+        self.openElsewhere = openElsewhere
         self.importCertificate = importCertificate
         self.certificateList = certificateList
         self.openFiles = openFiles

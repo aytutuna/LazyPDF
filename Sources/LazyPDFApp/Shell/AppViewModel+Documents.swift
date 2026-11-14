@@ -269,8 +269,11 @@ extension AppViewModel {
             showNotice(L10n.t("File is read-only"), L10n.t("{0} is read-only. You can work on it, but save your changes with Save as.", tab.title))
         } else if !tab.canDraw {
             showNotice(L10n.t("Pages cannot be shown"), L10n.t("{0} opens for editing, but its pages cannot be shown here.", tab.title))
-        } else if let (title, text, _) = Self.formNotice(tab.document) {
-            showNotice(title, text)
+        } else if let (title, text, xfa) = Self.formNotice(tab.document) {
+            let action = xfa ? NoticeAction(L10n.t("Open in another app")) { [weak self, weak tab] in
+                if let tab { self?.openElsewhereRequested?(tab) }
+            } : nil
+            showNotice(title, text, action)
         }
     }
 
