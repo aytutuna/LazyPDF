@@ -32,7 +32,7 @@ internal static class Jbig2Halftone
     {
         if (width < 1 || height < 1 || maxIndex < 0 || maxIndex >= MaxPatterns) throw PdfReadException.Damaged("A JBIG2 pattern dictionary has a bad size.");
         int count = (int)maxIndex + 1;
-        budget.Keep((long)count * width * height);
+        budget.Keep((long)count * (width * height + 64));
         Jbig2Bitmap collective;
         if (mmr)
         {
@@ -75,6 +75,7 @@ internal static class Jbig2Halftone
         var region = new Jbig2Bitmap(p.Width, p.Height, budget);
         if (p.DefaultPixel != 0) region.Fill(1);
         int patternWidth = patterns[0].Width, patternHeight = patterns[0].Height;
+        budget.Work((long)gridWidth * gridHeight);
 
         Jbig2Bitmap? skip = null;
         if (p.EnableSkip)

@@ -67,17 +67,20 @@ internal sealed class Jbig2Arith
     private int _a;
     private int _ct;
     private byte[]? _iaid;
-    private readonly byte[][] _integers = new byte[IntegerCount][];
+    private readonly byte[]?[] _integers = new byte[IntegerCount][];
 
     /// <summary>Generic region contexts (the largest template has 16 bits).</summary>
-    public byte[] Gb = new byte[1 << 16];
+    public byte[] Gb;
 
     /// <summary>Generic refinement region contexts (the largest template has 13 bits).</summary>
-    public byte[] Gr = new byte[1 << 13];
+    public byte[] Gr;
 
     /// <summary>E.3.5 INITDEC: starts decoding the bytes from <paramref name="start"/> up to <paramref name="end"/>.</summary>
-    public Jbig2Arith(byte[] data, int start, int end)
+    public Jbig2Arith(byte[] data, int start, int end, byte[]? refinementContexts = null)
     {
+        // A decoder that only refines (Huffman coded blocks, one for each symbol) has no use for the other contexts.
+        Gb = refinementContexts is null ? new byte[1 << 16] : [];
+        Gr = refinementContexts ?? new byte[1 << 13];
         _data = data;
         _end = Math.Min(end, data.Length);
         _bp = start;
@@ -88,7 +91,6 @@ internal sealed class Jbig2Arith
         _clow = (_clow << 7) & 0xffff;
         _ct -= 7;
         _a = 0x8000;
-        for (int i = 0; i < IntegerCount; i++) _integers[i] = new byte[512];
     }
 
     private int At(int index) => index >= 0 && index < _end ? _data[index] : 0xff;
@@ -188,7 +190,7 @@ internal sealed class Jbig2Arith
     /// </summary>
     public bool Integer(int procedure, out int value)
     {
-        var contexts = _integers[procedure];
+        var contexts = _integers[procedure] ??= new byte[512];
         int prev = 1;
         int sign = (int)ReadBits(contexts, ref prev, 1);
         long v;

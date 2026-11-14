@@ -99,7 +99,7 @@ internal sealed class Jbig2Text(Jbig2Budget budget, Jbig2Arith? arith, Jbig2Read
                 long top = p.Transposed ? currentS : t;
                 if (right) left -= w - 1;
                 if (bottom) top -= h - 1;
-                budget.Work((long)w * h);
+                budget.Work((long)w * h + 64);
                 if (left > int.MinValue && left < int.MaxValue && top > int.MinValue && top < int.MaxValue)
                     bitmap.Compose(symbol, (int)left, (int)top, p.CombinationOperator);
                 // Step x
@@ -148,7 +148,7 @@ internal sealed class Jbig2Text(Jbig2Budget budget, Jbig2Arith? arith, Jbig2Read
         int size = Value(p.RefineSize, 0);
         reader!.ByteAlign();
         if (size < 0 || size > reader.End - reader.Position) throw PdfReadException.Damaged("A JBIG2 refinement is longer than its segment.");
-        var block = new Jbig2Arith(reader.Data, reader.Position, reader.Position + size) { Gr = refinementContexts! };
+        var block = new Jbig2Arith(reader.Data, reader.Position, reader.Position + size, refinementContexts);
         var result = Jbig2Generic.Refine(budget, block, width, height, p.RefinementTemplate, reference, dx, dy, false, p.RefinementAt);
         reader.Position += size;
         return result;

@@ -290,7 +290,10 @@ internal sealed class Jbig2Decoder(long maxSize)
             if (gr is not null) arith.Gr = (byte[])gr.Clone();
         }
         var symbols = Jbig2Symbols.Decode(_budget, arith, reader, p);
-        _dictionaries[segment.Number] = new Jbig2SymbolDictionary(symbols, arith?.Gb, arith?.Gr ?? p.RefineContexts);
+        // Only a dictionary that says so leaves its contexts behind.
+        bool retained = (flags & 0x200) != 0;
+        if (retained) _budget.Keep(1 << 17);
+        _dictionaries[segment.Number] = new Jbig2SymbolDictionary(symbols, retained ? arith?.Gb : null, retained ? arith?.Gr ?? p.RefineContexts : null);
     }
 
     private void TextRegion(Segment segment, byte[] data, int start, int end)
@@ -456,17 +459,19 @@ internal sealed class Jbig2Decoder(long maxSize)
         Store(segment, region, Jbig2Halftone.Region(_budget, data, position, end, p, patterns));
     }
 
-    private static Region ReadRegion(byte[] data, int start, int end)
+    private static Region ReadRegion(byte[] data, int start, int end, bool heightFollows = false)
     {
         if (end - start < 17) throw PdfReadException.Damaged("A JBIG2 region segment is cut off.");
         long width = U32(data, start), height = U32(data, start + 4), x = U32(data, start + 8), y = U32(data, start + 12);
+        // A region of unknown length may give an unknown height too; the row count it ends with says it.
+        if (heightFollows) height = Math.Min(height, int.MaxValue);
         if (width > int.MaxValue || height > int.MaxValue) throw Jbig2Budget.TooBig();
         return new Region((int)width, (int)height, (int)Math.Min(x, int.MaxValue), (int)Math.Min(y, int.MaxValue), data[start + 16] & 7);
     }
 
     private void GenericRegion(Segment segment, byte[] data, int start, int end)
     {
-        var region = ReadRegion(data, start, end);
+        var region = ReadRegion(data, start, end, segment.UnknownLength);
         if (segment.UnknownLength)
         {
             // The row count the segment ends with is the height that was coded.
@@ -545,7 +550,8 @@ internal sealed class Jbig2Decoder(long maxSize)
         {
             // Doubling keeps the total of what is allocated, which the budget counts, within twice the page.
             int capacity = (int)Math.Min(Math.Max(rows, page.Height * 2L), int.MaxValue);
-            if (page.Width > 0 && capacity > PdfImageSamples.MaxPixels / page.Width) capacity = rows;
+            // Doubling must not take a page that fits past the limit.
+            if (page.Width > 0 && capacity > PdfImageSamples.MaxPixels / page.Width) capacity = (int)Math.Max(rows, PdfImageSamples.MaxPixels / page.Width);
             var grown = new Jbig2Bitmap(page.Width, capacity, _budget);
             if (_defaultPixel != 0) grown.Fill(1);
             Array.Copy(page.Pixels, grown.Pixels, page.Pixels.Length);

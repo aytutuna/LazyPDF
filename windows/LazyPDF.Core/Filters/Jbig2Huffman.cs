@@ -61,6 +61,8 @@ internal sealed class Jbig2Huffman
 
     private const int MaxPrefixLength = 32;
 
+    private const int MaxCustomLines = 1 << 12;
+
     private readonly long[] _low;
     private readonly int[] _rangeLength;
     private readonly int[] _kind;
@@ -157,6 +159,7 @@ internal sealed class Jbig2Huffman
             int range = (int)reader.ReadBits(rangeBits);
             if (range > 32) throw PdfReadException.Damaged("A JBIG2 Huffman table has a range out of range.");
             lines.Add((current, prefix, range, Normal));
+            if (lines.Count > MaxCustomLines) throw PdfReadException.Damaged("A JBIG2 Huffman table has too many lines.");
             current += 1L << range;
         } while (current < highest);
         lines.Add((lowest - 1, (int)reader.ReadBits(prefixBits), 32, Lower));

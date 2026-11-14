@@ -57,7 +57,7 @@ internal sealed class Jbig2Bitmap
     /// </summary>
     public void Compose(Jbig2Bitmap source, int x, int y, int op)
     {
-        int left = Math.Max(0, -x), top = Math.Max(0, -y);
+        int left = (int)Math.Min(source.Width, Math.Max(0L, -(long)x)), top = (int)Math.Min(source.Height, Math.Max(0L, -(long)y));
         int right = (int)Math.Min(source.Width, (long)Width - x), bottom = (int)Math.Min(source.Height, (long)Height - y);
         for (int sy = top; sy < bottom; sy++)
         {

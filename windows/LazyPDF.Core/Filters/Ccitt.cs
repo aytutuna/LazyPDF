@@ -76,8 +76,10 @@ internal static class Ccitt
         int stride = (columns + 7) / 8;
         var output = new byte[(long)rows * stride];
         var rowBytes = new byte[stride];
-        var reference = new int[columns + 2];
-        var coding = new int[columns + 2];
+        // A row cannot change colour more often than the data has bits, however wide it is.
+        int changes = (int)Math.Min(columns, data.Length * 8L) + 2;
+        var reference = new int[changes];
+        var coding = new int[changes];
         int referenceCount = 0;
         var bits = new BitReader(data);
         for (int done = 0; done < rows && !bits.AtEnd; done++)

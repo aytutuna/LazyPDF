@@ -40,11 +40,11 @@ internal sealed class Jbig2SymbolParams
 }
 
 /// <summary>The symbols a dictionary exports, and the contexts it leaves for a later one to continue from (7.4.2.2).</summary>
-internal sealed class Jbig2SymbolDictionary(List<Jbig2Bitmap> exported, byte[]? gb, byte[] gr)
+internal sealed class Jbig2SymbolDictionary(List<Jbig2Bitmap> exported, byte[]? gb, byte[]? gr)
 {
     public List<Jbig2Bitmap> Exported { get; } = exported;
     public byte[]? Gb { get; } = gb;
-    public byte[] Gr { get; } = gr;
+    public byte[]? Gr { get; } = gr;
 }
 
 /// <summary>6.5: decodes the new symbols of a dictionary and picks the exported ones.</summary>
@@ -90,7 +90,7 @@ internal static class Jbig2Symbols
                 if (p.Refine)
                 {
                     var bitmap = Aggregate(budget, arith, reader, p, all, (int)width, height, codeLength);
-                    budget.Keep((long)bitmap.Width * bitmap.Height);
+                    budget.Keep((long)bitmap.Width * bitmap.Height + 64);
                     all.Add(bitmap);
                 }
                 else if (huffman)
@@ -99,7 +99,7 @@ internal static class Jbig2Symbols
                 }
                 else
                 {
-                    budget.Keep(width * height);
+                    budget.Keep(width * height + 64);
                     all.Add(Jbig2Generic.Decode(budget, arith!, (int)width, height, p.Template, false, null, p.At));
                 }
             }
@@ -123,6 +123,8 @@ internal static class Jbig2Symbols
         {
             if (flags[i]) exported.Add(all[i]);
         }
+        // The list is kept for the segments that refer to it.
+        budget.Keep(exported.Count * 8L);
         return exported;
     }
 
@@ -141,7 +143,7 @@ internal static class Jbig2Symbols
         reader.ByteAlign();
         if (size < 0 || size > reader.End - reader.Position) throw PdfReadException.Damaged("A JBIG2 symbol bitmap is longer than its segment.");
         if (totalWidth > int.MaxValue) throw Jbig2Budget.TooBig();
-        budget.Keep(totalWidth * height);
+        budget.Keep(totalWidth * height + 64 * widths.Count);
         Jbig2Bitmap collective;
         if (size == 0)
         {
