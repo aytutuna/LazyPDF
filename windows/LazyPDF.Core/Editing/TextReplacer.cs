@@ -38,14 +38,14 @@ public static class TextReplacer
             var model = PageModel.Load(document, p);
             var hits = TextSearch.FindAll(model.Text, query, options, cancel);
             if (hits.Count == 0) continue;
-            // The space the search adds at a line break is not a character of the next line, so a hit's range stops short of it.
+            // A hit that ends on the space the search adds at a line break runs over two lines, or is only that space; it is never
+            // written, since the space is no character of the next line and its range would cut that line's first one.
             var matches = new List<SearchMatch>();
             foreach (var match in hits)
             {
-                var (range, cut) = (match.Range, match.Source!.Value);
+                var cut = match.Source!.Value;
                 if (cut.End != 0) matches.Add(match);
-                else if (cut.Last < 0) failures.Add(new ReplaceFailure(p, match.Text, EditingText.NothingChanged));
-                else matches.Add(match with { Range = new TextRange(range.Start, range.End - 1), Source = cut with { End = cut.Last } });
+                else failures.Add(new ReplaceFailure(p, match.Text, cut.Last < 0 ? EditingText.NothingChanged : EditingText.CrossesLines));
             }
             if (matches.Count == 0) continue;
             var batch = new EditBatch(document, model.Page, model.Scan);

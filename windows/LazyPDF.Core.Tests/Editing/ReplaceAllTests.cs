@@ -298,9 +298,9 @@ public class ReplaceAllTests
     {
         var session = Open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td /Span <</ActualText (cd ab)>> BDC (cd ab) Tj EMC ET");
         var report = TextReplacer.ReplaceAll(session, "b ?", "Z", new TextSearchOptions(Regex: true));
-        Assert.Equal(2, report.Replaced);
-        Assert.Empty(report.Failed);
-        Assert.Equal("aZ\ncd aZ", Page(session, 0));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal(EditingText.CrossesLines, Assert.Single(report.Failed).Reason);
+        Assert.Equal("ab\ncd aZ", Page(session, 0));
     }
 
     [Theory]
@@ -315,14 +315,16 @@ public class ReplaceAllTests
         Assert.Equal("ab\ncd", Page(session, 0));
     }
 
-    [Fact]
-    public void AHitThatEndsOnALineBreakReplacesOnlyTheLettersBeforeIt()
+    [Theory]
+    [InlineData("X")]
+    [InlineData("[$&]")]
+    public void AHitThatEndsOnALineBreakIsReportedAsCrossingLines(string replacement)
     {
         var session = Open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td (cd) Tj ET");
-        var report = TextReplacer.ReplaceAll(session, "b\\s", "X", new TextSearchOptions(Regex: true));
-        Assert.Equal(1, report.Replaced);
-        Assert.Empty(report.Failed);
-        Assert.Equal("aX\ncd", Page(session, 0));
+        var report = TextReplacer.ReplaceAll(session, "b\\s", replacement, new TextSearchOptions(Regex: true));
+        Assert.Equal(0, report.Replaced);
+        Assert.Equal(EditingText.CrossesLines, Assert.Single(report.Failed).Reason);
+        Assert.Equal("ab\ncd", Page(session, 0));
     }
 
     [Theory]

@@ -59,18 +59,15 @@ public enum TextReplacer {
             let model = PageModel.load(document, p)
             let hits = try TextSearch.findAll(model.text, query, options)
             if hits.isEmpty { continue }
-            // The space the search adds at a line break is not a character of the next line, so a hit's range stops short of it.
+            // A hit that ends on the space the search adds at a line break runs over two lines, or is only that space; it is never
+            // written, since the space is no character of the next line and its range would cut that line's first one.
             var matches: [SearchMatch] = []
             for match in hits {
                 let cut = match.source!
                 if cut.end != 0 {
                     matches.append(match)
-                } else if cut.last < 0 {
-                    failures.append(ReplaceFailure(page: p, text: match.text, reason: EditingText.nothingChanged))
                 } else {
-                    var trimmed = SearchMatch(page: match.page, range: TextRange(match.range.start, match.range.end - 1), text: match.text, quads: match.quads)
-                    trimmed.source = HitCut(order: cut.order, index: cut.index, start: cut.start, end: cut.last, last: cut.last)
-                    matches.append(trimmed)
+                    failures.append(ReplaceFailure(page: p, text: match.text, reason: cut.last < 0 ? EditingText.nothingChanged : EditingText.crossesLines))
                 }
             }
             if matches.isEmpty { continue }
