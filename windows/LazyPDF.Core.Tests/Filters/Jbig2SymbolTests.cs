@@ -112,6 +112,21 @@ public class Jbig2SymbolTests
     }
 
     [Fact]
+    public void RefinementSelectionsOfARegionThatDoesNotRefineAreIgnored()
+    {
+        var symbols = Symbols(6, 4);
+        byte[] dictionary = Jbig2SymbolEncode.Huffman([], symbols, [.. symbols.Select(_ => true)], HuffEnc.Std(4), HuffEnc.Std(2), 0, false);
+        var spec = new TextSpec
+        {
+            Huffman = true, Width = 50, Height = 30, Symbols = symbols, Instances = Placed(symbols, 50, 30, 2, 12),
+            SymbolLengths = [.. symbols.Select(_ => Jbig2TextEncode.CodeLength(symbols.Count))],
+        };
+        // Custom tables selected for values that are never coded, with no table segment to supply them.
+        var stream = Page(50, 30, Jbig2Segments.Segment(1, 0, dictionary), Jbig2Segments.Segment(2, 6, Jbig2TextEncode.HuffmanSegment(spec, 0x7fc0), [1]));
+        Assert.Equal(spec.Expected().Packed(), Decode(stream));
+    }
+
+    [Fact]
     public void HuffmanSymbolCodesOfDifferentLengthsWithRunsAndUnusedSymbols()
     {
         var symbols = Symbols(14, 12);

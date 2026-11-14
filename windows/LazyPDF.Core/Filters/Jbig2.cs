@@ -351,11 +351,15 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
             p.FirstS = Select(huffmanFlags & 3, 6, 2, custom);
             p.DeltaS = Select((huffmanFlags >> 2) & 3, 8, 3, custom);
             p.DeltaT = Select((huffmanFlags >> 4) & 3, 11, 3, custom);
-            p.RefineWidth = Select((huffmanFlags >> 6) & 3, 14, 2, custom);
-            p.RefineHeight = Select((huffmanFlags >> 8) & 3, 14, 2, custom);
-            p.RefineX = Select((huffmanFlags >> 10) & 3, 14, 2, custom);
-            p.RefineY = Select((huffmanFlags >> 12) & 3, 14, 2, custom);
-            p.RefineSize = (huffmanFlags & 0x4000) != 0 ? custom.Next() : Jbig2Huffman.Standard(1);
+            // The selections for the refinement values mean nothing in a region that does not refine.
+            if (p.Refine)
+            {
+                p.RefineWidth = Select((huffmanFlags >> 6) & 3, 14, 2, custom);
+                p.RefineHeight = Select((huffmanFlags >> 8) & 3, 14, 2, custom);
+                p.RefineX = Select((huffmanFlags >> 10) & 3, 14, 2, custom);
+                p.RefineY = Select((huffmanFlags >> 12) & 3, 14, 2, custom);
+                p.RefineSize = (huffmanFlags & 0x4000) != 0 ? custom.Next() : Jbig2Huffman.Standard(1);
+            }
         }
         else
         {

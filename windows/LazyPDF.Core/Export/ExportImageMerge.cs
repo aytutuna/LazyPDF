@@ -76,7 +76,7 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         plain["Height"] = new PdfNumber(pixels.Height);
         // /Decode does not apply to JPEG 2000 data (ISO 32000-1 Table 89).
         if (coder == "JPXDecode" && !imageMask) plain.Remove("Decode");
-        if (!imageMask) plain["BitsPerComponent"] = new PdfNumber(imageMask ? 1 : 8);
+        if (!imageMask) plain["BitsPerComponent"] = new PdfNumber(8);
 
         var converted = PdfImageSamples.ToRgba(plain, Pack(pixels, n, imageMask), document.Resolve, document.Data);
         if (coder == "JPXDecode" && document.Integer(dictionary, "SMaskInData") is > 0)

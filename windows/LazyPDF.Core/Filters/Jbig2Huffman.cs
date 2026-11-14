@@ -73,7 +73,7 @@ internal sealed class Jbig2Huffman
     private readonly int _longest;
 
     /// <summary>The prefix code B.3 gives each line, for tests.</summary>
-    public long[] Codes { get; }
+    internal long[] Codes { get; }
 
     /// <summary>Lines of (range low, prefix length, range length, kind); a line with prefix length 0 is not used.</summary>
     public Jbig2Huffman((long Low, int PrefixLength, int RangeLength, int Kind)[] lines)
@@ -183,7 +183,7 @@ internal sealed class Jbig2Huffman
         StandardTables[number] ??= new Jbig2Huffman(StandardLines[number - 1]);
 
     /// <summary>The lines of a standard table, for tests.</summary>
-    public static (long Low, int PrefixLength, int RangeLength, int Kind)[] StandardTable(int number) => StandardLines[number - 1];
+    internal static (long Low, int PrefixLength, int RangeLength, int Kind)[] StandardTable(int number) => StandardLines[number - 1];
 
     // Annex B.5: (range low, prefix length, range length, kind) for each line in the order of the standard, with the
     // lower range line as kind 1 and the out-of-band line as kind 3. The last range of a table has 32 offset bits.
