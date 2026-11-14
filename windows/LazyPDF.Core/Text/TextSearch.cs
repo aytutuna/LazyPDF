@@ -10,7 +10,11 @@ namespace LazyPDF.Core;
 public sealed record TextSearchOptions(bool MatchCase = false, bool WholeWord = false, bool Regex = false, bool FoldDiacritics = false);
 
 /// <summary>A hit: the page, its characters and the boxes to paint, one for each line it crosses.</summary>
-public sealed record SearchMatch(int Page, TextRange Range, string Text, IReadOnlyList<TextQuad> Quads);
+public sealed record SearchMatch(int Page, TextRange Range, string Text, IReadOnlyList<TextQuad> Quads)
+{
+    /// <summary>Where the hit is in the text that was searched, for a replacement that has to cut a character's own text.</summary>
+    internal (SearchText Searched, int Index, int Length)? Source { get; init; }
+}
 
 /// <summary>Collects the pages where a regular expression ran out of time; hits found before the limit are still given.</summary>
 public sealed class SearchTimeouts
@@ -57,6 +61,8 @@ public static class TextSearch
         }
     }
 
+    private readonly record struct Hit(TextRange Range, SearchText Searched, int Index, int Length);
+
     private sealed class Matcher
     {
         private readonly TextSearchOptions _options;
@@ -86,24 +92,24 @@ public static class TextSearch
 
         public IReadOnlyList<SearchMatch> Find(TextPage page, CancellationToken cancel, SearchTimeouts? timeouts)
         {
-            var found = new List<TextRange>();
+            var found = new List<Hit>();
             var text = SearchText.Build(page, _options, false);
             bool timedOut = !Collect(text, found, cancel);
             if (text.HasHyphenBreak) timedOut |= !Collect(SearchText.Build(page, _options, true), found, cancel);
             if (timedOut) timeouts?.Pages.Add(page.PageIndex);
-            found.Sort((a, b) => a.Start != b.Start ? a.Start.CompareTo(b.Start) : b.End.CompareTo(a.End));
+            found.Sort((a, b) => a.Range.Start != b.Range.Start ? a.Range.Start.CompareTo(b.Range.Start) : b.Range.End.CompareTo(a.Range.End));
             var result = new List<SearchMatch>();
             int end = -1;
-            foreach (var range in found)
+            foreach (var (range, searched, index, length) in found)
             {
                 if (range.Start < end) continue;
                 end = range.End;
-                result.Add(new SearchMatch(page.PageIndex, range, page.GetText(range, true), page.Quads(range)));
+                result.Add(new SearchMatch(page.PageIndex, range, page.GetText(range, true), page.Quads(range)) { Source = (searched, index, length) });
             }
             return result;
         }
 
-        private bool Collect(SearchText text, List<TextRange> found, CancellationToken cancel)
+        private bool Collect(SearchText text, List<Hit> found, CancellationToken cancel)
         {
             if (text.Text.Length == 0) return true;
             if (_regex is null)
@@ -118,7 +124,7 @@ public static class TextSearch
                         from = i + 1;
                         continue;
                     }
-                    found.Add(new TextRange(text.Map[i], text.Map[from - 1] + 1));
+                    found.Add(new Hit(new TextRange(text.Map[i], text.Map[from - 1] + 1), text, i, from - i));
                 }
                 return true;
             }
@@ -128,7 +134,7 @@ public static class TextSearch
                 {
                     cancel.ThrowIfCancellationRequested();
                     if (m.Length == 0) continue;
-                    found.Add(new TextRange(text.Map[m.Index], text.Map[m.Index + m.Length - 1] + 1));
+                    found.Add(new Hit(new TextRange(text.Map[m.Index], text.Map[m.Index + m.Length - 1] + 1), text, m.Index, m.Length));
                 }
             }
             catch (RegexMatchTimeoutException)

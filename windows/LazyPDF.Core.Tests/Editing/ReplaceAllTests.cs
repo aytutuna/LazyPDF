@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.RegularExpressions;
 using LazyPDF.Core;
 using Xunit;
 
@@ -18,7 +20,7 @@ public class ReplaceAllTests
             "1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0041> <005A> <0041> endbfrange endcmap end end");
         for (int i = 0; i < contents.Length; i++)
         {
-            pdf.Obj(10 + i, $"<</Type /Page /Parent 2 0 R /Contents {30 + i} 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R>>>>>>");
+            pdf.Obj(10 + i, $"<</Type /Page /Parent 2 0 R /Contents {30 + i} 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R>> /Properties <</MC0 <</MCID 4 /Lang (en) /ActualText (hello world)>>>>>>>>");
             pdf.Stream(30 + i, "", contents[i]);
         }
         return PdfEditSession.Open(pdf.Finish());
@@ -108,5 +110,100 @@ public class ReplaceAllTests
         var report = TextReplacer.ReplaceAll(session, "aa", "xyz");
         Assert.Equal(4, report.Replaced);
         Assert.Equal("xyz bb xyz bb xyz bb xyz", Page(session, 0));
+    }
+
+    private static string Content(PdfEditSession session) => Encoding.Latin1.GetString(PdfDocument.Open(session.Current.ToArray()).Pages[0].Contents());
+
+    private sealed class MarkedCollector : ContentVisitor
+    {
+        public List<MarkedContent> Marked { get; } = [];
+
+        public override void BeginMarked(ContentContext context, MarkedContent marked) => Marked.Add(marked);
+    }
+
+    private const string Hello = "BT /F1 12 Tf 50 700 Td {0} BDC (hello world) Tj EMC ET";
+
+    [Fact]
+    public void AHitInsideReplacementTextKeepsTheRestOfIt()
+    {
+        var session = Open(string.Format(Hello, "/Span <</ActualText (hello world)>>"));
+        var report = TextReplacer.ReplaceAll(session, "world", "globe");
+        Assert.Equal(1, report.Replaced);
+        Assert.Empty(report.Failed);
+        Assert.Equal("hello globe", Page(session, 0));
+        Assert.DoesNotContain("/ActualText", Content(session));
+    }
+
+    [Fact]
+    public void AHitOnAllOfReplacementTextReplacesIt()
+    {
+        var session = Open(string.Format(Hello, "/Span <</ActualText (hello world)>>"));
+        Assert.Equal(1, TextReplacer.ReplaceAll(session, "hello world", "bye").Replaced);
+        Assert.Equal("bye", Page(session, 0));
+    }
+
+    [Fact]
+    public void AHitOverTwoSpansKeepsTheTextOutsideIt()
+    {
+        var session = Open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (say hello wor)>> BDC (say hello wor) Tj EMC " +
+            "/Span <</ActualText (ld again)>> BDC (ld again) Tj EMC ET");
+        var report = TextReplacer.ReplaceAll(session, "world", "globe");
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("say hello globe again", Page(session, 0));
+        Assert.DoesNotContain("/ActualText", Content(session));
+    }
+
+    [Fact]
+    public void TheMatchIsFoundThroughCaseAndAccentFolding()
+    {
+        var session = Open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (caf\\351 World)>> BDC (cafe World) Tj EMC ET");
+        var report = TextReplacer.ReplaceAll(session, "cafe", "tea", new TextSearchOptions(FoldDiacritics: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("tea World", Page(session, 0));
+    }
+
+    [Theory]
+    [InlineData("/P <</MCID 3 /Lang (en) /ActualText (hello world)>>")]
+    [InlineData("/P /MC0")]
+    public void ATaggedSpanKeepsItsTagAndPropertiesWhenReplaced(string open)
+    {
+        var session = Open(string.Format(Hello, open));
+        Assert.Equal(1, TextReplacer.ReplaceAll(session, "world", "globe").Replaced);
+        Assert.Equal("hello globe", Page(session, 0));
+        string content = Content(session);
+        Assert.DoesNotContain("/ActualText", content);
+        var visitor = new MarkedCollector();
+        var document = PdfDocument.Open(session.Current.ToArray());
+        new ContentInterpreter(document).Run(document.Pages[0], visitor);
+        Assert.Contains(visitor.Marked, m => m.Tag == "P" && m.Mcid is not null && m.Properties!.ContainsKey("Lang"));
+    }
+
+    [Fact]
+    public void ASpanWithOnlyTheTextBecomesPlainMarkedContent()
+    {
+        var session = Open(string.Format(Hello, "/Span <</ActualText (hello world)>>"));
+        TextReplacer.ReplaceAll(session, "world", "globe");
+        Assert.Contains("/Span BMC", Content(session));
+    }
+
+    [Fact]
+    public void EveryEnclosingSpanIsNeutralized()
+    {
+        var session = Open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (hello world)>> BDC /Span <</ActualText (hello)>> BDC (hello) Tj EMC ( world) Tj EMC ET");
+        Assert.Equal(1, TextReplacer.ReplaceAll(session, "world", "globe").Replaced);
+        Assert.Equal("hello globe", Page(session, 0));
+        Assert.Equal(0, Regex.Count(Content(session), "/ActualText"));
+    }
+
+    [Fact]
+    public void DeletingTaggedReplacementTextKeepsItsTag()
+    {
+        var session = Open(string.Format(Hello, "/P <</MCID 3 /Lang (en) /ActualText (hello world)>>"));
+        var editor = new PageEditor(session, 0);
+        Assert.True(editor.DeleteText(Assert.Single(editor.Objects.OfType<TextObject>()).Range).Done);
+        string content = Content(session);
+        Assert.Matches(@"/P\s*<<[^>]*/MCID 3[^>]*/Lang \(en\)", content);
+        Assert.DoesNotContain("/ActualText", content);
+        Assert.Equal("", Page(session, 0));
     }
 }
