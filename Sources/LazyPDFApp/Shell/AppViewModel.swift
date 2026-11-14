@@ -159,6 +159,17 @@ public final class AppViewModel {
     public func select(_ tab: any StripTab) {
         if activeTab === tab || index(of: tab) == nil { return }
         if !handInForSwitch() { return }
+        show(tab)
+    }
+
+    /// Shows a file the person asked to open whatever the open tool answers; it still gets the chance to hand its input in.
+    func showOpened(_ tab: any StripTab) {
+        if activeTab === tab || index(of: tab) == nil { return }
+        _ = handInForSwitch()
+        show(tab)
+    }
+
+    private func show(_ tab: any StripTab) {
         activeTab = tab
         dropAction()
         if let document = tab as? DocumentTab { lastDocument = document }

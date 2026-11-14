@@ -24,6 +24,22 @@ final class HandInTests: XCTestCase {
         XCTAssertNil(f.vm.closeQuestion)
     }
 
+    func test_aFileThatIsOpenedIsShownWhateverTheToolAnswers() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.pdf("a.pdf"))
+        var asked = 0
+        f.vm.handInTyping = {
+            asked += 1
+            return false
+        }
+
+        await f.vm.open(f.pdf("b.pdf"))
+
+        XCTAssertEqual(f.vm.documents.count, 2)
+        XCTAssertEqual(f.vm.activeDocument?.title, "b.pdf")
+        XCTAssertEqual(asked, 1)
+    }
+
     func test_closingGoesOnWhenTheToolHandedItsTextIn() async throws {
         let f = ViewModelFixture(self)
         await f.vm.open(f.pdf())
