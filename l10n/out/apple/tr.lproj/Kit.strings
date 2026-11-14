@@ -2016,6 +2016,7 @@
 "The whole file fits in one part. Use a smaller amount." = "Dosyanın tamamı tek parçaya sığıyor. Daha küçük bir değer girin.";
 "The width of {0} is {1} but the font program says {2}." = "{0} karakterinin genişliği {1} ama yazı tipi programı {2} diyor.";
 "The window shows the file name, not the title. Turn on showing the title." = "Pencere başlığı değil dosya adını gösteriyor. Başlığın gösterilmesini açın.";
+"The word you were correcting is no longer in the file, so the correction was dropped." = "Düzelttiğiniz sözcük artık dosyada değil, bu yüzden düzeltme atıldı.";
 "The workbook cannot be made into a PDF. Only .xlsx files up to 100 MB with something to print can be; older .xls and .xlsb files must be saved as .xlsx first." = "Çalışma kitabı PDF'ye çevrilemiyor. Yalnızca yazdırılacak içeriği olan, 100 MB'a kadar .xlsx dosyaları çevrilebilir; eski .xls ve .xlsb dosyalarını önce .xlsx olarak kaydedin.";
 "There are no tags to check. Tag the document first." = "Denetlenecek etiket yok. Önce belgeyi etiketleyin.";
 "There is no text there." = "Orada metin yok.";

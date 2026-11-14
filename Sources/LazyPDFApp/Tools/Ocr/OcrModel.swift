@@ -50,7 +50,10 @@ public final class OcrModel: ToolPanelModel {
     @ObservationIgnored var keepsSigned = false
 
     /// The word a signed file kept waiting for each tab while another tab or tool is shown, and the revision it was typed against.
-    @ObservationIgnored var keptWords: [ObjectIdentifier: (tab: WeakTab, word: WordRef, text: String, revision: Int)] = [:]
+    @ObservationIgnored var keptWords: [ObjectIdentifier: (tab: WeakTab, word: WordRef, origin: OcrLayerWord?, text: String, revision: Int)] = [:]
+
+    /// The picked word as the layer has it, to find it again after the file changed.
+    @ObservationIgnored var pickedOrigin: OcrLayerWord?
 
     struct WeakTab {
         weak var tab: DocumentTab?

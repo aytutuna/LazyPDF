@@ -415,4 +415,66 @@ final class OcrModelTests: XCTestCase {
         XCTAssertEqual(tab.pendingWords, 0)
         XCTAssertFalse(tab.hasUnappliedWork)
     }
+
+    private func waitingWord() async throws -> (model: OcrModel, viewer: ViewerModel, host: RecordingHost, tab: DocumentTab) {
+        let rig = try await pointerRig(Pdfs.signed(certified: false, pages: 1))
+        rig.model.pick(WordRef(0, 0), edit: true)
+        rig.viewer.overlay(0).field("ocr.word")?.typed("gamma")
+        XCTAssertTrue(rig.model.handIn())
+        XCTAssertEqual(rig.tab.pendingWords, 1)
+        return rig
+    }
+
+    private func edit(_ tab: DocumentTab) throws {
+        tab.document.catalog["Extra"] = PdfDictionary()
+        try tab.commit("Edit")
+    }
+
+    func test_aWaitingWordIsFoundAgainWhenTheFileChanges() async throws {
+        let (model, _, _, tab) = try await waitingWord()
+
+        try edit(tab)
+        await waitUntil { model.picked != nil && !model.isLoading }
+
+        XCTAssertEqual(model.picked, WordRef(0, 0))
+        XCTAssertEqual(model.draft, "gamma")
+        XCTAssertTrue(model.inPanel)
+        XCTAssertEqual(tab.pendingWords, 1)
+    }
+
+    func test_aWaitingWordIsDroppedWithANoteWhenTheLayerGoesAway() async throws {
+        let (model, _, host, tab) = try await waitingWord()
+
+        XCTAssertTrue(try tab.undo())
+        await waitUntil { tab.pendingWords == 0 }
+
+        XCTAssertNil(model.picked)
+        XCTAssertFalse(model.inPanel)
+        XCTAssertFalse(tab.hasUnappliedWork)
+        XCTAssertEqual(host.statuses.last, "The word you were correcting is no longer in the file, so the correction was dropped.")
+    }
+
+    func test_aKeptWordIsFoundAgainWhenTheFileChangedWhileTheTabWasAway() async throws {
+        let (model, viewer, host, tab) = try await waitingWord()
+        model.detach()
+
+        try edit(tab)
+        model.attach(tab, viewer, host)
+
+        XCTAssertEqual(model.picked, WordRef(0, 0))
+        XCTAssertEqual(model.draft, "gamma")
+        XCTAssertEqual(tab.pendingWords, 1)
+    }
+
+    func test_aKeptWordIsDroppedWhenTheFileLostItWhileTheTabWasAway() async throws {
+        let (model, viewer, host, tab) = try await waitingWord()
+        model.detach()
+
+        XCTAssertTrue(try tab.undo())
+        model.attach(tab, viewer, host)
+
+        XCTAssertNil(model.picked)
+        XCTAssertEqual(tab.pendingWords, 0)
+        XCTAssertEqual(host.statuses.last, "The word you were correcting is no longer in the file, so the correction was dropped.")
+    }
 }

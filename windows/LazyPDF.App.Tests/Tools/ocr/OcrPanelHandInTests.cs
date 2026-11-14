@@ -17,13 +17,15 @@ public sealed class OcrPanelHandInTests
             Task.FromResult<IReadOnlyList<OcrWord>>([]);
     }
 
-    private static (OcrPanel Panel, DocumentTab Tab, TextBox Box) Picked(byte[]? bytes = null)
+    private static (OcrPanel Panel, DocumentTab Tab, TextBox Box) Picked(byte[]? bytes = null) => Picked(bytes, new RecordingHost());
+
+    private static (OcrPanel Panel, DocumentTab Tab, TextBox Box) Picked(byte[]? bytes, RecordingHost host)
     {
         var tab = new DocumentTab(PdfEditSession.Open(bytes ?? Pdfs.Text(1), (string?)null), new FakeRenderer(), null, "a.pdf", null);
         PdfOcrLayer.Add(tab.Document, [new OcrPageWords(0, [new OcrWord("alpha", new OcrBox(10, 10, 50, 20)), new OcrWord("beta", new OcrBox(70, 10, 50, 20))], 200, 300)], "en");
         tab.Session.Commit("Read");
         var panel = new OcrPanel(new NoRecognizer(), () => new OcrLanguageState([], []));
-        panel.Attach(tab, FakeViewer.Create().Viewer, new RecordingHost());
+        panel.Attach(tab, FakeViewer.Create().Viewer, host);
         typeof(OcrPanel).GetMethod("Pick", BindingFlags.Instance | BindingFlags.NonPublic, [typeof(int), typeof(int), typeof(bool)])!
             .Invoke(panel, [0, 1, false]);
         return (panel, tab, (TextBox)panel.FindName("WordBox"));
@@ -91,6 +93,48 @@ public sealed class OcrPanelHandInTests
         Assert.Equal("gamma", ((TextBox)panel.FindName("WordBox")).Text);
         Assert.Equal(1, tab.PendingWords);
         Assert.Equal(["alpha", "beta"], Words(tab));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AWordKeptForASignedFileIsStillWaitingWhenItsPageIsNotInView() => Sta.Run(() =>
+    {
+        var (panel, tab, box) = Picked(StampsPanelTests.Signed(certified: false, pages: 1));
+        using var guard = tab;
+        box.Text = "gamma";
+        panel.HandIn();
+        panel.Detach();
+        panel.Attach(tab, FakeViewer.Create().Viewer, new RecordingHost());
+        ((CheckBox)panel.FindName("WordsToggle")).IsChecked = false;
+
+        Assert.True(panel.HandIn());
+
+        Assert.Equal(1, tab.PendingWords);
+        Assert.Equal("gamma", ((TextBox)panel.FindName("WordBox")).Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AWaitingWordIsFoundAgainAfterTheFileChangesAndDroppedWhenItIsGone() => Sta.Run(() =>
+    {
+        var host = new RecordingHost();
+        var (panel, tab, box) = Picked(StampsPanelTests.Signed(certified: false, pages: 1), host);
+        using var guard = tab;
+        box.Text = "gamma";
+        panel.HandIn();
+
+        tab.Document.Catalog["Extra"] = new PdfDictionary();
+        tab.Commit("Edit");
+
+        Assert.Equal(1, tab.PendingWords);
+        Assert.Equal("gamma", box.Text);
+
+        Assert.True(tab.Undo());
+        Assert.True(tab.Undo());
+
+        Assert.Equal(0, tab.PendingWords);
+        Assert.False(tab.HasUnappliedWork);
+        Assert.Contains("no longer in the file", host.Status);
         return Task.CompletedTask;
     });
 }

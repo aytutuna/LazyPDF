@@ -85,6 +85,9 @@
   <data name="A corrected word is not applied yet." xml:space="preserve">
     <value>Düzeltilmiş bir sözcük henüz uygulanmadı.</value>
   </data>
+  <data name="A description you typed was dropped because its figure changed." xml:space="preserve">
+    <value>Yazdığınız açıklama atıldı, çünkü şekil değişti.</value>
+  </data>
   <data name="A dictionary has {0} entries; the limit is 4095." xml:space="preserve">
     <value>Bir sözlükte {0} girdi var; sınır 4095.</value>
   </data>
@@ -7143,6 +7146,9 @@
   </data>
   <data name="The window shows the file name, not the title. Turn on showing the title." xml:space="preserve">
     <value>Pencere başlığı değil dosya adını gösteriyor. Başlığın gösterilmesini açın.</value>
+  </data>
+  <data name="The word you were correcting is no longer in the file, so the correction was dropped." xml:space="preserve">
+    <value>Düzelttiğiniz sözcük artık dosyada değil, bu yüzden düzeltme atıldı.</value>
   </data>
   <data name="The workbook cannot be made into a PDF. Only .xlsx files up to 100 MB with something to print can be; older .xls and .xlsb files must be saved as .xlsx first." xml:space="preserve">
     <value>Çalışma kitabı PDF'ye çevrilemiyor. Yalnızca yazdırılacak içeriği olan, 100 MB'a kadar .xlsx dosyaları çevrilebilir; eski .xls ve .xlsb dosyalarını önce .xlsx olarak kaydedin.</value>
