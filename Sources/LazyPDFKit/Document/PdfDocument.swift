@@ -61,6 +61,11 @@ public final class PdfDocument {
     var lastEndobj = -2
     var lengthRepaired = Set<Int>()
 
+    // The last globals stream decoded: the images of a page that share one come one after the other.
+    var globalsOf: PdfStream?
+    var globalsSource: [UInt8]?
+    var globalsData: [UInt8]?
+
     // Security
     #if canImport(Security)
     var certificate: PdfCertificate?
