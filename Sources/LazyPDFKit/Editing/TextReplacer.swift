@@ -34,10 +34,12 @@ public struct ReplaceReport {
 }
 
 public enum TextReplacer {
-    private struct RangeKey: Hashable {
-        let start: Int
-        let end: Int
+    private struct HitKey: Hashable {
+        let order: Int
+        let index: Int
     }
+
+    private struct Unmappable: Error {}
 
     private static let regexTimeout: TimeInterval = 2
 
@@ -60,24 +62,30 @@ public enum TextReplacer {
             let batch = EditBatch(document, model.page, model.scan)
             let builder = TextBuilder(document, batch, fonts)
             let editor = TextEditor(model, batch, builder, fonts)
-            let expanded = try expansions(model.text, query, replacement, options)
+            let expanded = try expansions(model, query, replacement, options)
             var done: [SearchMatch] = []
-            for match in matches {
+            // Hits in the text of one span share a character, so they are replaced together.
+            var k = 0
+            while k < matches.count {
+                var n = 1
+                while k + n < matches.count && matches[k + n].range == matches[k].range { n += 1 }
+                let group = Array(matches[k..<k + n])
+                k += n
                 let mark = batch.save()
                 do {
-                    if linesOf(model, match.range) > 1 { throw EditConflictException(EditingText.crossesLines) }
+                    if linesOf(model, group[0].range) > 1 { throw EditConflictException(EditingText.crossesLines) }
                     // expansions stops at a time limit of its own; a group token left for a match after that would be written as it is.
-                    var text = replacement
-                    if let found = expanded[RangeKey(start: match.range.start, end: match.range.end)] {
-                        text = found
-                    } else if options.regex && replacement.contains("$") {
-                        throw EditConflictException(EditingText.nothingChanged)
+                    let texts: [String] = try group.map { m in
+                        let cut = m.source!
+                        if let found = expanded[HitKey(order: cut.order, index: cut.index)] { return found }
+                        if options.regex && replacement.contains("$") { throw EditConflictException(EditingText.nothingChanged) }
+                        return replacement
                     }
-                    try editor.replace(match.range, keepSpanText(model, match, text, options))
-                    done.append(match)
+                    try editor.replace(group[0].range, try splice(model, group, texts))
+                    done.append(contentsOf: group)
                 } catch let e as EditConflictException {
                     batch.restore(mark)
-                    failures.append(ReplaceFailure(page: p, text: match.text, reason: e.message))
+                    failures.append(contentsOf: group.map { ReplaceFailure(page: p, text: $0.text, reason: e.message) })
                 }
             }
             if done.isEmpty { continue }
@@ -98,21 +106,26 @@ public enum TextReplacer {
     }
 
     // A character that stands for /ActualText is the text of a whole span, and an edit takes the span's glyphs together, so
-    // what a match leaves of that text goes back around the replacement.
-    private static func keepSpanText(_ model: PageModel, _ match: SearchMatch, _ text: String, _ options: TextSearchOptions) -> String {
-        guard let source = match.source else { return text }
-        let first = match.range.start, last = match.range.end - 1
-        var before: [UInt16] = [], after: [UInt16] = []
-        if let start = inSpan(model, first) {
-            let begin = (source.searched.map.lastIndex(of: first) ?? 0) - SearchText.fold(start, options).count + 1
-            before = Array(start[..<foldedOffset(start, source.index - begin, options, false)])
+    // what the hits leave of that text goes back around the replacements.
+    private static func splice(_ model: PageModel, _ group: [SearchMatch], _ texts: [String]) throws -> String {
+        let range = group[0].range
+        let cuts = group.map { $0.source! }
+        if group.count > 1 {
+            guard range.end - range.start == 1, let whole = inSpan(model, range.start) else { throw EditConflictException(EditingText.nothingChanged) }
+            var out: [UInt16] = []
+            var at = 0
+            for (i, cut) in cuts.enumerated() {
+                if cut.start < at { throw EditConflictException(EditingText.nothingChanged) }
+                out.append(contentsOf: whole[at..<cut.start])
+                out.append(contentsOf: texts[i].utf16)
+                at = cut.end
+            }
+            out.append(contentsOf: whole[at...])
+            return String(units: out)
         }
-        if let end = inSpan(model, last) {
-            let end0 = source.searched.map.lastIndex(of: last) ?? 0
-            let total = SearchText.fold(end, options).count
-            after = Array(end[foldedOffset(end, total - (end0 - (source.index + source.length - 1)), options, true)...])
-        }
-        return String(units: before) + text + String(units: after)
+        let before = inSpan(model, range.start).map { Array($0[..<cuts[0].start]) } ?? []
+        let after = inSpan(model, range.end - 1).map { Array($0[cuts[0].end...]) } ?? []
+        return String(units: before) + texts[0] + String(units: after)
     }
 
     private static func inSpan(_ model: PageModel, _ index: Int) -> [UInt16]? {
@@ -120,16 +133,33 @@ public enum TextReplacer {
         return Array(model.text.chars[index].text.utf16)
     }
 
-    // The offset in the page's own text of a position in its folded text; a fold that makes two letters of one (or the reverse) is taken whole.
-    private static func foldedOffset(_ text: [UInt16], _ folded: Int, _ options: TextSearchOptions, _ roundUp: Bool) -> Int {
-        var offset = 0, seen = 0
-        while offset < text.count {
-            let next = SearchText.fold([text[offset]], options).count
-            if roundUp ? (seen >= folded && next > 0) : (seen + next > folded) { break }
-            seen += next
-            offset += 1
+    // The page text of the searched characters from `index` for `length`, where a span's character gives only the part of its text the range takes.
+    private static func pageText(_ model: PageModel, _ searched: SearchText, _ index: Int, _ length: Int) throws -> String {
+        let range = rangeOf(searched, index, length)
+        var full = Array(model.text.getText(range, joinHyphens: true).utf16)
+        let first = inSpan(model, range.start), last = inSpan(model, range.end - 1)
+        let start = searched.startOf(index), end = searched.endOf(index + length - 1)
+        if range.end - range.start == 1, let first {
+            if full != first || start > end { throw Unmappable() }
+            return String(units: trimmed(Array(first[start..<end])))
         }
-        return offset
+        if let first {
+            if !full.starts(with: first) { throw Unmappable() }
+            full = Array(first[start...]) + full[first.count...]
+        }
+        if let last {
+            if full.count < last.count || Array(full[(full.count - last.count)...]) != last { throw Unmappable() }
+            full = Array(full[..<(full.count - last.count)]) + last[..<end]
+        }
+        // As the page text of a range, which has no white space at its ends.
+        return String(units: first == nil && last == nil ? full : trimmed(full))
+    }
+
+    private static func trimmed(_ units: [UInt16]) -> [UInt16] {
+        var result = units[...]
+        while let c = result.first, c.isWhiteSpace { result.removeFirst() }
+        while let c = result.last, c.isWhiteSpace { result.removeLast() }
+        return Array(result)
     }
 
     private static func linesOf(_ model: PageModel, _ range: TextRange) -> Int {
@@ -146,14 +176,16 @@ public enum TextReplacer {
     // The replacement of each regex match, found on the text TextSearch runs (folded as the options ask) so that every
     // match it reports has an entry. Lookarounds and the whole-word edges see the page; a group is the page's own text,
     // with its case and accents, taken back through the map.
-    private static func expansions(_ text: TextPage, _ query: String, _ replacement: String, _ options: TextSearchOptions) throws -> [RangeKey: String] {
-        var found: [RangeKey: String] = [:]
+    private static func expansions(_ model: PageModel, _ query: String, _ replacement: String, _ options: TextSearchOptions) throws -> [HitKey: String] {
+        var found: [HitKey: String] = [:]
+        let text = model.text
         if !options.regex { return found }
         let folded = options.foldDiacritics ? SearchText.stripMarks(query) : query
         let pattern = options.wholeWord ? "(?<![\\p{L}\\p{N}])(?:\(folded))(?![\\p{L}\\p{N}])" : folded
         let regex = try NSRegularExpression(pattern: pattern, options: options.matchCase ? [] : [.caseInsensitive])
         let numbering = GroupNumbering(pattern)
         for dropHyphens in [false, true] {
+            let order = dropHyphens ? 1 : 0
             let searched = SearchText.build(text, options, dropHyphens)
             var matches: [NSTextCheckingResult] = []
             var timedOut = false
@@ -170,9 +202,8 @@ public enum TextReplacer {
                 if let match { matches.append(match) }
             }
             for m in matches where m.range.length > 0 && m.range.location >= 0 && m.range.location + m.range.length <= searched.text.count {
-                let key = rangeOf(searched, m.range.location, m.range.length)
-                let at = RangeKey(start: key.start, end: key.end)
-                if found[at] == nil { found[at] = try expand(text, searched, numbering, m, replacement) }
+                let at = HitKey(order: order, index: m.range.location)
+                if found[at] == nil, let expanded = try? expand(model, searched, numbering, m, replacement) { found[at] = expanded }
             }
             if timedOut || !searched.hasHyphenBreak { break }
         }
@@ -184,13 +215,13 @@ public enum TextReplacer {
     }
 
     // The tokens .NET expands from the searched text ($&, $+, $`, $', $_) are taken from the page as well; $$ is left for the last step.
-    private static func expand(_ text: TextPage, _ searched: SearchText, _ numbering: GroupNumbering, _ m: NSTextCheckingResult, _ replacement: String) throws -> String {
+    private static func expand(_ model: PageModel, _ searched: SearchText, _ numbering: GroupNumbering, _ m: NSTextCheckingResult, _ replacement: String) throws -> String {
         let all = searched.text
         // The page text of a range loses the white space at its ends, which a group or the text around a match may be made of.
-        func page(_ index: Int, _ length: Int) -> [UInt16] {
+        func page(_ index: Int, _ length: Int) throws -> [UInt16] {
             if length == 0 { return [] }
             let seen = Array(all[index..<index + length])
-            let core = Array(text.getText(rangeOf(searched, index, length), joinHyphens: true).utf16)
+            let core = Array(try pageText(model, searched, index, length).utf16)
             let lead = seen.prefix { $0.isWhiteSpace }.count
             var trail: [UInt16] = []
             if lead < seen.count {
@@ -205,10 +236,10 @@ public enum TextReplacer {
             }
             return result
         }
-        func group(_ icu: Int) -> [UInt16] {
+        func group(_ icu: Int) throws -> [UInt16] {
             if icu >= m.numberOfRanges { return [] }
             let range = m.range(at: icu)
-            return range.location == NSNotFound ? [] : page(range.location, range.length)
+            return range.location == NSNotFound ? [] : try page(range.location, range.length)
         }
 
         let r = Array(replacement.utf16)
@@ -251,17 +282,17 @@ public enum TextReplacer {
             let token = Array(r[i..<i + length])
             i += length
             switch c {
-            case 0x26: out.append(contentsOf: group(0))
-            case 0x60: out.append(contentsOf: page(0, m.range.location))
-            case 0x27: out.append(contentsOf: page(m.range.location + m.range.length, all.count - m.range.location - m.range.length))
-            case 0x2B: out.append(contentsOf: group(numbering.index(ofNumber: numbering.total) ?? 0))
-            case 0x5F: out.append(contentsOf: page(0, all.count))
+            case 0x26: out.append(contentsOf: try group(0))
+            case 0x60: out.append(contentsOf: try page(0, m.range.location))
+            case 0x27: out.append(contentsOf: try page(m.range.location + m.range.length, all.count - m.range.location - m.range.length))
+            case 0x2B: out.append(contentsOf: try group(numbering.index(ofNumber: numbering.total) ?? 0))
+            case 0x5F: out.append(contentsOf: try page(0, all.count))
             default:
                 // Match.Result reads the ASCII digits after the $ as the number; any other digit after them is text.
                 let digits = name.prefix { $0 >= 0x30 && $0 <= 0x39 }.count
                 if digits == 0 {
                     if braces, let icu = numbering.index(ofName: String(units: Array(name))) {
-                        out.append(contentsOf: group(icu))
+                        out.append(contentsOf: try group(icu))
                     } else {
                         out.append(contentsOf: token)
                     }
@@ -277,7 +308,7 @@ public enum TextReplacer {
                     if number > Int(Int32.max) { throw ArgumentException("Capture group numbers must be less than or equal to Int32.MaxValue.") }
                 }
                 if let icu = numbering.index(ofNumber: number) {
-                    out.append(contentsOf: group(icu))
+                    out.append(contentsOf: try group(icu))
                     out.append(contentsOf: name.dropFirst(digits))
                 } else {
                     out.append(contentsOf: token)

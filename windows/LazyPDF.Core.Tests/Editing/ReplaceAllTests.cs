@@ -206,4 +206,38 @@ public class ReplaceAllTests
         Assert.DoesNotContain("/ActualText", content);
         Assert.Equal("", Page(session, 0));
     }
+
+    [Fact]
+    public void GroupsOfARegularExpressionInsideASpanExpandToTheirOwnText()
+    {
+        var session = Open(string.Format(Hello, "/Span <</ActualText (hello world)>>"));
+        var report = TextReplacer.ReplaceAll(session, "w(or)ld", "[$1]", new TextSearchOptions(Regex: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("hello [or]", Page(session, 0));
+        session = Open(string.Format(Hello, "/Span <</ActualText (hello world)>>"));
+        TextReplacer.ReplaceAll(session, "w(or)ld", "<$&|$`|$'>", new TextSearchOptions(Regex: true));
+        Assert.Equal("hello <world|hello |>", Page(session, 0));
+    }
+
+    [Theory]
+    [InlineData("hi hi", "x x", 2)]
+    [InlineData("hi hi hi", "x x x", 3)]
+    [InlineData("a hi b hi", "a x b x", 2)]
+    public void EveryHitInsideOneSpanIsReplaced(string text, string expected, int count)
+    {
+        var session = Open($"BT /F1 12 Tf 50 700 Td /Span <</ActualText ({text})>> BDC ({text}) Tj EMC ET");
+        var report = TextReplacer.ReplaceAll(session, "hi", "x");
+        Assert.Equal(count, report.Replaced);
+        Assert.Empty(report.Failed);
+        Assert.Equal(expected, Page(session, 0));
+    }
+
+    [Fact]
+    public void ASpanEndingInAHyphenAtALineEndKeepsItAroundAHit()
+    {
+        var session = Open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (ab-)>> BDC (ab-) Tj EMC 0 -14 Td (cd) Tj ET");
+        var report = TextReplacer.ReplaceAll(session, "a", "X");
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("Xb-\ncd", Page(session, 0));
+    }
 }

@@ -12,6 +12,13 @@ internal sealed class SearchText
     public string Text = "";
     public int[] Map = [];
 
+    /// <summary>For each character of <see cref="Text"/>, the offset in its page character's own text of the unit it was made from; -1 for a space that was made up.</summary>
+    public int[] Unit = [];
+
+    public int StartOf(int index) => Math.Max(Unit[index], 0);
+
+    public int EndOf(int index) => Unit[index] < 0 ? 0 : Unit[index] + 1;
+
     /// <summary>The page has a hyphen at a line end that a join would take out.</summary>
     public bool HasHyphenBreak;
 
@@ -19,6 +26,7 @@ internal sealed class SearchText
     {
         var sb = new StringBuilder(page.Chars.Count + 16);
         var map = new List<int>(page.Chars.Count + 16);
+        var unit = new List<int>(page.Chars.Count + 16);
         bool hyphenBreak = false;
         int line = -1;
         bool soft = false;
@@ -28,6 +36,7 @@ internal sealed class SearchText
             if (sb.Length == 0 || sb[^1] == ' ') return;
             sb.Append(' ');
             map.Add(index);
+            unit.Add(-1);
         }
 
         foreach (var c in page.Chars)
@@ -47,6 +56,7 @@ internal sealed class SearchText
                         {
                             sb.Length--;
                             map.RemoveAt(map.Count - 1);
+                            unit.RemoveAt(unit.Count - 1);
                         }
                     }
                     else
@@ -68,13 +78,17 @@ internal sealed class SearchText
                 continue;
             }
             soft = false;
-            foreach (char f in Fold(c.Text, options))
+            for (int u = 0; u < c.Text.Length; u++)
             {
-                sb.Append(f);
-                map.Add(c.Index);
+                foreach (char f in Fold(c.Text.Length == 1 ? c.Text : c.Text[u].ToString(), options))
+                {
+                    sb.Append(f);
+                    map.Add(c.Index);
+                    unit.Add(u);
+                }
             }
         }
-        return new SearchText { Text = sb.ToString(), Map = [.. map], HasHyphenBreak = hyphenBreak };
+        return new SearchText { Text = sb.ToString(), Map = [.. map], Unit = [.. unit], HasHyphenBreak = hyphenBreak };
     }
 
     private static bool JoinsAfterHyphen(StringBuilder sb, TextChar next) =>

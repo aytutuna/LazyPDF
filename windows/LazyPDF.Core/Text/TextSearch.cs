@@ -13,8 +13,11 @@ public sealed record TextSearchOptions(bool MatchCase = false, bool WholeWord = 
 public sealed record SearchMatch(int Page, TextRange Range, string Text, IReadOnlyList<TextQuad> Quads)
 {
     /// <summary>Where the hit is in the text that was searched, for a replacement that has to cut a character's own text.</summary>
-    internal (SearchText Searched, int Index, int Length)? Source { get; init; }
+    internal HitCut? Source { get; init; }
 }
+
+/// <summary>A hit in the searched text: which text (0, or 1 with line-end hyphens dropped), where it starts, and the offsets it cuts in the text of its first and last character.</summary>
+internal readonly record struct HitCut(int Order, int Index, int Start, int End);
 
 /// <summary>Collects the pages where a regular expression ran out of time; hits found before the limit are still given.</summary>
 public sealed class SearchTimeouts
@@ -61,7 +64,7 @@ public static class TextSearch
         }
     }
 
-    private readonly record struct Hit(TextRange Range, SearchText Searched, int Index, int Length);
+    private readonly record struct Hit(TextRange Range, SearchText Searched, int Order, int Index, int Length);
 
     private sealed class Matcher
     {
@@ -94,22 +97,27 @@ public static class TextSearch
         {
             var found = new List<Hit>();
             var text = SearchText.Build(page, _options, false);
-            bool timedOut = !Collect(text, found, cancel);
-            if (text.HasHyphenBreak) timedOut |= !Collect(SearchText.Build(page, _options, true), found, cancel);
+            bool timedOut = !Collect(text, 0, found, cancel);
+            if (text.HasHyphenBreak) timedOut |= !Collect(SearchText.Build(page, _options, true), 1, found, cancel);
             if (timedOut) timeouts?.Pages.Add(page.PageIndex);
-            found.Sort((a, b) => a.Range.Start != b.Range.Start ? a.Range.Start.CompareTo(b.Range.Start) : b.Range.End.CompareTo(a.Range.End));
             var result = new List<SearchMatch>();
             int end = -1;
-            foreach (var (range, searched, index, length) in found)
+            Hit? last = null;
+            foreach (var hit in found.OrderBy(h => h.Range.Start).ThenByDescending(h => h.Range.End).ThenBy(h => h.Order).ThenBy(h => h.Index))
             {
-                if (range.Start < end) continue;
+                var range = hit.Range;
+                // Several hits in the text of one character (a span's replacement text) are all kept.
+                bool sameChar = last is { } l && range == l.Range && range.End == range.Start + 1 && hit.Order == l.Order && hit.Index >= l.Index + l.Length;
+                if (range.Start < end && !sameChar) continue;
                 end = range.End;
-                result.Add(new SearchMatch(page.PageIndex, range, page.GetText(range, true), page.Quads(range)) { Source = (searched, index, length) });
+                last = hit;
+                var cut = new HitCut(hit.Order, hit.Index, hit.Searched.StartOf(hit.Index), hit.Searched.EndOf(hit.Index + hit.Length - 1));
+                result.Add(new SearchMatch(page.PageIndex, range, page.GetText(range, true), page.Quads(range)) { Source = cut });
             }
             return result;
         }
 
-        private bool Collect(SearchText text, List<Hit> found, CancellationToken cancel)
+        private bool Collect(SearchText text, int order, List<Hit> found, CancellationToken cancel)
         {
             if (text.Text.Length == 0) return true;
             if (_regex is null)
@@ -124,7 +132,7 @@ public static class TextSearch
                         from = i + 1;
                         continue;
                     }
-                    found.Add(new Hit(new TextRange(text.Map[i], text.Map[from - 1] + 1), text, i, from - i));
+                    found.Add(new Hit(new TextRange(text.Map[i], text.Map[from - 1] + 1), text, order, i, from - i));
                 }
                 return true;
             }
@@ -134,7 +142,7 @@ public static class TextSearch
                 {
                     cancel.ThrowIfCancellationRequested();
                     if (m.Length == 0) continue;
-                    found.Add(new Hit(new TextRange(text.Map[m.Index], text.Map[m.Index + m.Length - 1] + 1), text, m.Index, m.Length));
+                    found.Add(new Hit(new TextRange(text.Map[m.Index], text.Map[m.Index + m.Length - 1] + 1), text, order, m.Index, m.Length));
                 }
             }
             catch (RegexMatchTimeoutException)

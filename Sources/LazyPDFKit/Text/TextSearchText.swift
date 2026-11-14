@@ -8,12 +8,20 @@ final class SearchText {
     var text: [UInt16] = []
     var map: [Int] = []
 
+    /// For each unit of `text`, the offset in its page character's own text of the unit it was made from; -1 for a space that was made up.
+    var unit: [Int] = []
+
+    func startOf(_ index: Int) -> Int { Swift.max(unit[index], 0) }
+
+    func endOf(_ index: Int) -> Int { unit[index] < 0 ? 0 : unit[index] + 1 }
+
     /// The page has a hyphen at a line end that a join would take out.
     var hasHyphenBreak = false
 
     static func build(_ page: TextPage, _ options: TextSearchOptions, _ dropHyphens: Bool) -> SearchText {
         var sb: [UInt16] = []
         var map: [Int] = []
+        var unit: [Int] = []
         sb.reserveCapacity(page.chars.count + 16)
         map.reserveCapacity(page.chars.count + 16)
         var hyphenBreak = false
@@ -24,6 +32,7 @@ final class SearchText {
             if sb.isEmpty || sb[sb.count - 1] == 0x20 { return }
             sb.append(0x20)
             map.append(index)
+            unit.append(-1)
         }
 
         for c in page.chars {
@@ -36,6 +45,7 @@ final class SearchText {
                         if dropHyphens {
                             sb.removeLast()
                             map.removeLast()
+                            unit.removeLast()
                         }
                     } else {
                         space(c.index)
@@ -53,14 +63,19 @@ final class SearchText {
                 continue
             }
             soft = false
-            for f in fold(Array(c.text.utf16), options) {
-                sb.append(f)
-                map.append(c.index)
+            let units = Array(c.text.utf16)
+            for (u, original) in units.enumerated() {
+                for f in fold(units.count == 1 ? units : [original], options) {
+                    sb.append(f)
+                    map.append(c.index)
+                    unit.append(u)
+                }
             }
         }
         let result = SearchText()
         result.text = sb
         result.map = map
+        result.unit = unit
         result.hasHyphenBreak = hyphenBreak
         return result
     }

@@ -31,7 +31,15 @@ public struct SearchMatch {
     public let quads: [TextQuad]
 
     /// Where the hit is in the text that was searched, for a replacement that has to cut a character's own text.
-    var source: (searched: SearchText, index: Int, length: Int)? = nil
+    var source: HitCut? = nil
+}
+
+/// A hit in the searched text: which text (0, or 1 with line-end hyphens dropped), where it starts, and the offsets it cuts in the text of its first and last character.
+struct HitCut: Equatable {
+    let order: Int
+    let index: Int
+    let start: Int
+    let end: Int
 }
 
 /// Collects the pages where a regular expression ran out of time; hits found before the limit are still given.
@@ -130,6 +138,7 @@ public enum TextSearch {
     fileprivate struct Hit {
         let range: TextRange
         let searched: SearchText
+        let order: Int
         let index: Int
         let length: Int
     }
@@ -160,23 +169,31 @@ public enum TextSearch {
         func find(_ page: TextPage, _ timeouts: SearchTimeouts?) throws -> [SearchMatch] {
             var found: [Hit] = []
             let text = SearchText.build(page, options, false)
-            var timedOut = try !collect(text, &found)
-            if text.hasHyphenBreak { timedOut = try !collect(SearchText.build(page, options, true), &found) || timedOut }
+            var timedOut = try !collect(text, 0, &found)
+            if text.hasHyphenBreak { timedOut = try !collect(SearchText.build(page, options, true), 1, &found) || timedOut }
             if timedOut { timeouts?.pages.append(page.pageIndex) }
-            found.sort { a, b in a.range.start != b.range.start ? a.range.start < b.range.start : b.range.end < a.range.end }
+            found.sort { a, b in
+                if a.range.start != b.range.start { return a.range.start < b.range.start }
+                if a.range.end != b.range.end { return b.range.end < a.range.end }
+                return a.order != b.order ? a.order < b.order : a.index < b.index
+            }
             var result: [SearchMatch] = []
             var end = -1
+            var last: Hit?
             for hit in found {
                 let range = hit.range
-                if range.start < end { continue }
+                // Several hits in the text of one character (a span's replacement text) are all kept.
+                let sameChar = last.map { range == $0.range && range.end == range.start + 1 && hit.order == $0.order && hit.index >= $0.index + $0.length } ?? false
+                if range.start < end && !sameChar { continue }
                 end = range.end
-                result.append(SearchMatch(page: page.pageIndex, range: range, text: page.getText(range, joinHyphens: true), quads: page.quads(range),
-                                          source: (hit.searched, hit.index, hit.length)))
+                last = hit
+                let cut = HitCut(order: hit.order, index: hit.index, start: hit.searched.startOf(hit.index), end: hit.searched.endOf(hit.index + hit.length - 1))
+                result.append(SearchMatch(page: page.pageIndex, range: range, text: page.getText(range, joinHyphens: true), quads: page.quads(range), source: cut))
             }
             return result
         }
 
-        private func collect(_ text: SearchText, _ found: inout [Hit]) throws -> Bool {
+        private func collect(_ text: SearchText, _ order: Int, _ found: inout [Hit]) throws -> Bool {
             if text.text.isEmpty { return true }
             guard let regex else {
                 var from = 0
@@ -188,7 +205,7 @@ public enum TextSearch {
                         from = i + 1
                         continue
                     }
-                    found.append(Hit(range: TextRange(text.map[i], text.map[from - 1] + 1), searched: text, index: i, length: from - i))
+                    found.append(Hit(range: TextRange(text.map[i], text.map[from - 1] + 1), searched: text, order: order, index: i, length: from - i))
                 }
                 return true
             }
@@ -212,7 +229,7 @@ public enum TextSearch {
                 }
                 deadline = Date().addingTimeInterval(TextSearch.regexTimeout)
                 guard let m = match?.range, m.length > 0, m.location >= 0, m.location + m.length <= text.map.count else { return }
-                matched.append(Hit(range: TextRange(text.map[m.location], text.map[m.location + m.length - 1] + 1), searched: text, index: m.location, length: m.length))
+                matched.append(Hit(range: TextRange(text.map[m.location], text.map[m.location + m.length - 1] + 1), searched: text, order: order, index: m.location, length: m.length))
             }
             found.append(contentsOf: matched)
             if cancelled { throw CancellationError() }
