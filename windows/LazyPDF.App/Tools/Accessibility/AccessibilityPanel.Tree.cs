@@ -33,6 +33,7 @@ public partial class AccessibilityPanel
             });
             if (ticket != _treeTicket) return;
             (_treeCopy, _tree, _figures, _treeCount) = (copy, tree, figures, count);
+            int typed = _state.Drafts.Count;
             if (Tab!.Rewrites != _state.Rewrites)
             {
                 // Save compact numbers the objects again, so a draft follows its figure by place.
@@ -48,6 +49,7 @@ public partial class AccessibilityPanel
                     || (before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt && !(_state.Written.TryGetValue(key, out var written) && written == now.Alt))) _state.Drafts.Remove(key);
             _state.Written.Clear();
             _state.Checked = figures;
+            if (_state.Drafts.Count < typed) Host?.SetStatus(Loc.T("A description you typed was dropped because its figure changed."));
             SyncPending();
         }
         catch (Exception error) when (error is PdfReadException or InvalidOperationException)

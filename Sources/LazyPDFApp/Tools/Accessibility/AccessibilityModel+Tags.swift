@@ -48,6 +48,8 @@ extension AccessibilityModel {
 
     // A draft stays only while its figure is in the new list on the same page with the same description.
     private func keepDrafts(_ fresh: [FigureRow]) {
+        let typed = drafts.count
+        defer { if drafts.count < typed { host?.setStatus(L10n.t("A description you typed was dropped because its figure changed.")) } }
         drafts = drafts.filter { key, _ in
             guard let old = checkedFigures.first(where: { $0.key == key }) else { return false }
             return fresh.contains { $0.key == key && $0.page == old.page && $0.alt == old.alt }

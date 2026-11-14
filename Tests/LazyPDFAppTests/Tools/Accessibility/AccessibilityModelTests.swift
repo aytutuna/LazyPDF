@@ -426,6 +426,22 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertFalse(rig.tab.document.hasChanges)
     }
 
+    func test_aTypedDescriptionIsDroppedWithANoteWhenItsFigureGoesAway() async throws {
+        let (model, rig) = try await attached(try pictures(2))
+        await tag(model, rig)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.typeAlt("First")
+        XCTAssertEqual(rig.tab.pendingDescriptions, 1)
+
+        try removeFigure(rig.tab, 0)
+        try rig.tab.commit("Remove figure")
+        await waitUntil { rig.tab.pendingDescriptions == 0 }
+
+        XCTAssertTrue(model.drafts.isEmpty)
+        XCTAssertEqual(rig.host.statuses.last, "A description you typed was dropped because its figure changed.")
+    }
+
     func test_aSignedFileKeepsTheTypedDescriptionWaitingAndLetsTheWindowGo() async throws {
         let (model, rig) = try await attached(try signedPictures())
         model.setView(.figures)
