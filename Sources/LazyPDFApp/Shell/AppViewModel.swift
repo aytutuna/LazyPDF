@@ -166,7 +166,7 @@ public final class AppViewModel {
     /// Shows a file the person asked to open whatever the open tool answers; it still gets the chance to hand its input in.
     func showOpened(_ tab: any StripTab) {
         if activeTab === tab || index(of: tab) == nil { return }
-        _ = handInForSwitch()
+        if !handInForSwitch() { setStatus(L10n.t("Typed text was not kept.")) }
         show(tab)
     }
 

@@ -2161,6 +2161,7 @@
 "Type the text for at least one place." = "En az bir yer için metin yazın.";
 "Type the watermark text in the step, then run again." = "Adıma filigran metnini yazın, sonra yeniden çalıştırın.";
 "Typed text was not kept" = "Yazılan metin korunmadı";
+"Typed text was not kept." = "Yazılan metin korunmadı.";
 "Typing allowed" = "Yazmaya izin ver";
 "US Social Security numbers" = "ABD sosyal güvenlik numaraları";
 "Underline" = "Altı çizili";
