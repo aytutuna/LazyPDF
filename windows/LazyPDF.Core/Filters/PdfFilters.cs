@@ -17,7 +17,7 @@ public static class PdfFilters
 
     /// <summary>
     /// The data of a stream with its filters undone. Both arguments are resolved: a name or an
-    /// array of names, a dictionary or an array of them. An image codec (DCT, JPX, JBIG2) is
+    /// array of names, a dictionary or an array of them. An image codec (DCT, JPX) is
     /// <see cref="PdfReadProblem.Unsupported"/> here; see <see cref="DecodeToCodec"/>.
     /// </summary>
     public static byte[] Decode(byte[] data, PdfObject? filter, PdfObject? parameters) =>
@@ -33,8 +33,7 @@ public static class PdfFilters
 
     /// <summary>
     /// Undoes the filters before an image codec and stops there: the bytes are the codec's input
-    /// (a JPEG file, say), with the codec's name ("DCTDecode", "JPXDecode" or "JBIG2Decode") and its
-    /// /DecodeParms. Without a codec in the chain the data is fully decoded and the name is null.
+    /// (a JPEG file, say), with the codec's name ("DCTDecode" or "JPXDecode") and its /DecodeParms. Without a codec in the chain the data is fully decoded and the name is null.
     /// </summary>
     public static PdfDecodedStream DecodeToCodec(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize = DefaultMaxSize) =>
         Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false);
@@ -82,7 +81,10 @@ public static class PdfFilters
                     if ((decodeParms?["Name"] as PdfName)?.Value is not (null or "Identity"))
                         throw new PdfReadException(PdfReadProblem.Unsupported, "A named crypt filter reached the filter layer.");
                     break;
-                case "DCTDecode" or "DCT" or "JPXDecode" or "JBIG2Decode":
+                case "JBIG2Decode":
+                    data = DecodeJbig2(data, decodeParms, maxSize);
+                    break;
+                case "DCTDecode" or "DCT" or "JPXDecode":
                     if (!stopAtCodec) throw new PdfReadException(PdfReadProblem.Unsupported, $"The /{filters[i]} filter is an image codec.");
                     string codec = filters[i] == "DCT" ? "DCTDecode" : filters[i];
                     return new PdfDecodedStream(data, codec, decodeParms);
@@ -92,6 +94,13 @@ public static class PdfFilters
         }
         return new PdfDecodedStream(data, null, null);
     }
+
+    /// <summary>
+    /// /JBIG2Globals is a stream; it is read as the data it holds, so the caller passes one whose data is in memory
+    /// (<see cref="PdfStream.Data"/> set), as <c>PdfDocument.DecodeSpec</c> does when asked to decode.
+    /// </summary>
+    private static byte[] DecodeJbig2(byte[] data, PdfDictionary? p, long maxSize) =>
+        Jbig2.Decode((p?["JBIG2Globals"] as PdfStream)?.Data ?? [], data, maxSize);
 
     private static byte[] DecodeCcitt(byte[] data, PdfDictionary? p, long maxSize)
     {

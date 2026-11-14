@@ -51,7 +51,7 @@ public class StreamDataTests
     [Fact]
     public void UnsupportedFilterIsAReadException()
     {
-        var pdf = TestPdf.WithPages(1).Stream(9, "/Filter /JBIG2Decode", "x");
+        var pdf = TestPdf.WithPages(1).Stream(9, "/Filter /JPXDecode", "x");
         var document = Open(pdf);
         var e = Assert.Throws<PdfReadException>(() => document.Data((PdfStream)document.Get(9)!));
         Assert.Equal(PdfReadProblem.Unsupported, e.Problem);

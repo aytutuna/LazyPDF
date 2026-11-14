@@ -42,7 +42,7 @@ public sealed partial class PdfDocument
 
     internal byte[] Data(PdfStream stream, long maxSize, bool strict = false)
     {
-        var (filter, parameters, _) = DecodeSpec(stream);
+        var (filter, parameters, _) = DecodeSpec(stream, decoding: true);
         return PdfFilters.Decode(RawData(stream), filter, parameters, maxSize, strict);
     }
 
@@ -61,11 +61,14 @@ public sealed partial class PdfDocument
     /// <summary>
     /// What the filter layer is given: the resolved /Filter and /DecodeParms of an encrypted file's
     /// stream without the Crypt stage, which the decryption has already carried out. <c>Crypt</c> says there was one.
+    /// With <paramref name="decoding"/> a /JBIG2Globals stream comes with its decoded data in memory, which is what the
+    /// filter reads; a caller that writes the parameters back leaves it off and gets the stream as the file has it.
     /// </summary>
-    internal (PdfObject? Filter, PdfObject? Parameters, bool Crypt) DecodeSpec(PdfStream stream)
+    internal (PdfObject? Filter, PdfObject? Parameters, bool Crypt) DecodeSpec(PdfStream stream, bool decoding = false)
     {
         var filter = Flatten(stream.Dictionary["Filter"], 2);
         var parameters = Flatten(stream.Dictionary["DecodeParms"], 3);
+        if (decoding) parameters = WithGlobals(parameters);
         if (_security is null) return (filter, parameters, false);
         switch (filter)
         {
@@ -78,6 +81,31 @@ public sealed partial class PdfDocument
             default:
                 return (filter, parameters, false);
         }
+    }
+
+    private PdfObject? WithGlobals(PdfObject? parameters) => parameters switch
+    {
+        PdfDictionary dictionary => GlobalsIn(dictionary),
+        PdfArray array => new PdfArray([.. array.Items.Select(item => item is PdfDictionary d ? GlobalsIn(d) : item)]),
+        _ => parameters,
+    };
+
+    private PdfDictionary GlobalsIn(PdfDictionary parameters)
+    {
+        if (parameters["JBIG2Globals"] is not PdfStream globals) return parameters;
+        // Damaged globals leave the image to decode without them.
+        byte[] data;
+        try
+        {
+            data = Data(globals);
+        }
+        catch (PdfReadException)
+        {
+            data = [];
+        }
+        var copy = parameters.Copy();
+        copy["JBIG2Globals"] = new PdfStream(new PdfDictionary(), data);
+        return copy;
     }
 
     private int StreamLength(PdfStream stream, int start)

@@ -65,7 +65,7 @@ decode AHx,A85 - 7E7E>
 decode AHx,RL - 0361626380>
 codec DCT ColorTransform=0 abc
 codec AHx,DCTDecode - 41424344>
-codec AHx,JBIG2Decode JBIG2Globals=5 41424344>
+codec AHx,JPXDecode Globals=5 41424344>
 codec JPXDecode,AHx - 4142>
 codec AHx - 4142>
 codec - - 4142>

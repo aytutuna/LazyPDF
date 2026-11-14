@@ -114,8 +114,8 @@
 < codec=DCTDecode parameters=dictionary data=616263
 > codec AHx,DCTDecode - 41424344>
 < codec=DCTDecode parameters=- data=41424344
-> codec AHx,JBIG2Decode JBIG2Globals=5 41424344>
-< codec=JBIG2Decode parameters=- data=41424344
+> codec AHx,JPXDecode Globals=5 41424344>
+< codec=JPXDecode parameters=- data=41424344
 > codec JPXDecode,AHx - 4142>
 < codec=JPXDecode parameters=- data=343134323E
 > codec AHx - 4142>
