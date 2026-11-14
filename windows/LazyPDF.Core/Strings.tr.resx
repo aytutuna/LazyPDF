@@ -8899,8 +8899,8 @@
   <data name="{0} was changed by another program." xml:space="preserve">
     <value>{0} başka bir program tarafından değiştirildi.</value>
   </data>
-  <data name="{0} was changed by another program. Opening that version drops the marks and measurements not applied yet." xml:space="preserve">
-    <value>{0} başka bir program tarafından değiştirildi. O sürümü açarsanız henüz uygulanmamış işaretler ve ölçümler atılır.</value>
+  <data name="{0} was changed by another program. Opening that version drops the marks, measurements and typed text not applied yet." xml:space="preserve">
+    <value>{0} başka bir program tarafından değiştirildi. O sürümü açarsanız henüz uygulanmamış işaretler, ölçümler ve yazılmış metin atılır.</value>
   </data>
   <data name="{0} was changed by another program. Opening that version drops your unsaved changes." xml:space="preserve">
     <value>{0} başka bir program tarafından değiştirildi. O sürümü açarsanız kaydedilmemiş değişiklikleriniz atılır.</value>
