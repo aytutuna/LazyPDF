@@ -113,7 +113,7 @@ extension AppViewModel {
         defer { if !kept { access?.stop() } }
         let name = url.lastPathComponent
         if let already = tab(of: url) {
-            select(already)
+            showOpened(already)
             return
         }
         let key = RecentFiles.folded(url)
@@ -262,7 +262,7 @@ extension AppViewModel {
             tab.zoom = seen.zoom
             tab.fit = seen.fit
         }
-        select(tab)
+        showOpened(tab)
         if let note = source.note {
             showNotice(L10n.t("Opened with changes"), note)
         } else if tab.readOnly {
