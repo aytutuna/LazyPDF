@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace LazyPDF.Core;
 
 /// <summary>What to change about the look of some text; a null member is left as it is.</summary>
@@ -34,12 +36,25 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     private static List<EditGlyph> Whole(IEnumerable<EditGlyph> glyphs) =>
         [.. glyphs.SelectMany(g => g.Span is { } span ? span.Members.Prepend(g) : [g]).Distinct()];
 
-    // New text goes where the old was, which is inside the span, so the span stops claiming it.
+    // New text goes where the old was, which is inside the span, so the span stops claiming it. The marked content stays
+    // with what it carried besides the text (a structure tree points at its MCID), and an inner span goes with the outer one.
     private void Unwrap(IEnumerable<EditGlyph> glyphs)
     {
-        foreach (var span in glyphs.Select(g => g.Span).OfType<ActualSpan>().Distinct())
+        foreach (var span in glyphs.SelectMany(g => g.Inner.Prepend(g.Span!)).OfType<ActualSpan>().Distinct())
         {
-            if (!batch.ReplaceOperation(new Place(span.Unit, span.Visit), span.Op, "/Span BMC")) throw new EditConflictException(EditingText.SharedForm);
+            var place = new Place(span.Unit, span.Visit);
+            var op = span.Unit.Operations[span.Op];
+            var rest = span.Marked.Properties!.Copy();
+            rest.Remove("ActualText");
+            var writer = new ContentWriter();
+            if (rest.Count == 0) writer.Op("BMC", [op.Operands[0]]);
+            else if (op.Operands[^1] is PdfName)
+            {
+                string name = batch.AddResource(place, "Properties", rest) ?? throw new EditConflictException(EditingText.SharedForm);
+                writer.Op("BDC", [op.Operands[0], new PdfName(name)]);
+            }
+            else writer.Op("BDC", [op.Operands[0], rest]);
+            if (!batch.ReplaceOperation(place, span.Op, Encoding.Latin1.GetString(writer.ToArray()).TrimEnd())) throw new EditConflictException(EditingText.SharedForm);
         }
     }
 

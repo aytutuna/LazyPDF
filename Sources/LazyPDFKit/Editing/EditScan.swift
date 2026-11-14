@@ -83,13 +83,15 @@ final class ActualSpan {
 
     /// The operation that opens the span.
     let op: Int
+    let marked: MarkedContent
 
     var members: [EditGlyph] = []
 
-    init(_ unit: ContentUnit, _ visit: FormVisit?, _ op: Int) {
+    init(_ unit: ContentUnit, _ visit: FormVisit?, _ op: Int, _ marked: MarkedContent) {
         self.unit = unit
         self.visit = visit
         self.op = op
+        self.marked = marked
     }
 }
 
@@ -133,6 +135,9 @@ final class EditGlyph: Hashable {
 
     /// The /ActualText span the glyph is in, when the editor can take it as a unit: the span and the glyph are in the same stream.
     var span: ActualSpan?
+
+    /// The /ActualText spans inside `span` that also hold the glyph, outermost first.
+    var inner: [ActualSpan] = []
 
     /// Glyphs drawn again at the same place, which go with it.
     var twins: [EditGlyph] = []
@@ -281,7 +286,7 @@ final class EditScan: ContentVisitor {
 
     override func beginMarked(_ context: ContentContext, _ marked: MarkedContent) {
         if inPattern == 0, marked.properties?.containsKey("ActualText") == true {
-            spans[ObjectIdentifier(marked)] = ActualSpan(current, visit, context.operatorIndex)
+            spans[ObjectIdentifier(marked)] = ActualSpan(current, visit, context.operatorIndex, marked)
         }
     }
 
@@ -322,8 +327,10 @@ final class EditScan: ContentVisitor {
         g.renderMode = state.renderMode
         g.color = (state.renderMode == 1 ? state.strokeColor : state.fillColor).rgb
         g.hasActualText = context.marked.contains { $0.properties?.containsKey("ActualText") == true }
-        if let span = context.marked.lazy.compactMap({ self.spans[ObjectIdentifier($0)] }).first, span.unit === current, span.visit === visit {
+        let enclosing = context.marked.compactMap { self.spans[ObjectIdentifier($0)] }
+        if let span = enclosing.first, span.unit === current, span.visit === visit {
             g.span = span
+            g.inner = enclosing.dropFirst().filter { $0.unit === current && $0.visit === visit }
             span.members.append(g)
         }
         glyphs.append(g)
