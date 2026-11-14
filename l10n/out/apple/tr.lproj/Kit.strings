@@ -20,6 +20,7 @@
 "A constant opacity below 1 needs transparency." = "1'in altındaki sabit opaklık saydamlık gerektirir.";
 "A content stream could not be read." = "Bir içerik akışı okunamadı.";
 "A copy of {0} could not be made for printing. Check that the disk has room." = "{0} için yazdırmaya yönelik bir kopya oluşturulamadı. Diskte yer olup olmadığına bakın.";
+"A corrected word is not applied yet." = "Düzeltilmiş bir sözcük henüz uygulanmadı.";
 "A dictionary has {0} entries; the limit is 4095." = "Bir sözlükte {0} girdi var; sınır 4095.";
 "A field name cannot be empty or end with a period." = "Alan adı boş olamaz ve nokta ile bitemez.";
 "A field named {0} already exists. Choose another name." = "{0} adında bir alan zaten var. Başka bir ad seçin.";
@@ -2389,6 +2390,8 @@
 "{0} field, {1} required|other" = "{0} alan, {1} zorunlu";
 "{0} field|one" = "{0} alan";
 "{0} field|other" = "{0} alan";
+"{0} figure description is not saved yet.|one" = "{0} şekil açıklaması henüz kaydedilmedi.";
+"{0} figure description is not saved yet.|other" = "{0} şekil açıklaması henüz kaydedilmedi.";
 "{0} file could not be saved.|one" = "{0} dosya kaydedilemedi.";
 "{0} file could not be saved.|other" = "{0} dosya kaydedilemedi.";
 "{0} file failed|one" = "{0} dosya başarısız";

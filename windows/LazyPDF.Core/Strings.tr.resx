@@ -82,6 +82,9 @@
   <data name="A copy of {0} could not be made for printing. Check that the disk has room." xml:space="preserve">
     <value>{0} için yazdırmaya yönelik bir kopya oluşturulamadı. Diskte yer olup olmadığına bakın.</value>
   </data>
+  <data name="A corrected word is not applied yet." xml:space="preserve">
+    <value>Düzeltilmiş bir sözcük henüz uygulanmadı.</value>
+  </data>
   <data name="A dictionary has {0} entries; the limit is 4095." xml:space="preserve">
     <value>Bir sözlükte {0} girdi var; sınır 4095.</value>
   </data>
@@ -8538,6 +8541,9 @@
   </data>
   <data name="{0} field|plural" xml:space="preserve">
     <value>{0} alan</value>
+  </data>
+  <data name="{0} figure description is not saved yet.|plural" xml:space="preserve">
+    <value>{0} şekil açıklaması henüz kaydedilmedi.</value>
   </data>
   <data name="{0} file attached.|plural" xml:space="preserve">
     <value>{0} dosya ek olarak eklendi.</value>

@@ -188,14 +188,15 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertFalse(rig.tab.isDirty)
     }
 
-    func test_handingInOnASignedFileWaitsForTheAnswer() async throws {
+    func test_handingInOnASignedFileKeepsTheMeasurementsWaiting() async throws {
         let (model, rig) = try attached(try Pdfs.signed(certified: false))
         try measure(model, ViewPoint(100, 100), ViewPoint(172, 100))
 
-        XCTAssertFalse(model.handIn())
+        XCTAssertTrue(model.handIn())
 
-        XCTAssertEqual(rig.host.notices.map(\.title), ["Check before going on"])
+        XCTAssertTrue(rig.host.notices.isEmpty)
         XCTAssertEqual(model.rows.count, 1)
+        XCTAssertEqual(rig.tab.pendingMeasurements, 1)
         XCTAssertFalse(rig.tab.isDirty)
     }
 

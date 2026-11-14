@@ -107,7 +107,13 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>Measurements waiting in the Measure panel to be added to the page; lost with the tab.</summary>
     public int PendingMeasurements { get; set; }
 
-    public bool HasUnappliedWork => PendingMarks > 0 || PendingMeasurements > 0;
+    /// <summary>A corrected word typed in the OCR panel that a signed file would not take without asking.</summary>
+    public int PendingWords { get; set; }
+
+    /// <summary>Figure descriptions typed in the Accessibility panel and not written to the file.</summary>
+    public int PendingDescriptions { get; set; }
+
+    public bool HasUnappliedWork => PendingMarks > 0 || PendingMeasurements > 0 || PendingWords > 0 || PendingDescriptions > 0;
 
     public bool CanClose => true;
 

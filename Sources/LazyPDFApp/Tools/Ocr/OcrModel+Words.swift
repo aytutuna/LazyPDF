@@ -28,6 +28,7 @@ extension OcrModel {
     }
 
     func detachWords() {
+        tab?.pendingWords = 0
         viewWatch?.stop()
         viewWatch = nil
         shown = [:]
@@ -100,6 +101,7 @@ extension OcrModel {
     /// Chooses a word for correction; with `edit` its text opens in a field over the word.
     public func pick(_ word: WordRef?, edit: Bool = false) {
         if word != nil { field?.finish() }
+        tab?.pendingWords = 0
         if let old = picked { unmark(old) }
         picked = nil
         inPanel = false
@@ -158,13 +160,26 @@ extension OcrModel {
         field = viewer.overlay(ref.page).open(made)
     }
 
-    // A word typed and not yet in the file goes in before the file is saved, undone or closed. False while a signed file waits
-    // for its answer.
+    // A word typed and not yet in the file goes in before the file is saved, undone or closed. A signed file keeps it in the
+    // panel's box, as Measure keeps its readings: nothing is written without the user's answer, and the close question names it.
     public func handIn() -> Bool {
+        settle(keepSigned: true)
+        return true
+    }
+
+    // The panel loses the word when another tab or tool takes its place, so a signed file asks before that and the switch waits.
+    public func handInOnSwitch() -> Bool {
+        settle(keepSigned: false)
+        return !waiting
+    }
+
+    private func settle(keepSigned: Bool) {
         waiting = false
+        keepsSigned = keepSigned
         field?.finish()
         applyDraft()
-        return !waiting
+        keepsSigned = false
+        tab?.pendingWords = waiting ? 1 : 0
     }
 
     private func apply(_ word: WordRef, _ text: String) {
@@ -172,14 +187,29 @@ extension OcrModel {
         let go: @MainActor () -> Void = { [weak self] in
             if self?.tab === tab { self?.applyNow(tab, host, word, text) }
         }
-        if OcrWork.cleared(tab, host, go: go) {
+        if keepsSigned && tab.document.isSigned && OcrWork.refusal(tab.document) == nil {
+            keep(word, text)
+        } else if OcrWork.cleared(tab, host, go: go) {
             applyNow(tab, host, word, text)
         } else {
             waiting = OcrWork.refusal(tab.document) == nil
         }
     }
 
+    // The text moves into the panel's box, where its button still applies it after the usual question.
+    private func keep(_ word: WordRef, _ text: String) {
+        if picked != word {
+            if let old = picked { unmark(old) }
+            picked = word
+            mark(word)
+        }
+        draft = text
+        inPanel = true
+        waiting = true
+    }
+
     private func applyNow(_ tab: DocumentTab, _ host: ToolHost, _ word: WordRef, _ text: String) {
+        tab.pendingWords = 0
         let before = tab.revision
         ChangeGate.guarded(host, L10n.t("Correct word")) { try OcrWork.correct(tab, word.page, word.index, text) }
         if tab.revision != before {

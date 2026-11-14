@@ -116,6 +116,7 @@ public final class AccessibilityModel: ToolPanelModel {
         view = host.takeTaggingRequest() ? .tags : .check
         kept = kept.filter { $0.value.tab.tab != nil }
         if let back = kept.removeValue(forKey: ObjectIdentifier(tab)) { (drafts, checkedFigures) = (back.drafts, back.checked) }
+        syncPending()
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.fileChanged() })
         refresh()
     }

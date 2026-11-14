@@ -47,6 +47,7 @@ public final class OcrModel: ToolPanelModel {
     @ObservationIgnored var shown: [Int: [OcrLayerWord]] = [:]
     @ObservationIgnored var field: OverlayField?
     @ObservationIgnored var waiting = false
+    @ObservationIgnored var keepsSigned = false
     @ObservationIgnored var fieldSerial = 0
     @ObservationIgnored var touchStart: (word: WordRef, at: ViewPoint)?
     @ObservationIgnored var correctedRevision: Int?

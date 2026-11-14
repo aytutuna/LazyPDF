@@ -105,6 +105,7 @@ public partial class AccessibilityPanel
         if (changed) _state.Drafts[row.Key] = AltBox.Text;
         else _state.Drafts.Remove(row.Key);
         SaveAlt.IsEnabled = changed;
+        SyncPending();
     }
 
     private async void SaveAlt_Click(object sender, RoutedEventArgs e)
@@ -117,6 +118,7 @@ public partial class AccessibilityPanel
             shown = Selected?.Key == row.Key;
             if (!ReferenceEquals(tab, Tab) || !WriteAlts(tab, Host!, [(row, text)])) return Task.CompletedTask;
             if (_state.Drafts.TryGetValue(row.Key, out var draft) && draft.Trim() == text.Trim()) _state.Drafts.Remove(row.Key);
+            SyncPending();
             if (shown) _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
             return Task.CompletedTask;
         });
@@ -124,22 +126,33 @@ public partial class AccessibilityPanel
 
     public override bool KeepsDrafts => true;
 
-    // Typed descriptions go into the file with Save's rules, as one undo step; a signed file asks first, so the caller is told to wait.
+    // The close question counts the descriptions typed and not written, for the tab that shows them.
+    private void SyncPending()
+    {
+        if (Tab is { } tab) tab.PendingDescriptions = _state.Checked.Count(r => _state.Drafts.ContainsKey(r.Key));
+    }
+
+    // Typed descriptions go into the file with Save's rules, as one undo step. A signed file keeps them waiting, as Measure
+    // does: nothing is written without the user's answer, and the close question names them.
     public override bool HandIn()
     {
         if (Tab is not { } tab || _state.Drafts.Count == 0) return true;
         var edits = _state.Checked.Where(r => _state.Drafts.ContainsKey(r.Key)).Select(r => (r, _state.Drafts[r.Key])).ToList();
         if (edits.Count == 0) return true;
-        bool asks = tab.Document.IsSigned && ChangeGate.Refusal(tab.Document) is null;
+        if (tab.Document.IsSigned && ChangeGate.Refusal(tab.Document) is null) return true;
         // The notice can outlive the panel's attachment, so the callback holds its own host and state.
         var host = Host!;
         var state = _state;
         _ = ChangeGate.RunAsync(tab, host, Loc.T("Figure description"), () =>
         {
-            if (ReferenceEquals(state, _state) && WriteAlts(tab, host, edits)) foreach (var (row, _) in edits) _state.Drafts.Remove(row.Key);
+            if (ReferenceEquals(state, _state) && WriteAlts(tab, host, edits))
+            {
+                foreach (var (row, _) in edits) _state.Drafts.Remove(row.Key);
+                SyncPending();
+            }
             return Task.CompletedTask;
         });
-        return !asks;
+        return true;
     }
 
     private bool WriteAlts(DocumentTab tab, IToolHost host, IReadOnlyList<(FigureRow Row, string Text)> edits)

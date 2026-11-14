@@ -67,7 +67,13 @@ public final class DocumentTab: StripTab {
     /// Measurements listed but not yet added to the page; they live in the Measure panel and are lost with the tab.
     public var pendingMeasurements = 0
 
-    public var hasUnappliedWork: Bool { pendingMarks > 0 || pendingMeasurements > 0 }
+    /// A corrected word typed in the OCR panel that a signed file would not take without asking.
+    public var pendingWords = 0
+
+    /// Figure descriptions typed in the Accessibility panel and not written to the file.
+    public var pendingDescriptions = 0
+
+    public var hasUnappliedWork: Bool { pendingMarks > 0 || pendingMeasurements > 0 || pendingWords > 0 || pendingDescriptions > 0 }
 
     /// Called when the file's bytes changed.
     @ObservationIgnored public var changed: (() -> Void)?

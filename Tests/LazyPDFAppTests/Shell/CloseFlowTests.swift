@@ -62,6 +62,22 @@ final class CloseFlowTests: XCTestCase {
         XCTAssertTrue(f.vm.closeQuestion === tab)
     }
 
+    func test_aWaitingWordOrDescriptionIsAskedAboutOnCloseAndExit() async {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.pdf())
+        let tab = f.vm.activeDocument!
+        tab.pendingWords = 1
+
+        XCTAssertFalse(f.vm.requestClose(tab))
+        XCTAssertTrue(f.vm.closeQuestion === tab)
+        f.vm.cancelClose()
+
+        tab.pendingWords = 0
+        tab.pendingDescriptions = 2
+        XCTAssertFalse(f.vm.requestExit())
+        XCTAssertTrue(f.vm.closeQuestion === tab)
+    }
+
     func test_cancellingTheQuestionKeepsTheDocument() async throws {
         let f = ViewModelFixture(self)
         let tab = try await openDirty(f)

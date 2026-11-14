@@ -48,6 +48,7 @@ public partial class AccessibilityPanel
                     || (before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt && !(_state.Written.TryGetValue(key, out var written) && written == now.Alt))) _state.Drafts.Remove(key);
             _state.Written.Clear();
             _state.Checked = figures;
+            SyncPending();
         }
         catch (Exception error) when (error is PdfReadException or InvalidOperationException)
         {

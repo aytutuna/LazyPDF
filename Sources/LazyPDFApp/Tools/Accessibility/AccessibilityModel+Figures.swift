@@ -80,6 +80,7 @@ extension AccessibilityModel {
         let changed = altText.trimmingCharacters(in: .whitespacesAndNewlines) != row.alt
         drafts[row.key] = changed ? altText : nil
         canSaveAlt = changed
+        syncPending()
     }
 
     public func saveAlt() {
@@ -88,26 +89,44 @@ extension AccessibilityModel {
         ChangeGate.run(tab, host, L10n.t("Figure description")) { [self] in
             guard self.tab === tab, try writeAlts(tab, host, [(row, text)]) else { return }
             drafts[row.key] = nil
+            syncPending()
             figureNumber = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? row.number : nextBareAfter(row.number, row.number)
         }
     }
 
-    // Typed descriptions go into the file with Save's rules, as one undo step; a signed file asks first, so the caller is told to wait.
+    // Typed descriptions go into the file with Save's rules, as one undo step. A signed file keeps them waiting, as Measure
+    // does: nothing is written without the user's answer, and the close question names them.
     public func handIn() -> Bool {
         guard let tab, let host else { return true }
         let edits = checkedFigures.compactMap { row in drafts[row.key].map { (row, $0) } }
         if edits.isEmpty { return true }
-        let asks = tab.document.isSigned && ChangeGate.refusal(tab.document) == nil
+        if tab.document.isSigned && ChangeGate.refusal(tab.document) == nil { return true }
         // The notice can outlive the panel's attachment, so the answer writes to the tab it was asked for.
         ChangeGate.run(tab, host, L10n.t("Figure description")) { [weak self] in
             guard let self, try writeAlts(tab, host, edits) else { return }
             for (row, _) in edits { self.forgetDraft(row.key, of: tab) }
         }
-        return !asks
+        return true
     }
 
     private func forgetDraft(_ key: Int, of tab: DocumentTab) {
-        if self.tab === tab { drafts[key] = nil } else { kept[ObjectIdentifier(tab)]?.drafts[key] = nil }
+        if self.tab === tab {
+            drafts[key] = nil
+            syncPending()
+        } else if var back = kept[ObjectIdentifier(tab)] {
+            back.drafts[key] = nil
+            kept[ObjectIdentifier(tab)] = back
+            tab.pendingDescriptions = Self.waiting(back.drafts, back.checked)
+        }
+    }
+
+    // The close question counts the descriptions typed and not written, for the tab that shows them.
+    func syncPending() {
+        tab?.pendingDescriptions = Self.waiting(drafts, checkedFigures)
+    }
+
+    private static func waiting(_ drafts: [Int: String], _ checked: [FigureRow]) -> Int {
+        checked.filter { drafts[$0.key] != nil }.count
     }
 
     // False when nothing was written; the problem is on the info bar. Other errors reach ChangeGate, which reports them.
