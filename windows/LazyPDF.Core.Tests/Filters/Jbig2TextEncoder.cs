@@ -320,11 +320,12 @@ internal static class Jbig2SymbolEncode
     /// A symbol dictionary segment's data (7.4.2). The new symbols are in order of height; <paramref name="exported"/> says which
     /// of the input and new symbols are exported, in that order.
     /// </summary>
-    public static byte[] Arithmetic(List<Bm> input, List<NewSymbol> added, bool[] exported, int template, int[]? at, bool refine, int refineTemplate, int[]? refineAt)
+    public static byte[] Arithmetic(List<Bm> input, List<NewSymbol> added, bool[] exported, int template, int[]? at, bool refine, int refineTemplate, int[]? refineAt,
+                                    ArithEncoder? encoder = null, int extraFlags = 0)
     {
         at ??= Jbig2Encode.DefaultAt(template);
         refineAt ??= [-1, -1, -1, -1];
-        var e = new ArithEncoder();
+        var e = encoder ?? new ArithEncoder();
         int total = input.Count + added.Count;
         int codeLength = Jbig2TextEncode.CodeLength(total);
         var all = new List<Bm>(input);
@@ -364,7 +365,7 @@ internal static class Jbig2SymbolEncode
             e.Integer(ArithEncoder.Iadw, null);
         }
         ExportFlags(exported, run => e.Integer(ArithEncoder.Iaex, run));
-        return Cat(Flags(false, refine, template, refineTemplate), at, refine && refineTemplate == 0 ? refineAt : [], exported, added.Count, e.Finish());
+        return Cat(Flags(false, refine, template, refineTemplate) | extraFlags, at, refine && refineTemplate == 0 ? refineAt : [], exported, added.Count, e.Finish());
     }
 
     private static int Flags(bool huffman, bool refine, int template, int refineTemplate) =>

@@ -6,7 +6,7 @@ namespace LazyPDF.Core.Tests;
 
 // Mirrored by the Jbig2 golden test of the Swift engine. The streams are made by the encoders of this project (Jbig2Samples);
 // with LAZYPDF_WRITE_GOLDEN=1 the .bin files, the input and the output are written into Tests/Fixtures/golden/filters, and the
-// Swift side only reads them. One line of input is "jbig2 <file> <globals> <flips> <length>"; the result is the page the filter
+// Swift side only reads them. One line of input is "jbig2 <file> <globals> <flips> <length> <fit>" (fit is /Width and /Height of the image as WxH); the result is the page the filter
 // returns: short results in hex, long ones as their length and an FNV-1a sum.
 public class Jbig2GoldenTests
 {
@@ -70,7 +70,7 @@ public class Jbig2GoldenTests
         return output.ToString();
     }
 
-    // jbig2 <file> <globals> <flips> <length>
+    // jbig2 <file> <globals> <flips> <length> <fit>
     private static string Op(string[] words)
     {
         try
@@ -85,7 +85,13 @@ public class Jbig2GoldenTests
                 }
             }
             if (words[3] != "-") data = data[..int.Parse(words[3])];
-            var parameters = words[1] == "-" ? null : Parameters(File.ReadAllBytes(Path.Combine(Folder, words[1])));
+            var parameters = words[1] == "-" ? new PdfDictionary() : Parameters(File.ReadAllBytes(Path.Combine(Folder, words[1])));
+            if (words[4] != "-")
+            {
+                string[] size = words[4].Split('x');
+                parameters["Width"] = new PdfNumber(int.Parse(size[0]));
+                parameters["Height"] = new PdfNumber(int.Parse(size[1]));
+            }
             return Show(PdfFilters.Decode(data, new PdfName("JBIG2Decode"), parameters, PdfFilters.DefaultMaxSize));
         }
         catch (PdfReadException e)
