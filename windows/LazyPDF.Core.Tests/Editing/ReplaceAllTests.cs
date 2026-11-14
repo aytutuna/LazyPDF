@@ -315,6 +315,15 @@ public class ReplaceAllTests
         Assert.Equal("ab\ncd", Page(session, 0));
     }
 
+    [Fact]
+    public void TheTextBeforeAMatchAtTheStartOfALineDoesNotTakeItsFirstLetter()
+    {
+        var session = Open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td (cd) Tj ET");
+        var report = TextReplacer.ReplaceAll(session, "c", "[$`]", new TextSearchOptions(Regex: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("ab\n[ab ]d", Page(session, 0));
+    }
+
     [Theory]
     [InlineData("X")]
     [InlineData("[$&]")]

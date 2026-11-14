@@ -263,6 +263,13 @@ final class ReplaceAllTests: XCTestCase {
         }
     }
 
+    func test_theTextBeforeAMatchAtTheStartOfALineDoesNotTakeItsFirstLetter() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td (cd) Tj ET")
+        let report = try TextReplacer.replaceAll(session, "c", "[$`]", TextSearchOptions(regex: true))
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(try page(session, 0), "ab\n[ab ]d")
+    }
+
     func test_aHitThatEndsOnALineBreakIsReportedAsCrossingLines() throws {
         for replacement in ["X", "[$&]"] {
             let session = try open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td (cd) Tj ET")

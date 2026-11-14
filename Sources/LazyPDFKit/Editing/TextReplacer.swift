@@ -67,7 +67,7 @@ public enum TextReplacer {
                 if cut.end != 0 {
                     matches.append(match)
                 } else {
-                    failures.append(ReplaceFailure(page: p, text: match.text, reason: cut.last < 0 ? EditingText.nothingChanged : EditingText.crossesLines))
+                    failures.append(ReplaceFailure(page: p, text: match.text, reason: cut.onlyBreak ? EditingText.nothingChanged : EditingText.crossesLines))
                 }
             }
             if matches.isEmpty { continue }
@@ -155,6 +155,12 @@ public enum TextReplacer {
 
     // The page text of the searched characters from `index` for `length`, where a span's character gives only the part of its text the range takes.
     private static func pageText(_ model: PageModel, _ searched: SearchText, _ index: Int, _ length: Int) throws -> String {
+        // A piece that ends on the space the search adds at a line break stops before it; the caller keeps the white space of the searched text.
+        var length = length
+        if searched.endOf(index + length - 1) == 0 {
+            if length == 1 { return "" }
+            length -= 1
+        }
         let range = rangeOf(searched, index, length)
         var full = Array(model.text.getText(range, joinHyphens: true).utf16)
         let first = inSpan(model, range.start), last = inSpan(model, range.end - 1)

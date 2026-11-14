@@ -45,7 +45,7 @@ public static class TextReplacer
             {
                 var cut = match.Source!.Value;
                 if (cut.End != 0) matches.Add(match);
-                else failures.Add(new ReplaceFailure(p, match.Text, cut.Last < 0 ? EditingText.NothingChanged : EditingText.CrossesLines));
+                else failures.Add(new ReplaceFailure(p, match.Text, cut.OnlyBreak ? EditingText.NothingChanged : EditingText.CrossesLines));
             }
             if (matches.Count == 0) continue;
             var batch = new EditBatch(document, model.Page, model.Scan);
@@ -143,6 +143,12 @@ public static class TextReplacer
     // The page text of the searched characters from `index` for `length`, where a span's character gives only the part of its text the range takes.
     private static string PageText(PageModel model, SearchText searched, int index, int length)
     {
+        // A piece that ends on the space the search adds at a line break stops before it; the caller keeps the white space of the searched text.
+        if (searched.EndOf(index + length - 1) == 0)
+        {
+            if (length == 1) return "";
+            length--;
+        }
         var range = RangeOf(searched, index, length);
         string full = model.Text.GetText(range, true);
         string? first = InSpan(model, range.Start), last = InSpan(model, range.End - 1);
