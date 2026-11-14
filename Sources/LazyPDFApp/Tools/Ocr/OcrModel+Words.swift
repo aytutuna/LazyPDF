@@ -25,10 +25,25 @@ extension OcrModel {
         viewWatch = ObservationWatch(track: { _ = viewer.viewRevision; _ = viewer.visiblePages; _ = viewer.pageIndex },
                                      changed: { [weak self] in self?.showMarks() })
         showMarks()
+        keptWords = keptWords.filter { $0.value.tab.tab != nil }
+        guard let tab, let back = keptWords.removeValue(forKey: ObjectIdentifier(tab)) else { return }
+        if back.revision == tab.revision {
+            picked = back.word
+            draft = back.text
+            inPanel = true
+            tab.pendingWords = 1
+            mark(back.word)
+        } else {
+            tab.pendingWords = 0
+        }
     }
 
     func detachWords() {
-        tab?.pendingWords = 0
+        if let tab, tab.pendingWords > 0, let word = picked {
+            keptWords[ObjectIdentifier(tab)] = (WeakTab(tab: tab), word, draft, tab.revision)
+        } else {
+            tab?.pendingWords = 0
+        }
         viewWatch?.stop()
         viewWatch = nil
         shown = [:]
@@ -162,24 +177,15 @@ extension OcrModel {
 
     // A word typed and not yet in the file goes in before the file is saved, undone or closed. A signed file keeps it in the
     // panel's box, as Measure keeps its readings: nothing is written without the user's answer, and the close question names it.
+    // The word stays with its tab when another tab or tool is shown, so moving on loses nothing.
     public func handIn() -> Bool {
-        settle(keepSigned: true)
-        return true
-    }
-
-    // The panel loses the word when another tab or tool takes its place, so a signed file asks before that and the switch waits.
-    public func handInOnSwitch() -> Bool {
-        settle(keepSigned: false)
-        return !waiting
-    }
-
-    private func settle(keepSigned: Bool) {
         waiting = false
-        keepsSigned = keepSigned
+        keepsSigned = true
         field?.finish()
         applyDraft()
         keepsSigned = false
         tab?.pendingWords = waiting ? 1 : 0
+        return true
     }
 
     private func apply(_ word: WordRef, _ text: String) {
