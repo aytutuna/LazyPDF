@@ -69,6 +69,13 @@ public final class AccessibilityModel: ToolPanelModel {
     /// The figures the drafts were typed against, to tell whether a tag change touched one.
     @ObservationIgnored var checkedFigures: [FigureRow] = []
 
+    /// What a tab keeps while another tab or tool is shown: its drafts and the figures they were typed against.
+    @ObservationIgnored var kept: [ObjectIdentifier: (tab: WeakTab, drafts: [Int: String], checked: [FigureRow])] = [:]
+
+    struct WeakTab {
+        weak var tab: DocumentTab?
+    }
+
     /// The figure to show when the list is built: the one that was shown, or the next one after a save.
     @ObservationIgnored var figureNumber = 0
 
@@ -104,6 +111,8 @@ public final class AccessibilityModel: ToolPanelModel {
         treeStale = true
         readStale = true
         view = .check
+        kept = kept.filter { $0.value.tab.tab != nil }
+        if let back = kept.removeValue(forKey: ObjectIdentifier(tab)) { (drafts, checkedFigures) = (back.drafts, back.checked) }
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.fileChanged() })
         refresh()
     }
@@ -120,6 +129,7 @@ public final class AccessibilityModel: ToolPanelModel {
         readIndex = nil
         report = nil
         dropTree()
+        if let tab, !drafts.isEmpty { kept[ObjectIdentifier(tab)] = (WeakTab(tab: tab), drafts, checkedFigures) }
         drafts = [:]
         checkedFigures = []
         figureNumber = 0

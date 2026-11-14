@@ -344,6 +344,75 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertEqual(rig.viewer.sent.last, 0)
     }
 
+    func test_handingInWritesWhatWasTypedForEveryFigureAsOneStep() async throws {
+        let (model, rig) = try await attached(try pictures(2))
+        await tag(model, rig)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.typeAlt("First")
+        model.selectFigure(2)
+        model.typeAlt("Second")
+        let steps = rig.tab.session.undoLabel
+
+        XCTAssertTrue(model.handIn())
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Figure description")
+        XCTAssertNotEqual(steps, "Figure description")
+        XCTAssertTrue(try rig.tab.session.undo())
+        XCTAssertEqual(rig.tab.session.undoLabel, steps)
+        XCTAssertTrue(model.drafts.isEmpty)
+    }
+
+    func test_handingInWithNothingTypedChangesNothing() async throws {
+        let (model, rig) = try await attached(try pictures(2))
+        await tag(model, rig)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        let before = rig.tab.session.undoLabel
+
+        XCTAssertTrue(model.handIn())
+
+        XCTAssertEqual(rig.tab.session.undoLabel, before)
+    }
+
+    func test_whatWasTypedForAFigureComesBackWhenTheTabIsShownAgain() async throws {
+        let (model, rig) = try await attached(try pictures(2))
+        await tag(model, rig)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.typeAlt("Half written")
+
+        model.detach()
+        let other = try ToolRig()
+        other.attach(model)
+        XCTAssertTrue(model.drafts.isEmpty)
+        model.detach()
+        rig.attach(model)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+
+        XCTAssertEqual(model.altText, "Half written")
+        XCTAssertTrue(model.handIn())
+        XCTAssertEqual(rig.tab.session.undoLabel, "Figure description")
+    }
+
+    func test_aSignedFileAsksBeforeTheTypedDescriptionIsHandedIn() async throws {
+        let (model, rig) = try await attached(try signedPictures())
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.typeAlt("A grey square.")
+
+        XCTAssertFalse(model.handIn())
+
+        XCTAssertEqual(rig.host.notices.last?.title, "Check before going on")
+        XCTAssertFalse(rig.tab.session.canUndo)
+        XCTAssertEqual(model.drafts.count, 1)
+
+        rig.host.notices[0].action?.run()
+        XCTAssertEqual(rig.tab.session.undoLabel, "Figure description")
+        XCTAssertTrue(model.drafts.isEmpty)
+    }
+
     private func removeFigure(_ tab: DocumentTab, _ index: Int) throws {
         let tree = try XCTUnwrap(StructureTree.read(tab.document))
         tree.remove(FigureFinder.list(tree)[index].element)
