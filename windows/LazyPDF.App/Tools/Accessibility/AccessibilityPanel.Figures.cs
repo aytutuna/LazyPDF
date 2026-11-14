@@ -182,6 +182,11 @@ public partial class AccessibilityPanel
             host.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The tags of this file are too large to change here.")));
             return false;
         }
+        catch
+        {
+            tab.Session.Discard();
+            throw;
+        }
     }
 
     private void NextBare_Click(object sender, RoutedEventArgs e)

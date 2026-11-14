@@ -149,6 +149,9 @@ extension AccessibilityModel {
             try? tab.session.discard()
             host.showProblem(Problem(L10n.t("Description not saved"), L10n.t("The tags of this file are too large to change here.")))
             return false
+        } catch {
+            try? tab.session.discard()
+            throw error
         }
     }
 
