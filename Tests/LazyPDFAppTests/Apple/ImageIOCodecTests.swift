@@ -148,7 +148,7 @@ final class ImageIOCodecTests: XCTestCase {
 
         XCTAssertEqual(image.width, 32)
         XCTAssertEqual(image.height, 32)
-        XCTAssertNil(codec.decode(jpeg, "JBIG2Decode"))
+        XCTAssertNil(codec.decode(jpeg, "CCITTFaxDecode"))
     }
 
     func test_whatIsNotAPictureGivesNil() {

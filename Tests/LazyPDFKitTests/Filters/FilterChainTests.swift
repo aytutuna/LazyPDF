@@ -69,7 +69,7 @@ final class FilterChainTests: XCTestCase {
     }
 
     func test_codecIsReportedWithItsInput() throws {
-        for (filter, codec) in [("DCTDecode", "DCTDecode"), ("DCT", "DCTDecode"), ("JPXDecode", "JPXDecode"), ("JBIG2Decode", "JBIG2Decode")] {
+        for (filter, codec) in [("DCTDecode", "DCTDecode"), ("DCT", "DCTDecode"), ("JPXDecode", "JPXDecode")] {
             let result = try PdfFilters.decodeToCodec(plain, PdfName(filter), nil)
             XCTAssertEqual(result.codec, codec, filter)
             XCTAssertEqual(result.data, plain, filter)

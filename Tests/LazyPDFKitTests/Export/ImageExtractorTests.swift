@@ -8,6 +8,14 @@ final class ImageExtractorTests: XCTestCase {
 
     private let rgb2x2: [UInt8] = [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 0]
 
+    // 2 by 2 pixels, black on the diagonal.
+    private func jbig2Picture() -> [UInt8] {
+        let bm = Bm(2, 2)
+        bm[0, 0] = 1
+        bm[1, 1] = 1
+        return Jbig2Segments.generic(bm, 0, false)
+    }
+
     private func open(_ content: String) throws -> PdfDocument {
         let pdf = TestPdf()
         pdf.obj(1, "<</Type /Catalog /Pages 2 0 R>>")
@@ -18,7 +26,7 @@ final class ImageExtractorTests: XCTestCase {
         pdf.stream(11, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask 12 0 R", TestPdf.deflate(rgb2x2))
         pdf.stream(12, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode", TestPdf.deflate([0, 85, 170, 255]))
         pdf.stream(13, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode", [1, 2, 3])
-        pdf.stream(14, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode", [1, 2, 3])
+        pdf.stream(14, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode", jbig2Picture())
         pdf.stream(15, "/Type /XObject /Subtype /Image /Height 2 /ColorSpace /DeviceRGB /BitsPerComponent 8", rgb2x2)
         pdf.stream(16, "/Type /XObject /Subtype /Image /Width 8 /Height 6 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /SMask 12 0 R", ExportKit.jpeg)
         pdf.stream(17, "/Type /XObject /Subtype /Form /BBox [0 0 100 100] /Resources <<" + fonts + ">>", "q 50 0 0 50 0 0 cm /Alpha Do Q")
@@ -64,9 +72,22 @@ final class ImageExtractorTests: XCTestCase {
         XCTAssertEqual(found.map { $0.name }, ["Jpg", "Alpha"])
     }
 
-    func test_withoutACodecJpeg2000AndJbig2AreLeftOutAndABrokenImageToo() throws {
+    func test_withoutACodecJpeg2000IsLeftOutAndABrokenImageToo() throws {
         let found = try ImageExtractor.extract(open("q /Jpx Do /Jbig Do /Broken Do /Jpg Do Q"), [0])
-        XCTAssertEqual(found.map { $0.name }, ["Jpg"])
+        XCTAssertEqual(found.map { $0.name }, ["Jbig", "Jpg"])
+    }
+
+    func test_aJbig2ImageIsDecodedByTheFilterWithoutACodec() throws {
+        let found = try ImageExtractor.extract(open("q /Jbig Do Q"), [0])
+        XCTAssertEqual(found.count, 1)
+        let image = found[0].image
+        XCTAssertFalse(image.isJpeg)
+        let (w, h, rgba) = try ExportKit.pngDecode(image.data)
+        XCTAssertEqual([w, h], [2, 2])
+        XCTAssertEqual(Array(rgba[0..<4]), [0, 0, 0, 255])
+        XCTAssertEqual(Array(rgba[4..<8]), [255, 255, 255, 255])
+        XCTAssertEqual(Array(rgba[8..<12]), [255, 255, 255, 255])
+        XCTAssertEqual(Array(rgba[12..<16]), [0, 0, 0, 255])
     }
 
     func test_aCodecDecodesThoseAndAJpegWithAMaskGoesThroughIt() throws {
@@ -74,7 +95,7 @@ final class ImageExtractorTests: XCTestCase {
         let found = try ImageExtractor.extract(open("q /Jpx Do /Jbig Do /Masked Do Q"), [0], codec)
         XCTAssertEqual(found.map { $0.name }, ["Jpx", "Jbig", "Masked"])
         for f in found { XCTAssertFalse(f.image.isJpeg) }
-        XCTAssertEqual(codec.decoded, ["JPXDecode", "JBIG2Decode", "DCTDecode"])
+        XCTAssertEqual(codec.decoded, ["JPXDecode", "DCTDecode"])
         let masked = try ExportKit.pngDecode(found[2].image.data)
         XCTAssertEqual(masked.rgba.enumerated().filter { $0.offset % 4 == 3 }.prefix(4).map { $0.element }, [0, 85, 170, 255])
     }

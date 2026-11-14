@@ -114,14 +114,21 @@ final class ExportImageMergeTests: XCTestCase {
         XCTAssertEqual(try rgba(extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], codec)), [10, 20, 30, 255])
     }
 
-    func test_aColourKeyOnABilevelCodecImageMatchesItsOwnDepth() throws {
-        let png = try extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode /Mask [1 1]", [1], ExportPixelCodec(2, 0, 255))
+    // The first pixel black (sample 0 once the filter has made it an image), the second white.
+    private func blackThenWhite() -> [UInt8] {
+        let bm = Bm(2, 1)
+        bm[0, 0] = 1
+        return Jbig2Segments.generic(bm, 0, false)
+    }
+
+    func test_aColourKeyOnABilevelJbig2ImageMatchesItsOwnDepth() throws {
+        let png = try extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode /Mask [1 1]", blackThenWhite(), nil)
         XCTAssertEqual(alphas(try rgba(png)), [255, 0])
     }
 
-    func test_anIndexedBilevelCodecImageReadsItsPaletteByTheStoredSample() throws {
-        let png = try extract("/Width 2 /Height 1 /ColorSpace [/Indexed /DeviceRGB 3 <000000 FF0000 00FF00 0000FF>] /BitsPerComponent 1 /Filter /JBIG2Decode", [1],
-                              ExportPixelCodec(2, 0, 255))
+    func test_anIndexedBilevelJbig2ImageReadsItsPaletteByTheStoredSample() throws {
+        let png = try extract("/Width 2 /Height 1 /ColorSpace [/Indexed /DeviceRGB 3 <000000 FF0000 00FF00 0000FF>] /BitsPerComponent 1 /Filter /JBIG2Decode", blackThenWhite(),
+                              nil)
         XCTAssertEqual(try rgba(png), [0, 0, 0, 255, 255, 0, 0, 255])
     }
 

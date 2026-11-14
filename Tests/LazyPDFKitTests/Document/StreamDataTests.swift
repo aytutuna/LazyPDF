@@ -45,7 +45,7 @@ final class StreamDataTests: XCTestCase {
     }
 
     func test_unsupportedFilterIsAReadException() throws {
-        let pdf = TestPdf.withPages(1).stream(9, "/Filter /JBIG2Decode", "x")
+        let pdf = TestPdf.withPages(1).stream(9, "/Filter /JPXDecode", "x")
         let document = try open(pdf)
         assertReadFails(try document.data(try XCTUnwrap(document.get(9) as? PdfStream)), .unsupported)
     }
