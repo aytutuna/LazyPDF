@@ -66,6 +66,37 @@ internal static class Ccitt
         return output.ToArray();
     }
 
+    /// <summary>
+    /// The Group 4 data of a JBIG2 MMR bitmap (T.88 6.2.6): <paramref name="rows"/> rows of packed pixels, black 1.
+    /// A bad code ends the rows and the rest is white. <paramref name="used"/> is how many bytes were read, an EOFB
+    /// after the last row and the padding up to a byte included, for planes that follow each other in one stream.
+    /// </summary>
+    public static byte[] DecodeMmr(byte[] data, int columns, int rows, out int used)
+    {
+        int stride = (columns + 7) / 8;
+        var output = new byte[(long)rows * stride];
+        var rowBytes = new byte[stride];
+        var reference = new int[columns + 2];
+        var coding = new int[columns + 2];
+        int referenceCount = 0;
+        var bits = new BitReader(data);
+        for (int done = 0; done < rows && !bits.AtEnd; done++)
+        {
+            int count = 0;
+            bool ok = DecodeRow2D(ref bits, reference, referenceCount, coding, ref count, columns);
+            Array.Clear(rowBytes);
+            for (int i = 0; i < count; i += 2) FillBlack(rowBytes, coding[i], i + 1 < count ? coding[i + 1] : columns, true);
+            rowBytes.CopyTo(output, (long)done * stride);
+            (reference, coding) = (coding, reference);
+            referenceCount = count;
+            if (!ok) break;
+        }
+        if (!bits.AtEnd && bits.Peek(24) == 0x001001) bits.Skip(24);
+        bits.Align();
+        used = (int)Math.Min(data.Length, bits.Position / 8);
+        return output;
+    }
+
     /// <summary>One-dimensional row: alternating white and black runs. The changing elements go to <paramref name="changes"/>.</summary>
     private static bool DecodeRow1D(ref BitReader bits, int[] changes, ref int count, int columns)
     {
