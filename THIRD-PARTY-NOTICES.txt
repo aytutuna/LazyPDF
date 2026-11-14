@@ -90,10 +90,10 @@ pdf.js (https://github.com/mozilla/pdf.js)
     Copyright 2012 Mozilla Foundation. Apache License 2.0.
     The JBIG2 decoder of Lazy PDF (LazyPDF.Core/Filters/Jbig2.cs, Jbig2Arith.cs,
     Jbig2Generic.cs, Jbig2Halftone.cs, Jbig2Huffman.cs, Jbig2Symbols.cs and
-    Jbig2Text.cs, and the Swift port of them in LazyPDFKit) is ported from
+    Jbig2Text.cs) is ported from
     pdf.js src/core/jbig2.js and src/core/arithmetic_decoder.js, version
-    4.10.38, and changed: it is written in C# and Swift, reads Group 4 data
-    through the engine's own CCITT decoder, takes the template bits in the
+    4.10.38, and changed: it is written in C#, reads Group 4 data
+    through the engine's own CCITT decoder, takes the generic region template bits in the
     order of ITU-T T.88, and adds the parts pdf.js lacks (Huffman coded
     symbol refinement, skipped halftone cells, typical prediction of
     refinement rows, the other combination operators, refinement region
