@@ -52,6 +52,8 @@ internal sealed class Jbig2Decoder(long maxSize)
     private byte _defaultPixel;
 
     private readonly Dictionary<long, Jbig2Bitmap> _intermediate = [];
+    private readonly Dictionary<long, Jbig2SymbolDictionary> _dictionaries = [];
+    private readonly Dictionary<long, Jbig2Huffman> _tables = [];
 
     private readonly record struct Segment(long Number, int Type, long[] Referred, long Length, int HeaderEnd, bool UnknownLength);
 
@@ -159,8 +161,20 @@ internal sealed class Jbig2Decoder(long maxSize)
     {
         switch (segment.Type)
         {
+            case 0:
+                SymbolDictionary(segment, data, start, end);
+                break;
+            case 4 or 6 or 7:
+                TextRegion(segment, data, start, end);
+                break;
             case 36 or 38 or 39:
                 GenericRegion(segment, data, start, end);
+                break;
+            case 40 or 42 or 43:
+                RefinementRegion(segment, data, start, end);
+                break;
+            case 53:
+                _tables[segment.Number] = Jbig2Huffman.Custom(data, start, end);
                 break;
             case 48:
                 PageInformation(data, start, end);
@@ -170,6 +184,230 @@ internal sealed class Jbig2Decoder(long maxSize)
                 break;
             // Profiles, extensions, end of page and file, and types this reader does not know carry nothing to draw.
         }
+    }
+
+    /// <summary>The symbols the referred dictionaries export, one after the other.</summary>
+    private List<Jbig2Bitmap> InputSymbols(Segment segment)
+    {
+        var symbols = new List<Jbig2Bitmap>();
+        foreach (long number in segment.Referred)
+        {
+            if (!_dictionaries.TryGetValue(number, out var dictionary)) continue;
+            symbols.AddRange(dictionary.Exported);
+            if (symbols.Count > Jbig2Symbols.MaxSymbols) throw PdfReadException.Damaged("A JBIG2 segment refers to too many symbols.");
+        }
+        return symbols;
+    }
+
+    /// <summary>The tables segments a segment refers to, in order, for the selections that name a custom table.</summary>
+    private sealed class CustomTables(List<Jbig2Huffman> tables)
+    {
+        private int _next;
+
+        public Jbig2Huffman Next() =>
+            _next < tables.Count ? tables[_next++] : throw PdfReadException.Damaged("A JBIG2 segment names a custom table it does not refer to.");
+    }
+
+    private CustomTables TablesOf(Segment segment)
+    {
+        var tables = new List<Jbig2Huffman>();
+        foreach (long number in segment.Referred)
+        {
+            if (_tables.TryGetValue(number, out var table)) tables.Add(table);
+        }
+        return new CustomTables(tables);
+    }
+
+    // Selector 3 is a custom table; the standard ones are numbered from <first>.
+    private static Jbig2Huffman Select(int selector, int first, int standardCount, CustomTables custom)
+    {
+        if (selector < standardCount) return Jbig2Huffman.Standard(first + selector);
+        if (selector == 3) return custom.Next();
+        throw PdfReadException.Damaged("A JBIG2 segment has a bad Huffman table selection.");
+    }
+
+    private void SymbolDictionary(Segment segment, byte[] data, int start, int end)
+    {
+        int position = start;
+        int flags = U16(data, position);
+        position += 2;
+        var p = new Jbig2SymbolParams
+        {
+            Huffman = (flags & 1) != 0,
+            Refine = (flags & 2) != 0,
+            Template = (flags >> 10) & 3,
+            RefinementTemplate = (flags >> 12) & 1,
+        };
+        if (!p.Huffman) p.At = ReadAt(data, ref position, end, p.Template == 0 ? 4 : 1);
+        if (p.Refine && p.RefinementTemplate == 0) p.RefinementAt = ReadAt(data, ref position, end, 2);
+        long exported = U32(data, position), added = U32(data, position + 4);
+        position += 8;
+        if (exported > Jbig2Symbols.MaxSymbols || added > Jbig2Symbols.MaxSymbols) throw PdfReadException.Damaged("A JBIG2 symbol dictionary has too many symbols.");
+        p.ExportedCount = (int)exported;
+        p.NewCount = (int)added;
+        p.Input = InputSymbols(segment);
+
+        if (p.Huffman)
+        {
+            var custom = TablesOf(segment);
+            p.DeltaHeight = Select((flags >> 2) & 3, 4, 2, custom);
+            p.DeltaWidth = Select((flags >> 4) & 3, 2, 2, custom);
+            p.BitmapSize = (flags & 0x40) != 0 ? custom.Next() : Jbig2Huffman.Standard(1);
+            p.AggregateInstances = (flags & 0x80) != 0 ? custom.Next() : Jbig2Huffman.Standard(1);
+        }
+
+        // 7.4.2.2: the contexts a dictionary left, if it kept them, are where this one starts.
+        byte[]? gb = null, gr = null;
+        if ((flags & 0x100) != 0)
+        {
+            Jbig2SymbolDictionary? last = null;
+            foreach (long number in segment.Referred)
+            {
+                if (_dictionaries.TryGetValue(number, out var d)) last = d;
+            }
+            if (last is null) throw PdfReadException.Damaged("A JBIG2 symbol dictionary reuses contexts of a dictionary it does not refer to.");
+            gb = last.Gb;
+            gr = last.Gr;
+        }
+        Jbig2Arith? arith = null;
+        Jbig2Reader? reader = null;
+        if (p.Huffman)
+        {
+            reader = new Jbig2Reader(data, position, end);
+            gr?.CopyTo(p.RefineContexts, 0);
+        }
+        else
+        {
+            arith = new Jbig2Arith(data, position, end);
+            if (gb is not null) arith.Gb = (byte[])gb.Clone();
+            if (gr is not null) arith.Gr = (byte[])gr.Clone();
+        }
+        var symbols = Jbig2Symbols.Decode(_budget, arith, reader, p);
+        _dictionaries[segment.Number] = new Jbig2SymbolDictionary(symbols, arith?.Gb, arith?.Gr ?? p.RefineContexts);
+    }
+
+    private void TextRegion(Segment segment, byte[] data, int start, int end)
+    {
+        var region = ReadRegion(data, start, end);
+        int position = start + 17;
+        int flags = U16(data, position);
+        position += 2;
+        var p = new Jbig2TextParams
+        {
+            Huffman = (flags & 1) != 0,
+            Refine = (flags & 2) != 0,
+            LogStripSize = (flags >> 2) & 3,
+            ReferenceCorner = (flags >> 4) & 3,
+            Transposed = (flags & 0x40) != 0,
+            CombinationOperator = (flags >> 7) & 3,
+            DefaultPixel = (flags >> 9) & 1,
+            // A signed five bit number.
+            DsOffset = ((flags >> 10) & 0x1f) - ((flags & 0x4000) != 0 ? 32 : 0),
+            RefinementTemplate = (flags >> 15) & 1,
+            Width = region.Width,
+            Height = region.Height,
+        };
+        int huffmanFlags = 0;
+        if (p.Huffman)
+        {
+            huffmanFlags = U16(data, position);
+            position += 2;
+        }
+        if (p.Refine && p.RefinementTemplate == 0) p.RefinementAt = ReadAt(data, ref position, end, 2);
+        long instances = U32(data, position);
+        position += 4;
+        if (instances > Jbig2Text.MaxInstances) throw PdfReadException.Damaged("A JBIG2 text region has too many symbol instances.");
+        p.Instances = (int)instances;
+        p.Symbols = InputSymbols(segment);
+        p.SymbolCodeLength = Jbig2Text.CodeLength(p.Symbols.Count);
+
+        Jbig2Arith? arith = null;
+        Jbig2Reader? reader = null;
+        if (p.Huffman)
+        {
+            var custom = TablesOf(segment);
+            reader = new Jbig2Reader(data, position, end);
+            p.SymbolIds = SymbolIdTable(reader, p.Symbols.Count);
+            p.FirstS = Select(huffmanFlags & 3, 6, 2, custom);
+            p.DeltaS = Select((huffmanFlags >> 2) & 3, 8, 3, custom);
+            p.DeltaT = Select((huffmanFlags >> 4) & 3, 11, 3, custom);
+            p.RefineWidth = Select((huffmanFlags >> 6) & 3, 14, 2, custom);
+            p.RefineHeight = Select((huffmanFlags >> 8) & 3, 14, 2, custom);
+            p.RefineX = Select((huffmanFlags >> 10) & 3, 14, 2, custom);
+            p.RefineY = Select((huffmanFlags >> 12) & 3, 14, 2, custom);
+            p.RefineSize = (huffmanFlags & 0x4000) != 0 ? custom.Next() : Jbig2Huffman.Standard(1);
+        }
+        else
+        {
+            arith = new Jbig2Arith(data, position, end);
+        }
+        var bitmap = new Jbig2Text(_budget, arith, reader, p, new byte[1 << 13]).Decode();
+        Store(segment, region, bitmap);
+    }
+
+    /// <summary>7.4.3.1.7: the code lengths of the symbols, themselves coded with a table of 35 run codes.</summary>
+    private static Jbig2Huffman SymbolIdTable(Jbig2Reader reader, int count)
+    {
+        var runLengths = new int[35];
+        for (int i = 0; i < runLengths.Length; i++) runLengths[i] = (int)reader.ReadBits(4);
+        var runCodes = Jbig2Huffman.ForLengths(runLengths);
+        var lengths = new int[count];
+        for (int i = 0; i < count;)
+        {
+            if (!runCodes.Decode(reader, out int code)) throw PdfReadException.Damaged("A JBIG2 symbol code table has an out-of-band value.");
+            int repeat, length;
+            switch (code)
+            {
+                case < 32:
+                    lengths[i++] = code;
+                    continue;
+                case 32:
+                    if (i == 0) throw PdfReadException.Damaged("A JBIG2 symbol code table repeats nothing.");
+                    repeat = (int)reader.ReadBits(2) + 3;
+                    length = lengths[i - 1];
+                    break;
+                case 33:
+                    repeat = (int)reader.ReadBits(3) + 3;
+                    length = 0;
+                    break;
+                default:
+                    repeat = (int)reader.ReadBits(7) + 11;
+                    length = 0;
+                    break;
+            }
+            if (repeat > count - i) throw PdfReadException.Damaged("A JBIG2 symbol code table is too long.");
+            for (int j = 0; j < repeat; j++) lengths[i++] = length;
+        }
+        reader.ByteAlign();
+        return Jbig2Huffman.ForLengths(lengths);
+    }
+
+    private void RefinementRegion(Segment segment, byte[] data, int start, int end)
+    {
+        var region = ReadRegion(data, start, end);
+        int position = start + 17;
+        int flags = U8(data, position++);
+        int template = flags & 1;
+        int[] at = template == 0 ? ReadAt(data, ref position, end, 2) : [-1, -1, -1, -1];
+        Jbig2Bitmap? reference = null;
+        foreach (long number in segment.Referred)
+        {
+            if (_intermediate.TryGetValue(number, out var found)) reference = found;
+        }
+        if (reference is null)
+        {
+            // Nothing referred to: the page under the region is what gets refined.
+            if (_page is null) throw PdfReadException.Damaged("A JBIG2 refinement region comes before the page information.");
+            reference = new Jbig2Bitmap(region.Width, region.Height, _budget);
+            reference.Compose(_page, -region.X, -region.Y, 4);
+        }
+        else if (reference.Width != region.Width || reference.Height != region.Height)
+        {
+            throw PdfReadException.Damaged("A JBIG2 refinement region is not the size of the region it refines.");
+        }
+        var arith = new Jbig2Arith(data, position, end);
+        var bitmap = Jbig2Generic.Refine(_budget, arith, region.Width, region.Height, template, reference, 0, 0, (flags & 2) != 0, at);
+        Store(segment, region, bitmap);
     }
 
     private static Region ReadRegion(byte[] data, int start, int end)

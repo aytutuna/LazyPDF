@@ -9,6 +9,9 @@ internal sealed class Jbig2Budget
     /// <summary>The pixels of the symbols and patterns that stay around for later segments.</summary>
     private long _kept = 1L << 26;
 
+    /// <summary>The pixels that symbols and refinements may be drawn or coded over, all together.</summary>
+    private long _work = 1L << 31;
+
     public static PdfReadException TooBig() => new(PdfReadProblem.Unsupported, "A JBIG2 image needs too much memory.");
 
     public void Charge(long width, long height)
@@ -16,6 +19,12 @@ internal sealed class Jbig2Budget
         long pixels = width * height;
         if (width < 0 || height < 0 || pixels > PdfImageSamples.MaxPixels || pixels > _total) throw TooBig();
         _total -= pixels;
+    }
+
+    public void Work(long pixels)
+    {
+        if (pixels > _work) throw TooBig();
+        _work -= pixels;
     }
 
     public void Keep(long pixels)
