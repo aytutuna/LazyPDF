@@ -4,7 +4,7 @@ import Foundation
 // ImageIO on Apple).
 
 public protocol ImageCodec: AnyObject {
-    /// Pixels of a stream's data under `codec`: DCTDecode, JPXDecode or JBIG2Decode. Nil when the system cannot read it.
+    /// Pixels of a stream's data under `codec`: DCTDecode or JPXDecode. Nil when the system cannot read it.
     func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage?
 
     /// Every frame of a picture file (JPEG, PNG, TIFF, BMP, GIF, HEIC), or nil for anything else. A frame carries the resolution the file stores, in dots per inch. A frame with too many pixels comes back as a placeholder with its size and no pixels (`tooBig`).
