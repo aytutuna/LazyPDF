@@ -42,7 +42,7 @@ public sealed partial class PdfDocument
 
     internal byte[] Data(PdfStream stream, long maxSize, bool strict = false)
     {
-        var (filter, parameters, _) = DecodeSpec(stream, decoding: true);
+        var (filter, parameters, _) = DecodeSpec(stream, decoding: true, maxSize);
         return PdfFilters.Decode(RawData(stream), filter, parameters, maxSize, strict);
     }
 
@@ -64,11 +64,11 @@ public sealed partial class PdfDocument
     /// With <paramref name="decoding"/> a /JBIG2Globals stream comes with its decoded data in memory, which is what the
     /// filter reads; a caller that writes the parameters back leaves it off and gets the stream as the file has it.
     /// </summary>
-    internal (PdfObject? Filter, PdfObject? Parameters, bool Crypt) DecodeSpec(PdfStream stream, bool decoding = false)
+    internal (PdfObject? Filter, PdfObject? Parameters, bool Crypt) DecodeSpec(PdfStream stream, bool decoding = false, long maxSize = PdfFilters.DefaultMaxSize)
     {
         var filter = Flatten(stream.Dictionary["Filter"], 2);
         var parameters = Flatten(stream.Dictionary["DecodeParms"], 3);
-        if (decoding) parameters = WithImageSize(filter, WithGlobals(parameters), stream.Dictionary);
+        if (decoding) parameters = ForJbig2(filter, parameters, stream.Dictionary, maxSize);
         if (_security is null) return (filter, parameters, false);
         switch (filter)
         {
@@ -83,8 +83,9 @@ public sealed partial class PdfDocument
         }
     }
 
-    // The size of the image goes to its JBIG2 stage, which fits the page to it.
-    private PdfObject? WithImageSize(PdfObject? filter, PdfObject? parameters, PdfDictionary image)
+    // The JBIG2 stage of an image gets what it needs besides its own parameters: the decoded globals, and the size of the image,
+    // which the stage fits its page to. A stream with no such stage is left alone, whatever its parameters hold.
+    private PdfObject? ForJbig2(PdfObject? filter, PdfObject? parameters, PdfDictionary image, long maxSize)
     {
         List<PdfObject> names = filter switch
         {
@@ -93,8 +94,7 @@ public sealed partial class PdfDocument
             _ => [],
         };
         int at = names.FindIndex(n => n is PdfName { Value: "JBIG2Decode" });
-        long width = Integer(image, "Width") ?? 0, height = Integer(image, "Height") ?? 0;
-        if (at < 0 || width < 1 || height < 1 || width > int.MaxValue || height > int.MaxValue) return parameters;
+        if (at < 0) return parameters;
         var each = new List<PdfObject>();
         switch (parameters)
         {
@@ -102,36 +102,34 @@ public sealed partial class PdfDocument
             case PdfDictionary single: each.Add(single); break;
         }
         while (each.Count <= at) each.Add(PdfNull.Instance);
-        var sized = (each[at] as PdfDictionary)?.Copy() ?? new PdfDictionary();
-        sized["Width"] = new PdfNumber(width);
-        sized["Height"] = new PdfNumber(height);
-        each[at] = sized;
+        var stage = (each[at] as PdfDictionary)?.Copy() ?? new PdfDictionary();
+        if (stage["JBIG2Globals"] is PdfStream globals) stage["JBIG2Globals"] = new PdfStream(new PdfDictionary(), GlobalsData(globals, maxSize));
+        long width = Integer(image, "Width") ?? 0, height = Integer(image, "Height") ?? 0;
+        if (width is >= 1 and <= int.MaxValue && height is >= 1 and <= int.MaxValue)
+        {
+            stage["Width"] = new PdfNumber(width);
+            stage["Height"] = new PdfNumber(height);
+        }
+        each[at] = stage;
         return new PdfArray(each);
     }
 
-    private PdfObject? WithGlobals(PdfObject? parameters) => parameters switch
-    {
-        PdfDictionary dictionary => GlobalsIn(dictionary),
-        PdfArray array => new PdfArray([.. array.Items.Select(item => item is PdfDictionary d ? GlobalsIn(d) : item)]),
-        _ => parameters,
-    };
+    private sealed record GlobalsEntry(byte[]? Source, byte[] Decoded);
 
-    private PdfDictionary GlobalsIn(PdfDictionary parameters)
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<PdfStream, GlobalsEntry> _globals = [];
+
+    /// <summary>
+    /// The data of a globals stream, decoded once for every image that uses it. Its own filters are read without any globals
+    /// of theirs (a JBIG2 stage on it is damage), so that streams that name each other cannot send this round in circles.
+    /// </summary>
+    private byte[] GlobalsData(PdfStream globals, long maxSize)
     {
-        if (parameters["JBIG2Globals"] is not PdfStream globals) return parameters;
-        // Damaged globals leave the image to decode without them.
-        byte[] data;
-        try
-        {
-            data = Data(globals);
-        }
-        catch (PdfReadException)
-        {
-            data = [];
-        }
-        var copy = parameters.Copy();
-        copy["JBIG2Globals"] = new PdfStream(new PdfDictionary(), data);
-        return copy;
+        if (_globals.TryGetValue(globals, out var known) && ReferenceEquals(known.Source, globals.Data) && known.Decoded.Length <= maxSize) return known.Decoded;
+        var (filter, parameters, _) = DecodeSpec(globals);
+        if (PdfFilters.Uses(filter, "JBIG2Decode")) throw PdfReadException.Damaged("A JBIG2 globals stream is JBIG2 coded.");
+        byte[] data = PdfFilters.Decode(RawData(globals), filter, parameters, maxSize);
+        _globals.AddOrUpdate(globals, new GlobalsEntry(globals.Data, data));
+        return data;
     }
 
     private int StreamLength(PdfStream stream, int start)
