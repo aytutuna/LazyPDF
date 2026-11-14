@@ -189,14 +189,28 @@ public enum TextSearch {
             }
             var result: [SearchMatch] = []
             var end = -1
+            // The search with line-end hyphens dropped finds a copy of every other hit, which would be replaced twice.
+            let seen: Set<HitKey> = all ? Set(found.filter { $0.order == 0 }.map(key)) : []
             for hit in found {
                 let range = hit.range
+                if all && hit.order == 1 && seen.contains(key(hit)) { continue }
                 if !all && range.start < end { continue }
                 end = range.end
                 let cut = HitCut(order: hit.order, index: hit.index, start: hit.searched.startOf(hit.index), end: hit.searched.endOf(hit.index + hit.length - 1))
                 result.append(SearchMatch(page: page.pageIndex, range: range, text: page.getText(range, joinHyphens: true), quads: page.quads(range), source: cut))
             }
             return result
+        }
+
+        private struct HitKey: Hashable {
+            let start: Int
+            let end: Int
+            let from: Int
+            let to: Int
+        }
+
+        private func key(_ h: Hit) -> HitKey {
+            HitKey(start: h.range.start, end: h.range.end, from: h.searched.startOf(h.index), to: h.searched.endOf(h.index + h.length - 1))
         }
 
         private func collect(_ text: SearchText, _ order: Int, _ found: inout [Hit]) throws -> Bool {

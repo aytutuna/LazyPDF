@@ -12,12 +12,15 @@ internal sealed class SearchText
     public string Text = "";
     public int[] Map = [];
 
-    /// <summary>For each character of <see cref="Text"/>, the offset in its page character's own text of the unit it was made from; -1 for a space that was made up.</summary>
-    public int[] Unit = [];
+    /// <summary>For each character of <see cref="Text"/>, the offsets in its page character's own text that a hit on it takes: from the start of the letter it was made from (with the mark it is on, if it is a mark) to the end of that letter and the marks after it. A space the search made up at a line break takes none (0 to 0).</summary>
+    public int[] From = [], To = [];
 
-    public int StartOf(int index) => Math.Max(Unit[index], 0);
+    public int StartOf(int index) => From[index];
 
-    public int EndOf(int index) => Unit[index] < 0 ? 0 : Unit[index] + 1;
+    public int EndOf(int index) => To[index];
+
+    private static bool IsMark(char c) =>
+        CharUnicodeInfo.GetUnicodeCategory(c) is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or UnicodeCategory.EnclosingMark;
 
     /// <summary>The page has a hyphen at a line end that a join would take out.</summary>
     public bool HasHyphenBreak;
@@ -26,17 +29,19 @@ internal sealed class SearchText
     {
         var sb = new StringBuilder(page.Chars.Count + 16);
         var map = new List<int>(page.Chars.Count + 16);
-        var unit = new List<int>(page.Chars.Count + 16);
+        var from = new List<int>(page.Chars.Count + 16);
+        var to = new List<int>(page.Chars.Count + 16);
         bool hyphenBreak = false;
         int line = -1;
         bool soft = false;
 
-        void Space(int index)
+        void Space(int index, int end)
         {
             if (sb.Length == 0 || sb[^1] == ' ') return;
             sb.Append(' ');
             map.Add(index);
-            unit.Add(-1);
+            from.Add(0);
+            to.Add(end);
         }
 
         foreach (var c in page.Chars)
@@ -56,12 +61,13 @@ internal sealed class SearchText
                         {
                             sb.Length--;
                             map.RemoveAt(map.Count - 1);
-                            unit.RemoveAt(unit.Count - 1);
+                            from.RemoveAt(from.Count - 1);
+                            to.RemoveAt(to.Count - 1);
                         }
                     }
                     else
                     {
-                        Space(c.Index);
+                        Space(c.Index, 0);
                     }
                 }
                 line = c.Line;
@@ -69,7 +75,7 @@ internal sealed class SearchText
             }
             if (c.IsSpace)
             {
-                Space(c.Index);
+                Space(c.Index, 1);
                 continue;
             }
             if (c.Text == "\u00AD")
@@ -84,11 +90,15 @@ internal sealed class SearchText
                 {
                     sb.Append(f);
                     map.Add(c.Index);
-                    unit.Add(u);
+                    int start = u, end = u + 1;
+                    while (start > 0 && IsMark(c.Text[start])) start--;
+                    while (end < c.Text.Length && IsMark(c.Text[end])) end++;
+                    from.Add(start);
+                    to.Add(end);
                 }
             }
         }
-        return new SearchText { Text = sb.ToString(), Map = [.. map], Unit = [.. unit], HasHyphenBreak = hyphenBreak };
+        return new SearchText { Text = sb.ToString(), Map = [.. map], From = [.. from], To = [.. to], HasHyphenBreak = hyphenBreak };
     }
 
     private static bool JoinsAfterHyphen(StringBuilder sb, TextChar next) =>

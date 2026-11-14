@@ -109,9 +109,12 @@ public static class TextSearch
             var ordered = all
                 ? found.OrderBy(h => h.Range.Start).ThenBy(h => h.Searched.StartOf(h.Index)).ThenByDescending(h => h.Range.End).ThenBy(h => h.Order).ThenBy(h => h.Index)
                 : found.OrderBy(h => h.Range.Start).ThenByDescending(h => h.Range.End).ThenBy(h => h.Order).ThenBy(h => h.Index);
+            // The search with line-end hyphens dropped finds a copy of every other hit, which would be replaced twice.
+            var seen = all ? found.Where(h => h.Order == 0).Select(Key).ToHashSet() : [];
             foreach (var hit in ordered)
             {
                 var range = hit.Range;
+                if (all && hit.Order == 1 && seen.Contains(Key(hit))) continue;
                 if (!all && range.Start < end) continue;
                 end = range.End;
                 var cut = new HitCut(hit.Order, hit.Index, hit.Searched.StartOf(hit.Index), hit.Searched.EndOf(hit.Index + hit.Length - 1));
@@ -119,6 +122,8 @@ public static class TextSearch
             }
             return result;
         }
+
+        private static (TextRange, int, int) Key(Hit h) => (h.Range, h.Searched.StartOf(h.Index), h.Searched.EndOf(h.Index + h.Length - 1));
 
         private bool Collect(SearchText text, int order, List<Hit> found, CancellationToken cancel)
         {

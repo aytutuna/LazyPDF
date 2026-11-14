@@ -18,10 +18,10 @@ public class ReplaceAllTests
             "/CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 600>>] /ToUnicode 8 0 R>>");
         pdf.Stream(8, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /X def /CMapType 2 def " +
             "1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0041> <005A> <0041> endbfrange endcmap end end");
-        // Codes 1, 2 and 3 are the ligature glyphs ffi, ff and fi.
+        // Codes 1, 2 and 3 are the ligature glyphs ffi, ff and fi; 4 and 5 are e and a with a combining mark.
         pdf.Obj(6, "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 1 /LastChar 255 /Widths [" + string.Join(' ', Enumerable.Repeat(500, 255)) + "] /ToUnicode 9 0 R>>");
         pdf.Stream(9, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Y def /CMapType 2 def " +
-            "1 begincodespacerange <00> <FF> endcodespacerange 3 beginbfchar <01> <006600660069> <02> <00660066> <03> <00660069> endbfchar endcmap end end");
+            "1 begincodespacerange <00> <FF> endcodespacerange 5 beginbfchar <01> <006600660069> <02> <00660066> <03> <00660069> <04> <00650301> <05> <00610300> endbfchar endcmap end end");
         for (int i = 0; i < contents.Length; i++)
         {
             pdf.Obj(10 + i, $"<</Type /Page /Parent 2 0 R /Contents {30 + i} 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R /F4 6 0 R>> /Properties <</MC0 <</MCID 4 /Lang (en) /ActualText (hello world)>>>>>>>>");
@@ -301,5 +301,29 @@ public class ReplaceAllTests
         Assert.Equal(1, report.Replaced);
         Assert.Equal(EditingText.CrossesLines, Assert.Single(report.Failed).Reason);
         Assert.Equal("ab\ncd aZ", Page(session, 0));
+    }
+
+    [Theory]
+    [InlineData("BT /F1 12 Tf 50 700 Td (well-) Tj 0 -14 Td (known fact) Tj ET", "\\s", "_", "well-\nknown_fact")]
+    [InlineData("BT /F1 12 Tf 50 700 Td (well-) Tj 0 -14 Td (known fact) Tj ET", "\\s+", "_", "well-\nknown_fact")]
+    [InlineData("BT /F1 12 Tf 50 700 Td (well-) Tj /F4 12 Tf 0 -14 Td (a\\003 b) Tj ET", "fi\\s", "Z", "well-\naZb")]
+    public void AHitIsReplacedOnceOnAPageWithAJoinedLineEndHyphen(string content, string query, string replacement, string expected)
+    {
+        var session = Open(content);
+        var report = TextReplacer.ReplaceAll(session, query, replacement, new TextSearchOptions(Regex: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Empty(report.Failed);
+        Assert.Equal(expected, Page(session, 0));
+    }
+
+    [Theory]
+    [InlineData("(caf\\004)", "cafe", "tea", true, "tea")]
+    [InlineData("(x\\005y)", "a", "b", false, "xby")]
+    public void AMarkAfterTheLastLetterOfAHitIsReplacedWithIt(string shown, string query, string replacement, bool foldAccents, string expected)
+    {
+        var session = Open($"BT /F4 12 Tf 50 700 Td {shown} Tj ET");
+        var report = TextReplacer.ReplaceAll(session, query, replacement, new TextSearchOptions(FoldDiacritics: foldAccents));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal(expected, Page(session, 0));
     }
 }

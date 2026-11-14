@@ -8,12 +8,23 @@ final class SearchText {
     var text: [UInt16] = []
     var map: [Int] = []
 
-    /// For each unit of `text`, the offset in its page character's own text of the unit it was made from; -1 for a space that was made up.
-    var unit: [Int] = []
+    /// For each unit of `text`, the offsets in its page character's own text that a hit on it takes: from the start of the letter it
+    /// was made from (with the mark it is on, if it is a mark) to the end of that letter and the marks after it. A space the search
+    /// made up at a line break takes none (0 to 0).
+    var from: [Int] = []
+    var to: [Int] = []
 
-    func startOf(_ index: Int) -> Int { Swift.max(unit[index], 0) }
+    func startOf(_ index: Int) -> Int { from[index] }
 
-    func endOf(_ index: Int) -> Int { unit[index] < 0 ? 0 : unit[index] + 1 }
+    func endOf(_ index: Int) -> Int { to[index] }
+
+    private static func isMark(_ unit: UInt16) -> Bool {
+        guard let scalar = Unicode.Scalar(UInt32(unit)) else { return false }
+        switch scalar.properties.generalCategory {
+        case .nonspacingMark, .spacingMark, .enclosingMark: return true
+        default: return false
+        }
+    }
 
     /// The page has a hyphen at a line end that a join would take out.
     var hasHyphenBreak = false
@@ -21,18 +32,20 @@ final class SearchText {
     static func build(_ page: TextPage, _ options: TextSearchOptions, _ dropHyphens: Bool) -> SearchText {
         var sb: [UInt16] = []
         var map: [Int] = []
-        var unit: [Int] = []
+        var from: [Int] = []
+        var to: [Int] = []
         sb.reserveCapacity(page.chars.count + 16)
         map.reserveCapacity(page.chars.count + 16)
         var hyphenBreak = false
         var line = -1
         var soft = false
 
-        func space(_ index: Int) {
+        func space(_ index: Int, _ end: Int) {
             if sb.isEmpty || sb[sb.count - 1] == 0x20 { return }
             sb.append(0x20)
             map.append(index)
-            unit.append(-1)
+            from.append(0)
+            to.append(end)
         }
 
         for c in page.chars {
@@ -45,17 +58,18 @@ final class SearchText {
                         if dropHyphens {
                             sb.removeLast()
                             map.removeLast()
-                            unit.removeLast()
+                            from.removeLast()
+                            to.removeLast()
                         }
                     } else {
-                        space(c.index)
+                        space(c.index, 0)
                     }
                 }
                 line = c.line
                 soft = false
             }
             if c.isSpace {
-                space(c.index)
+                space(c.index, 1)
                 continue
             }
             if c.text == "\u{AD}" {
@@ -68,14 +82,19 @@ final class SearchText {
                 for f in fold(units.count == 1 ? units : [original], options) {
                     sb.append(f)
                     map.append(c.index)
-                    unit.append(u)
+                    var start = u, end = u + 1
+                    while start > 0 && isMark(units[start]) { start -= 1 }
+                    while end < units.count && isMark(units[end]) { end += 1 }
+                    from.append(start)
+                    to.append(end)
                 }
             }
         }
         let result = SearchText()
         result.text = sb
         result.map = map
-        result.unit = unit
+        result.from = from
+        result.to = to
         result.hasHyphenBreak = hyphenBreak
         return result
     }
