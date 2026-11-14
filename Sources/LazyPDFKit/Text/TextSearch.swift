@@ -72,6 +72,12 @@ public enum TextSearch {
         return Hits(cache, try Matcher.create(query, options), first, last, timeouts)
     }
 
+    /// Every hit on a page, several in one character included (hits in a span's replacement text), for a replacement that cuts them out of that text.
+    static func findAll(_ page: TextPage, _ query: String, _ options: TextSearchOptions) throws -> [SearchMatch] {
+        guard let matcher = try Matcher.create(query, options) else { return [] }
+        return try matcher.find(page, nil, all: true)
+    }
+
     public struct Hits: AsyncSequence {
         public typealias Element = SearchMatch
 
@@ -166,7 +172,7 @@ public enum TextSearch {
             return plain.isEmpty ? nil : Matcher(options, plain, nil)
         }
 
-        func find(_ page: TextPage, _ timeouts: SearchTimeouts?) throws -> [SearchMatch] {
+        func find(_ page: TextPage, _ timeouts: SearchTimeouts?, all: Bool = false) throws -> [SearchMatch] {
             var found: [Hit] = []
             let text = SearchText.build(page, options, false)
             var timedOut = try !collect(text, 0, &found)
@@ -174,19 +180,19 @@ public enum TextSearch {
             if timedOut { timeouts?.pages.append(page.pageIndex) }
             found.sort { a, b in
                 if a.range.start != b.range.start { return a.range.start < b.range.start }
+                if all {
+                    let (x, y) = (a.searched.startOf(a.index), b.searched.startOf(b.index))
+                    if x != y { return x < y }
+                }
                 if a.range.end != b.range.end { return b.range.end < a.range.end }
                 return a.order != b.order ? a.order < b.order : a.index < b.index
             }
             var result: [SearchMatch] = []
             var end = -1
-            var last: Hit?
             for hit in found {
                 let range = hit.range
-                // Several hits in the text of one character (a span's replacement text) are all kept.
-                let sameChar = last.map { range == $0.range && range.end == range.start + 1 && hit.order == $0.order && hit.index >= $0.index + $0.length } ?? false
-                if range.start < end && !sameChar { continue }
+                if !all && range.start < end { continue }
                 end = range.end
-                last = hit
                 let cut = HitCut(order: hit.order, index: hit.index, start: hit.searched.startOf(hit.index), end: hit.searched.endOf(hit.index + hit.length - 1))
                 result.append(SearchMatch(page: page.pageIndex, range: range, text: page.getText(range, joinHyphens: true), quads: page.quads(range), source: cut))
             }

@@ -57,23 +57,18 @@ public enum TextReplacer {
         for p in 0..<document.pages.count {
             try Task.checkCancellation()
             let model = PageModel.load(document, p)
-            let matches = try TextSearch.find(model.text, query, options)
+            let matches = try TextSearch.findAll(model.text, query, options)
             if matches.isEmpty { continue }
             let batch = EditBatch(document, model.page, model.scan)
             let builder = TextBuilder(document, batch, fonts)
             let editor = TextEditor(model, batch, builder, fonts)
             let expanded = try expansions(model, query, replacement, options)
             var done: [SearchMatch] = []
-            // Hits in the text of one span share a character, so they are replaced together.
-            var k = 0
-            while k < matches.count {
-                var n = 1
-                while k + n < matches.count && matches[k + n].range == matches[k].range { n += 1 }
-                let group = Array(matches[k..<k + n])
-                k += n
+            for group in clusters(model, matches) {
                 let mark = batch.save()
                 do {
-                    if linesOf(model, group[0].range) > 1 { throw EditConflictException(EditingText.crossesLines) }
+                    let range = TextRange(group[0].range.start, group[group.count - 1].range.end)
+                    if linesOf(model, range) > 1 { throw EditConflictException(EditingText.crossesLines) }
                     // expansions stops at a time limit of its own; a group token left for a match after that would be written as it is.
                     let texts: [String] = try group.map { m in
                         let cut = m.source!
@@ -81,7 +76,7 @@ public enum TextReplacer {
                         if options.regex && replacement.contains("$") { throw EditConflictException(EditingText.nothingChanged) }
                         return replacement
                     }
-                    try editor.replace(group[0].range, try splice(model, group, texts))
+                    try editor.replace(range, splice(model, group, texts))
                     done.append(contentsOf: group)
                 } catch let e as EditConflictException {
                     batch.restore(mark)
@@ -105,27 +100,39 @@ public enum TextReplacer {
         return ReplaceReport(replaced: replaced, failed: failures, substitutions: substitutions, pages: changed)
     }
 
+    // The hits to replace, in groups that are edited together: hits in the text of one span share its character (a hit that
+    // runs on into the next span shares the character it ends in), so a hit that starts where the one before ended in a span
+    // is taken in with it. Any other hit that overlaps the one before, and a second hit in a character that is not a span's
+    // (a ligature), is left out: the character is replaced once.
+    private static func clusters(_ model: PageModel, _ matches: [SearchMatch]) -> [[SearchMatch]] {
+        var groups: [[SearchMatch]] = []
+        var lastEnd = -1, lastCut = 0
+        for match in matches {
+            let range = match.range, cut = match.source!
+            if range.start >= lastEnd {
+                groups.append([match])
+            } else if range.start == lastEnd - 1 && cut.start >= lastCut && inSpan(model, range.start) != nil {
+                groups[groups.count - 1].append(match)
+            } else {
+                continue
+            }
+            (lastEnd, lastCut) = (range.end, cut.end)
+        }
+        return groups
+    }
+
     // A character that stands for /ActualText is the text of a whole span, and an edit takes the span's glyphs together, so
     // what the hits leave of that text goes back around the replacements.
-    private static func splice(_ model: PageModel, _ group: [SearchMatch], _ texts: [String]) throws -> String {
-        let range = group[0].range
+    private static func splice(_ model: PageModel, _ group: [SearchMatch], _ texts: [String]) -> String {
         let cuts = group.map { $0.source! }
-        if group.count > 1 {
-            guard range.end - range.start == 1, let whole = inSpan(model, range.start) else { throw EditConflictException(EditingText.nothingChanged) }
-            var out: [UInt16] = []
-            var at = 0
-            for (i, cut) in cuts.enumerated() {
-                if cut.start < at { throw EditConflictException(EditingText.nothingChanged) }
-                out.append(contentsOf: whole[at..<cut.start])
-                out.append(contentsOf: texts[i].utf16)
-                at = cut.end
-            }
-            out.append(contentsOf: whole[at...])
-            return String(units: out)
+        var out: [UInt16] = []
+        if let head = inSpan(model, group[0].range.start) { out.append(contentsOf: head[..<cuts[0].start]) }
+        for i in 0..<group.count {
+            if i > 0, let shared = inSpan(model, group[i].range.start) { out.append(contentsOf: shared[cuts[i - 1].end..<cuts[i].start]) }
+            out.append(contentsOf: texts[i].utf16)
         }
-        let before = inSpan(model, range.start).map { Array($0[..<cuts[0].start]) } ?? []
-        let after = inSpan(model, range.end - 1).map { Array($0[cuts[0].end...]) } ?? []
-        return String(units: before) + texts[0] + String(units: after)
+        if let tail = inSpan(model, group[group.count - 1].range.end - 1) { out.append(contentsOf: tail[cuts[cuts.count - 1].end...]) }
+        return String(units: out)
     }
 
     private static func inSpan(_ model: PageModel, _ index: Int) -> [UInt16]? {
@@ -203,7 +210,9 @@ public enum TextReplacer {
             }
             for m in matches where m.range.length > 0 && m.range.location >= 0 && m.range.location + m.range.length <= searched.text.count {
                 let at = HitKey(order: order, index: m.range.location)
-                if found[at] == nil, let expanded = try? expand(model, searched, numbering, m, replacement) { found[at] = expanded }
+                if found[at] == nil {
+                    do { found[at] = try expand(model, searched, numbering, m, replacement) } catch is Unmappable {}
+                }
             }
             if timedOut || !searched.hasHyphenBreak { break }
         }

@@ -200,4 +200,30 @@ final class ReplaceAllTests: XCTestCase {
         XCTAssertEqual(report.replaced, 1)
         XCTAssertEqual(try page(session, 0), "Xb-\ncd")
     }
+
+    func test_findGivesOneMatchPerRangeEvenWhenTheTextHasSeveralHits() throws {
+        for (text, query) in [("hi hi", "hi"), ("ff", "f")] {
+            let session = try open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (\(text))>> BDC (\(text)) Tj EMC ET")
+            let document = try PdfDocument.open(session.current)
+            let found = try TextSearch.find(TextPage.create(document, document.pages[0]), query)
+            XCTAssertEqual(found.count, 1, text)
+            XCTAssertEqual(try TextReplacer.replaceAll(session, query, "g").replaced, 2, text)
+        }
+    }
+
+    func test_aHitThatRunsIntoASpanDoesNotHideTheNextHitInIt() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (say hello wor)>> BDC (say hello wor) Tj EMC " +
+            "/Span <</ActualText (ld, world again)>> BDC (ld, world again) Tj EMC ET")
+        let report = try TextReplacer.replaceAll(session, "world", "globe")
+        XCTAssertEqual(report.replaced, 2)
+        XCTAssertEqual(try page(session, 0), "say hello globe, globe again")
+    }
+
+    func test_twoHitsOnOneFoldedLetterReplaceItOnce() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (Stra\\337e ist)>> BDC (Strasse ist) Tj EMC ET")
+        let report = try TextReplacer.replaceAll(session, "s", "x", TextSearchOptions(foldDiacritics: true))
+        XCTAssertEqual(report.replaced, 3)
+        XCTAssertTrue(report.failed.isEmpty)
+        XCTAssertEqual(try page(session, 0), "xtraxe ixt")
+    }
 }

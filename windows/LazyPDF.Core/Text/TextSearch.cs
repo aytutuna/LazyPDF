@@ -54,6 +54,10 @@ public static class TextSearch
         return matcher is null ? [] : Pages(cache, matcher, first, last, cancel, timeouts);
     }
 
+    /// <summary>Every hit on a page, several in one character included (hits in a span's replacement text), for a replacement that cuts them out of that text.</summary>
+    internal static IReadOnlyList<SearchMatch> FindAll(TextPage page, string query, TextSearchOptions options, CancellationToken cancel) =>
+        Matcher.Create(query, options) is { } matcher ? matcher.Find(page, cancel, null, true) : [];
+
     private static IEnumerable<SearchMatch> Pages(TextCache cache, Matcher matcher, int first, int last, CancellationToken cancel, SearchTimeouts? timeouts)
     {
         int end = Math.Min(last, cache.PageCount - 1);
@@ -93,7 +97,7 @@ public static class TextSearch
             return plain.Length == 0 ? null : new Matcher(options, plain, null);
         }
 
-        public IReadOnlyList<SearchMatch> Find(TextPage page, CancellationToken cancel, SearchTimeouts? timeouts)
+        public IReadOnlyList<SearchMatch> Find(TextPage page, CancellationToken cancel, SearchTimeouts? timeouts, bool all = false)
         {
             var found = new List<Hit>();
             var text = SearchText.Build(page, _options, false);
@@ -102,15 +106,14 @@ public static class TextSearch
             if (timedOut) timeouts?.Pages.Add(page.PageIndex);
             var result = new List<SearchMatch>();
             int end = -1;
-            Hit? last = null;
-            foreach (var hit in found.OrderBy(h => h.Range.Start).ThenByDescending(h => h.Range.End).ThenBy(h => h.Order).ThenBy(h => h.Index))
+            var ordered = all
+                ? found.OrderBy(h => h.Range.Start).ThenBy(h => h.Searched.StartOf(h.Index)).ThenByDescending(h => h.Range.End).ThenBy(h => h.Order).ThenBy(h => h.Index)
+                : found.OrderBy(h => h.Range.Start).ThenByDescending(h => h.Range.End).ThenBy(h => h.Order).ThenBy(h => h.Index);
+            foreach (var hit in ordered)
             {
                 var range = hit.Range;
-                // Several hits in the text of one character (a span's replacement text) are all kept.
-                bool sameChar = last is { } l && range == l.Range && range.End == range.Start + 1 && hit.Order == l.Order && hit.Index >= l.Index + l.Length;
-                if (range.Start < end && !sameChar) continue;
+                if (!all && range.Start < end) continue;
                 end = range.End;
-                last = hit;
                 var cut = new HitCut(hit.Order, hit.Index, hit.Searched.StartOf(hit.Index), hit.Searched.EndOf(hit.Index + hit.Length - 1));
                 result.Add(new SearchMatch(page.PageIndex, range, page.GetText(range, true), page.Quads(range)) { Source = cut });
             }

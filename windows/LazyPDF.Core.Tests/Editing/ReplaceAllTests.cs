@@ -240,4 +240,36 @@ public class ReplaceAllTests
         Assert.Equal(1, report.Replaced);
         Assert.Equal("Xb-\ncd", Page(session, 0));
     }
+
+    [Theory]
+    [InlineData("hi hi", "hi")]
+    [InlineData("ff", "f")]
+    public void FindGivesOneMatchPerRangeEvenWhenTheTextHasSeveralHits(string text, string query)
+    {
+        var session = Open($"BT /F1 12 Tf 50 700 Td /Span <</ActualText ({text})>> BDC ({text}) Tj EMC ET");
+        var document = PdfDocument.Open(session.Current.ToArray());
+        var found = TextSearch.Find(TextPage.Create(document, document.Pages[0]), query);
+        Assert.Equal(1, found.Count);
+        Assert.Equal(2, TextReplacer.ReplaceAll(session, query, "g").Replaced);
+    }
+
+    [Fact]
+    public void AHitThatRunsIntoASpanDoesNotHideTheNextHitInIt()
+    {
+        var session = Open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (say hello wor)>> BDC (say hello wor) Tj EMC " +
+            "/Span <</ActualText (ld, world again)>> BDC (ld, world again) Tj EMC ET");
+        var report = TextReplacer.ReplaceAll(session, "world", "globe");
+        Assert.Equal(2, report.Replaced);
+        Assert.Equal("say hello globe, globe again", Page(session, 0));
+    }
+
+    [Fact]
+    public void TwoHitsOnOneFoldedLetterReplaceItOnce()
+    {
+        var session = Open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (Stra\\337e ist)>> BDC (Strasse ist) Tj EMC ET");
+        var report = TextReplacer.ReplaceAll(session, "s", "x", new TextSearchOptions(FoldDiacritics: true));
+        Assert.Equal(3, report.Replaced);
+        Assert.Empty(report.Failed);
+        Assert.Equal("xtraxe ixt", Page(session, 0));
+    }
 }

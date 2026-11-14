@@ -36,24 +36,20 @@ public static class TextReplacer
         {
             cancel.ThrowIfCancellationRequested();
             var model = PageModel.Load(document, p);
-            var matches = TextSearch.Find(model.Text, query, options, cancel);
+            var matches = TextSearch.FindAll(model.Text, query, options, cancel);
             if (matches.Count == 0) continue;
             var batch = new EditBatch(document, model.Page, model.Scan);
             var builder = new TextBuilder(document, batch, fonts);
             var editor = new TextEditor(model, batch, builder, fonts);
             var expanded = Expansions(model, query, replacement, options);
             var done = new List<SearchMatch>();
-            // Hits in the text of one span share a character, so they are replaced together.
-            for (int k = 0; k < matches.Count;)
+            foreach (var group in Clusters(model, matches))
             {
-                int n = 1;
-                while (k + n < matches.Count && matches[k + n].Range == matches[k].Range) n++;
-                var group = matches.Skip(k).Take(n).ToList();
-                k += n;
                 var mark = batch.Save();
                 try
                 {
-                    if (LinesOf(model, group[0].Range) > 1) throw new EditConflictException(EditingText.CrossesLines);
+                    var range = new TextRange(group[0].Range.Start, group[^1].Range.End);
+                    if (LinesOf(model, range) > 1) throw new EditConflictException(EditingText.CrossesLines);
                     // Expansions stops at a time limit of its own; a group token left for a match after that would be written as it is.
                     var texts = group.Select(m =>
                     {
@@ -61,7 +57,7 @@ public static class TextReplacer
                         if (options.Regex && replacement.Contains('$')) throw new EditConflictException(EditingText.NothingChanged);
                         return replacement;
                     }).ToList();
-                    editor.Replace(group[0].Range, Splice(model, group, texts));
+                    editor.Replace(range, Splice(model, group, texts));
                     done.AddRange(group);
                 }
                 catch (EditConflictException e)
@@ -90,28 +86,39 @@ public static class TextReplacer
         return new ReplaceReport(replaced, failures, substitutions, changed);
     }
 
+    // The hits to replace, in groups that are edited together: hits in the text of one span share its character (a hit that
+    // runs on into the next span shares the character it ends in), so a hit that starts where the one before ended in a span
+    // is taken in with it. Any other hit that overlaps the one before, and a second hit in a character that is not a span's
+    // (a ligature), is left out: the character is replaced once.
+    private static List<List<SearchMatch>> Clusters(PageModel model, IReadOnlyList<SearchMatch> matches)
+    {
+        var groups = new List<List<SearchMatch>>();
+        int lastEnd = -1, lastCut = 0;
+        foreach (var match in matches)
+        {
+            var (range, cut) = (match.Range, match.Source!.Value);
+            if (range.Start >= lastEnd) groups.Add([match]);
+            else if (range.Start == lastEnd - 1 && cut.Start >= lastCut && InSpan(model, range.Start) is not null) groups[^1].Add(match);
+            else continue;
+            (lastEnd, lastCut) = (range.End, cut.End);
+        }
+        return groups;
+    }
+
     // A character that stands for /ActualText is the text of a whole span, and an edit takes the span's glyphs together, so
     // what the hits leave of that text goes back around the replacements.
     private static string Splice(PageModel model, List<SearchMatch> group, List<string> texts)
     {
-        var range = group[0].Range;
         var cuts = group.Select(m => m.Source!.Value).ToList();
-        if (group.Count > 1)
+        var sb = new StringBuilder();
+        if (InSpan(model, group[0].Range.Start) is { } head) sb.Append(head, 0, cuts[0].Start);
+        for (int i = 0; i < group.Count; i++)
         {
-            if (range.End - range.Start != 1 || InSpan(model, range.Start) is not { } whole) throw new EditConflictException(EditingText.NothingChanged);
-            var sb = new StringBuilder();
-            int at = 0;
-            for (int i = 0; i < group.Count; i++)
-            {
-                if (cuts[i].Start < at) throw new EditConflictException(EditingText.NothingChanged);
-                sb.Append(whole, at, cuts[i].Start - at).Append(texts[i]);
-                at = cuts[i].End;
-            }
-            return sb.Append(whole, at, whole.Length - at).ToString();
+            if (i > 0 && InSpan(model, group[i].Range.Start) is { } shared) sb.Append(shared, cuts[i - 1].End, cuts[i].Start - cuts[i - 1].End);
+            sb.Append(texts[i]);
         }
-        string before = InSpan(model, range.Start) is { } first ? first[..cuts[0].Start] : "";
-        string after = InSpan(model, range.End - 1) is { } last ? last[cuts[0].End..] : "";
-        return before + texts[0] + after;
+        if (InSpan(model, group[^1].Range.End - 1) is { } tail) sb.Append(tail, cuts[^1].End, tail.Length - cuts[^1].End);
+        return sb.ToString();
     }
 
     private static string? InSpan(PageModel model, int index) =>
