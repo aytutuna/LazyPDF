@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace LazyPDF.Core;
@@ -40,27 +41,33 @@ public static class TextReplacer
             var batch = new EditBatch(document, model.Page, model.Scan);
             var builder = new TextBuilder(document, batch, fonts);
             var editor = new TextEditor(model, batch, builder, fonts);
-            var expanded = Expansions(model.Text, query, replacement, options);
+            var expanded = Expansions(model, query, replacement, options);
             var done = new List<SearchMatch>();
-            foreach (var match in matches)
+            // Hits in the text of one span share a character, so they are replaced together.
+            for (int k = 0; k < matches.Count;)
             {
+                int n = 1;
+                while (k + n < matches.Count && matches[k + n].Range == matches[k].Range) n++;
+                var group = matches.Skip(k).Take(n).ToList();
+                k += n;
                 var mark = batch.Save();
                 try
                 {
-                    if (LinesOf(model, match.Range) > 1) throw new EditConflictException(EditingText.CrossesLines);
+                    if (LinesOf(model, group[0].Range) > 1) throw new EditConflictException(EditingText.CrossesLines);
                     // Expansions stops at a time limit of its own; a group token left for a match after that would be written as it is.
-                    if (!expanded.TryGetValue(match.Range, out string? text))
+                    var texts = group.Select(m =>
                     {
+                        if (expanded.TryGetValue((m.Source!.Value.Order, m.Source.Value.Index), out string? found)) return found;
                         if (options.Regex && replacement.Contains('$')) throw new EditConflictException(EditingText.NothingChanged);
-                        text = replacement;
-                    }
-                    editor.Replace(match.Range, KeepSpanText(model, match, text, options));
-                    done.Add(match);
+                        return replacement;
+                    }).ToList();
+                    editor.Replace(group[0].Range, Splice(model, group, texts));
+                    done.AddRange(group);
                 }
                 catch (EditConflictException e)
                 {
                     batch.Restore(mark);
-                    failures.Add(new ReplaceFailure(p, match.Text, e.Message));
+                    failures.AddRange(group.Select(m => new ReplaceFailure(p, m.Text, e.Message)));
                 }
             }
             if (done.Count == 0) continue;
@@ -84,41 +91,58 @@ public static class TextReplacer
     }
 
     // A character that stands for /ActualText is the text of a whole span, and an edit takes the span's glyphs together, so
-    // what a match leaves of that text goes back around the replacement.
-    private static string KeepSpanText(PageModel model, SearchMatch match, string text, TextSearchOptions options)
+    // what the hits leave of that text goes back around the replacements.
+    private static string Splice(PageModel model, List<SearchMatch> group, List<string> texts)
     {
-        if (match.Source is not { } source) return text;
-        var (searched, index, length) = source;
-        int first = match.Range.Start, last = match.Range.End - 1;
-        string before = "", after = "";
-        if (InSpan(model, first) is { } start)
+        var range = group[0].Range;
+        var cuts = group.Select(m => m.Source!.Value).ToList();
+        if (group.Count > 1)
         {
-            int begin = Array.LastIndexOf(searched.Map, first) - SearchText.Fold(start, options).Length + 1;
-            before = start[..FoldedOffset(start, index - begin, options, false)];
+            if (range.End - range.Start != 1 || InSpan(model, range.Start) is not { } whole) throw new EditConflictException(EditingText.NothingChanged);
+            var sb = new StringBuilder();
+            int at = 0;
+            for (int i = 0; i < group.Count; i++)
+            {
+                if (cuts[i].Start < at) throw new EditConflictException(EditingText.NothingChanged);
+                sb.Append(whole, at, cuts[i].Start - at).Append(texts[i]);
+                at = cuts[i].End;
+            }
+            return sb.Append(whole, at, whole.Length - at).ToString();
         }
-        if (InSpan(model, last) is { } end)
-        {
-            int end0 = Array.LastIndexOf(searched.Map, last);
-            after = end[FoldedOffset(end, SearchText.Fold(end, options).Length - (end0 - (index + length - 1)), options, true)..];
-        }
-        return before + text + after;
+        string before = InSpan(model, range.Start) is { } first ? first[..cuts[0].Start] : "";
+        string after = InSpan(model, range.End - 1) is { } last ? last[cuts[0].End..] : "";
+        return before + texts[0] + after;
     }
 
     private static string? InSpan(PageModel model, int index) =>
         index >= 0 && index < model.CharGlyphs.Length && model.CharGlyphs[index]?.Span is not null && !model.Text.Chars[index].IsSpace ? model.Text.Chars[index].Text : null;
 
-    // The offset in the page's own text of a position in its folded text; a fold that makes two letters of one (or the reverse) is taken whole.
-    private static int FoldedOffset(string text, int folded, TextSearchOptions options, bool roundUp)
+    private sealed class Unmappable : Exception;
+
+    // The page text of the searched characters from `index` for `length`, where a span's character gives only the part of its text the range takes.
+    private static string PageText(PageModel model, SearchText searched, int index, int length)
     {
-        int offset = 0, seen = 0;
-        while (offset < text.Length)
+        var range = RangeOf(searched, index, length);
+        string full = model.Text.GetText(range, true);
+        string? first = InSpan(model, range.Start), last = InSpan(model, range.End - 1);
+        int start = searched.StartOf(index), end = searched.EndOf(index + length - 1);
+        if (range.End - range.Start == 1 && first is not null)
         {
-            int next = SearchText.Fold(text[offset].ToString(), options).Length;
-            if (roundUp ? seen >= folded && next > 0 : seen + next > folded) break;
-            seen += next;
-            offset++;
+            if (full != first || start > end) throw new Unmappable();
+            return first[start..end].Trim();
         }
-        return offset;
+        if (first is not null)
+        {
+            if (!full.StartsWith(first, StringComparison.Ordinal)) throw new Unmappable();
+            full = first[start..] + full[first.Length..];
+        }
+        if (last is not null)
+        {
+            if (!full.EndsWith(last, StringComparison.Ordinal)) throw new Unmappable();
+            full = full[..^last.Length] + last[..end];
+        }
+        // As the page text of a range, which has no white space at its ends.
+        return first is null && last is null ? full : full.Trim();
     }
 
     private static int LinesOf(PageModel model, TextRange range)
@@ -134,9 +158,10 @@ public static class TextReplacer
     // The replacement of each regex match, found on the text TextSearch runs (folded as the options ask) so that every
     // match it reports has an entry. Lookarounds and the whole-word edges see the page; a group is the page's own text,
     // with its case and accents, taken back through the map.
-    private static Dictionary<TextRange, string> Expansions(TextPage text, string query, string replacement, TextSearchOptions options)
+    private static Dictionary<(int Order, int Index), string> Expansions(PageModel model, string query, string replacement, TextSearchOptions options)
     {
-        var found = new Dictionary<TextRange, string>();
+        var found = new Dictionary<(int, int), string>();
+        var text = model.Text;
         if (!options.Regex) return found;
         string folded = options.FoldDiacritics ? SearchText.StripMarks(query) : query;
         string pattern = options.WholeWord ? $@"(?<![\p{{L}}\p{{N}}])(?:{folded})(?![\p{{L}}\p{{N}}])" : folded;
@@ -149,7 +174,14 @@ public static class TextReplacer
                 var searched = SearchText.Build(text, options, dropHyphens);
                 foreach (Match m in regex.Matches(searched.Text))
                 {
-                    if (m.Length > 0) found.TryAdd(RangeOf(searched, m.Index, m.Length), Expand(text, searched, regex, m, replacement));
+                    if (m.Length == 0) continue;
+                    try
+                    {
+                        found.TryAdd((dropHyphens ? 1 : 0, m.Index), Expand(model, searched, regex, m, replacement));
+                    }
+                    catch (Unmappable)
+                    {
+                    }
                 }
                 if (!searched.HasHyphenBreak) break;
             }
@@ -164,14 +196,14 @@ public static class TextReplacer
         new(searched.Map[index], searched.Map[index + length - 1] + 1);
 
     // The tokens .NET expands from the searched text ($&, $+, $`, $', $_) are taken from the page as well; $$ is left for Result.
-    private static string Expand(TextPage text, SearchText searched, Regex regex, Match m, string replacement)
+    private static string Expand(PageModel model, SearchText searched, Regex regex, Match m, string replacement)
     {
         // The page text of a range loses the white space at its ends, which a group or the text around a match may be made of.
         string Page(int index, int length)
         {
             if (length == 0) return "";
             string seen = searched.Text.Substring(index, length);
-            string core = text.GetText(RangeOf(searched, index, length), true);
+            string core = PageText(model, searched, index, length);
             string lead = seen[..(seen.Length - seen.TrimStart().Length)];
             string trail = lead.Length == seen.Length ? "" : seen[seen.TrimEnd().Length..];
             return (lead + core + trail).Replace("$", "$$");

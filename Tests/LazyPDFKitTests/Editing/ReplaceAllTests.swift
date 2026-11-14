@@ -173,4 +173,31 @@ final class ReplaceAllTests: XCTestCase {
         XCTAssertFalse(content.contains("/ActualText"))
         XCTAssertEqual(try page(session, 0), "")
     }
+
+    func test_groupsOfARegularExpressionInsideASpanExpandToTheirOwnText() throws {
+        var session = try open(hello("/Span <</ActualText (hello world)>>"))
+        let report = try TextReplacer.replaceAll(session, "w(or)ld", "[$1]", TextSearchOptions(regex: true))
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(try page(session, 0), "hello [or]")
+        session = try open(hello("/Span <</ActualText (hello world)>>"))
+        _ = try TextReplacer.replaceAll(session, "w(or)ld", "<$&|$`|$'>", TextSearchOptions(regex: true))
+        XCTAssertEqual(try page(session, 0), "hello <world|hello |>")
+    }
+
+    func test_everyHitInsideOneSpanIsReplaced() throws {
+        for (text, expected, count) in [("hi hi", "x x", 2), ("hi hi hi", "x x x", 3), ("a hi b hi", "a x b x", 2)] {
+            let session = try open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (\(text))>> BDC (\(text)) Tj EMC ET")
+            let report = try TextReplacer.replaceAll(session, "hi", "x")
+            XCTAssertEqual(report.replaced, count, text)
+            XCTAssertTrue(report.failed.isEmpty)
+            XCTAssertEqual(try page(session, 0), expected)
+        }
+    }
+
+    func test_aSpanEndingInAHyphenAtALineEndKeepsItAroundAHit() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td /Span <</ActualText (ab-)>> BDC (ab-) Tj EMC 0 -14 Td (cd) Tj ET")
+        let report = try TextReplacer.replaceAll(session, "a", "X")
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(try page(session, 0), "Xb-\ncd")
+    }
 }
