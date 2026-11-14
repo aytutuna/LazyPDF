@@ -30,9 +30,9 @@ final class PdfUaCheckerTests: XCTestCase {
     }
 
     func test_theCatalogMustBeMarkedAndHoldATree() throws {
-        try fails("01-001", PdfUaKit.build(markInfo: ""))
+        try fails("", PdfUaKit.build(markInfo: ""))
         try fails("01-007", PdfUaKit.build(markInfo: "/MarkInfo <</Marked true /Suspects true>>"))
-        try fails("01-002", PdfUaKit.build(tree: false))
+        try fails("", PdfUaKit.build(tree: false))
     }
 
     func test_contentIsTaggedOrAnArtifact() throws {

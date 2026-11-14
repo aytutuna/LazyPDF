@@ -60,17 +60,18 @@ internal sealed partial class PdfUaChecker(PdfDocument document, CancellationTok
         return -1;
     }
 
+    // No Matterhorn condition covers an untagged file, so these two carry the ISO clause only.
     private void CheckMarkInfo()
     {
         var info = _doc.Dict(_doc.Catalog, "MarkInfo");
-        if (_doc.Bool(info, "Marked") != true) Add("01-001", "6.2", PdfAText.Catalog, PdfUaText.NoMarkInfo);
+        if (_doc.Bool(info, "Marked") != true) Add("", "6.2", PdfAText.Catalog, PdfUaText.NoMarkInfo);
         if (_doc.Bool(info, "Suspects") == true) Add("01-007", "7.1", PdfAText.Catalog, PdfUaText.Suspects);
     }
 
     private void CheckTree()
     {
-        if (_tree is null) Add("01-002", "7.1", PdfAText.Catalog, PdfUaText.NoStructTree);
-        else if (_tree.IsTruncated) Add("01-002", "7.1", PdfAText.Catalog, PdfUaText.StructTreeTooBig);
+        if (_tree is null) Add("", "7.1", PdfAText.Catalog, PdfUaText.NoStructTree);
+        else if (_tree.IsTruncated) Add("", "7.1", PdfAText.Catalog, PdfUaText.StructTreeTooBig);
     }
 
     // 7.1: the catalog's XMP names PDF/UA and carries the title.

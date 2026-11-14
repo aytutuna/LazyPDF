@@ -34,9 +34,9 @@ public class PdfUaCheckerTests
     [Fact]
     public void TheCatalogMustBeMarkedAndHoldATree()
     {
-        Fails("01-001", PdfUaKit.Build(markInfo: ""));
+        Fails("", PdfUaKit.Build(markInfo: ""));
         Fails("01-007", PdfUaKit.Build(markInfo: "/MarkInfo <</Marked true /Suspects true>>"));
-        Fails("01-002", PdfUaKit.Build(tree: false));
+        Fails("", PdfUaKit.Build(tree: false));
     }
 
     [Fact]

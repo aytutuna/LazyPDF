@@ -263,7 +263,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         if (set.Steps.Any(s => s.Kind == BatchStepKind.PdfUa && s.MarkPdfUa)) bytes = MarkPdfUa(bytes, now, cancellation);
         using var made = PdfDocument.Open(bytes);
         var report = PdfUaValidator.Validate(made);
-        int left = report.Issues.Select(i => i.Condition).Distinct().Count();
+        int left = report.Issues.Select(i => (i.Condition, i.Clause)).Distinct().Count();
         if (left > 0) notes.Add(Loc.Plural(left, "{0} PDF/UA condition is not met.", "{0} PDF/UA conditions are not met."));
         if (report.Truncated) notes.Add(Loc.T("The PDF/UA check stopped at 1000 findings."));
         return bytes;

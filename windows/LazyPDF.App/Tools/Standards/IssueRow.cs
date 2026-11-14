@@ -44,7 +44,7 @@ public sealed class IssueRow
 
     /// <summary>The same for the PDF/UA check, whose rows name the Matterhorn condition and the clause of ISO 14289-1.</summary>
     public static IReadOnlyList<IssueRow> Group(IEnumerable<PdfUaIssue> issues) =>
-        Group(issues.Select(i => (new PdfAIssue(i.Condition, i.Where, i.Message), (string?)Loc.T("Matterhorn {0}, ISO 14289-1 clause {1}", i.Condition, i.Clause))));
+        Group(issues.Select(i => (new PdfAIssue(i.Condition, i.Where, i.Message), (string?)(i.Condition.Length == 0 ? Loc.T("ISO 14289-1 clause {0}", i.Clause) : Loc.T("Matterhorn {0}, ISO 14289-1 clause {1}", i.Condition, i.Clause)))));
 
     private static IReadOnlyList<IssueRow> Group(IEnumerable<(PdfAIssue Issue, string? Clause)> issues)
     {
