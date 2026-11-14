@@ -16,8 +16,8 @@ public sealed record SearchMatch(int Page, TextRange Range, string Text, IReadOn
     internal HitCut? Source { get; init; }
 }
 
-/// <summary>A hit in the searched text: which text (0, or 1 with line-end hyphens dropped), where it starts, and the offsets it cuts in the text of its first and last character.</summary>
-internal readonly record struct HitCut(int Order, int Index, int Start, int End);
+/// <summary>A hit in the searched text: which text (0, or 1 with line-end hyphens dropped), where it starts, and the offsets it cuts in the text of its first and last character. When the hit ends on the space the search adds at a line break, End is 0 and Last is the end offset in the last character before it (-1 if the hit is only that space).</summary>
+internal readonly record struct HitCut(int Order, int Index, int Start, int End, int Last);
 
 /// <summary>Collects the pages where a regular expression ran out of time; hits found before the limit are still given.</summary>
 public sealed class SearchTimeouts
@@ -117,7 +117,8 @@ public static class TextSearch
                 if (all && hit.Order == 1 && seen.Contains(Key(hit))) continue;
                 if (!all && range.Start < end) continue;
                 end = range.End;
-                var cut = new HitCut(hit.Order, hit.Index, hit.Searched.StartOf(hit.Index), hit.Searched.EndOf(hit.Index + hit.Length - 1));
+                int tip = hit.Index + hit.Length - 1, tipEnd = hit.Searched.EndOf(tip);
+                var cut = new HitCut(hit.Order, hit.Index, hit.Searched.StartOf(hit.Index), tipEnd, tipEnd != 0 ? tipEnd : hit.Length > 1 ? hit.Searched.EndOf(tip - 1) : -1);
                 result.Add(new SearchMatch(page.PageIndex, range, page.GetText(range, true), page.Quads(range)) { Source = cut });
             }
             return result;

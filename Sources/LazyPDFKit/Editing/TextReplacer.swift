@@ -57,7 +57,22 @@ public enum TextReplacer {
         for p in 0..<document.pages.count {
             try Task.checkCancellation()
             let model = PageModel.load(document, p)
-            let matches = try TextSearch.findAll(model.text, query, options)
+            let hits = try TextSearch.findAll(model.text, query, options)
+            if hits.isEmpty { continue }
+            // The space the search adds at a line break is not a character of the next line, so a hit's range stops short of it.
+            var matches: [SearchMatch] = []
+            for match in hits {
+                let cut = match.source!
+                if cut.end != 0 {
+                    matches.append(match)
+                } else if cut.last < 0 {
+                    failures.append(ReplaceFailure(page: p, text: match.text, reason: EditingText.nothingChanged))
+                } else {
+                    var trimmed = SearchMatch(page: match.page, range: TextRange(match.range.start, match.range.end - 1), text: match.text, quads: match.quads)
+                    trimmed.source = HitCut(order: cut.order, index: cut.index, start: cut.start, end: cut.last, last: cut.last)
+                    matches.append(trimmed)
+                }
+            }
             if matches.isEmpty { continue }
             let batch = EditBatch(document, model.page, model.scan)
             let builder = TextBuilder(document, batch, fonts)
@@ -115,8 +130,7 @@ public enum TextReplacer {
             } else {
                 continue
             }
-            // A hit that ends on the space the search adds at a line break takes nothing of the next line's first character.
-            (lastEnd, lastCut) = (cut.end == 0 ? range.end - 1 : range.end, cut.end)
+            (lastEnd, lastCut) = (range.end, cut.end)
         }
         return groups
     }

@@ -34,12 +34,13 @@ public struct SearchMatch {
     var source: HitCut? = nil
 }
 
-/// A hit in the searched text: which text (0, or 1 with line-end hyphens dropped), where it starts, and the offsets it cuts in the text of its first and last character.
+/// A hit in the searched text: which text (0, or 1 with line-end hyphens dropped), where it starts, and the offsets it cuts in the text of its first and last character. When the hit ends on the space the search adds at a line break, end is 0 and last is the end offset in the last character before it (-1 if the hit is only that space).
 struct HitCut: Equatable {
     let order: Int
     let index: Int
     let start: Int
     let end: Int
+    let last: Int
 }
 
 /// Collects the pages where a regular expression ran out of time; hits found before the limit are still given.
@@ -196,7 +197,9 @@ public enum TextSearch {
                 if all && hit.order == 1 && seen.contains(key(hit)) { continue }
                 if !all && range.start < end { continue }
                 end = range.end
-                let cut = HitCut(order: hit.order, index: hit.index, start: hit.searched.startOf(hit.index), end: hit.searched.endOf(hit.index + hit.length - 1))
+                let tip = hit.index + hit.length - 1, tipEnd = hit.searched.endOf(tip)
+                let cut = HitCut(order: hit.order, index: hit.index, start: hit.searched.startOf(hit.index), end: tipEnd,
+                                 last: tipEnd != 0 ? tipEnd : hit.length > 1 ? hit.searched.endOf(tip - 1) : -1)
                 result.append(SearchMatch(page: page.pageIndex, range: range, text: page.getText(range, joinHyphens: true), quads: page.quads(range), source: cut))
             }
             return result

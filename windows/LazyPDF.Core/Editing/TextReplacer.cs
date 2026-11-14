@@ -36,7 +36,17 @@ public static class TextReplacer
         {
             cancel.ThrowIfCancellationRequested();
             var model = PageModel.Load(document, p);
-            var matches = TextSearch.FindAll(model.Text, query, options, cancel);
+            var hits = TextSearch.FindAll(model.Text, query, options, cancel);
+            if (hits.Count == 0) continue;
+            // The space the search adds at a line break is not a character of the next line, so a hit's range stops short of it.
+            var matches = new List<SearchMatch>();
+            foreach (var match in hits)
+            {
+                var (range, cut) = (match.Range, match.Source!.Value);
+                if (cut.End != 0) matches.Add(match);
+                else if (cut.Last < 0) failures.Add(new ReplaceFailure(p, match.Text, EditingText.NothingChanged));
+                else matches.Add(match with { Range = new TextRange(range.Start, range.End - 1), Source = cut with { End = cut.Last } });
+            }
             if (matches.Count == 0) continue;
             var batch = new EditBatch(document, model.Page, model.Scan);
             var builder = new TextBuilder(document, batch, fonts);
@@ -99,8 +109,7 @@ public static class TextReplacer
             if (range.Start >= lastEnd) groups.Add([match]);
             else if (range.Start == lastEnd - 1 && cut.Start >= lastCut && InSpan(model, range.Start) is not null) groups[^1].Add(match);
             else continue;
-            // A hit that ends on the space the search adds at a line break takes nothing of the next line's first character.
-            (lastEnd, lastCut) = (cut.End == 0 ? range.End - 1 : range.End, cut.End);
+            (lastEnd, lastCut) = (range.End, cut.End);
         }
         return groups;
     }

@@ -248,9 +248,27 @@ final class ReplaceAllTests: XCTestCase {
     func test_aHitThatEndsOnALineBreakDoesNotTakeTheNextHitInTheFirstCharOfTheNextLine() throws {
         let session = try open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td /Span <</ActualText (cd ab)>> BDC (cd ab) Tj EMC ET")
         let report = try TextReplacer.replaceAll(session, "b ?", "Z", TextSearchOptions(regex: true))
+        XCTAssertEqual(report.replaced, 2)
+        XCTAssertTrue(report.failed.isEmpty)
+        XCTAssertEqual(try page(session, 0), "aZ\ncd aZ")
+    }
+
+    func test_aLineBreakAloneIsNotReplacedAndNothingOfTheNextLineGoes() throws {
+        for (query, replacement) in [("\\s", "_"), ("\\s+", " ")] {
+            let session = try open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td (cd) Tj ET")
+            let report = try TextReplacer.replaceAll(session, query, replacement, TextSearchOptions(regex: true))
+            XCTAssertEqual(report.replaced, 0, query)
+            XCTAssertEqual(try assertSingle(report.failed).reason, EditingText.nothingChanged, query)
+            XCTAssertEqual(try page(session, 0), "ab\ncd", query)
+        }
+    }
+
+    func test_aHitThatEndsOnALineBreakReplacesOnlyTheLettersBeforeIt() throws {
+        let session = try open("BT /F1 12 Tf 50 700 Td (ab) Tj 0 -14 Td (cd) Tj ET")
+        let report = try TextReplacer.replaceAll(session, "b\\s", "X", TextSearchOptions(regex: true))
         XCTAssertEqual(report.replaced, 1)
-        XCTAssertEqual(try assertSingle(report.failed).reason, EditingText.crossesLines)
-        XCTAssertEqual(try page(session, 0), "ab\ncd aZ")
+        XCTAssertTrue(report.failed.isEmpty)
+        XCTAssertEqual(try page(session, 0), "aX\ncd")
     }
 
     func test_aHitIsReplacedOnceOnAPageWithAJoinedLineEndHyphen() throws {
