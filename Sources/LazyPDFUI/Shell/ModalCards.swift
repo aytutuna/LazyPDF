@@ -52,8 +52,9 @@ struct CloseCard: View {
     let discard: () -> Void
     let cancel: () -> Void
 
-    var body: some View {
-        let marksOnly = !tab.isDirty
+    private var marksOnly: Bool { !tab.isDirty }
+
+    private var text: String {
         var parts: [String] = []
         if !marksOnly { parts.append(L10n.t("Your changes are lost if you do not save them.")) }
         if tab.pendingMarks > 0 {
@@ -66,8 +67,12 @@ struct CloseCard: View {
         if tab.pendingDescriptions > 0 {
             parts.append(L10n.plural(tab.pendingDescriptions, one: "{0} figure description is not saved yet.", other: "{0} figure descriptions are not saved yet."))
         }
+        return parts.joined(separator: " ")
+    }
+
+    var body: some View {
         ModalCard(title: marksOnly ? L10n.t("Close {0}?", tab.title) : L10n.t("Save changes to {0}?", tab.title),
-                  text: parts.joined(separator: " ")) {
+                  text: text) {
             if !marksOnly {
                 Button(L10n.t("Save"), action: save)
                     .buttonStyle(.borderedProminent)
