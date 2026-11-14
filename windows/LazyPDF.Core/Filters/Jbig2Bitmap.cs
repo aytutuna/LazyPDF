@@ -10,6 +10,21 @@ internal sealed class Jbig2Budget
     /// With the pixels of the picture the page is fitted to, what a decode may make is a multiple of that and a little more:
     /// a dictionary that says 1 by 1 does not get a page of millions of pixels made for it and cut down.
     /// </summary>
+    /// <summary>The globals of an image may be shared by many; they make symbols and tables, not pages.</summary>
+    public void ForGlobals()
+    {
+        _total = Math.Min(_total, 1L << 26);
+        _work = Math.Min(_work, 1L << 27);
+    }
+
+    /// <summary>The budget of the image's own segments: the most there is, or tied to the size of its picture.</summary>
+    public void ForImage(long fitPixels)
+    {
+        _total = 3 * PdfImageSamples.MaxPixels;
+        _work = 1L << 29;
+        if (fitPixels > 0) Fit(fitPixels);
+    }
+
     public void Fit(long fitPixels)
     {
         _total = Math.Min(_total, 16 * fitPixels + (1 << 24));

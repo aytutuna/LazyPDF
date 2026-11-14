@@ -316,6 +316,44 @@ public class Jbig2FilterTests
     }
 
     [Fact]
+    public void ALongRunOfZerosBeforeALastByteIsGivenUpOnQuickly()
+    {
+        // What a Flate stage can make of a few hundred kilobytes: megabytes of zero headers and a byte at the end that is not zero.
+        byte[] stream = [.. Page(8, 8), .. new byte[8 << 20], 1];
+        var time = Stopwatch.StartNew();
+        Damaged(stream);
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(2), time.Elapsed.ToString());
+    }
+
+    [Fact]
+    public void GlobalsHoldDictionariesAndTablesAndNothingElse()
+    {
+        // A region of 134 million pixels in the globals is not drawn, and costs nothing, for an image of one pixel.
+        var big = new Bm(4, 4);
+        byte[] region = Jbig2Segments.GenericData(big, [0xff, 0xac], 0, false, false, null);
+        Array.Copy(Jbig2Segments.U32(11585), 0, region, 0, 4);
+        Array.Copy(Jbig2Segments.U32(11585), 0, region, 4, 4);
+        byte[] globals = Jbig2Segments.Segment(1, 36, region, page: 0);
+        var parameters = WithGlobals(globals);
+        parameters["Width"] = new PdfNumber(8);
+        parameters["Height"] = new PdfNumber(8);
+        var time = Stopwatch.StartNew();
+        var bm = Bm.Text(8, 8, 3);
+        Assert.Equal(bm.Packed(), Decode(Jbig2Segments.Generic(bm, 0, false), parameters));
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(2), time.Elapsed.ToString());
+    }
+
+    [Fact]
+    public void ACutSegmentIsOnlyAFailureWhenThePageMustBeWhole()
+    {
+        var sample = Jbig2Samples.All().First(s => s.Name == "generic-t0.bin");
+        byte[] cut = sample.Data[..^6];
+        Decode(cut);
+        var e = Assert.Throws<PdfReadException>(() => PdfFilters.DecodeToCodecWhole(cut, new PdfName("JBIG2Decode"), null, PdfFilters.DefaultMaxSize));
+        Assert.Equal(PdfReadProblem.Damaged, e.Problem);
+    }
+
+    [Fact]
     public void NothingAfterTheEndOfThePageIsRead()
     {
         var bm = Bm.Text(30, 20, 5);

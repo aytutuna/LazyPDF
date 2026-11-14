@@ -32,9 +32,9 @@ internal static class Jbig2
     /// </summary>
     public static byte[] Decode(byte[] globals, byte[] data, long maxSize, int width = 0, int height = 0, bool whole = false)
     {
+        // TODO: a budget for all the JBIG2 decodes of a document, so that many images cannot each use a full one.
         var decoder = new Jbig2Decoder(maxSize, width, height, whole);
-        decoder.Read(globals);
-        decoder.FitBudget();
+        decoder.Read(globals, globals: true);
         decoder.Read(data);
         return decoder.Finish();
     }
@@ -75,21 +75,36 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
 
     /// <summary>
     /// What the image's own segments may make is tied to the size of the picture (the globals, which many pictures share,
-    /// are not); this is called between the two.
+    /// are not), which have a budget of their own and may hold dictionaries and tables only.
     /// </summary>
-    public void FitBudget()
+    private void StartImage()
     {
-        if (fitWidth > 0 && fitHeight > 0) _budget.Fit((long)fitWidth * fitHeight);
+        _inGlobals = false;
+        _budget.ForImage(fitWidth > 0 && fitHeight > 0 ? (long)fitWidth * fitHeight : 0);
     }
 
+    private bool _inGlobals;
+
+    // How many segments in a row may fail before the rest of the data is given up on.
+    private const int MaxFailedRun = 16;
+
+    // The end of the segment being read: no field of it is read past that.
+    private int _limit;
+
     /// <summary>The segments of <paramref name="data"/> one after the other (7.2), through the end of file segment.</summary>
-    public void Read(byte[] data)
+    public void Read(byte[] data, bool globals = false)
     {
+        _inGlobals = globals;
+        if (globals) _budget.ForGlobals();
+        else StartImage();
         int position = 0;
-        while (position < data.Length)
+        int failedRun = 0;
+        // Zeros at the end are padding, a line break or a stray byte after the last segment is the end of the data, not a segment that failed.
+        int last = data.AsSpan().LastIndexOfAnyExcept((byte)0);
+        while (position <= last)
         {
-            // Padding, a line break or a stray byte after the last segment is the end of the data, not a segment that failed.
-            if (data.Length - position < MinHeader || data.AsSpan(position).IndexOfAnyExcept((byte)0) < 0) return;
+            if (data.Length - position < MinHeader) return;
+            _limit = data.Length;
             Segment segment;
             try
             {
@@ -103,14 +118,27 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
             if (++_segments > MaxSegments) throw Jbig2Budget.TooBig();
             int start = segment.HeaderEnd;
             int end = (int)Math.Min(start + segment.Length, data.Length);
+            // A segment that runs past the end of the data is read as far as it goes, unless a partial page is no use.
+            if (whole && !segment.UnknownLength && start + segment.Length > data.Length)
+            {
+                Fail(PdfReadException.Damaged("A JBIG2 segment is cut off."));
+                return;
+            }
             try
             {
-                // The handlers get the segment alone, so that reading past its end is damage and not the next segment's bytes.
-                Process(segment, data.AsSpan(start, end - start).ToArray());
+                // The handlers read nothing of the next segment: the fields they take are bounded by the end of this one.
+                _limit = end;
+                Process(segment, data, start, end);
+                failedRun = 0;
             }
             catch (PdfReadException e) when (e.Problem == PdfReadProblem.Damaged)
             {
                 Fail(e);
+                if (++failedRun > MaxFailedRun)
+                {
+                    Fail(PdfReadException.Damaged("A JBIG2 stream has nothing but segments that do not decode."));
+                    return;
+                }
             }
             // Nothing after the end of the page or of the file is read.
             if (segment.Type is 49 or 51) return;
@@ -125,7 +153,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
     }
 
     /// <summary>7.2: the segment header at <paramref name="start"/>.</summary>
-    private static Segment ReadHeader(byte[] data, int start)
+    private Segment ReadHeader(byte[] data, int start)
     {
         int position = start;
         long number = U32(data, position);
@@ -168,7 +196,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         return new Segment(number, type, referred, length, position, unknown);
     }
 
-    private static long UnknownLength(byte[] data, int start)
+    private long UnknownLength(byte[] data, int start)
     {
         // The flags byte of the generic region follows its 17 byte region information.
         bool mmr = (U8(data, start + 17) & 1) != 0;
@@ -181,10 +209,10 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         throw PdfReadException.Damaged("A JBIG2 segment of unknown length does not end.");
     }
 
-    private void Process(Segment segment, byte[] data)
+    private void Process(Segment segment, byte[] data, int start, int end)
     {
-        const int start = 0;
-        int end = data.Length;
+        // The globals of an image hold dictionaries and tables; whatever else is there is not drawn.
+        if (_inGlobals && segment.Type is not (0 or 16 or 53)) return;
         switch (segment.Type)
         {
             case 0:
@@ -490,7 +518,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         Store(segment, region, Jbig2Halftone.Region(_budget, data, position, end, p, patterns));
     }
 
-    private static Region ReadRegion(byte[] data, int start, int end, bool heightFollows = false)
+    private Region ReadRegion(byte[] data, int start, int end, bool heightFollows = false)
     {
         if (end - start < 17) throw PdfReadException.Damaged("A JBIG2 region segment is cut off.");
         long width = U32(data, start), height = U32(data, start + 4), x = U32(data, start + 8), y = U32(data, start + 12);
@@ -626,10 +654,10 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         return output;
     }
 
-    private static int U8(byte[] data, int at) =>
-        at >= 0 && at < data.Length ? data[at] : throw PdfReadException.Damaged("A JBIG2 segment is cut off.");
+    private int U8(byte[] data, int at) =>
+        at >= 0 && at < data.Length && at < _limit ? data[at] : throw PdfReadException.Damaged("A JBIG2 segment is cut off.");
 
-    private static int U16(byte[] data, int at) => (U8(data, at) << 8) | U8(data, at + 1);
+    private int U16(byte[] data, int at) => (U8(data, at) << 8) | U8(data, at + 1);
 
-    private static long U32(byte[] data, int at) => ((long)U16(data, at) << 16) | (uint)U16(data, at + 2);
+    private long U32(byte[] data, int at) => ((long)U16(data, at) << 16) | (uint)U16(data, at + 2);
 }
