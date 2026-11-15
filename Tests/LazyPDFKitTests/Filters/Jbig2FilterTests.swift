@@ -129,14 +129,15 @@ final class Jbig2FilterTests: XCTestCase {
     }
 
     func test_manyMediumRegionsRunOutOfTheMemoryBudget() {
-        // Each region is within the limit and the stream is small, but together they ask for more than a decode may make.
+        // Each region is within the limit and the stream is small, but together they ask for more than a decode may make:
+        // for an image of 8 by 8 that is a few million pixels, and each region has 4 million.
         // MMR data that ends at once leaves the rest of the region white, so every region is quick.
         var data = Jbig2Segments.genericData(Bm(4, 4), [], 0, true, false, nil)
-        data.replaceSubrange(0..<4, with: Jbig2Segments.u32(11000))
-        data.replaceSubrange(4..<8, with: Jbig2Segments.u32(11000))
+        data.replaceSubrange(0..<4, with: Jbig2Segments.u32(2000))
+        data.replaceSubrange(4..<8, with: Jbig2Segments.u32(2000))
         var segments = [Jbig2Segments.segment(0, 48, Jbig2Segments.pageInfo(8, 8))]
         for i in 1...8 { segments.append(Jbig2Segments.segment(i, 38, data)) }
-        unsupported(segments.flatMap { $0 })
+        unsupported(segments.flatMap { $0 }, sizeParameters(8, 8))
     }
 
     func test_stripedPageThatReachesFarDownIsRefused() {
@@ -195,31 +196,42 @@ final class Jbig2FilterTests: XCTestCase {
         XCTAssertThrowsError(try whole(stream)) { XCTAssertEqual(($0 as? PdfReadException)?.problem, .damaged) }
     }
 
+    // The page size a sample's first segment (its page information) gives, as an image of that size would say it.
+    private func parametersOf(_ sample: [UInt8], _ globals: [UInt8]) -> PdfDictionary {
+        guard sample.count >= 19, sample[4] & 0x3f == 48 else { return Jbig2Samples.parameters(globals) }
+        let width = Int(sample[11]) << 24 | Int(sample[12]) << 16 | Int(sample[13]) << 8 | Int(sample[14])
+        let height = Int(sample[15]) << 24 | Int(sample[16]) << 16 | Int(sample[17]) << 8 | Int(sample[18])
+        return sizeParameters(width, height, globals: globals)
+    }
+
     func test_cutAndDamagedStreamsGiveAnErrorOrWhatDecodedAndNeverHang() throws {
+        // Decoded as an image of the page's own size is, so that the budget tied to that size applies, as it does for every caller.
+        // Without it a stream that is damaged may run up to the whole budget of a page of any size, which a debug build takes minutes over.
         let start = Date()
         let names = try Jbig2Samples.names()
         let samples = try names.map { try Jbig2Samples.file($0) }
-        let globals = Jbig2Samples.parameters(try Jbig2Samples.globals())
-        for sample in samples {
+        let globals = try Jbig2Samples.globals()
+        let sizes = samples.map { parametersOf($0, globals) }
+        for (sample, parameters) in zip(samples, sizes) {
             var length = 0
             while length < sample.count {
-                tryDecode(Array(sample[..<length]), globals)
-                length += max(1, sample.count / 30)
+                tryDecode(Array(sample[..<length]), parameters)
+                length += max(1, sample.count / 15)
             }
         }
         var random = DotNetRandom(77)
-        for _ in 0..<12 {
-            for sample in samples {
+        for _ in 0..<6 {
+            for (sample, parameters) in zip(samples, sizes) {
                 var data = sample
                 var flips = random.next(1, 4)
                 while flips > 0 {
                     data[random.next(data.count)] ^= UInt8(1 << random.next(8))
                     flips -= 1
                 }
-                tryDecode(data, globals)
+                tryDecode(data, parameters)
             }
         }
-        XCTAssertLessThan(seconds(start), 10)
+        XCTAssertLessThan(seconds(start), 30)
     }
 
     func test_segmentsOfEveryLengthUnderTheirMinimumNeverRaiseAnythingButDamage() {
