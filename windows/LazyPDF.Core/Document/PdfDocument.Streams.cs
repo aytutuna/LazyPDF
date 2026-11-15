@@ -66,9 +66,14 @@ public sealed partial class PdfDocument
     /// </summary>
     internal (PdfObject? Filter, PdfObject? Parameters, bool Crypt) DecodeSpec(PdfStream stream, bool decoding = false, long maxSize = PdfFilters.DefaultMaxSize)
     {
-        var filter = Flatten(stream.Dictionary["Filter"], 2);
-        var parameters = Flatten(stream.Dictionary["DecodeParms"], 3);
+        var (filter, parameters, crypt) = WithoutCrypt(Flatten(stream.Dictionary["Filter"], 2), Flatten(stream.Dictionary["DecodeParms"], 3));
+        // After the Crypt stage is gone, so that the stage that follows it gets the parameters that were given for it.
         if (decoding) parameters = ForJbig2(filter, parameters, stream.Dictionary, maxSize);
+        return (filter, parameters, crypt);
+    }
+
+    private (PdfObject? Filter, PdfObject? Parameters, bool Crypt) WithoutCrypt(PdfObject? filter, PdfObject? parameters)
+    {
         if (_security is null) return (filter, parameters, false);
         switch (filter)
         {

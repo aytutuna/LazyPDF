@@ -86,6 +86,20 @@ public class CryptFilterTests
     }
 
     [Fact]
+    public void TheJbig2StageAfterTheCryptFilterGetsTheOneParameterDictionary()
+    {
+        var (file, _) = Encrypted("/Filter [/Crypt /JBIG2Decode] /DecodeParms <</JBIG2Globals 7 0 R>>",
+            (s, d) => TestPdf.Latin("HELLO"),
+            more: (pdf, s) => pdf.Stream(7, "", s.EncryptStream(7, 0, TestPdf.Latin("globals"), new PdfDictionary())));
+        var document = PdfDocument.Open(file);
+        var (filter, parameters, crypt) = document.DecodeSpec((PdfStream)document.Get(6)!, decoding: true);
+        Assert.True(crypt);
+        Assert.Equal("JBIG2Decode", Assert.Single(((PdfArray)filter!).Items.Cast<PdfName>()).Value);
+        var stage = (PdfDictionary)Assert.Single(((PdfArray)parameters!).Items);
+        Assert.Equal("globals", TestPdf.Text(((PdfStream)stage["JBIG2Globals"]!).Data!));
+    }
+
+    [Fact]
     public void AStreamInTheEncryptDictionaryDoesNotStopAKeptHandlerFromSaving()
     {
         var (file, _) = Encrypted("", (s, d) => s.EncryptStream(6, 0, TestPdf.Latin("q Q"), d),
