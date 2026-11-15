@@ -260,6 +260,37 @@ final class Jbig2FilterTests: XCTestCase {
         XCTAssertLessThan(seconds(start), 2)
     }
 
+    // The bits as bytes, the last one padded with zeros.
+    private func bits(_ text: String) -> [UInt8] {
+        var bytes = [UInt8](repeating: 0, count: (text.count + 7) / 8)
+        for (i, c) in text.enumerated() where c == "1" { bytes[i / 8] |= UInt8(0x80 >> (i % 8)) }
+        return bytes
+    }
+
+    func test_aHeightClassOfNoWidthButGreatHeightIsRefusedAtOnce() {
+        // A Huffman coded dictionary of one symbol: height 2^30 (Table B.4, last line), width 0 (B.2), the end of the class, a bitmap size of 0 (B.1).
+        let offset = String((1 << 30) - 76, radix: 2)
+        let text = "11111" + String(repeating: "0", count: 32 - offset.count) + offset + "0" + "111111" + "00000"
+        let data = Jbig2Segments.cat(Jbig2Segments.u16(1), Jbig2Segments.u32(1), Jbig2Segments.u32(1), bits(text))
+        let start = Date()
+        unsupported(page(10, 10, Jbig2Segments.segment(1, 0, data)))
+        XCTAssertLessThan(seconds(start), 2)
+    }
+
+    func test_aFitOfAnyHugeSizeNeverMakesTheBudgetNegative() throws {
+        let budget = Jbig2Budget()
+        budget.forImage(1 << 62)
+        try budget.charge(8, 8)
+        try budget.chargeWork(1000)
+        // Through the filter: the page is made, and what is refused is the size of the rows the image asks for.
+        let parameters = sizeParameters(Int(Int32.max), Int(Int32.max))
+        XCTAssertThrowsError(try decode(Jbig2Segments.generic(Bm(1, 1), 0, false), parameters)) {
+            let e = $0 as? PdfReadException
+            XCTAssertEqual(e?.problem, .unsupported)
+            XCTAssertEqual(e?.message, FilterBuffer.tooBig().message)
+        }
+    }
+
     func test_globalsHoldDictionariesAndTablesAndNothingElse() throws {
         // A region of 134 million pixels in the globals is not drawn, and costs nothing, for an image of one pixel.
         var region = Jbig2Segments.genericData(Bm(4, 4), [0xff, 0xac], 0, false, false, nil)
@@ -296,12 +327,27 @@ final class Jbig2FilterTests: XCTestCase {
     }
 
     func test_aRunOfInstancesPastTheEndOfTheDataStillEnds() throws {
-        // A text region of the most instances there may be, over the symbols of the globals, in a few bytes of zeros: the data
-        // runs out and the decoder keeps going on the ones it is fed.
-        let text = Jbig2Segments.cat(Jbig2Segments.regionInfo(64, 40), Jbig2Segments.u16(0), Jbig2Segments.u32(Jbig2Text.maxInstances), [UInt8](repeating: 0, count: 8))
-        let stream = page(64, 40, Jbig2Segments.segment(2, 6, text, [1]))
+        // A real region of one instance over a real dictionary, whose count is then made the most there may be: the data runs
+        // out after the first instance and the decoder keeps going on the ones it is fed.
+        let symbol = Bm.text(3, 3, 4)
+        let dictionary = Jbig2Segments.segment(1, 0, Jbig2Encode.oneSymbolDictionary(symbol))
+        var text = Jbig2Encode.oneInstanceText(10, 10, x: 2, y: 3)
+        let one = page(10, 10, dictionary, Jbig2Segments.segment(2, 6, text, [1]))
+        let placed = Bm(10, 10)
+        for y in 0..<3 { for x in 0..<3 { placed[2 + x, 3 + y] = symbol[x, y] } }
+        XCTAssertEqual(try decode(one), placed.packed())
+
+        text.replaceSubrange(19..<23, with: Jbig2Segments.u32(Jbig2Text.maxInstances))
+        let stream = page(10, 10, dictionary, Jbig2Segments.segment(2, 6, text, [1]))
         let start = Date()
-        tryDecode(stream, sizeParameters(64, 40, globals: try Jbig2Samples.globals()))
+        // The picture the region is for is 10 by 10, which is what the work a decode may do is measured by. The one instance that
+        // is coded decodes as above (so the first pass of the loop is made); the loop then asks for more, and the data that is
+        // left is where the decode ends, as damage, in the second pass: a strip delta that is out of band where there is none.
+        XCTAssertThrowsError(try decode(stream, sizeParameters(10, 10))) { error in
+            let e = error as? PdfReadException
+            XCTAssertEqual(e?.problem, .damaged)
+            XCTAssertEqual(e?.message, "A JBIG2 text region has an out-of-band value where there is none.")
+        }
         XCTAssertLessThan(seconds(start), 3)
     }
 }

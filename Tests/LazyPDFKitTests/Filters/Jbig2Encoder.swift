@@ -85,6 +85,28 @@ final class ArithEncoder {
 
     let gb = Jbig2Contexts(1 << 16)
     let gr = Jbig2Contexts(1 << 13)
+    private let ints = (0..<13).map { _ in Jbig2Contexts(512) }
+
+    /// A.2: a value, or nil for the out-of-band value.
+    func integer(_ procedure: Int, _ value: Int?) {
+        let contexts = ints[procedure]
+        var prev = 1
+        func put(_ bit: Int) {
+            self.bit(contexts, prev, bit)
+            prev = prev < 256 ? (prev << 1) | bit : (((prev << 1) | bit) & 511) | 256
+        }
+        func bits(_ v: Int, _ count: Int) {
+            for i in stride(from: count - 1, through: 0, by: -1) { put((v >> i) & 1) }
+        }
+        let magnitude = value.map { abs($0) } ?? 0
+        put(value == nil || value! < 0 ? 1 : 0)
+        if magnitude < 4 { put(0); bits(magnitude, 2) }
+        else if magnitude < 20 { put(1); put(0); bits(magnitude - 4, 4) }
+        else if magnitude < 84 { put(1); put(1); put(0); bits(magnitude - 20, 6) }
+        else if magnitude < 340 { put(1); put(1); put(1); put(0); bits(magnitude - 84, 8) }
+        else if magnitude < 4436 { put(1); put(1); put(1); put(1); put(0); bits(magnitude - 340, 12) }
+        else { put(1); put(1); put(1); put(1); put(1); bits(magnitude - 4436, 32) }
+    }
 
     func bit(_ contexts: Jbig2Contexts, _ pos: Int, _ d: Int) {
         var index = Int(contexts[pos]) >> 1, mps = Int(contexts[pos]) & 1
@@ -157,6 +179,30 @@ final class ArithEncoder {
 }
 
 enum Jbig2Encode {
+    /// The data of a symbol dictionary segment (7.4.2) with one symbol, coded with the arithmetic coder and exported.
+    static func oneSymbolDictionary(_ symbol: Bm) -> [UInt8] {
+        let e = ArithEncoder()
+        e.integer(Jbig2Arith.iadh, symbol.height)
+        e.integer(Jbig2Arith.iadw, symbol.width)
+        generic(e, symbol, 0, false)
+        e.integer(Jbig2Arith.iadw, nil)
+        e.integer(Jbig2Arith.iaex, 0)
+        e.integer(Jbig2Arith.iaex, 1)
+        return Jbig2Segments.cat(Jbig2Segments.u16(0), Jbig2Segments.at(defaultAt(0)), Jbig2Segments.u32(1), Jbig2Segments.u32(1), e.finish())
+    }
+
+    /// The data of a text region segment (7.4.3) of one instance of the only symbol at (x, y), reference corner at the top left.
+    static func oneInstanceText(_ width: Int, _ height: Int, x: Int, y: Int) -> [UInt8] {
+        let e = ArithEncoder()
+        e.integer(Jbig2Arith.iadt, 0)
+        e.integer(Jbig2Arith.iadt, y)
+        e.integer(Jbig2Arith.iafs, x)
+        // One symbol has a symbol id of no bits.
+        e.integer(Jbig2Arith.iads, nil)
+        // Flags: the top left reference corner.
+        return Jbig2Segments.cat(Jbig2Segments.regionInfo(width, height), Jbig2Segments.u16(1 << 4), Jbig2Segments.u32(1), e.finish())
+    }
+
     private static let reused = [0x9b25, 0x0795, 0x00e5, 0x0195]
 
     /// The nominal adaptive pixels of Figures 3 to 6 and 7.
