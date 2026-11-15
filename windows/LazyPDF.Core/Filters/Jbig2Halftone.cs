@@ -76,7 +76,7 @@ internal static class Jbig2Halftone
         var region = new Jbig2Bitmap(p.Width, p.Height, budget);
         if (p.DefaultPixel != 0) region.Fill(1);
         int patternWidth = patterns[0].Width, patternHeight = patterns[0].Height;
-        budget.Work((long)gridWidth * gridHeight);
+        budget.Work(Math.Max((long)gridWidth, 1) * Math.Max((long)gridHeight, 1));
 
         Jbig2Bitmap? skip = null;
         if (p.EnableSkip)

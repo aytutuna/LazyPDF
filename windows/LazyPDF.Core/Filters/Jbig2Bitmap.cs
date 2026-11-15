@@ -27,6 +27,8 @@ internal sealed class Jbig2Budget
     /// </summary>
     public void Fit(long fitPixels)
     {
+        // Past this the other limits are the smaller ones; the cap keeps the products below from overflowing.
+        fitPixels = Math.Min(fitPixels, 1L << 40);
         _total = Math.Min(_total, 16 * fitPixels + (1 << 24));
         // Enough for a page of symbols however small, and for drawing over the picture many times.
         _work = Math.Min(_work, 32 * fitPixels + (1 << 26));
@@ -45,8 +47,10 @@ internal sealed class Jbig2Budget
 
     public void Charge(long width, long height)
     {
-        long pixels = width * height;
-        if (width < 0 || height < 0 || pixels > PdfImageSamples.MaxPixels || pixels > _total) throw TooBig();
+        if (width < 0 || height < 0) throw TooBig();
+        // A bitmap with no columns or no rows still costs the rows or columns that a loop over it walks.
+        long pixels = Math.Max(width, 1) * Math.Max(height, 1);
+        if (pixels > PdfImageSamples.MaxPixels || pixels > _total) throw TooBig();
         _total -= pixels;
     }
 
@@ -88,6 +92,7 @@ internal sealed class Jbig2Bitmap
     {
         int left = (int)Math.Min(source.Width, Math.Max(0L, -(long)x)), top = (int)Math.Min(source.Height, Math.Max(0L, -(long)y));
         int right = (int)Math.Min(source.Width, (long)Width - x), bottom = (int)Math.Min(source.Height, (long)Height - y);
+        if (left >= right || top >= bottom) return;
         for (int sy = top; sy < bottom; sy++)
         {
             int from = sy * source.Width;

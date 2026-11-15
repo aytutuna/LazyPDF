@@ -73,7 +73,7 @@ enum Jbig2Halftone {
         let region = try Jbig2Bitmap(p.width, p.height, budget)
         if p.defaultPixel != 0 { region.fill(1) }
         let patternWidth = patterns[0].width, patternHeight = patterns[0].height
-        try budget.chargeWork(gridWidth * gridHeight)
+        try budget.chargeWork(max(gridWidth, 1) * max(gridHeight, 1))
 
         var skip: Jbig2Bitmap?
         if p.enableSkip {

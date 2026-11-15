@@ -42,9 +42,11 @@ final class Jbig2Budget {
     func fixed(_ bytes: Int) throws { try charge(bytes, 1) }
 
     func charge(_ width: Int, _ height: Int) throws {
+        if width < 0 || height < 0 { throw Jbig2Budget.tooBig() }
+        // A bitmap with no columns or no rows still costs the rows or columns that a loop over it walks.
         // Sizes come from 32-bit fields, so the product of two of them fits.
-        let pixels = width * height
-        if width < 0 || height < 0 || pixels > PdfImageSamples.maxPixels || pixels > total { throw Jbig2Budget.tooBig() }
+        let pixels = max(width, 1) * max(height, 1)
+        if pixels > PdfImageSamples.maxPixels || pixels > total { throw Jbig2Budget.tooBig() }
         total -= pixels
     }
 

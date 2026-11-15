@@ -150,7 +150,7 @@ internal static class Jbig2Symbols
             collective = new Jbig2Bitmap((int)totalWidth, height, budget);
             int stride = (int)((totalWidth + 7) / 8);
             if (reader.End - reader.Position < (long)stride * height) throw PdfReadException.Damaged("A JBIG2 symbol bitmap is cut off.");
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < height && totalWidth > 0; y++)
             {
                 for (int x = 0; x < totalWidth; x++) collective.Pixels[y * (int)totalWidth + x] = (byte)((reader.Data[reader.Position + x / 8] >> (7 - (x & 7))) & 1);
                 reader.Position += stride;

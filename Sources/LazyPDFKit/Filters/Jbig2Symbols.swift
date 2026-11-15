@@ -141,7 +141,7 @@ enum Jbig2Symbols {
             collective = try Jbig2Bitmap(totalWidth, height, budget)
             let stride = (totalWidth + 7) / 8
             if reader.end - reader.position < stride * height { throw PdfReadException.damaged("A JBIG2 symbol bitmap is cut off.") }
-            for y in 0..<height {
+            for y in 0..<(totalWidth > 0 ? height : 0) {
                 for x in 0..<totalWidth {
                     collective.pixels[y * totalWidth + x] = (reader.data[reader.position + x / 8] >> UInt8(7 - (x & 7))) & 1
                 }

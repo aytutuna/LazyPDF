@@ -345,6 +345,44 @@ public class Jbig2FilterTests
             PdfFilters.DecodeToCodecWhole(stream, new PdfName("JBIG2Decode"), null, PdfFilters.DefaultMaxSize)).Problem);
     }
 
+    // The bits as bytes, the last one padded with zeros.
+    private static byte[] Bits(string bits)
+    {
+        var bytes = new byte[(bits.Length + 7) / 8];
+        for (int i = 0; i < bits.Length; i++)
+        {
+            if (bits[i] == '1') bytes[i / 8] |= (byte)(0x80 >> (i % 8));
+        }
+        return bytes;
+    }
+
+    [Fact]
+    public void AHeightClassOfNoWidthButGreatHeightIsRefusedAtOnce()
+    {
+        // A Huffman coded dictionary of one symbol: height 2^30 (Table B.4, last line), width 0 (B.2), the end of the class, a bitmap size of 0 (B.1).
+        string bits = "11111" + Convert.ToString((1L << 30) - 76, 2).PadLeft(32, '0') + "0" + "111111" + "00000";
+        byte[] data = Jbig2Segments.Cat(Jbig2Segments.U16(1), Jbig2Segments.U32(1), Jbig2Segments.U32(1), Bits(bits));
+        var time = Stopwatch.StartNew();
+        Unsupported(Page(10, 10, Jbig2Segments.Segment(1, 0, data)));
+        Assert.True(time.Elapsed < TimeSpan.FromSeconds(2), time.Elapsed.ToString());
+    }
+
+    [Fact]
+    public void AFitOfAnyHugeSizeNeverMakesTheBudgetNegative()
+    {
+        var budget = new Jbig2Budget();
+        budget.ForImage(1L << 62);
+        budget.Charge(8, 8);
+        budget.Work(1000);
+        // Through the filter: the page is made, and what is refused is the size of the rows the image asks for.
+        var parameters = new PdfDictionary();
+        parameters["Width"] = new PdfNumber(int.MaxValue);
+        parameters["Height"] = new PdfNumber(int.MaxValue);
+        var e = Assert.Throws<PdfReadException>(() => Decode(Jbig2Segments.Generic(new Bm(1, 1), 0, false), parameters));
+        Assert.Equal(PdfReadProblem.Unsupported, e.Problem);
+        Assert.Equal(FilterBuffer.TooBig().Message, e.Message);
+    }
+
     [Fact]
     public void GlobalsHoldDictionariesAndTablesAndNothingElse()
     {

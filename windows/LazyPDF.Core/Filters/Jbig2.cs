@@ -640,7 +640,7 @@ internal sealed class Jbig2Decoder(long maxSize, int fitWidth = 0, int fitHeight
         int width = _page.Width, rows = _rows;
         bool fit = fitWidth > 0 && fitHeight > 0;
         int outWidth = fit ? fitWidth : width, outRows = fit ? fitHeight : rows;
-        int stride = (outWidth + 7) / 8;
+        int stride = (int)(((long)outWidth + 7) / 8);
         if ((long)outRows * stride > maxSize) throw FilterBuffer.TooBig();
         var output = new byte[outRows * stride];
         Array.Fill(output, (byte)0xff);
