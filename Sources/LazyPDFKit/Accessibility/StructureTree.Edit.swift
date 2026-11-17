@@ -83,7 +83,7 @@ extension StructureTree {
         return true
     }
 
-    private func indexIn(_ kid: StructKid) -> Int {
+    func indexIn(_ kid: StructKid) -> Int {
         if let parent = kid.parent { return parent.kidList.firstIndex(where: { $0 === kid }) ?? -1 }
         if let element = kid as? StructElement { return rootList.firstIndex(where: { $0 === element }) ?? -1 }
         return -1

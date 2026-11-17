@@ -37,6 +37,23 @@ public enum AccessibilityText {
         }
     }
 
+    public static func contentReason(_ key: String) -> String {
+        switch key {
+        case TagContent.truncated: return L10n.t("The structure tree is too large to edit.")
+        case TagContent.notInTree: return L10n.t("The item is not in the tree.")
+        case TagContent.notContent: return L10n.t("This item is not marked content.")
+        case TagContent.formContent: return L10n.t("The content is drawn by a form XObject, which other places may share.")
+        case TagContent.sharedStream: return L10n.t("The page content is shared with another page.")
+        case TagContent.unreadable: return L10n.t("The page content cannot be edited safely.")
+        case TagContent.nestedTagged: return L10n.t("Other tagged content lies inside or around this content.")
+        case TagContent.partialMarked: return L10n.t("The selection covers only part of content that is already marked.")
+        case TagContent.splitOperation: return L10n.t("The selection cuts through a line of text or a picture. Select whole lines or pictures.")
+        case TagContent.emptySelection: return L10n.t("Nothing in the selection can be tagged.")
+        case TagContent.tooLarge: return L10n.t("The page has too many marked sequences to tag more.")
+        default: return placementReason(key)
+        }
+    }
+
     public static func name(_ rule: AccessibilityRule) -> String {
         switch rule {
         case .tagged: return L10n.t("Document is tagged")

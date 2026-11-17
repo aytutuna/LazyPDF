@@ -51,7 +51,7 @@ extension StructureTree {
 
     // Each page's array in the parent tree runs up to its highest MCID, so a few far-off numbers would allocate a great deal.
     // A sequence number is a C# int; clamping keeps a caller's huge one from overflowing the sum.
-    private func parentSlots() -> Int {
+    func parentSlots() -> Int {
         var highest: [SlotKey: Int] = [:]
         for content in contents {
             let key = SlotKey(page: content.pageIndex, stream: content.stream?.number ?? 0)

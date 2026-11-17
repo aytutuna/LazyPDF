@@ -35,6 +35,22 @@ public static class AccessibilityText
         _ => key,
     };
 
+    public static string ContentReason(string key) => key switch
+    {
+        TagContent.Truncated => Loc.T("The structure tree is too large to edit."),
+        TagContent.NotInTree => Loc.T("The item is not in the tree."),
+        TagContent.NotContent => Loc.T("This item is not marked content."),
+        TagContent.FormContent => Loc.T("The content is drawn by a form XObject, which other places may share."),
+        TagContent.SharedStream => Loc.T("The page content is shared with another page."),
+        TagContent.Unreadable => Loc.T("The page content cannot be edited safely."),
+        TagContent.NestedTagged => Loc.T("Other tagged content lies inside or around this content."),
+        TagContent.PartialMarked => Loc.T("The selection covers only part of content that is already marked."),
+        TagContent.SplitOperation => Loc.T("The selection cuts through a line of text or a picture. Select whole lines or pictures."),
+        TagContent.EmptySelection => Loc.T("Nothing in the selection can be tagged."),
+        TagContent.TooLarge => Loc.T("The page has too many marked sequences to tag more."),
+        _ => PlacementReason(key),
+    };
+
     public static string Name(AccessibilityRule rule) => rule switch
     {
         AccessibilityRule.Tagged => Loc.T("Document is tagged"),
