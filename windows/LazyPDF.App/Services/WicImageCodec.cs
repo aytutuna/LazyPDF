@@ -14,8 +14,13 @@ public sealed class WicImageCodec : IImageCodec
 {
     private const int MaxFrames = 2000;
 
-    public PdfRgbaImage? Decode(byte[] data, string codec) =>
-        codec is "DCTDecode" or "JPXDecode" ? DecodeFile(data)?.FirstOrDefault() is { TooBig: false } first ? first : null : null;
+    public PdfRgbaImage? Decode(byte[] data, string codec)
+    {
+        if (codec is not ("DCTDecode" or "JPXDecode")) return null;
+        if (DecodeFile(data)?.FirstOrDefault() is { TooBig: false } first) return first;
+        // Windows has no JPEG 2000 codec of its own; the bundled one reads what WIC does not.
+        return codec == "JPXDecode" ? OpenJpeg.Decode(data) : null;
+    }
 
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file)
     {
