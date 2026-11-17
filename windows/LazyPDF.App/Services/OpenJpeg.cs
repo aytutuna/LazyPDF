@@ -19,7 +19,9 @@ internal static class OpenJpeg
     private const int DecoderParametersSize = 8300;
     private const int MaxComponents = 5;
     private const int FlagsOffset = 8248, IgnoreColourBoxes = 1;
-    private const long MaxTileSamples = 1 << 16;
+    private const long MaxTileSamples = 1 << 12;
+    // What one decode may allocate inside OpenJPEG: the image and the tile buffers of the largest picture accepted, plus slack.
+    private const long DecodeBudget = 8 * PdfImageSamples.MaxPixels + (128L << 20);
 
     private static readonly byte[] Jp2Signature = [0, 0, 0, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A];
     private static readonly MessageFn Quiet = (_, _) => { };
@@ -68,6 +70,15 @@ internal static class OpenJpeg
         public IntPtr Comps, IccBuffer;
         public uint IccLength;
     }
+
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern void lazypdf_opj_budget(nuint bytes);
+
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+    internal static extern nuint lazypdf_opj_used();
+
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int opj_codec_set_threads(IntPtr codec, int threads);
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr opj_create_decompress(int format);
@@ -128,11 +139,14 @@ internal static class OpenJpeg
     /// <see cref="PdfImageSamples.MaxPixels"/> samples of 4 bytes while decoded (a palette makes new components out of one).
     /// <paramref name="components"/> is the colour space's component count from the PDF, 0 when it is not known.
     /// </summary>
-    public static PdfRgbaImage? Decode(byte[] data, int components = 0)
+    public static PdfRgbaImage? Decode(byte[] data, int components = 0) => Decode(data, components, DecodeBudget);
+
+    internal static PdfRgbaImage? Decode(byte[] data, int components, long budget)
     {
         int format = Format(data);
         if (format < 0 || !ReadStructure(data, format, out var colour)) return null;
         IntPtr parameters = IntPtr.Zero, codec = IntPtr.Zero, stream = IntPtr.Zero, image = IntPtr.Zero;
+        bool budgeted = false;
         var source = new Source(data);
         ReadFn read = source.Read;
         SkipFn skip = source.Skip;
@@ -143,8 +157,12 @@ internal static class OpenJpeg
             opj_set_default_decoder_parameters(parameters);
             // Palette and channel boxes are applied below, so OpenJPEG never expands a palette itself.
             Marshal.WriteInt32(parameters, FlagsOffset, Marshal.ReadInt32(parameters, FlagsOffset) | IgnoreColourBoxes);
+            // The budget is per thread, so every call of one decode stays on this one.
+            lazypdf_opj_budget((nuint)budget);
+            budgeted = true;
             codec = opj_create_decompress(format);
             if (codec == IntPtr.Zero) return null;
+            if (opj_codec_set_threads(codec, 0) == 0) return null;
             opj_set_info_handler(codec, Quiet, IntPtr.Zero);
             opj_set_warning_handler(codec, Quiet, IntPtr.Zero);
             opj_set_error_handler(codec, Quiet, IntPtr.Zero);
@@ -177,6 +195,7 @@ internal static class OpenJpeg
             if (codec != IntPtr.Zero) opj_destroy_codec(codec);
             if (stream != IntPtr.Zero) opj_stream_destroy(stream);
             if (image != IntPtr.Zero) opj_image_destroy(image);
+            if (budgeted) lazypdf_opj_budget(0);
             if (parameters != IntPtr.Zero) Marshal.FreeHGlobal(parameters);
             GC.KeepAlive(read);
             GC.KeepAlive(skip);

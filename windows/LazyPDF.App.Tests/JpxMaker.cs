@@ -65,7 +65,12 @@ internal static class JpxMaker
     private static extern int opj_end_compress(IntPtr codec, IntPtr stream);
 
     /// <summary>A codestream (<paramref name="jp2"/> false) or a JP2 file of the given components.</summary>
-    public static byte[] Encode(int width, int height, int colorSpace, bool jp2, bool mct, params Comp[] comps)
+    public static byte[] Encode(int width, int height, int colorSpace, bool jp2, bool mct, params Comp[] comps) => Encode(width, height, 0, colorSpace, jp2, mct, comps);
+
+    /// <summary>A codestream cut into tiles of <paramref name="tile"/> x <paramref name="tile"/> samples.</summary>
+    public static byte[] Tiled(int width, int height, int tile, params Comp[] comps) => Encode(width, height, tile, Gray, false, false, comps);
+
+    private static byte[] Encode(int width, int height, int tile, int colorSpace, bool jp2, bool mct, Comp[] comps)
     {
         var output = new MemoryStream();
         IntPtr parameters = Marshal.AllocHGlobal(ParametersSize), layout = Marshal.AllocHGlobal(comps.Length * 36);
@@ -110,6 +115,12 @@ internal static class JpxMaker
             }
 
             opj_set_default_encoder_parameters(parameters);
+            if (tile > 0)
+            {
+                Marshal.WriteInt32(parameters, 0, 1);
+                Marshal.WriteInt32(parameters, 12, tile);
+                Marshal.WriteInt32(parameters, 16, tile);
+            }
             Marshal.WriteInt32(parameters, DistoAlloc, 1);
             Marshal.WriteInt32(parameters, NumLayers, 1);
             Marshal.WriteInt32(parameters, Rates, 0);

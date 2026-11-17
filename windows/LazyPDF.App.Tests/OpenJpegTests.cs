@@ -15,6 +15,60 @@ public sealed class OpenJpegTests
 
     private static PdfRgbaImage Read(byte[] file) => Assert.IsType<PdfRgbaImage>(OpenJpeg.Decode(file));
 
+    private static byte[] Be16(int v) => [(byte)(v >> 8), (byte)v];
+
+    private static byte[] Be32(long v) => [(byte)(v >> 24), (byte)(v >> 16), (byte)(v >> 8), (byte)v];
+
+    // A one-component codestream by hand: SIZ, COD without decomposition levels, QCD, optional extra main header segments,
+    // and one tile-part with no packets. Only its structure matters, so it never holds a picture.
+    private static byte[] Hostile(int width, int height, int tile, int blockExp, bool smallPrecincts, byte[]? extra = null)
+    {
+        byte[] siz = [.. Be16(0xFF51), .. Be16(41), 0, 0, .. Be32(width), .. Be32(height), .. Be32(0), .. Be32(0), .. Be32(tile), .. Be32(tile), .. Be32(0), .. Be32(0), .. Be16(1), 7, 1, 1];
+        byte[] cod = [.. Be16(0xFF52), .. Be16(smallPrecincts ? 13 : 12), (byte)(smallPrecincts ? 1 : 0), 0, 0, 1, 0, 0, (byte)blockExp, (byte)blockExp, 0, 1, .. smallPrecincts ? new byte[] { 0 } : []];
+        byte[] qcd = [.. Be16(0xFF5C), .. Be16(4), 0x40, 0x40];
+        return [.. Be16(0xFF4F), .. siz, .. cod, .. qcd, .. extra ?? [], .. Be16(0xFF90), .. Be16(10), 0, 0, .. Be32(0), 0, 1, .. Be16(0xFF93), .. Be16(0xFFD9)];
+    }
+
+    // A 64 KB MCT record, which OpenJPEG copies into the coding parameters of every tile.
+    private static byte[] MctRecord() => [.. Be16(0xFF74), .. Be16(65535), .. Be16(0), .. Be16(1), .. Be16(0), .. new byte[65535 - 8]];
+
+    private static void AssertRefused(byte[] file, long budget)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Assert.Null(OpenJpeg.Decode(file, 0, budget));
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), watch.Elapsed.ToString());
+        Assert.Equal((nuint)0, OpenJpeg.lazypdf_opj_used());
+    }
+
+    [Fact]
+    public void AnMctRecordCopiedIntoEveryTileStaysWithinTheBudget() =>
+        AssertRefused(Hostile(64, 64, 1, 4, false, MctRecord()), 16 << 20);
+
+    [Fact]
+    public void TinyPrecinctsAndBlocksStayWithinTheBudget() =>
+        AssertRefused(Hostile(8000, 8000, 8000, 0, true), 1L << 30);
+
+    [Fact]
+    public void ManyOnePixelTilesAreRefusedFromTheHeader() =>
+        AssertRefused(Hostile(255, 257, 1, 4, false, MctRecord()), 1L << 30);
+
+    [Fact]
+    public void ADecodeThatSucceedsLeavesNothingCharged()
+    {
+        Read(Encode(8, 8, Gray, false, false, new Comp(8, Ramp(64, 255))));
+        Assert.Equal((nuint)0, OpenJpeg.lazypdf_opj_used());
+    }
+
+    [Fact]
+    public void AMultiTilePictureStillDecodes()
+    {
+        int[] gray = [.. Enumerable.Range(0, 100 * 100).Select(i => i * 7 % 256)];
+        var image = Read(Tiled(100, 100, 32, new Comp(8, gray)));
+
+        Assert.Equal((100, 100), (image.Width, image.Height));
+        for (int i = 0; i < gray.Length; i++) Assert.Equal(gray[i], image.Rgba[i * 4]);
+    }
+
     [Fact]
     public void AGrayCodestreamComesBackAsEqualChannels()
     {
