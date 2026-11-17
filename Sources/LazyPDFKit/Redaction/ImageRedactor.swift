@@ -88,6 +88,9 @@ final class ImageRedactor {
             let mode = JpxImage.maskInData(document, d)
             if mode <= 0 && !JpxImage.opaque(pixels) { return nil }
             pixels = JpxImage.alpha(pixels, mode)
+        } else if !soft {
+            guard let decodedPixels = withDecode(d, decoded.data, pixels) else { return nil }
+            pixels = decodedPixels
         }
         var rgba = pixels.rgba
         for (row, from, to) in Self.cells(pixels.width, pixels.height, pixels.height, unit) {
@@ -115,6 +118,31 @@ final class ImageRedactor {
             if let mask = copy[key] { made.dictionary[key] = mask }
         }
         return reference
+    }
+
+    // A picture of a DCT file is written back as RGB with no /Decode, so the /Decode goes onto the codec's samples first. That
+    // works where a codec channel is a component of the colour space: gray, which the codec gives as R = G = B, and RGB. A CMYK
+    // picture keeps what the codec made of it only under the inversion the Adobe marker already undid; any other /Decode on a
+    // picture the codec converted cannot be carried over, so the picture is one that cannot be decoded here.
+    private func withDecode(_ image: PdfDictionary, _ jpeg: [UInt8], _ pixels: PdfRgbaImage) -> PdfRgbaImage? {
+        guard let decode = PdfFunction.numbers(image["Decode"], { self.document.resolve($0) }) else { return pixels }
+        let identity = stride(from: 0, to: decode.count, by: 2).allSatisfy { $0 + 1 < decode.count && decode[$0] == 0 && decode[$0 + 1] == 1 }
+        if identity { return pixels }
+        let (family, components) = ImageKit.describe(document, image["ColorSpace"])
+        if family == .cmyk { return ExportImageMerge.inverts(decode) && ExportImageMerge.hasAdobeMarker(jpeg) ? pixels : nil }
+        if family != .gray && family != .rgb { return nil }
+        if decode.count < 2 * components { return pixels }
+        var rgba = pixels.rgba
+        var i = 0
+        while i < rgba.count {
+            for c in 0..<3 {
+                let j = components == 1 ? 0 : c
+                let value = decode[2 * j] + Double(rgba[i + c]) * (decode[2 * j + 1] - decode[2 * j]) / 255
+                rgba[i + c] = UInt8(min(max(value, 0), 1) * 255 + 0.5)
+            }
+            i += 4
+        }
+        return PdfRgbaImage(pixels.width, pixels.height, rgba, dpiX: pixels.dpiX, dpiY: pixels.dpiY)
     }
 
     // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is

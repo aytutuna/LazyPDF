@@ -153,6 +153,55 @@ public class RedactImageTests
         Assert.Equal(expected, written?.ToString());
     }
 
+    // The codec's samples are what the file stores, and the copy is plain RGB, so /Decode has to be on the samples.
+    [Theory]
+    [InlineData("/DeviceGray", "[1 0]", 60, 60, 60, 195, 195, 195)]
+    [InlineData("/DeviceGray", "[0 1]", 60, 60, 60, 60, 60, 60)]
+    [InlineData("/DeviceRGB", "[1 0 0 1 1 0]", 60, 40, 20, 195, 40, 235)]
+    [InlineData("/DeviceRGB", "[0 1 0 1 0 1]", 60, 40, 20, 60, 40, 20)]
+    public void ADecodeArrayOfAJpegIsAppliedBeforeItIsWrittenAsRgb(string space, string decode, int r, int g, int b, int er, int eg, int eb)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode /Decode {decode}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight((byte)r, (byte)g, (byte)b, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+
+        Assert.False(image.Dictionary.ContainsKey("Decode"));
+        Assert.Equal([0, 0, 0], output.Data(image)[..3].Select(v => (int)v));
+        Assert.Equal([er, eg, eb], output.Data(image)[(5 * 3)..(5 * 3 + 3)].Select(v => (int)v));
+    }
+
+    // Decode does not apply to JPEG 2000 (ISO 32000-1 Table 89).
+    [Fact]
+    public void ADecodeArrayOfAJpxPictureIsNotApplied()
+    {
+        using var document = WithImage("/ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /JPXDecode /Decode [1 0]", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+
+        Assert.Equal([60, 60, 60], output.Data(image)[(5 * 3)..(5 * 3 + 3)].Select(v => (int)v));
+    }
+
+    private static readonly byte[] AdobeJpeg = [0xFF, 0xD8, 0xFF, 0xEE, 0, 14, (byte)'A', (byte)'d', (byte)'o', (byte)'b', (byte)'e', 0, 100, 0, 0, 0, 0, 2, 0xFF, 0xDA];
+
+    [Theory]
+    [InlineData("/DeviceCMYK", "[1 0 1 0 1 0 1 0]", false, false)]
+    [InlineData("/DeviceCMYK", "[0 1 0 1 0 1 0 1]", false, true)]
+    [InlineData("/DeviceCMYK", "[1 0 1 0 1 0 1 0]", true, true)]
+    [InlineData("/DeviceCMYK", "[0 0.5 0 1 0 1 0 1]", true, false)]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]", "[1 0 0 1 0 1]", false, false)]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", "[1 0]", false, false)]
+    public void ADecodeArrayThePixelsCannotCarryRemovesTheJpegWhole(string space, string decode, bool adobe, bool kept)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode /Decode {decode}", adobe ? AdobeJpeg : [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Equal(kept, RedactionKit.Images(output).Count == 1);
+        Assert.Equal(kept ? 0 : 1, result.Report.Pages.Single().WholeImages);
+    }
+
     // A JPX picture usually has no /ColorSpace, so its component count is not known from the dictionary.
     [Theory]
     [InlineData("[0.5]", "[0.5 0.5 0.5]")]

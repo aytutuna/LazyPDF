@@ -82,6 +82,11 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             if (mode <= 0 && !JpxImage.Opaque(pixels)) return null;
             pixels = JpxImage.Alpha(pixels, mode);
         }
+        else if (!soft)
+        {
+            if (WithDecode(d, decoded.Data, pixels) is not { } decodedPixels) return null;
+            pixels = decodedPixels;
+        }
         var rgba = pixels.Rgba;
         var cells = Cells(pixels.Width, pixels.Height, pixels.Height, unit);
         foreach (var (row, from, to) in cells)
@@ -113,6 +118,31 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             if (copy[key] is { } mask) made.Dictionary[key] = mask;
         }
         return reference;
+    }
+
+    // A picture of a DCT file is written back as RGB with no /Decode, so the /Decode goes onto the codec's samples first. That
+    // works where a codec channel is a component of the colour space: gray, which the codec gives as R = G = B, and RGB. A CMYK
+    // picture keeps what the codec made of it only under the inversion the Adobe marker already undid; any other /Decode on a
+    // picture the codec converted cannot be carried over, so the picture is one that cannot be decoded here.
+    private PdfRgbaImage? WithDecode(PdfDictionary image, byte[] jpeg, PdfRgbaImage pixels)
+    {
+        var decode = PdfFunction.Numbers(image["Decode"], document.Resolve);
+        if (decode is null || decode.Chunk(2).All(pair => pair is [0, 1])) return pixels;
+        var (family, components) = ImageKit.Describe(document, image["ColorSpace"]);
+        if (family == ImageFamily.Cmyk) return ExportImageMerge.Inverts(decode) && ExportImageMerge.HasAdobeMarker(jpeg) ? pixels : null;
+        if (family is not (ImageFamily.Gray or ImageFamily.Rgb)) return null;
+        if (decode.Length < 2 * components) return pixels;
+        var rgba = (byte[])pixels.Rgba.Clone();
+        for (int i = 0; i < rgba.Length; i += 4)
+        {
+            for (int c = 0; c < 3; c++)
+            {
+                int j = components == 1 ? 0 : c;
+                double value = decode[2 * j] + rgba[i + c] * (decode[2 * j + 1] - decode[2 * j]) / 255;
+                rgba[i + c] = (byte)(Math.Clamp(value, 0, 1) * 255 + 0.5);
+            }
+        }
+        return new PdfRgbaImage(pixels.Width, pixels.Height, rgba, pixels.DpiX, pixels.DpiY);
     }
 
     // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is

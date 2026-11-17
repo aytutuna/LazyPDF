@@ -86,10 +86,10 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         return Apply(converted, mask, stencil);
     }
 
-    private static bool Inverts(double[]? decode) => decode is { Length: >= 8 } && decode.Chunk(2).Take(4).All(pair => pair is [1, 0]);
+    internal static bool Inverts(double[]? decode) => decode is { Length: >= 8 } && decode.Chunk(2).Take(4).All(pair => pair is [1, 0]);
 
     // The Adobe marker (APP14) tells a codec that the stored inks are inverted.
-    private static bool HasAdobeMarker(byte[] jpeg)
+    internal static bool HasAdobeMarker(byte[] jpeg)
     {
         int p = 2;
         while (p + 4 <= jpeg.Length && jpeg[p] == 0xFF && jpeg[p + 1] != 0xDA)

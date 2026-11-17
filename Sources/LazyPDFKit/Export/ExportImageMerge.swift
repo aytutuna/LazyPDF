@@ -106,13 +106,13 @@ final class ExportImageMerge {
         return result
     }
 
-    private static func inverts(_ decode: [Double]?) -> Bool {
+    static func inverts(_ decode: [Double]?) -> Bool {
         guard let decode, decode.count >= 8 else { return false }
         return pairs(decode, 4).allSatisfy { $0 == (1, 0) }
     }
 
     // The Adobe marker (APP14) tells a codec that the stored inks are inverted.
-    private static func hasAdobeMarker(_ jpeg: [UInt8]) -> Bool {
+    static func hasAdobeMarker(_ jpeg: [UInt8]) -> Bool {
         var p = 2
         while p + 4 <= jpeg.count && jpeg[p] == 0xFF && jpeg[p + 1] != 0xDA {
             let length = Int(jpeg[p + 2]) << 8 | Int(jpeg[p + 3])
