@@ -393,6 +393,30 @@ public sealed class OpenJpegTests
         Assert.Equal([30, 20, 10, 255], image.Rgba[..4].Select(v => (int)v));
     }
 
+    // A channel definition box of n entries, entry i for channel i % 3, each saying colour with no association.
+    private static byte[] Definitions(int n) => [.. Be16(n), .. Enumerable.Range(0, n).SelectMany(i => (byte[])[.. Be16(i % 3), .. Be16(0), .. Be16(0)])];
+
+    [Fact]
+    public void AChannelDefinitionWithTooManyEntriesIsRefused()
+    {
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(10), Flat(20), Flat(30));
+        Assert.NotNull(OpenJpeg.Decode(Wrap(8, 8, 3, code, Colr(Srgb + 15), ("cdef", Definitions(12)))));
+        AssertRefusedFast(Wrap(8, 8, 3, code, Colr(Srgb + 15), ("cdef", Definitions(13))));
+        AssertRefusedFast(Wrap(8, 8, 3, code, Colr(Srgb + 15), ("cdef", Definitions(65535))));
+        AssertRefusedFast(Wrap(8, 8, 3, code, Colr(Srgb + 15), ("cdef", Definitions(2))));
+    }
+
+    [Fact]
+    public void SwapsInAChannelDefinitionFollowTheChannelsAlreadyMoved()
+    {
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(10), Flat(20), Flat(30));
+        // Channel 0 goes to 1's place, then what is now in 0 goes to 2's place.
+        byte[] cdef = [0, 3, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 3, 0, 2, 0, 0, 0, 1];
+        var image = Read(Wrap(8, 8, 3, code, Colr(Srgb + 15), ("cdef", cdef)));
+
+        Assert.Equal([30, 10, 20, 255], image.Rgba[..4].Select(v => (int)v));
+    }
+
     private static void PutShort(byte[] data, int at, int value)
     {
         data[at] = (byte)(value >> 8);

@@ -542,14 +542,15 @@ internal static class OpenJpeg
 
         if (colour.Definitions is { } checking)
         {
+            // Every channel is defined at least once and none more than a few times over; more is not a picture.
+            if (checking.Length < count || checking.Length > 4 * count) return null;
+            var defined = new bool[count];
             foreach (var d in checking)
             {
                 if (d.Channel >= count || d.Association is > 0 and not 65535 && d.Association - 1 >= count) return null;
+                defined[d.Channel] = true;
             }
-            for (int c = 0; c < count; c++)
-            {
-                if (!checking.Any(d => d.Channel == c)) return null;
-            }
+            if (defined.Contains(false)) return null;
         }
 
         var channels = new Channel[count];
@@ -583,26 +584,26 @@ internal static class OpenJpeg
 
         if (colour.Definitions is { } definitions)
         {
-            var info = (Definition[])definitions.Clone();
-            for (int i = 0; i < info.Length; i++)
+            // A swap moves the channels that later entries name too: where[c] is where the channel an entry calls c stands now.
+            var where = Enumerable.Range(0, count).ToArray();
+            var who = (int[])where.Clone();
+            foreach (var info in definitions)
             {
-                int cn = info[i].Channel, asoc = info[i].Association;
+                int cn = where[info.Channel], asoc = info.Association;
                 if (asoc is 0 or 65535)
                 {
-                    channels[cn].Kind = info[i].Type;
+                    channels[cn].Kind = info.Type;
                     continue;
                 }
                 int acn = asoc - 1;
-                if (cn != acn && info[i].Type == 0)
+                if (cn != acn && info.Type == 0)
                 {
                     (channels[cn], channels[acn]) = (channels[acn], channels[cn]);
-                    for (int j = i + 1; j < info.Length; j++)
-                    {
-                        if (info[j].Channel == cn) info[j] = info[j] with { Channel = acn };
-                        else if (info[j].Channel == acn) info[j] = info[j] with { Channel = cn };
-                    }
+                    (who[cn], who[acn]) = (who[acn], who[cn]);
+                    where[who[cn]] = cn;
+                    where[who[acn]] = acn;
                 }
-                channels[cn].Kind = info[i].Type;
+                channels[cn].Kind = info.Type;
             }
         }
         return channels;
