@@ -200,6 +200,23 @@ public class OptimizeImageTests
         Assert.Equal(0, codec.Decodes);
     }
 
+    // A JPEG in a space that is not gray or RGB is left as stored, and so is one with a colour key, which would not fit the RGB written.
+    [Theory]
+    [InlineData("/ColorSpace [/Indexed /DeviceRGB 1 <000000FFFFFF>]")]
+    [InlineData("/ColorSpace [/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]")]
+    [InlineData("/ColorSpace [/Lab <</WhitePoint [0.95 1 1.09]>>]")]
+    [InlineData("/ColorSpace /DeviceGray /Mask [10 20]")]
+    public void AJpegInASpaceOrWithAKeyThePixelsCannotCarryIsLeft(string entries)
+    {
+        string dictionary = $"/Type /XObject /Subtype /Image /Width 16 /Height 16 {entries} /BitsPerComponent 8 /Filter /DCTDecode";
+        byte[] file = OptimizeKit.Build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf => pdf.Stream(5, dictionary, OptimizeKit.TinyJpeg));
+        var codec = new OptimizeFakeCodec();
+        var image = Run(file, Downsample(8, 10), out var after, codec);
+        Assert.Equal(16, after.Integer(image.Dictionary, "Width"));
+        Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(image));
+        Assert.Equal(0, codec.Decodes);
+    }
+
     [Fact]
     public void AGrayJpegWithAnInvertingDecodeIsLeft()
     {

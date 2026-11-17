@@ -202,6 +202,74 @@ public class RedactImageTests
         Assert.Equal(kept ? 0 : 1, result.Report.Pages.Single().WholeImages);
     }
 
+    // A codec shows an Adobe-marked CMYK file as a JPEG file looks, the page shows the stored inks: the two are inverses unless a
+    // reversing /Decode goes with the marker.
+    [Theory]
+    [InlineData("", false, true)]
+    [InlineData("", true, false)]
+    [InlineData("/Decode [0 1 0 1 0 1 0 1]", false, true)]
+    [InlineData("/Decode [0 1 0 1 0 1 0 1]", true, false)]
+    [InlineData("/Decode [1 0 1 0 1 0 1 0]", true, true)]
+    public void ACmykJpegIsKeptOnlyWhereTheCodecShowsWhatThePageShows(string decode, bool adobe, bool kept)
+    {
+        using var document = WithImage($"/ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /DCTDecode {decode}", adobe ? AdobeJpeg : [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Equal(kept, RedactionKit.Images(output).Count == 1);
+        Assert.Equal(kept ? 0 : 1, result.Report.Pages.Single().WholeImages);
+    }
+
+    [Theory]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", "")]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", "/Decode [0 255]")]
+    [InlineData("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]", "")]
+    [InlineData("[/DeviceN [/A /B] /DeviceRGB <</FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Length 15>>]", "")]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]", "")]
+    public void ADctPictureInASpaceThePixelsCannotShowIsRemovedWhole(string space, string decode)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode {decode}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(1, 2, 3, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
+    // The key is matched on the raw samples; the copy holds the samples after /Decode, as RGB.
+    [Theory]
+    [InlineData("/DeviceGray", "[10 20]", "", "10 20 10 20 10 20")]
+    [InlineData("/DeviceGray", "[10 20]", "/Decode [1 0]", "235 245 235 245 235 245")]
+    [InlineData("/DeviceGray", "[10 20]", "/Decode [0 1]", "10 20 10 20 10 20")]
+    [InlineData("/DeviceRGB", "[1 2 3 4 5 6]", "", "1 2 3 4 5 6")]
+    [InlineData("/DeviceRGB", "[1 2 3 4 5 6]", "/Decode [1 0 0 1 1 0]", "253 254 3 4 249 250")]
+    public void AColourKeyOfAJpegIsCarriedOverWithItsDecode(string space, string key, string decode, string expected)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode /Mask {key} {decode}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+
+        var written = Assert.IsType<PdfArray>(output.Resolve(image.Dictionary["Mask"]));
+        Assert.Equal(expected, string.Join(" ", written.Items.Select(item => ((PdfNumber)item).Value)));
+    }
+
+    [Theory]
+    [InlineData("/ColorSpace /DeviceCMYK", "[1 2 3 4 5 6 7 8]", "", "DCTDecode")]
+    [InlineData("/ColorSpace /DeviceRGB", "[1 2 3 4 5 6]", "/Decode [0 0.5 0 1 0 1]", "DCTDecode")]
+    [InlineData("/ColorSpace /DeviceRGB", "[1 2 3 4]", "", "DCTDecode")]
+    [InlineData("/ColorSpace /DeviceRGB", "[1 2 3 4 5 6]", "", "JPXDecode")]
+    public void AColourKeyThatCannotBeCarriedOverRemovesThePictureWhole(string space, string key, string decode, string filter)
+    {
+        using var document = WithImage($"{space} /BitsPerComponent 8 /Filter /{filter} /Mask {key} {decode}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
     // A JPX picture usually has no /ColorSpace, so its component count is not known from the dictionary.
     [Theory]
     [InlineData("[0.5]", "[0.5 0.5 0.5]")]

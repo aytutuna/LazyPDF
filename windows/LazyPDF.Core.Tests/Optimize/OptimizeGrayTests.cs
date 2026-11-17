@@ -119,6 +119,38 @@ public class OptimizeGrayTests
         Assert.DoesNotContain(OptimizeText.NeedsCodec, result.Notes);
     }
 
+    private static byte[] Marked(byte[] jpeg) => [.. jpeg[..2], 0xFF, 0xEE, 0, 14, (byte)'A', (byte)'d', (byte)'o', (byte)'b', (byte)'e', 0, 100, 0, 0, 0, 0, 2, .. jpeg[2..]];
+
+    // The codec's pixels of a JPEG are not what the page shows in these spaces, so the picture stays as stored.
+    [Theory]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", false)]
+    [InlineData("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]", false)]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]", false)]
+    [InlineData("/DeviceCMYK", true)]
+    public void AJpegThePixelsCannotStandForIsLeftAsStored(string space, bool adobe)
+    {
+        byte[] jpeg = adobe ? Marked(OptimizeKit.TinyJpeg) : OptimizeKit.TinyJpeg;
+        byte[] file = OptimizeKit.Build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+            pdf.Stream(5, $"/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode", jpeg));
+        var codec = new OptimizeFakeCodec();
+        var result = Run(file, codec);
+
+        Assert.Null(codec.LastEncoded);
+        using var after = PdfDocument.Open(result.Bytes);
+        Assert.Equal(jpeg, after.RawData(OptimizeKit.Image(after)));
+    }
+
+    [Fact]
+    public void AnUnmarkedCmykJpegBecomesGray()
+    {
+        byte[] file = OptimizeKit.Build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+            pdf.Stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /DCTDecode", OptimizeKit.TinyJpeg));
+        var codec = new OptimizeFakeCodec();
+        Run(file, codec);
+
+        Assert.NotNull(codec.LastEncoded);
+    }
+
     [Theory]
     [InlineData("/ColorSpace [/Indexed /DeviceRGB 1 <000000FFFFFF>]")]
     [InlineData("/ColorSpace /DeviceRGB /SMaskInData 1")]

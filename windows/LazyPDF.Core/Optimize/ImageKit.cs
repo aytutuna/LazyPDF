@@ -55,7 +55,7 @@ internal static class ImageKit
             double[] range = (document.Resolve(lab.Items[1]) is PdfDictionary labs ? PdfFunction.Numbers(labs["Range"], document.Resolve) : null) ?? [-100, 100, -100, 100];
             return decode.Length == 6 && decode[0] == 0 && decode[1] == 100 && range.Length >= 4 && decode[2..].SequenceEqual(range[..4]);
         }
-        return decode.Length >= 2 && decode.Chunk(2).All(pair => pair is [0, 1]);
+        return decode.Chunk(2).All(pair => pair is [0, 1]);
     }
 
     /// <summary>The samples of an image at 8 bits each, rows packed; 16-bit samples keep their high byte, fewer bits are scaled to the full range.</summary>

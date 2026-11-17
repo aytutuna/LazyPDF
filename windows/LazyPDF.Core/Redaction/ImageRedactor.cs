@@ -75,6 +75,12 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         // A picture whose colour space the pixels cannot show is not rewritten: the caller removes it.
         bool jpx = decoded.Codec == "JPXDecode";
         if (jpx && !JpxImage.Readable(document, d)) return null;
+        if (!jpx && !soft && !DctImage.Readable(document, d)) return null;
+        if (!soft && document.Resolve(d["Mask"]) is PdfArray colourKey)
+        {
+            if (ColourKey(d, colourKey, jpx) is not { } mapped) return null;
+            copy["Mask"] = mapped;
+        }
         if (codec?.Decode(decoded.Data, decoded.Codec, jpx ? JpxImage.Components(document, d) : 0) is not { } pixels || !Fits(pixels.Width, pixels.Height)) return null;
         if (jpx)
         {
@@ -122,14 +128,15 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
 
     // A picture of a DCT file is written back as RGB with no /Decode, so the /Decode goes onto the codec's samples first. That
     // works where a codec channel is a component of the colour space: gray, which the codec gives as R = G = B, and RGB. A CMYK
-    // picture keeps what the codec made of it only under the inversion the Adobe marker already undid; any other /Decode on a
-    // picture the codec converted cannot be carried over, so the picture is one that cannot be decoded here.
+    // picture keeps what the codec made of it only where the page shows the same (see DctImage.CmykAsShown): the RGB inverse
+    // cannot stand in for the ink inverse otherwise, and any other /Decode on a picture the codec converted cannot be carried
+    // over, so the picture is one that cannot be decoded here.
     private PdfRgbaImage? WithDecode(PdfDictionary image, byte[] jpeg, PdfRgbaImage pixels)
     {
         var decode = PdfFunction.Numbers(image["Decode"], document.Resolve);
-        if (decode is null || decode.Chunk(2).All(pair => pair is [0, 1])) return pixels;
         var (family, components) = ImageKit.Describe(document, image["ColorSpace"]);
-        if (family == ImageFamily.Cmyk) return ExportImageMerge.Inverts(decode) && ExportImageMerge.HasAdobeMarker(jpeg) ? pixels : null;
+        if (family == ImageFamily.Cmyk) return DctImage.CmykAsShown(document, image, jpeg) ? pixels : null;
+        if (decode is null || ImageKit.DefaultDecode(document, image, decode)) return pixels;
         if (family is not (ImageFamily.Gray or ImageFamily.Rgb)) return null;
         if (decode.Length < 2 * components) return pixels;
         var rgba = (byte[])pixels.Rgba.Clone();
@@ -143,6 +150,33 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             }
         }
         return new PdfRgbaImage(pixels.Width, pixels.Height, rgba, pixels.DpiX, pixels.DpiY);
+    }
+
+    // The picture is written back as RGB with /Decode applied, so a colour key (matched on the raw samples, ISO 32000-1 8.9.6.4)
+    // becomes an RGB key on the decoded ones: a gray key is repeated for the three channels and a component with a reversing
+    // /Decode swaps its range end for end. Any other /Decode, a CMYK key, a key on a JPEG 2000 picture, whose samples may be of
+    // any depth, and a key that does not fit its colour space cannot be carried over.
+    private PdfArray? ColourKey(PdfDictionary image, PdfArray key, bool jpx)
+    {
+        var (family, components) = ImageKit.Describe(document, image["ColorSpace"]);
+        var values = PdfFunction.Numbers(key, document.Resolve);
+        if (jpx || family is not (ImageFamily.Gray or ImageFamily.Rgb) || values is null || values.Length != 2 * components || (document.Integer(image, "BitsPerComponent") ?? 8) != 8) return null;
+        var decode = PdfFunction.Numbers(image["Decode"], document.Resolve);
+        bool decoded = decode is not null && decode.Length >= 2 * components && !ImageKit.DefaultDecode(document, image, decode);
+        var mapped = new List<PdfObject>();
+        for (int c = 0; c < 3; c++)
+        {
+            int j = components == 1 ? 0 : c;
+            double low = values[2 * j], high = values[2 * j + 1];
+            if (decoded)
+            {
+                if (decode![2 * j] == 1 && decode[2 * j + 1] == 0) (low, high) = (255 - high, 255 - low);
+                else if (decode[2 * j] != 0 || decode[2 * j + 1] != 1) return null;
+            }
+            mapped.Add(new PdfNumber(low));
+            mapped.Add(new PdfNumber(high));
+        }
+        return new PdfArray(mapped);
     }
 
     // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is

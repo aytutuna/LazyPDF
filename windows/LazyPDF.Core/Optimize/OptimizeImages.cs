@@ -237,7 +237,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
     {
         var dictionary = stream.Dictionary;
         bool jpx = decoded.Codec == "JPXDecode";
-        if (dictionary.ContainsKey("Decode") || (!jpx && family is not (ImageFamily.Gray or ImageFamily.Rgb))) return false;
+        if (dictionary.ContainsKey("Decode") || document.Resolve(dictionary["Mask"]) is PdfArray || (!jpx && family is not (ImageFamily.Gray or ImageFamily.Rgb))) return false;
         if (jpx && (family is not (ImageFamily.Gray or ImageFamily.Rgb or ImageFamily.Unknown) || !JpxImage.Readable(document, dictionary))) return false;
         if (codec is null)
         {

@@ -395,8 +395,10 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
 
     // Pixels of a JPEG 2000 picture stand for it only in a space they can be read as, and without alpha: the JPEG written back has none.
     // One that drops its alpha under /SMaskInData 0 is left too when the codec's pixels have any (see JpxImage.Opaque).
-    private bool Decodable(PdfDictionary dictionary, string coded) =>
-        coded != "JPXDecode" || JpxImage.Readable(document, dictionary) && JpxImage.MaskInData(document, dictionary) <= 0;
+    // A DCT picture in a space the pixels cannot show, or a CMYK one the codec shows as its inverse, is left as stored too.
+    private bool Decodable(PdfDictionary dictionary, string coded, byte[] data) => coded == "JPXDecode"
+        ? JpxImage.Readable(document, dictionary) && JpxImage.MaskInData(document, dictionary) <= 0
+        : DctImage.Readable(document, dictionary) && (ImageKit.Describe(document, dictionary["ColorSpace"]).Family != ImageFamily.Cmyk || DctImage.CmykAsShown(document, dictionary, data));
 
     private void GrayImage(PdfStream stream)
     {
@@ -423,7 +425,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
                 plain.Remove("Mask");
                 pixels = PdfImageSamples.ToRgba(plain, decoded.Data, document.Resolve, s => document.Data(s));
             }
-            else if (coded is "DCTDecode" or "JPXDecode" && !dictionary.ContainsKey("Decode") && codec is not null && Decodable(dictionary, coded)
+            else if (coded is "DCTDecode" or "JPXDecode" && !dictionary.ContainsKey("Decode") && codec is not null && Decodable(dictionary, coded, decoded.Data)
                 && codec.Decode(decoded.Data, coded, coded == "JPXDecode" ? components : 0) is { } image && (coded != "JPXDecode" || JpxImage.Opaque(image)))
             {
                 pixels = image;
