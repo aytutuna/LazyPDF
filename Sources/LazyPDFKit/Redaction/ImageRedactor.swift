@@ -77,8 +77,12 @@ final class ImageRedactor {
             return try document.add(PdfStream(copy, data: PdfFilterEncoders.flate(samples)))
         }
 
-        guard let pixels = codec?.decode(decoded.data, name), Self.fits(pixels.width, pixels.height),
-              pixels.rgba.count == pixels.width * pixels.height * 4 else { return nil }
+        // A picture whose colour space the pixels cannot show is not rewritten: the caller removes it.
+        let jpx = name == "JPXDecode"
+        if jpx && !JpxImage.readable(document, d) { return nil }
+        guard let decodedPixels = codec?.decode(decoded.data, name, jpx ? JpxImage.components(document, d) : 0), Self.fits(decodedPixels.width, decodedPixels.height),
+              decodedPixels.rgba.count == decodedPixels.width * decodedPixels.height * 4 else { return nil }
+        let pixels = jpx ? JpxImage.alpha(decodedPixels, JpxImage.maskInData(document, d)) : decodedPixels
         var rgba = pixels.rgba
         for (row, from, to) in Self.cells(pixels.width, pixels.height, pixels.height, unit) {
             for x in from..<to {

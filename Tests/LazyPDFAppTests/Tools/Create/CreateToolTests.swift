@@ -81,7 +81,7 @@ final class CreateToolTests: XCTestCase {
 
     func test_aPictureTooBigToDecodeIsCountedAndTheRestStay() throws {
         final class BigCodec: ImageCodec {
-            func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+            func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
             func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
                 [PdfRgbaImage(4, 4, [UInt8](repeating: 128, count: 64)), PdfRgbaImage(60000, 60000, [])]
             }
@@ -100,7 +100,7 @@ final class CreateToolTests: XCTestCase {
     @MainActor
     func test_picturesLeftOutForSizeAreSaid() async throws {
         final class BigCodec: ImageCodec {
-            func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+            func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
             func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
                 [PdfRgbaImage(4, 4, [UInt8](repeating: 128, count: 64)), PdfRgbaImage(60000, 60000, [])]
             }

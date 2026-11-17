@@ -18,7 +18,7 @@ final class StandInRenderer: DocumentRenderer {
 }
 
 final class StandInCodec: ImageCodec {
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
 
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { nil }
 

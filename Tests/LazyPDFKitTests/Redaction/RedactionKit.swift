@@ -19,7 +19,7 @@ final class FakeCodec: ImageCodec {
         self.image = image
     }
 
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { image }
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { image }
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { nil }
     func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
 }

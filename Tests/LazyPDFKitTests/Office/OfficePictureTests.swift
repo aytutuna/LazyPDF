@@ -95,7 +95,7 @@ final class OfficePictureTests: XCTestCase {
     private final class BigCodec: ImageCodec {
         let frame = PdfRgbaImage(3000, 3000, [UInt8](repeating: 0, count: 3000 * 3000 * 4))
         var reads = 0
-        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
         func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { reads += 1; return [frame] }
         func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
     }

@@ -14,7 +14,7 @@ final class SignaturePictureCodec: ImageCodec {
         self.frame = frame
     }
 
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { frame.map { [$0] } }
     func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
 }

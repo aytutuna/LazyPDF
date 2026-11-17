@@ -21,7 +21,7 @@ public final class ImageIOCodec: ImageCodec {
 
     public init() {}
 
-    public func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? {
+    public func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? {
         guard codec == "DCTDecode" || codec == "JPXDecode" else { return nil }
         guard let first = decodeFile(data)?.first, !first.tooBig else { return nil }
         return first

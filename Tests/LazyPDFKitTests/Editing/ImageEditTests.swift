@@ -124,7 +124,7 @@ final class ImageEditTests: XCTestCase {
     }
 
     private final class FakeCodec: ImageCodec {
-        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
         func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { [PdfRgbaImage(2, 2, [255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 9, 9, 9, 128])] }
         func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
     }

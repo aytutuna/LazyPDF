@@ -20,7 +20,7 @@ final class ExportArialSource: FontSource {
 final class ExportFakeCodec: ImageCodec {
     var decoded: [String] = []
 
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? {
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? {
         decoded.append(codec)
         return PdfRgbaImage(2, 2, [255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255])
     }

@@ -57,7 +57,7 @@ final class ExportImageMerge {
     /// image is brought to what the page shows (see `cmykView`). `coded` is the codec's input.
     func fromPixels(_ dictionary: PdfDictionary, _ decoded: PdfRgbaImage, _ coder: String, _ coded: [UInt8]) throws -> PdfRgbaImage {
         var pixels = decoded
-        if coder == "JPXDecode" { pixels = Self.jpxAlpha(pixels, document.integer(dictionary, "SMaskInData") ?? 0) }
+        if coder == "JPXDecode" { pixels = JpxImage.alpha(pixels, JpxImage.maskInData(document, dictionary)) }
         let imageMask = document.bool(dictionary, "ImageMask") == true
         var space: SampleColorSpace?
         var readable = true
@@ -93,23 +93,6 @@ final class ExportImageMerge {
             converted = PdfRgbaImage(converted.width, converted.height, rgba)
         }
         return try apply(converted, mask, stencil)
-    }
-
-    // ISO 32000-1 Table 89: 0 leaves the codestream's alpha out, 1 takes it as straight alpha, 2 as premultiplied.
-    private static func jpxAlpha(_ image: PdfRgbaImage, _ mode: Int) -> PdfRgbaImage {
-        if mode == 1 { return image }
-        var rgba = image.rgba
-        var i = 3
-        while i < rgba.count {
-            let alpha = Int(rgba[i])
-            if mode < 1 {
-                rgba[i] = 255
-            } else if alpha > 0 && alpha < 255 {
-                for c in 1...3 { rgba[i - c] = UInt8(truncatingIfNeeded: min(255, (Int(rgba[i - c]) * 255 + alpha / 2) / alpha)) }
-            }
-            i += 4
-        }
-        return PdfRgbaImage(image.width, image.height, rgba)
     }
 
     // The consecutive pairs of `values`, at most `limit`, the last alone when the count is odd (LINQ Chunk(2)).
@@ -265,7 +248,8 @@ final class ExportImageMerge {
             image = try PdfImageSamples.toRgba(mask.dictionary, decoded.data, resolve, data)
         } else if let coder = decoded.codec {
             try charge(0)
-            image = codec?.decode(decoded.data, coder)
+            if coder == "JPXDecode" && !JpxImage.readable(document, mask.dictionary) { return nil }
+            image = codec?.decode(decoded.data, coder, coder == "JPXDecode" ? JpxImage.components(document, mask.dictionary) : 0)
             if let image { try charge(Self.area(image) ?? Int.max) }
             if let d = PdfFunction.numbers(mask.dictionary["Decode"], resolve), d.count >= 2 { inverted = d[0] > d[1] }
         }

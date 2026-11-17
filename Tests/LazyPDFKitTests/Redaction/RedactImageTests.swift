@@ -170,6 +170,40 @@ final class RedactImageTests: XCTestCase {
         }
     }
 
+    private func eight(_ r: UInt8, _ g: UInt8, _ b: UInt8, _ a: UInt8) -> PdfRgbaImage {
+        PdfRgbaImage(8, 8, (0..<64).flatMap { _ in [r, g, b, a] })
+    }
+
+    func test_aJpxPictureInASpaceThePixelsCannotShowIsRemovedWhole() throws {
+        let spaces = ["[/Indexed /DeviceRGB 1 <000000FFFFFF>]",
+                      "[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]",
+                      "[/Lab <</WhitePoint [0.95 1 1.09]>>]"]
+        for space in spaces {
+            let document = try withImage("/ColorSpace \(space) /BitsPerComponent 8 /Filter /JPXDecode", [1, 2, 3])
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(1, 2, 3, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+            XCTAssertTrue(RedactionKit.images(output).isEmpty, space)
+            XCTAssertTrue(imageStreams(output).isEmpty, space)
+            XCTAssertEqual(result.report.pages[0].wholeImages, 1, space)
+        }
+    }
+
+    func test_aJpxPictureKeepsItsAlphaAsSMaskInDataSays() throws {
+        let cases: [(String, Bool, UInt8)] = [("/SMaskInData 0", false, 60), ("", false, 60), ("/SMaskInData 1", true, 60), ("/SMaskInData 2", true, 120)]
+        for (entry, softMask, red) in cases {
+            let document = try withImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode \(entry)", [1, 2, 3])
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 40, 20, 128))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+            let image = try XCTUnwrap(RedactionKit.images(output).first?.stream)
+            let data = try output.data(image)
+
+            XCTAssertEqual(output.stream(image.dictionary, "SMask") != nil, softMask, entry)
+            XCTAssertFalse(image.dictionary.containsKey("SMaskInData"), entry)
+            XCTAssertEqual(Array(data[(5 * 3)..<(5 * 3 + 2)]), [red, red == 60 ? 40 : 80], entry)
+            XCTAssertEqual(Array(data[0..<3]), [0, 0, 0], entry)
+        }
+    }
+
     func test_imageOutsideTheMarkIsLeftAlone() throws {
         let data = gradient()
         let document = try withImage("/ColorSpace /DeviceGray /BitsPerComponent 8", data)

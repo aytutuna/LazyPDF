@@ -18,7 +18,7 @@ final class ExportPixelCodec: ImageCodec {
         self.gray = gray
     }
 
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? {
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? {
         var rgba = [UInt8](repeating: 0, count: gray.count * 4)
         for i in 0..<gray.count { (rgba[4 * i], rgba[4 * i + 1], rgba[4 * i + 2], rgba[4 * i + 3]) = (gray[i], gray[i], gray[i], 255) }
         return PdfRgbaImage(width, gray.count / width, rgba)

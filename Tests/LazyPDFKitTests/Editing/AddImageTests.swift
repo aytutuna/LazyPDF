@@ -6,20 +6,20 @@ import XCTest
 
 final class AddImageTests: XCTestCase {
     private final class SquareCodec: ImageCodec {
-        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
         func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { file.isEmpty ? nil : [PdfRgbaImage(2, 2, [UInt8](repeating: 0, count: 16))] }
         func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
     }
 
     private final class HugeCodec: ImageCodec {
-        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
         func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { [PdfRgbaImage(12000, 12000, [UInt8](repeating: 0, count: 16))] }
         func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
     }
 
     // Decodes any file as 4 by 2 gray pixels 10 to 17, row by row.
     private final class RowsCodec: ImageCodec {
-        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
         func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
             var rgba = [UInt8]()
             for i in 0..<8 { rgba += [UInt8(10 + i), UInt8(10 + i), UInt8(10 + i), 255] }
@@ -32,7 +32,7 @@ final class AddImageTests: XCTestCase {
     private final class EncodingCodec: ImageCodec {
         var asked: [Int]?
 
-        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
         func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { RowsCodec().decodeFile(file) }
         func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] {
             asked = [image.width, image.height, quality]

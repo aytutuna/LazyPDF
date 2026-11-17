@@ -113,6 +113,33 @@ final class OptimizeGrayTests: XCTestCase {
         XCTAssertFalse(result.notes.contains(OptimizeText.needsCodec))
     }
 
+    func test_aJpxPictureThatTheCodecPixelsCannotStandForIsLeftAsStored() throws {
+        for entries in ["/ColorSpace [/Indexed /DeviceRGB 1 <000000FFFFFF>]", "/ColorSpace /DeviceRGB /SMaskInData 1", "/ColorSpace /DeviceRGB /SMaskInData 2"] {
+            let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
+                pdf.stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 \(entries) /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.tinyJpeg)
+            })
+            let codec = OptimizeFakeCodec()
+            let result = try run(file, codec)
+
+            XCTAssertNil(codec.lastEncoded, entries)
+            let after = try PdfDocument.open(result.bytes)
+            XCTAssertEqual("JPXDecode", after.name(try OptimizeKit.image(after).dictionary, "Filter"), entries)
+            XCTAssertEqual(OptimizeKit.tinyJpeg, after.rawData(try OptimizeKit.image(after)), entries)
+        }
+    }
+
+    func test_aJpxPictureInDeviceRgbWithoutAlphaBecomesGrayThroughTheCodec() throws {
+        let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
+            pdf.stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /SMaskInData 0 /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.tinyJpeg)
+        })
+        let codec = OptimizeFakeCodec()
+        let result = try run(file, codec)
+
+        XCTAssertNotNil(codec.lastEncoded)
+        let after = try PdfDocument.open(result.bytes)
+        XCTAssertEqual("DCTDecode", after.name(try OptimizeKit.image(after).dictionary, "Filter"))
+    }
+
     func test_jpegTheCodecCannotWriteBecomesFlateGray() throws {
         let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
             pdf.stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode", OptimizeKit.tinyJpeg)

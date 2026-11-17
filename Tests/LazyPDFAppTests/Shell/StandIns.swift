@@ -64,7 +64,7 @@ final class FakeRenderer: DocumentRenderer {
 
 /// Takes pictures as 4 by 4 grey squares, one frame each.
 final class FakeCodec: ImageCodec {
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
 
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
         file.isEmpty ? nil : [PdfRgbaImage(4, 4, [UInt8](repeating: 128, count: 4 * 4 * 4))]

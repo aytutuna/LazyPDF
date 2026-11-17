@@ -117,7 +117,7 @@ final class OptimizeFakeCodec: ImageCodec {
     private(set) var lastQuality = 0
     private(set) var lastEncoded: PdfRgbaImage?
 
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? {
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? {
         decodes += 1
         onDecode?()
         let at = OptimizeKit.indexOf(data, [0xFF, 0xC0])

@@ -239,12 +239,12 @@ final class OptimizeImages {
         let dictionary = stream.dictionary
         let jpx = decoded.codec == "JPXDecode"
         if dictionary.containsKey("Decode") || (!jpx && !(family == .gray || family == .rgb)) { return false }
-        if jpx && !(family == .gray || family == .rgb || family == .unknown) { return false }
+        if jpx && (!(family == .gray || family == .rgb || family == .unknown) || !JpxImage.readable(document, dictionary)) { return false }
         guard let codec, let name = decoded.codec else {
             needsCodec = true
             return false
         }
-        guard let image = codec.decode(decoded.data, name), image.width >= 1, image.height >= 1, image.width <= image.rgba.count / 4 / image.height,
+        guard let image = codec.decode(decoded.data, name, jpx ? components : 0), image.width >= 1, image.height >= 1, image.width <= image.rgba.count / 4 / image.height,
               image.width * image.height <= Self.maxPixels else { return false }
         let rgb = Self.rgbOf(image)
         let small = ImageKit.shrink(rgb, image.width, image.height, 3, newWidth, newHeight)
