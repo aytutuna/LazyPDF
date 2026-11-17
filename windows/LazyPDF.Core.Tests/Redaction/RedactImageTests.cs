@@ -153,6 +153,24 @@ public class RedactImageTests
         Assert.Equal(expected, written?.ToString());
     }
 
+    // A JPX picture usually has no /ColorSpace, so its component count is not known from the dictionary.
+    [Theory]
+    [InlineData("[0.5]", "[0.5 0.5 0.5]")]
+    [InlineData("[0 0 0]", "[0 0 0]")]
+    [InlineData("[0 0]", null)]
+    [InlineData("[0 0 0 0]", null)]
+    public void WithNoColourSpaceTheMatteIsRepeatedOrKeptByItsLength(string matte, string? expected)
+    {
+        using var document = WithImage("/BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
+            more: pdf => pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Matte {matte}", [1, 2, 3]));
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+        var written = output.Stream(image.Dictionary, "SMask")!.Dictionary["Matte"];
+
+        Assert.Equal(expected, written?.ToString());
+    }
+
     [Fact]
     public void SharedImageGetsAPrivateCopyForTheMarkedUse()
     {

@@ -273,6 +273,22 @@ final class RedactImageTests: XCTestCase {
         }
     }
 
+    // A JPX picture usually has no /ColorSpace, so its component count is not known from the dictionary.
+    func test_withNoColourSpaceTheMatteIsRepeatedOrKeptByItsLength() throws {
+        let cases: [(String, String?)] = [("[0.5]", "[0.5 0.5 0.5]"), ("[0 0 0]", "[0 0 0]"), ("[0 0]", nil), ("[0 0 0 0]", nil)]
+        for (matte, expected) in cases {
+            let document = try withImage("/BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3], more: { pdf in
+                pdf.stream(7, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Matte \(matte)", [1, 2, 3])
+            })
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 60, 60, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+            let image = try XCTUnwrap(RedactionKit.images(output).first?.stream)
+            let written = try XCTUnwrap(output.stream(image.dictionary, "SMask")).dictionary["Matte"]
+
+            XCTAssertEqual(written.map { "\($0)" }, expected, matte)
+        }
+    }
+
     func test_imageOutsideTheMarkIsLeftAlone() throws {
         let data = gradient()
         let document = try withImage("/ColorSpace /DeviceGray /BitsPerComponent 8", data)

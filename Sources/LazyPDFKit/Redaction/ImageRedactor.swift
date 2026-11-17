@@ -117,10 +117,11 @@ final class ImageRedactor {
         return reference
     }
 
-    // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is dropped.
+    // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is
+    // dropped. With no colour space (0 components) the length of the matte is all there is to go by.
     private func fitMatte(_ image: PdfDictionary, _ components: Int) {
         guard let soft = document.stream(image, "SMask"), let matte = document.array(soft.dictionary, "Matte"), matte.items.count != 3 else { return }
-        if matte.items.count == 1 && components == 1 {
+        if matte.items.count == 1 && (components == 0 || components == 1) {
             soft.dictionary["Matte"] = PdfArray([PdfObject](repeating: matte.items[0], count: 3))
         } else {
             soft.dictionary.remove("Matte")

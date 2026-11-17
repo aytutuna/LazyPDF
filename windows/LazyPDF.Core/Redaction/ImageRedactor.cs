@@ -115,11 +115,12 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         return reference;
     }
 
-    // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is dropped.
+    // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is
+    // dropped. With no colour space (0 components) the length of the matte is all there is to go by.
     private void FitMatte(PdfDictionary image, int components)
     {
         if (document.Stream(image, "SMask") is not { } soft || document.Array(soft.Dictionary, "Matte") is not { } matte || matte.Items.Count == 3) return;
-        if (matte.Items.Count == 1 && components == 1) soft.Dictionary["Matte"] = new PdfArray([.. Enumerable.Repeat(matte.Items[0], 3)]);
+        if (matte.Items.Count == 1 && components is 0 or 1) soft.Dictionary["Matte"] = new PdfArray([.. Enumerable.Repeat(matte.Items[0], 3)]);
         else soft.Dictionary.Remove("Matte");
     }
 
