@@ -34,7 +34,7 @@ public static class TagRules
 
     private static readonly HashSet<string> Inline = new(StringComparer.Ordinal)
     {
-        "Span", "Quote", "Note", "Reference", "BibEntry", "Code", "Link", "Annot", "Ruby", "Warichu", "Figure", "Formula", "Form",
+        "Span", "Quote", "Note", "Reference", "BibEntry", "Code", "Link", "Annot", "Ruby", "Warichu", "Figure", "Formula", "Form", "NonStruct", "Private",
     };
 
     private static readonly HashSet<string> NoContentTypes = new(StringComparer.Ordinal)
@@ -87,8 +87,9 @@ public static class TagRules
         "TR" => parent is "Table" or "THead" or "TBody" or "TFoot" ? null : NeedsTableOrPart,
         "TH" or "TD" => parent == "TR" ? null : NeedsRow,
         "LI" => parent == "L" ? null : NeedsList,
-        "Lbl" or "LBody" => parent == "LI" ? null : NeedsItem,
-        "Caption" => parent is "Table" or "L" or "Figure" or "Formula" ? null : NeedsCaptionParent,
+        "Lbl" => parent is "LI" or "TOCI" ? null : NeedsItem,
+        "LBody" => parent == "LI" ? null : NeedsItem,
+        "Caption" => parent is "Table" or "L" or "TOC" or "Figure" or "Formula" ? null : NeedsCaptionParent,
         "TOCI" => parent == "TOC" ? null : NeedsToc,
         "RB" or "RT" or "RP" => parent == "Ruby" ? null : NeedsRuby,
         "WT" or "WP" => parent == "Warichu" ? null : NeedsWarichu,

@@ -31,7 +31,7 @@ public enum TagRules {
     public static let unmapped = "unmapped"
 
     private static let inline: Set<String> = [
-        "Span", "Quote", "Note", "Reference", "BibEntry", "Code", "Link", "Annot", "Ruby", "Warichu", "Figure", "Formula", "Form",
+        "Span", "Quote", "Note", "Reference", "BibEntry", "Code", "Link", "Annot", "Ruby", "Warichu", "Figure", "Formula", "Form", "NonStruct", "Private",
     ]
 
     private static let noContentTypes: Set<String> = ["Table", "THead", "TBody", "TFoot", "TR", "L", "LI", "TOC", "Ruby", "Warichu"]
@@ -79,8 +79,9 @@ public enum TagRules {
         case "TR": return ["Table", "THead", "TBody", "TFoot"].contains(parent) ? nil : needsTableOrPart
         case "TH", "TD": return parent == "TR" ? nil : needsRow
         case "LI": return parent == "L" ? nil : needsList
-        case "Lbl", "LBody": return parent == "LI" ? nil : needsItem
-        case "Caption": return ["Table", "L", "Figure", "Formula"].contains(parent) ? nil : needsCaptionParent
+        case "Lbl": return parent == "LI" || parent == "TOCI" ? nil : needsItem
+        case "LBody": return parent == "LI" ? nil : needsItem
+        case "Caption": return ["Table", "L", "TOC", "Figure", "Formula"].contains(parent) ? nil : needsCaptionParent
         case "TOCI": return parent == "TOC" ? nil : needsToc
         case "RB", "RT", "RP": return parent == "Ruby" ? nil : needsRuby
         case "WT", "WP": return parent == "Warichu" ? nil : needsWarichu
