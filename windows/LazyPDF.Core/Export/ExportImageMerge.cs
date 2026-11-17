@@ -23,7 +23,7 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
     {
         if (Present(dictionary["SMask"]) || Present(dictionary["Mask"]) || document.Bool(dictionary, "ImageMask") == true) return false;
         var decode = PdfFunction.Numbers(dictionary["Decode"], document.Resolve);
-        bool identity = decode is null || decode.Chunk(2).All(pair => pair is [0, 1]);
+        bool identity = decode is null || ImageKit.DefaultDecode(document, dictionary, decode);
         try
         {
             var space = Space(dictionary);

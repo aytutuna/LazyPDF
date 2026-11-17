@@ -38,6 +38,26 @@ internal static class ImageKit
         return (ImageFamily.Unknown, 0);
     }
 
+    /// <summary>
+    /// True when <paramref name="decode"/> is the /Decode the image's colour space has by default (ISO 32000-1 Table 90): 0 to 1 for
+    /// every component, 0 to 2^bpc - 1 for an Indexed space, and for Lab 0 to 100 and then the /Range of its dictionary.
+    /// </summary>
+    public static bool DefaultDecode(PdfDocument document, PdfDictionary image, double[] decode)
+    {
+        var (family, _) = Describe(document, image["ColorSpace"]);
+        if (family == ImageFamily.Indexed)
+        {
+            long bpc = document.Integer(image, "BitsPerComponent") ?? 8;
+            return decode is [0, var top] && top == (1L << (int)Math.Clamp(bpc, 1, 16)) - 1;
+        }
+        if (family == ImageFamily.Lab && document.Resolve(image["ColorSpace"]) is PdfArray { Items.Count: > 1 } lab)
+        {
+            double[] range = (document.Resolve(lab.Items[1]) is PdfDictionary labs ? PdfFunction.Numbers(labs["Range"], document.Resolve) : null) ?? [-100, 100, -100, 100];
+            return decode.Length == 6 && decode[0] == 0 && decode[1] == 100 && range.Length >= 4 && decode[2..].SequenceEqual(range[..4]);
+        }
+        return decode.Length >= 2 && decode.Chunk(2).All(pair => pair is [0, 1]);
+    }
+
     /// <summary>The samples of an image at 8 bits each, rows packed; 16-bit samples keep their high byte, fewer bits are scaled to the full range.</summary>
     public static byte[] Unpack(byte[] data, int width, int height, int components, int bpc)
     {
