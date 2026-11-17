@@ -58,9 +58,44 @@ public sealed class OpenJpegTests
     public void AnMctRecordCopiedIntoEveryTileStaysWithinTheBudget() =>
         AssertRefused(Hostile(64, 64, 1, 4, false, MctRecord()), 16 << 20);
 
+    // The real budget, through the public Decode: 2048 x 2048 one-sample precincts are 2^22 packets, which the packet bound lets
+    // through, and their code-block and tag tree records are more than the budget holds.
     [Fact]
-    public void TinyPrecinctsAndBlocksStayWithinTheBudget() =>
-        AssertRefused(Hostile(8000, 8000, 8000, 0, true), 1L << 30);
+    public void TinyPrecinctsAndBlocksStayWithinTheBudget()
+    {
+        byte[] file = Hostile(2048, 2048, 2048, 0, true);
+        Assert.True(OpenJpeg.Plausible(file));
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Assert.Null(OpenJpeg.Decode(file));
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30), watch.Elapsed.ToString());
+        Assert.Equal((nuint)0, OpenJpeg.lazypdf_opj_used());
+    }
+
+    // 65535 tiles pass the header check now, and a 64 KB record copied into each of them is 4 GB.
+    [Fact]
+    public void AnMctRecordInEveryTileOfAManyTilePictureStaysWithinTheBudget()
+    {
+        byte[] file = Hostile(255, 257, 1, 4, false, MctRecord());
+        Assert.True(OpenJpeg.Plausible(file));
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Assert.Null(OpenJpeg.Decode(file));
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30), watch.Elapsed.ToString());
+        Assert.Equal((nuint)0, OpenJpeg.lazypdf_opj_used());
+    }
+
+    // 8192 x 8192 pixels of three components in 128 pixel tiles is 4096 tiles of 3 components, which 2^12 refused.
+    [Fact]
+    public void AnOrdinaryLargeTiledHeaderPassesTheStructureCheck() =>
+        Assert.True(OpenJpeg.Plausible(Hostile(8192, 8192, 128, 0, false, components: 3)));
+
+    // The image and the tile buffers of a picture of the most samples accepted, 4 bytes each, fit with room for slack.
+    [Fact]
+    public void TheDecodeBudgetCoversThePictureTheSampleCapAccepts()
+    {
+        long needed = 2 * 4 * PdfImageSamples.MaxPixels;
+        Assert.NotEqual(0, OpenJpeg.DecodeBudget);
+        Assert.True(OpenJpeg.DecodeBudget >= needed, OpenJpeg.DecodeBudget.ToString());
+    }
 
     // A 92 x 92 tile of one-sample precincts is 8464 packets a layer. At 65535 layers that takes hours to walk, which the
     // memory budget does not stop.
@@ -140,8 +175,8 @@ public sealed class OpenJpegTests
     }
 
     [Fact]
-    public void ManyOnePixelTilesAreRefusedFromTheHeader() =>
-        AssertRefused(Hostile(255, 257, 1, 4, false, MctRecord()), 1L << 30);
+    public void MoreTilesThanTheHeaderAllowsAreRefusedBeforeOpenJpegReadsThem() =>
+        AssertRefusedFast(Hostile(256, 257, 1, 4, false, MctRecord()));
 
     [Fact]
     public void ADecodeThatSucceedsLeavesNothingCharged()
