@@ -180,7 +180,7 @@ final class OptimizeImages {
 
         let replaced = shrink(stream, width, height, newWidth, newHeight)
         if replaced, let soft, maskWidth > 0, maskHeight > 0, done.insert(ObjectIdentifier(soft)).inserted {
-            _ = shrink(soft, maskWidth, maskHeight, Swift.max(1, maskWidth * newWidth / width), Swift.max(1, maskHeight * newHeight / height))
+            _ = shrink(soft, maskWidth, maskHeight, Swift.max(1, maskWidth * newWidth / width), Swift.max(1, maskHeight * newHeight / height), mask: true)
         }
         return replaced
     }
@@ -194,7 +194,7 @@ final class OptimizeImages {
         (document.resolve(image["SMask"]) as? PdfStream)?.dictionary.containsKey("Matte") == true
     }
 
-    private func shrink(_ stream: PdfStream, _ width: Int, _ height: Int, _ newWidth: Int, _ newHeight: Int) -> Bool {
+    private func shrink(_ stream: PdfStream, _ width: Int, _ height: Int, _ newWidth: Int, _ newHeight: Int, mask: Bool = false) -> Bool {
         let dictionary = stream.dictionary
         // A bilevel picture, JBIG2 coded or not, is kept as it is; decoding it first would only be thrown away.
         if document.integer(dictionary, "BitsPerComponent") == 1 { return false }
@@ -207,7 +207,8 @@ final class OptimizeImages {
         }
         var (family, components) = ImageKit.describe(document, dictionary["ColorSpace"])
         let bpc = document.integer(dictionary, "BitsPerComponent") ?? 8
-        if decoded.codec == "DCTDecode" || decoded.codec == "JPXDecode" { return shrinkCoded(stream, decoded, family, components, newWidth, newHeight) }
+        // shrinkCoded writes RGB, which a soft mask must not be, so a coded one stays as stored.
+        if decoded.codec == "DCTDecode" || decoded.codec == "JPXDecode" { return !mask && shrinkCoded(stream, decoded, family, components, newWidth, newHeight) }
         if decoded.codec != nil || bpc == 1 || !(bpc == 2 || bpc == 4 || bpc == 8 || bpc == 16) { return false }
 
         let pixels: [UInt8]
@@ -246,6 +247,8 @@ final class OptimizeImages {
         }
         guard let image = codec.decode(decoded.data, name, jpx ? components : 0), image.width >= 1, image.height >= 1, image.width <= image.rgba.count / 4 / image.height,
               image.width * image.height <= Self.maxPixels else { return false }
+        // The alpha is left out below, which only shows the picture right when it has none (see JpxImage.opaque).
+        if jpx && !JpxImage.opaque(image) { return false }
         let rgb = Self.rgbOf(image)
         let small = ImageKit.shrink(rgb, image.width, image.height, 3, newWidth, newHeight)
         var rgba = Array(repeating: UInt8(255), count: newWidth * newHeight * 4)

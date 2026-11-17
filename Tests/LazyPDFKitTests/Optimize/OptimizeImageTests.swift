@@ -165,6 +165,35 @@ final class OptimizeImageTests: XCTestCase {
         XCTAssertTrue(result.notes.contains(OptimizeText.needsCodec))
     }
 
+    func test_jpxIsShrunkOnlyWhenItHasNoAlphaToDrop() throws {
+        for (alpha, width) in [(UInt8(255), 8), (UInt8(128), 16)] {
+            let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode"
+            let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in pdf.stream(5, dictionary, OptimizeKit.tinyJpeg) })
+            let codec = OptimizeFakeCodec()
+            codec.alpha = alpha
+            let (image, after) = try run(file, downsample(8, 10), codec: codec)
+            XCTAssertEqual(width, after.integer(image.dictionary, "Width"), "\(alpha)")
+            if width == 16 { XCTAssertEqual(OptimizeKit.tinyJpeg, after.rawData(image)) }
+        }
+    }
+
+    func test_aCodedSoftMaskStaysAsStoredWhileItsImageIsShrunk() throws {
+        for filter in ["DCTDecode", "JPXDecode"] {
+            let image = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /SMask 6 0 R"
+            let mask = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /\(filter)"
+            let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
+                pdf.stream(5, image, OptimizeKit.tinyJpeg)
+                pdf.stream(6, mask, OptimizeKit.tinyJpeg)
+            })
+            let (shrunk, after) = try run(file, downsample(8, 10), codec: OptimizeFakeCodec())
+            XCTAssertEqual(8, after.integer(shrunk.dictionary, "Width"), filter)
+            let soft = try XCTUnwrap(after.stream(shrunk.dictionary, "SMask"))
+            XCTAssertEqual("DeviceGray", after.name(soft.dictionary, "ColorSpace"), filter)
+            XCTAssertEqual(16, after.integer(soft.dictionary, "Width"), filter)
+            XCTAssertEqual(OptimizeKit.tinyJpeg, after.rawData(soft), filter)
+        }
+    }
+
     func test_jpegWithADecodeArrayIsLeft() throws {
         let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Decode [1 0 1 0 1 0]"
         let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in pdf.stream(5, dictionary, OptimizeKit.tinyJpeg) })

@@ -172,6 +172,38 @@ public class OptimizeImageTests
         Assert.Contains(OptimizeText.NeedsCodec, result.Notes);
     }
 
+    [Theory]
+    [InlineData(255, 8)]
+    [InlineData(128, 16)]
+    public void JpxIsShrunkOnlyWhenItHasNoAlphaToDrop(int alpha, int width)
+    {
+        string dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode";
+        byte[] file = OptimizeKit.Build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf => pdf.Stream(5, dictionary, OptimizeKit.TinyJpeg));
+        var image = Run(file, Downsample(8, 10), out var after, new OptimizeFakeCodec { Alpha = (byte)alpha });
+        Assert.Equal(width, after.Integer(image.Dictionary, "Width"));
+        if (width == 16) Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(image));
+    }
+
+    [Theory]
+    [InlineData("DCTDecode")]
+    [InlineData("JPXDecode")]
+    public void ACodedSoftMaskStaysAsStoredWhileItsImageIsShrunk(string filter)
+    {
+        string image = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /SMask 6 0 R";
+        string mask = $"/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /{filter}";
+        byte[] file = OptimizeKit.Build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+        {
+            pdf.Stream(5, image, OptimizeKit.TinyJpeg);
+            pdf.Stream(6, mask, OptimizeKit.TinyJpeg);
+        });
+        var shrunk = Run(file, Downsample(8, 10), out var after, new OptimizeFakeCodec());
+        Assert.Equal(8, after.Integer(shrunk.Dictionary, "Width"));
+        var soft = after.Stream(shrunk.Dictionary, "SMask")!;
+        Assert.Equal("DeviceGray", after.Name(soft.Dictionary, "ColorSpace"));
+        Assert.Equal(16, after.Integer(soft.Dictionary, "Width"));
+        Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(soft));
+    }
+
     [Fact]
     public void JpegWithADecodeArrayIsLeft()
     {
