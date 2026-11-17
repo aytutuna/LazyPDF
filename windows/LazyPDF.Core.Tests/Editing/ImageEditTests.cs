@@ -126,7 +126,7 @@ public class ImageEditTests
 
     private sealed class FakeCodec : IImageCodec
     {
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => [new PdfRgbaImage(2, 2, [255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 9, 9, 9, 128])];
         public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
     }

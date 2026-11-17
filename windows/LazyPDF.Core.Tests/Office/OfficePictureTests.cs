@@ -108,7 +108,7 @@ public class OfficePictureTests
     {
         private readonly PdfRgbaImage frame = new(3000, 3000, new byte[3000 * 3000 * 4]);
         public int Reads { get; private set; }
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) { Reads++; return [frame]; }
         public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
     }

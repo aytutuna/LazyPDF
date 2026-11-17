@@ -125,7 +125,7 @@ internal sealed class OptimizeFakeCodec : IImageCodec
     public int LastQuality { get; private set; }
     public PdfRgbaImage? LastEncoded { get; private set; }
 
-    public PdfRgbaImage? Decode(byte[] data, string codec)
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0)
     {
         Decodes++;
         OnDecode?.Invoke();

@@ -119,6 +119,36 @@ public class OptimizeGrayTests
         Assert.DoesNotContain(OptimizeText.NeedsCodec, result.Notes);
     }
 
+    [Theory]
+    [InlineData("/ColorSpace [/Indexed /DeviceRGB 1 <000000FFFFFF>]")]
+    [InlineData("/ColorSpace /DeviceRGB /SMaskInData 1")]
+    [InlineData("/ColorSpace /DeviceRGB /SMaskInData 2")]
+    public void AJpxPictureThatTheCodecPixelsCannotStandForIsLeftAsStored(string entries)
+    {
+        byte[] file = OptimizeKit.Build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+            pdf.Stream(5, $"/Type /XObject /Subtype /Image /Width 16 /Height 16 {entries} /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.TinyJpeg));
+        var codec = new OptimizeFakeCodec();
+        var result = Run(file, codec);
+
+        Assert.Null(codec.LastEncoded);
+        using var after = PdfDocument.Open(result.Bytes);
+        Assert.Equal("JPXDecode", after.Name(OptimizeKit.Image(after).Dictionary, "Filter"));
+        Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(OptimizeKit.Image(after)));
+    }
+
+    [Fact]
+    public void AJpxPictureInDeviceRgbWithoutAlphaBecomesGrayThroughTheCodec()
+    {
+        byte[] file = OptimizeKit.Build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+            pdf.Stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /SMaskInData 0 /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.TinyJpeg));
+        var codec = new OptimizeFakeCodec();
+        var result = Run(file, codec);
+
+        Assert.NotNull(codec.LastEncoded);
+        using var after = PdfDocument.Open(result.Bytes);
+        Assert.Equal("DCTDecode", after.Name(OptimizeKit.Image(after).Dictionary, "Filter"));
+    }
+
     [Fact]
     public void JpegWhoseHeaderReadsZeroHeightIsLeft()
     {

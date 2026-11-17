@@ -266,7 +266,7 @@ public class PdfFromPicturesTests
     {
         public int Files { get; private set; }
 
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
 
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file)
         {

@@ -19,7 +19,7 @@ internal sealed class ExportFakeCodec : IImageCodec
 {
     public List<string> Decoded { get; } = [];
 
-    public PdfRgbaImage? Decode(byte[] data, string codec)
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0)
     {
         Decoded.Add(codec);
         return new PdfRgbaImage(2, 2, [255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255]);

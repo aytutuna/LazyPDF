@@ -180,6 +180,42 @@ public class RedactImageTests
         Assert.Equal(1, result.Report.Pages.Single().WholeImages);
     }
 
+    private static PdfRgbaImage Eight(byte r, byte g, byte b, byte a) =>
+        new(8, 8, [.. Enumerable.Range(0, 64).SelectMany(_ => new[] { r, g, b, a })]);
+
+    [Theory]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]")]
+    [InlineData("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]")]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]")]
+    public void AJpxPictureInASpaceThePixelsCannotShowIsRemovedWhole(string space)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /JPXDecode", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(1, 2, 3, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
+    [Theory]
+    [InlineData("/SMaskInData 0", false, 60)]
+    [InlineData("", false, 60)]
+    [InlineData("/SMaskInData 1", true, 60)]
+    [InlineData("/SMaskInData 2", true, 120)]
+    public void AJpxPictureKeepsItsAlphaAsSMaskInDataSays(string entry, bool softMask, int red)
+    {
+        using var document = WithImage($"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode {entry}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 128))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+
+        Assert.Equal(softMask, output.Stream(image.Dictionary, "SMask") is not null);
+        Assert.False(image.Dictionary.ContainsKey("SMaskInData"));
+        Assert.Equal([red, red == 60 ? 40 : 80], output.Data(image)[(5 * 3)..(5 * 3 + 2)].Select(b => (int)b));
+        Assert.Equal([0, 0, 0], output.Data(image)[..3].Select(b => (int)b));
+    }
+
     [Fact]
     public void ImageOutsideTheMarkIsLeftAlone()
     {

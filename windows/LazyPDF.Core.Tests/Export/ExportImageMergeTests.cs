@@ -6,7 +6,13 @@ namespace LazyPDF.Core.Tests;
 /// <summary>Hands back the same RGBA pixels for every coded stream it is asked to read.</summary>
 internal sealed class ExportRgbaCodec(int width, params byte[] rgba) : IImageCodec
 {
-    public PdfRgbaImage? Decode(byte[] data, string codec) => new(width, rgba.Length / 4 / width, rgba);
+    public List<int> Hints { get; } = [];
+
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0)
+    {
+        Hints.Add(components);
+        return new(width, rgba.Length / 4 / width, rgba);
+    }
 
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => null;
 
@@ -16,7 +22,7 @@ internal sealed class ExportRgbaCodec(int width, params byte[] rgba) : IImageCod
 /// <summary>Reports an image of the given size without holding any pixels.</summary>
 internal sealed class ExportSizedCodec(int width, int height) : IImageCodec
 {
-    public PdfRgbaImage? Decode(byte[] data, string codec) => new(width, height, []);
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => new(width, height, []);
 
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => null;
 
@@ -154,19 +160,52 @@ public class ExportImageMergeTests
         Assert.Equal([9, 8, 7, 255], Rgba(png));
     }
 
-    [Fact]
-    public void ADecodedImageWithAnUnreadableColourSpaceIsStillExported()
+    [Theory]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]")]
+    [InlineData("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]")]
+    [InlineData("[/DeviceN [/A /B] /DeviceRGB <</FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Length 10>>]")]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]")]
+    [InlineData("[/CalCMYK <<>>]")]
+    public void AJpxImageInASpaceTheCodecCannotShowIsLeftOutAndNeverDecoded(string space)
     {
-        var png = Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], new ExportRgbaCodec(1, 10, 20, 30, 255));
+        var codec = new ExportRgbaCodec(1, 10, 20, 30, 255);
+
+        Assert.Null(Extract($"/Width 1 /Height 1 /ColorSpace {space} /BitsPerComponent 8 /Filter /JPXDecode", [1], codec));
+        Assert.Empty(codec.Hints);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("/ColorSpace /DeviceRGB")]
+    public void AJpxImageInAPlainSpaceIsExportedFromTheCodecPixels(string space)
+    {
+        var png = Extract($"/Width 1 /Height 1 {space} /Filter /JPXDecode", [1], new ExportRgbaCodec(1, 10, 20, 30, 255));
+
         Assert.Equal([10, 20, 30, 255], Rgba(png));
     }
 
     [Fact]
-    public void TheAlphaOfAJpxImageWithAnUnreadableColourSpaceFollowsSMaskInData()
+    public void TheCodecIsToldHowManyComponentsThePdfColourSpaceHas()
     {
-        var codec = new ExportRgbaCodec(1, 10, 20, 30, 40);
-        Assert.Equal([10, 20, 30, 255], Rgba(Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], codec)));
-        Assert.Equal([10, 20, 30, 40], Rgba(Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode /SMaskInData 1", [1], codec)));
+        var codec = new ExportRgbaCodec(1, 10, 20, 30, 255);
+        Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], codec);
+        Extract("/Width 1 /Height 1 /ColorSpace /DeviceGray /Filter /JPXDecode", [1], codec);
+        Extract("/Width 1 /Height 1 /ColorSpace /DeviceCMYK /Filter /JPXDecode", [1], codec);
+        Extract("/Width 1 /Height 1 /Filter /JPXDecode", [1], codec);
+
+        Assert.Equal([3, 1, 4, 0], codec.Hints);
+    }
+
+    [Theory]
+    [InlineData("/SMaskInData 0", 255, false)]
+    [InlineData("", 255, false)]
+    [InlineData("/SMaskInData 1", 40, false)]
+    [InlineData("/SMaskInData 2", 40, true)]
+    public void TheAlphaOfAJpxImageFollowsSMaskInData(string entry, int alpha, bool premultiplied)
+    {
+        var png = Extract($"/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode {entry}", [1], new ExportRgbaCodec(1, 10, 20, 30, 40));
+
+        Assert.Equal(premultiplied ? [64, 128, 191, alpha] : [10, 20, 30, alpha], Rgba(png).Select(b => (int)b));
     }
 
     [Fact]

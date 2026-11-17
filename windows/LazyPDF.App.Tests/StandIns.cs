@@ -53,7 +53,7 @@ internal sealed class FakeRenderer : IDocumentRenderer
 /// <summary>Takes pictures as 4 by 4 grey squares, one frame each.</summary>
 internal sealed class FakeCodec : IImageCodec
 {
-    public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
 
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) =>
         file.Length == 0 ? null : [new PdfRgbaImage(4, 4, Enumerable.Repeat((byte)128, 4 * 4 * 4).ToArray())];

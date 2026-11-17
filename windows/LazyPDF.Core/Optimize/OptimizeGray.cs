@@ -393,6 +393,10 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         };
     }
 
+    // Pixels of a JPEG 2000 picture stand for it only in a space they can be read as, and without alpha: the JPEG written back has none.
+    private bool Decodable(PdfDictionary dictionary, string coded) =>
+        coded != "JPXDecode" || JpxImage.Readable(document, dictionary) && JpxImage.MaskInData(document, dictionary) == 0;
+
     private void GrayImage(PdfStream stream)
     {
         var dictionary = stream.Dictionary;
@@ -418,7 +422,8 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
                 plain.Remove("Mask");
                 pixels = PdfImageSamples.ToRgba(plain, decoded.Data, document.Resolve, s => document.Data(s));
             }
-            else if (coded is "DCTDecode" or "JPXDecode" && !dictionary.ContainsKey("Decode") && codec is not null && codec.Decode(decoded.Data, coded) is { } image)
+            else if (coded is "DCTDecode" or "JPXDecode" && !dictionary.ContainsKey("Decode") && codec is not null && Decodable(dictionary, coded)
+                && codec.Decode(decoded.Data, coded, coded == "JPXDecode" ? components : 0) is { } image)
             {
                 pixels = image;
             }

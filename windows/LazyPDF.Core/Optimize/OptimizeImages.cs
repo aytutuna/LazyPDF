@@ -237,13 +237,13 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         var dictionary = stream.Dictionary;
         bool jpx = decoded.Codec == "JPXDecode";
         if (dictionary.ContainsKey("Decode") || (!jpx && family is not (ImageFamily.Gray or ImageFamily.Rgb))) return false;
-        if (jpx && family is not (ImageFamily.Gray or ImageFamily.Rgb or ImageFamily.Unknown)) return false;
+        if (jpx && (family is not (ImageFamily.Gray or ImageFamily.Rgb or ImageFamily.Unknown) || !JpxImage.Readable(document, dictionary))) return false;
         if (codec is null)
         {
             NeedsCodec = true;
             return false;
         }
-        var image = codec.Decode(decoded.Data, decoded.Codec!);
+        var image = codec.Decode(decoded.Data, decoded.Codec!, jpx ? components : 0);
         if (image is null || image.Width < 1 || image.Height < 1 || (long)image.Width * image.Height > MaxPixels) return false;
         var rgb = new byte[image.Width * image.Height * 3];
         for (int i = 0, o = 0; i < image.Width * image.Height; i++)

@@ -329,7 +329,7 @@ public sealed class CreateToolTests
 
     private sealed class BigFrameCodec : IImageCodec
     {
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
 
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) =>
             [new PdfRgbaImage(4, 4, new byte[64]), new PdfRgbaImage(40000, 40000, []), new PdfRgbaImage(50000, 50000, [])];

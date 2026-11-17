@@ -8,14 +8,14 @@ public class AddImageTests
 {
     private sealed class SquareCodec : IImageCodec
     {
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => file.Length == 0 ? null : [new PdfRgbaImage(2, 2, new byte[16])];
         public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
     }
 
     private sealed class HugeCodec : IImageCodec
     {
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => [new PdfRgbaImage(12000, 12000, new byte[16])];
         public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
     }
@@ -23,7 +23,7 @@ public class AddImageTests
     // Decodes any file as 4 by 2 gray pixels 10 to 17, row by row.
     private sealed class RowsCodec : IImageCodec
     {
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
 
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file)
         {
@@ -40,7 +40,7 @@ public class AddImageTests
     {
         public (int, int, int)? Asked;
 
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => new RowsCodec().DecodeFile(file);
 
         public byte[] EncodeJpeg(PdfRgbaImage image, int quality)

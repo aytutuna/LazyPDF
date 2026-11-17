@@ -51,7 +51,7 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
     /// </summary>
     public PdfRgbaImage FromPixels(PdfDictionary dictionary, PdfRgbaImage pixels, string coder, byte[] coded)
     {
-        if (coder == "JPXDecode") pixels = JpxAlpha(pixels, document.Integer(dictionary, "SMaskInData") ?? 0);
+        if (coder == "JPXDecode") pixels = JpxImage.Alpha(pixels, JpxImage.MaskInData(document, dictionary));
         bool imageMask = document.Bool(dictionary, "ImageMask") == true;
         SampleColorSpace? space = null;
         bool readable = true;
@@ -84,23 +84,6 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
             for (int i = 3; i < converted.Rgba.Length; i += 4) converted.Rgba[i] = (byte)(converted.Rgba[i] * pixels.Rgba[i] / 255);
         }
         return Apply(converted, mask, stencil);
-    }
-
-    // ISO 32000-1 Table 89: 0 leaves the codestream's alpha out, 1 takes it as straight alpha, 2 as premultiplied.
-    private static PdfRgbaImage JpxAlpha(PdfRgbaImage image, long mode)
-    {
-        if (mode == 1) return image;
-        var rgba = (byte[])image.Rgba.Clone();
-        for (int i = 3; i < rgba.Length; i += 4)
-        {
-            int alpha = rgba[i];
-            if (mode < 1) rgba[i] = 255;
-            else if (alpha is > 0 and < 255)
-            {
-                for (int c = 1; c <= 3; c++) rgba[i - c] = (byte)Math.Min(255, (rgba[i - c] * 255 + alpha / 2) / alpha);
-            }
-        }
-        return new PdfRgbaImage(image.Width, image.Height, rgba);
     }
 
     private static bool Inverts(double[]? decode) => decode is { Length: >= 8 } && decode.Chunk(2).Take(4).All(pair => pair is [1, 0]);
@@ -262,7 +245,8 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         else
         {
             Charge(0);
-            image = codec?.Decode(decoded.Data, decoded.Codec);
+            if (decoded.Codec == "JPXDecode" && !JpxImage.Readable(document, mask.Dictionary)) return null;
+            image = codec?.Decode(decoded.Data, decoded.Codec, decoded.Codec == "JPXDecode" ? JpxImage.Components(document, mask.Dictionary) : 0);
             if (image is not null) Charge((long)image.Width * image.Height);
             inverted = PdfFunction.Numbers(mask.Dictionary["Decode"], document.Resolve) is [var low, var high, ..] && low > high;
         }

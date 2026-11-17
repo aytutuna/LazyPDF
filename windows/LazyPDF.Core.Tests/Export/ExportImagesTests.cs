@@ -7,7 +7,7 @@ namespace LazyPDF.Core.Tests;
 /// <summary>Hands back the same gray pixels for every coded stream it is asked to read.</summary>
 internal sealed class ExportPixelCodec(int width, params byte[] gray) : IImageCodec
 {
-    public PdfRgbaImage? Decode(byte[] data, string codec)
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0)
     {
         var rgba = new byte[gray.Length * 4];
         for (int i = 0; i < gray.Length; i++) (rgba[4 * i], rgba[4 * i + 1], rgba[4 * i + 2], rgba[4 * i + 3]) = (gray[i], gray[i], gray[i], 255);

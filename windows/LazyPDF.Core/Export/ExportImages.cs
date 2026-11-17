@@ -118,8 +118,10 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
             return _merge.FromSamples(dictionary, decoded.Data);
         }
         if (codec is null) return null;
+        bool jpx = decoded.Codec == "JPXDecode";
+        if (jpx && !JpxImage.Readable(document, dictionary)) return null;
         _merge.Charge(0);
-        if (codec.Decode(decoded.Data, decoded.Codec) is not { } coded) return null;
+        if (codec.Decode(decoded.Data, decoded.Codec, jpx ? JpxImage.Components(document, dictionary) : 0) is not { } coded) return null;
         long size = (long)coded.Width * coded.Height;
         _merge.Charge(size);
         if (size > MaxPixels) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);

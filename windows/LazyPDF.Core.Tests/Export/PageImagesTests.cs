@@ -75,7 +75,7 @@ public class PageImagesTests
     private sealed class Capture : IImageCodec
     {
         public PdfRgbaImage? Seen { get; private set; }
-        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
         public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => null;
 
         public byte[] EncodeJpeg(PdfRgbaImage image, int quality)

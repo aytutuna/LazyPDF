@@ -71,7 +71,11 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(samples)));
         }
 
-        if (codec?.Decode(decoded.Data, decoded.Codec) is not { } pixels || !Fits(pixels.Width, pixels.Height)) return null;
+        // A picture whose colour space the pixels cannot show is not rewritten: the caller removes it.
+        bool jpx = decoded.Codec == "JPXDecode";
+        if (jpx && !JpxImage.Readable(document, d)) return null;
+        if (codec?.Decode(decoded.Data, decoded.Codec, jpx ? JpxImage.Components(document, d) : 0) is not { } pixels || !Fits(pixels.Width, pixels.Height)) return null;
+        if (jpx) pixels = JpxImage.Alpha(pixels, JpxImage.MaskInData(document, d));
         var rgba = pixels.Rgba;
         var cells = Cells(pixels.Width, pixels.Height, pixels.Height, unit);
         foreach (var (row, from, to) in cells)
