@@ -31,6 +31,7 @@ extension StructureTree {
         Self.put(dictionary, "RoleMap", roleMap.count == 0 ? nil : Self.mapOf(roleMap.entries.map { (key: $0.key, value: PdfName($0.value) as PdfObject) }))
         Self.put(dictionary, "ClassMap", classMap.count == 0 ? nil : Self.mapOf(classMap.entries))
         try writeParentTree(document, all, pages)
+        try writeIdTree(document, all)
 
         for number in removed { document.delete(number) }
         removed.removeAll()
@@ -188,6 +189,27 @@ extension StructureTree {
         }
         let highest = entries.keys.max() ?? -1
         Self.put(dictionary, "ParentTreeNextKey", PdfNumber(Swift.max(next, highest + 1)))
+    }
+
+    // Headers names elements by ID, and a reader finds them through /IDTree, so an ID the tree lacks has to be added.
+    private func writeIdTree(_ document: PdfDocument, _ all: [StructElement]) throws {
+        var entries: [String: PdfObject] = [:]
+        for element in all {
+            if let id = element.id, !id.isEmpty, let reference = element.reference {
+                let key = PdfNameTree.keyOf(id)
+                if entries[key] == nil { entries[key] = reference }
+            }
+        }
+        if entries.isEmpty && dictionary["IDTree"] == nil { return }
+
+        let existing = PdfNameTree.read(document, dictionary["IDTree"])
+        let same = existing.count == entries.count && existing.allSatisfy { entry in
+            entries[entry.key]?.description == entry.value.description
+        }
+        if same { return }
+        let list = entries.map { (key: $0.key, value: $0.value) }
+        let root = try PdfNameTree.write(document, document.dict(dictionary, "IDTree"), list)
+        if dictionary["IDTree"] == nil { dictionary["IDTree"] = try document.add(root) }
     }
 
     private static func keyOf(_ document: PdfDocument, _ owner: PdfDictionary, _ name: String) -> Int? {

@@ -3,11 +3,6 @@ import Foundation
 // Twin of windows/LazyPDF.Core/Accessibility/PdfUaChecker.Structure.cs: the tags, role map, nesting, headings, alternate text
 // and notes (ISO 14289-1 7.1 to 7.9). Type names are compared as UTF-16 code units, as the C# compares them ordinally.
 
-private let tableParts: Set<String> = ["THead", "TBody", "TFoot"]
-
-// Types whose own parent is checked, so a wrong child is not reported a second time from the parent.
-private let placed: Set<String> = ["THead", "TBody", "TFoot", "TR", "TH", "TD", "LI", "Lbl", "LBody"]
-
 private func ordinalPrecedes(_ a: String, _ b: String) -> Bool {
     a.utf16.lexicographicallyPrecedes(b.utf16)
 }
@@ -85,29 +80,15 @@ extension PdfUaChecker {
             let checkpoint = table ? "09-004" : "09-005"
             let clause = "7.2"
 
-            let isPlaced: Bool
-            switch t {
-            case "THead", "TBody", "TFoot": isPlaced = parent == "Table"
-            case "TR": isPlaced = parent == "Table" || tableParts.contains(parent)
-            case "TH", "TD": isPlaced = parent == "TR"
-            case "LI": isPlaced = parent == "L"
-            case "Lbl", "LBody": isPlaced = parent == "LI"
-            default: isPlaced = true
+            // A type whose own parent is checked is not reported a second time from the parent.
+            if TagRules.checksOwnParent(t) && TagRules.parentRule(parent, t) != nil {
+                add(checkpoint, clause, Self.place(element), element.parent == nil ? PdfUaText.misnestedTop(t) : PdfUaText.misnested(t, parent))
             }
-            if !isPlaced { add(checkpoint, clause, Self.place(element), element.parent == nil ? PdfUaText.misnestedTop(t) : PdfUaText.misnested(t, parent)) }
 
-            let allowed: [String]
-            switch t {
-            case "Table": allowed = ["Caption", "TR", "THead", "TBody", "TFoot"]
-            case "THead", "TBody", "TFoot": allowed = ["TR"]
-            case "TR": allowed = ["TH", "TD"]
-            case "L": allowed = ["LI", "Caption"]
-            case "LI": allowed = ["Lbl", "LBody"]
-            default: continue
-            }
+            if !TagRules.hasFixedKids(t) { continue }
             for child in element.children {
                 let c = type(child)
-                if !allowed.contains(c) && !placed.contains(c) { add(checkpoint, clause, Self.place(child), PdfUaText.misnested(c, t)) }
+                if !TagRules.checksOwnParent(c) && TagRules.kidRule(t, c) != nil { add(checkpoint, clause, Self.place(child), PdfUaText.misnested(c, t)) }
             }
         }
     }

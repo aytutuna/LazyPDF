@@ -39,7 +39,7 @@ public struct OrderedNames<Value> {
 
 public final class StructureTree {
     private static let maxDepth = 128
-    private static let maxNodes = 1_000_000
+    static let maxNodes = 1_000_000
     static let maxMcid = 1_000_000
     static let maxParentSlots = 4_000_000
 
@@ -191,7 +191,7 @@ public final class StructureTree {
         insert(parent, kid, index)
     }
 
-    private func insert(_ parent: StructElement?, _ kid: StructKid, _ index: Int) {
+    func insert(_ parent: StructElement?, _ kid: StructKid, _ index: Int) {
         if let parent {
             let at = index < 0 || index > parent.kidList.count ? parent.kidList.count : index
             parent.kidList.insert(kid, at: at)
@@ -202,7 +202,7 @@ public final class StructureTree {
         kid.parent = parent
     }
 
-    private func detach(_ kid: StructKid) {
+    func detach(_ kid: StructKid) {
         if let parent = kid.parent {
             if let at = parent.kidList.firstIndex(where: { $0 === kid }) { parent.kidList.remove(at: at) }
         } else if let element = kid as? StructElement, let at = rootList.firstIndex(where: { $0 === element }) {
