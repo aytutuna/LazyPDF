@@ -200,6 +200,20 @@ final class TagContentTests: XCTestCase {
         XCTAssertEqual(StructureTree.read(again)?.roots.map { $0.type }, ["Document"])
     }
 
+    func test_aRoleMappedTypeWithASpaceAndALatinByteIsWrittenAsOneName() throws {
+        let document = try open(make([words]))
+        let tree = StructureTree.create(document)
+        tree.roleMap["Body T\u{E9}xt"] = "P"
+        let line = TextPage.create(document, document.pages[0]).lines[0].range
+
+        XCTAssertNil(try tree.tagSelection(0, [line], "Body T\u{E9}xt", nil).reason)
+
+        let begin = try XCTUnwrap(ContentParser.parse(document.pages[0].contents()).first { $0.operator == "BDC" })
+        XCTAssertEqual(begin.operands.count, 2)
+        XCTAssertEqual((begin.operands[0] as? PdfName)?.value, "Body T\u{E9}xt")
+        XCTAssertEqual(tags(document), "Body T\u{E9}xt:0")
+    }
+
     func test_aSelectionThatCutsAStringIsRefusedWithTheContentUntouched() throws {
         let document = try open(make([words]))
         let tree = StructureTree.create(document)

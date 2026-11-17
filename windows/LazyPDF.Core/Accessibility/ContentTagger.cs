@@ -141,7 +141,7 @@ internal sealed class ContentTagger
         {
             int mcid = _newMcid(_target);
             Sequences.Add((_stream, operations[_first].Start, mcid));
-            begin = $"/{_target.Type} <</MCID {mcid}>> BDC ";
+            begin = $"{new PdfName(_target.Type)} <</MCID {mcid}>> BDC ";
         }
         Insertions[_stream].Add(new ContentInsertion(operations[_first].Start, 1, begin));
         Insertions[_stream].Add(new ContentInsertion(operations[_last].End, 0, " EMC"));

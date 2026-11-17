@@ -124,7 +124,7 @@ final class ContentTagger {
         if let target {
             let mcid = newMcid(target)
             sequences.append((stream, operations[first].start, mcid))
-            begin = "/\(target.type) <</MCID \(mcid)>> BDC "
+            begin = "\(PdfName(target.type)) <</MCID \(mcid)>> BDC "
         } else {
             if !tagArtifacts { return }
             begin = "/Artifact BMC "

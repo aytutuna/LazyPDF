@@ -206,6 +206,22 @@ public class TagContentTests
     }
 
     [Fact]
+    public void ARoleMappedTypeWithASpaceAndALatinByteIsWrittenAsOneName()
+    {
+        using var document = Open(Make([Words]));
+        var tree = StructureTree.Create(document);
+        tree.RoleMap["Body Téxt"] = "P";
+        var line = TextPage.Create(document, document.Pages[0]).Lines[0].Range;
+
+        Assert.Null(tree.TagSelection(0, [line], "Body Téxt", null).Reason);
+
+        var begin = ContentParser.Parse(document.Pages[0].Contents()).First(o => o.Operator == "BDC");
+        Assert.Equal(2, begin.Operands.Count);
+        Assert.Equal("Body Téxt", Assert.IsType<PdfName>(begin.Operands[0]).Value);
+        Assert.Equal("Body Téxt:0", Tags(document));
+    }
+
+    [Fact]
     public void ASelectionThatCutsAStringIsRefusedWithTheContentUntouched()
     {
         using var document = Open(Make([Words]));
