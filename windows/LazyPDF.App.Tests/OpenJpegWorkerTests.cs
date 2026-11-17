@@ -143,4 +143,97 @@ public sealed partial class OpenJpegTests
         Assert.Equal((1024, 768), (image.Width, image.Height));
         for (int i = 0; i < r.Length; i += 97) Assert.Equal([r[i], g[i], b[i], 255], image.Rgba[(i * 4)..(i * 4 + 4)].Select(v => (int)v));
     }
+
+    private static readonly TimeSpan Instant = TimeSpan.FromMilliseconds(500);
+
+    private static void WithLimit(TimeSpan limit, Action body)
+    {
+        var old = JpxWorker.Limit;
+        var pause = JpxWorker.Pause;
+        JpxWorker.Reset();
+        JpxWorker.Limit = limit;
+        try
+        {
+            body();
+        }
+        finally
+        {
+            JpxWorker.Limit = old;
+            JpxWorker.Pause = pause;
+            JpxWorker.Reset();
+        }
+    }
+
+    [Fact]
+    public void DataThatTimedOutIsRefusedAtOnceNextTime()
+    {
+        AssertStillDecodes();
+        WithLimit(TimeSpan.FromSeconds(1), () =>
+        {
+            byte[] bomb = Hostile(92, 92, 92, 0, true, layers: 65535);
+            Assert.Null(OpenJpeg.Decode(bomb));
+            int starts = JpxWorker.Starts, kills = JpxWorker.Kills;
+
+            var watch = Stopwatch.StartNew();
+            for (int i = 0; i < 100; i++) Assert.Null(OpenJpeg.Decode((byte[])bomb.Clone()));
+
+            Assert.True(watch.Elapsed < Short, watch.Elapsed.ToString());
+            Assert.Equal((starts, kills), (JpxWorker.Starts, JpxWorker.Kills));
+        });
+        AssertStillDecodes();
+    }
+
+    [Fact]
+    public void ThreeTimeoutsInARowPauseEveryDecodeForAWhile()
+    {
+        AssertStillDecodes();
+        WithLimit(TimeSpan.FromSeconds(1), () =>
+        {
+            JpxWorker.Pause = TimeSpan.FromSeconds(4);
+            for (int i = 0; i < 3; i++) Assert.Null(JpxWorker.Request(JpxChild.Hang, 0, [(byte)i]));
+            int starts = JpxWorker.Starts;
+
+            var watch = Stopwatch.StartNew();
+            Assert.Null(OpenJpeg.Decode(Small(5)));
+            Assert.True(watch.Elapsed < Instant, watch.Elapsed.ToString());
+            Assert.Equal(starts, JpxWorker.Starts);
+
+            Thread.Sleep(JpxWorker.Pause);
+            AssertStillDecodes();
+        });
+    }
+
+    [Fact]
+    public void ASuccessfulDecodeBetweenTimeoutsStartsTheCountAgain()
+    {
+        AssertStillDecodes();
+        WithLimit(TimeSpan.FromSeconds(1), () =>
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                Assert.Null(JpxWorker.Request(JpxChild.Hang, 0, [(byte)i]));
+                if (i % 2 == 1) AssertStillDecodes();
+            }
+            AssertStillDecodes();
+        });
+    }
+
+    [Fact]
+    public void ACallerWaitingBehindTheLockGivesUpAfterTheLimit()
+    {
+        AssertStillDecodes();
+        WithLimit(TimeSpan.FromSeconds(1), () =>
+        {
+            Task<PdfRgbaImage?> waiting;
+            var watch = Stopwatch.StartNew();
+            lock (JpxWorker.Gate)
+            {
+                waiting = Task.Run(() => OpenJpeg.Decode(Small(7)));
+                Assert.Null(waiting.Result);
+            }
+
+            Assert.InRange(watch.Elapsed, TimeSpan.FromMilliseconds(900), TimeSpan.FromSeconds(8));
+        });
+        AssertStillDecodes();
+    }
 }

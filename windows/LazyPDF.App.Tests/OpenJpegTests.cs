@@ -325,6 +325,8 @@ public sealed partial class OpenJpegTests
 
     private static void AssertRefusedFast(byte[] file)
     {
+        // A cold runner takes a while to start the child, which must not count against the bound.
+        Read(Small(1));
         var watch = System.Diagnostics.Stopwatch.StartNew();
         Assert.Null(OpenJpeg.Decode(file));
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2));
