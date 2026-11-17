@@ -21,6 +21,9 @@ jobs:
         run: |
           python scripts/gen_l10n.py
           git diff --exit-code -- windows/LazyPDF.Core/Strings.tr.resx l10n/out
+      - name: OpenJPEG
+        shell: pwsh
+        run: ./scripts/build_openjpeg.ps1 -Arch x64
       # Built first, so the tests do not share the runner's cores with the compiler.
       - name: Build
         run: dotnet build windows/LazyPDF.sln -c Release

@@ -25,6 +25,16 @@
     <Content Include="..\..\fonts\**\*.ttf" Link="Fonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- openjp2.dll comes from scripts/build_openjpeg.ps1; without it JPEG 2000 pictures are not read. -->
+  <PropertyGroup>
+    <OpenJpegArch>x64</OpenJpegArch>
+    <OpenJpegArch Condition="$(RuntimeIdentifier.EndsWith('arm64'))">arm64</OpenJpegArch>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('..\native\bin\$(OpenJpegArch)\openjp2.dll')">
+    <Content Include="..\native\bin\$(OpenJpegArch)\openjp2.dll" Link="openjp2.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\LazyPDF.Core\LazyPDF.Core.csproj" />
   </ItemGroup>
