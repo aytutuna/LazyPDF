@@ -19,14 +19,14 @@ internal static class OpenJpeg
     private const int DecoderParametersSize = 8300;
     private const int MaxComponents = 5;
     private const int FlagsOffset = 8248, IgnoreColourBoxes = 1;
-    private const long MaxTileSamples = 1 << 12;
+    private const long MaxTileSamples = 1 << 16;
     private const int MaxLayers = 1024, MaxLevels = 32;
     // The packets of all tiles OpenJPEG may be asked to walk. A real picture has a few dozen layers at most and precincts of
     // 2^7 or the default, so a 16384 x 8192 RGB picture of 30 layers in 128 pixel precincts is about 1 million. The memory
     // budget does not limit this work, which runs at some millions of packets a second.
     private const long MaxPackets = 1 << 22;
     // What one decode may allocate inside OpenJPEG: the image and the tile buffers of the largest picture accepted, plus slack.
-    private const long DecodeBudget = 8 * PdfImageSamples.MaxPixels + (128L << 20);
+    internal const long DecodeBudget = 8 * PdfImageSamples.MaxPixels + (128L << 20);
 
     private static readonly byte[] Jp2Signature = [0, 0, 0, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A];
     private static readonly MessageFn Quiet = (_, _) => { };
