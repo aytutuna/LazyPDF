@@ -53,6 +53,8 @@ function New-Package([string] $publish, [string] $arch) {
     robocopy $publish $stage /E /XF *.pdb /NFL /NDL /NJH /NJS /NP | Out-Null
     if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
     Copy-Item (Join-Path $store 'Assets') (Join-Path $stage 'Assets') -Recurse
+    # A publish without a runtime carries both architectures' DLLs under runtimes; the package gets its own beside the exe.
+    Remove-Item (Join-Path $stage 'runtimes\win-*\native\openjp2.dll') -Force -ErrorAction SilentlyContinue
     Copy-Item (Join-Path $root "windows\native\bin\$arch\openjp2.dll") $stage -Force
 
     # The runtime's own third-party notices, from the runtime pack named in the publish's deps.json.

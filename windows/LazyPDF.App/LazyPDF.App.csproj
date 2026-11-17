@@ -25,14 +25,20 @@
     <Content Include="..\..\fonts\**\*.ttf" Link="Fonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- openjp2.dll comes from scripts/build_openjpeg.ps1; without it JPEG 2000 pictures are not read. -->
+  <!-- openjp2.dll comes from scripts/build_openjpeg.ps1; without it JPEG 2000 pictures are not read. A build for one
+       runtime carries that architecture's DLL beside the exe; one without a runtime carries both, and OpenJpeg picks by the process. -->
   <PropertyGroup>
     <OpenJpegArch>x64</OpenJpegArch>
     <OpenJpegArch Condition="$(RuntimeIdentifier.EndsWith('arm64'))">arm64</OpenJpegArch>
   </PropertyGroup>
 
-  <ItemGroup Condition="Exists('..\native\bin\$(OpenJpegArch)\openjp2.dll')">
+  <ItemGroup Condition="'$(RuntimeIdentifier)' != '' And Exists('..\native\bin\$(OpenJpegArch)\openjp2.dll')">
     <Content Include="..\native\bin\$(OpenJpegArch)\openjp2.dll" Link="openjp2.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == ''">
+    <Content Include="..\native\bin\x64\openjp2.dll" Link="runtimes\win-x64\native\openjp2.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\native\bin\x64\openjp2.dll')" />
+    <Content Include="..\native\bin\arm64\openjp2.dll" Link="runtimes\win-arm64\native\openjp2.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\native\bin\arm64\openjp2.dll')" />
   </ItemGroup>
 
   <ItemGroup>

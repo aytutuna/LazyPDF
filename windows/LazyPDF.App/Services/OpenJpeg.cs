@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.InteropServices;
 using LazyPDF.Core;
 
@@ -19,6 +20,22 @@ internal static class OpenJpeg
 
     private static readonly byte[] Jp2Signature = [0, 0, 0, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A];
     private static readonly MessageFn Quiet = (_, _) => { };
+
+    // The DLL is loaded from the app's own folder by full path, never found through the current directory or PATH.
+    // A build without a runtime identifier carries one per architecture under runtimes; a build for one has it beside the exe.
+    static OpenJpeg() => NativeLibrary.SetDllImportResolver(typeof(OpenJpeg).Assembly, Resolve);
+
+    private static IntPtr Resolve(string name, Assembly assembly, DllImportSearchPath? path)
+    {
+        if (name != Library) return IntPtr.Zero;
+        string arch = RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "win-arm64" : "win-x64";
+        string folder = AppContext.BaseDirectory;
+        foreach (string file in new[] { Path.Combine(folder, "runtimes", arch, "native", "openjp2.dll"), Path.Combine(folder, "openjp2.dll") })
+        {
+            if (NativeLibrary.TryLoad(file, out var handle)) return handle;
+        }
+        throw new DllNotFoundException("openjp2.dll");
+    }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate nuint ReadFn(IntPtr buffer, nuint count, IntPtr user);
