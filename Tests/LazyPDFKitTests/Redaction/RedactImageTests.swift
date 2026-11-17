@@ -189,18 +189,31 @@ final class RedactImageTests: XCTestCase {
     }
 
     func test_aJpxPictureKeepsItsAlphaAsSMaskInDataSays() throws {
-        let cases: [(String, Bool, UInt8)] = [("/SMaskInData 0", false, 60), ("", false, 60), ("/SMaskInData 1", true, 60), ("/SMaskInData 2", true, 120)]
-        for (entry, softMask, red) in cases {
+        let cases: [(String, UInt8, Bool)] = [("/SMaskInData 0", 255, false), ("", 255, false), ("/SMaskInData 1", 128, true)]
+        for (entry, alpha, softMask) in cases {
             let document = try withImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode \(entry)", [1, 2, 3])
-            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 40, 20, 128))).apply([topLeft()])
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 40, 20, alpha))).apply([topLeft()])
             let output = try RedactionKit.open(result)
             let image = try XCTUnwrap(RedactionKit.images(output).first?.stream)
             let data = try output.data(image)
 
             XCTAssertEqual(output.stream(image.dictionary, "SMask") != nil, softMask, entry)
             XCTAssertFalse(image.dictionary.containsKey("SMaskInData"), entry)
-            XCTAssertEqual(Array(data[(5 * 3)..<(5 * 3 + 2)]), [red, red == 60 ? 40 : 80], entry)
+            XCTAssertEqual(Array(data[(5 * 3)..<(5 * 3 + 2)]), [60, 40], entry)
             XCTAssertEqual(Array(data[0..<3]), [0, 0, 0], entry)
+        }
+    }
+
+    func test_aJpxPictureWhoseAlphaCannotBeReadAsTheFileSaysIsRemovedWhole() throws {
+        let cases: [(String, UInt8)] = [("/SMaskInData 2", 128), ("/SMaskInData 0", 0), ("", 100)]
+        for (entry, alpha) in cases {
+            let document = try withImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode \(entry)", [1, 2, 3])
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 40, 20, alpha))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+
+            XCTAssertTrue(RedactionKit.images(output).isEmpty, entry)
+            XCTAssertTrue(imageStreams(output).isEmpty, entry)
+            XCTAssertEqual(result.report.pages[0].wholeImages, 1, entry)
         }
     }
 

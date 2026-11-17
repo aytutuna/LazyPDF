@@ -82,7 +82,12 @@ final class ImageRedactor {
         if jpx && !JpxImage.readable(document, d) { return nil }
         guard let decodedPixels = codec?.decode(decoded.data, name, jpx ? JpxImage.components(document, d) : 0), Self.fits(decodedPixels.width, decodedPixels.height),
               decodedPixels.rgba.count == decodedPixels.width * decodedPixels.height * 4 else { return nil }
-        let pixels = jpx ? JpxImage.alpha(decodedPixels, JpxImage.maskInData(document, d)) : decodedPixels
+        var pixels = decodedPixels
+        if jpx {
+            let mode = JpxImage.maskInData(document, d)
+            if mode == 0 && !JpxImage.opaque(pixels) { return nil }
+            pixels = JpxImage.alpha(pixels, mode)
+        }
         var rgba = pixels.rgba
         for (row, from, to) in Self.cells(pixels.width, pixels.height, pixels.height, unit) {
             for x in from..<to {

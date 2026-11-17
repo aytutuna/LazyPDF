@@ -197,22 +197,23 @@ public class ExportImageMergeTests
     }
 
     [Theory]
-    [InlineData("/SMaskInData 0", 255, false)]
-    [InlineData("", 255, false)]
-    [InlineData("/SMaskInData 1", 40, false)]
-    [InlineData("/SMaskInData 2", 40, true)]
-    public void TheAlphaOfAJpxImageFollowsSMaskInData(string entry, int alpha, bool premultiplied)
+    [InlineData("/SMaskInData 0", 255)]
+    [InlineData("", 255)]
+    [InlineData("/SMaskInData 1", 40)]
+    public void TheAlphaOfAJpxImageFollowsSMaskInData(string entry, int alpha)
     {
         var png = Extract($"/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode {entry}", [1], new ExportRgbaCodec(1, 10, 20, 30, 40));
 
-        Assert.Equal(premultiplied ? [64, 128, 191, alpha] : [10, 20, 30, alpha], Rgba(png).Select(b => (int)b));
+        Assert.Equal([10, 20, 30, alpha], Rgba(png).Select(b => (int)b));
     }
 
     [Fact]
-    public void PremultipliedJpxAlphaIsUndone()
+    public void AJpxImageWithPremultipliedAlphaIsLeftOutAndNeverDecoded()
     {
-        var png = Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], new ExportRgbaCodec(1, 10, 20, 30, 128));
-        Assert.Equal([20, 40, 60, 128], Rgba(png));
+        var codec = new ExportRgbaCodec(1, 10, 20, 30, 128);
+
+        Assert.Null(Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], codec));
+        Assert.Empty(codec.Hints);
     }
 
     [Fact]

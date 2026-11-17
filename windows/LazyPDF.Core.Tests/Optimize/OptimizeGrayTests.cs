@@ -136,6 +136,21 @@ public class OptimizeGrayTests
         Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(OptimizeKit.Image(after)));
     }
 
+    [Theory]
+    [InlineData("/SMaskInData 0")]
+    [InlineData("")]
+    public void AJpxPictureWhoseCodecPixelsHaveAlphaIsLeftAsStoredWhenTheFileDropsIt(string entry)
+    {
+        byte[] file = OptimizeKit.Build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+            pdf.Stream(5, $"/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB {entry} /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.TinyJpeg));
+        var codec = new OptimizeFakeCodec { Alpha = 0 };
+        var result = Run(file, codec);
+
+        Assert.Null(codec.LastEncoded);
+        using var after = PdfDocument.Open(result.Bytes);
+        Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(OptimizeKit.Image(after)));
+    }
+
     [Fact]
     public void AJpxPictureInDeviceRgbWithoutAlphaBecomesGrayThroughTheCodec()
     {

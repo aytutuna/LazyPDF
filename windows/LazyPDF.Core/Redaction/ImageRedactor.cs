@@ -75,7 +75,12 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         bool jpx = decoded.Codec == "JPXDecode";
         if (jpx && !JpxImage.Readable(document, d)) return null;
         if (codec?.Decode(decoded.Data, decoded.Codec, jpx ? JpxImage.Components(document, d) : 0) is not { } pixels || !Fits(pixels.Width, pixels.Height)) return null;
-        if (jpx) pixels = JpxImage.Alpha(pixels, JpxImage.MaskInData(document, d));
+        if (jpx)
+        {
+            long mode = JpxImage.MaskInData(document, d);
+            if (mode == 0 && !JpxImage.Opaque(pixels)) return null;
+            pixels = JpxImage.Alpha(pixels, mode);
+        }
         var rgba = pixels.Rgba;
         var cells = Cells(pixels.Width, pixels.Height, pixels.Height, unit);
         foreach (var (row, from, to) in cells)

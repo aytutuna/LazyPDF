@@ -128,6 +128,21 @@ final class OptimizeGrayTests: XCTestCase {
         }
     }
 
+    func test_aJpxPictureWhoseCodecPixelsHaveAlphaIsLeftAsStoredWhenTheFileDropsIt() throws {
+        for entry in ["/SMaskInData 0", ""] {
+            let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
+                pdf.stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB \(entry) /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.tinyJpeg)
+            })
+            let codec = OptimizeFakeCodec()
+            codec.alpha = 0
+            let result = try run(file, codec)
+
+            XCTAssertNil(codec.lastEncoded, entry)
+            let after = try PdfDocument.open(result.bytes)
+            XCTAssertEqual(OptimizeKit.tinyJpeg, after.rawData(try OptimizeKit.image(after)), entry)
+        }
+    }
+
     func test_aJpxPictureInDeviceRgbWithoutAlphaBecomesGrayThroughTheCodec() throws {
         let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
             pdf.stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /SMaskInData 0 /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.tinyJpeg)

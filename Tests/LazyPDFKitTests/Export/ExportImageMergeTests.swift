@@ -185,16 +185,17 @@ final class ExportImageMergeTests: XCTestCase {
     }
 
     func test_theAlphaOfAJpxImageFollowsSMaskInData() throws {
-        let cases: [(String, UInt8, Bool)] = [("/SMaskInData 0", 255, false), ("", 255, false), ("/SMaskInData 1", 40, false), ("/SMaskInData 2", 40, true)]
-        for (entry, alpha, premultiplied) in cases {
+        let cases: [(String, UInt8)] = [("/SMaskInData 0", 255), ("", 255), ("/SMaskInData 1", 40)]
+        for (entry, alpha) in cases {
             let png = try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode \(entry)", [1], ExportRgbaCodec(1, 10, 20, 30, 40))
-            XCTAssertEqual(try rgba(png), premultiplied ? [64, 128, 191, alpha] : [10, 20, 30, alpha], entry)
+            XCTAssertEqual(try rgba(png), [10, 20, 30, alpha], entry)
         }
     }
 
-    func test_premultipliedJpxAlphaIsUndone() throws {
-        let png = try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], ExportRgbaCodec(1, 10, 20, 30, 128))
-        XCTAssertEqual(try rgba(png), [20, 40, 60, 128])
+    func test_aJpxImageWithPremultipliedAlphaIsLeftOutAndNeverDecoded() throws {
+        let codec = ExportRgbaCodec(1, 10, 20, 30, 128)
+        XCTAssertNil(try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], codec))
+        XCTAssertTrue(codec.hints.isEmpty)
     }
 
     func test_aCodedSoftMaskBesideAMaskStreamLeavesTheMaskStreamUnread() throws {

@@ -1,13 +1,15 @@
 import Foundation
 
 // Twin of windows/LazyPDF.Core/Filters/JpxImage.cs: what a JPEG 2000 image's codec output stands for. The codec knows
-// nothing of the PDF dictionary: it gives sRGB or RGBA, with a palette already applied. Its pixels are used for an image
-// whose /ColorSpace is absent or a device, Cal or ICC based space of one, three or four components; for any other space
-// (Indexed, Separation, DeviceN, Lab) the image is one that cannot be decoded.
+// nothing of the PDF dictionary: it gives sRGB or RGBA, with a palette already applied and always as straight alpha. Its
+// pixels are used for an image whose /ColorSpace is absent or a device, Cal or ICC based space of one, three or four
+// components; for any other space (Indexed, Separation, DeviceN, Lab) the image is one that cannot be decoded, and neither
+// is one whose /SMaskInData is 2 (premultiplied colour).
 
 enum JpxImage {
-    /// True when the codec's pixels show the image as its colour space would.
+    /// True when the codec's pixels show the image as its colour space and /SMaskInData would.
     static func readable(_ document: PdfDocument, _ dictionary: PdfDictionary) -> Bool {
+        if maskInData(document, dictionary) == 2 { return false }
         guard let space = document.resolve(dictionary["ColorSpace"]), !(space is PdfNull) else { return true }
         let family = ImageKit.describe(document, dictionary["ColorSpace"]).family
         return family == .gray || family == .rgb || family == .cmyk
@@ -24,20 +26,26 @@ enum JpxImage {
         document.integer(dictionary, "SMaskInData") ?? 0
     }
 
-    /// The pixels with their alpha as /SMaskInData says (ISO 32000-1 Table 89): dropped for 0, kept for 1, and for 2 taken out of the colour.
+    /// The pixels with their alpha as /SMaskInData says (ISO 32000-1 Table 89): dropped for 0, kept for 1. The codec's alpha is straight already.
     static func alpha(_ image: PdfRgbaImage, _ mode: Int) -> PdfRgbaImage {
-        if mode == 1 { return image }
+        if mode > 0 { return image }
         var rgba = image.rgba
         var i = 3
         while i < rgba.count {
-            let alpha = Int(rgba[i])
-            if mode < 1 {
-                rgba[i] = 255
-            } else if alpha > 0 && alpha < 255 {
-                for c in 1...3 { rgba[i - c] = UInt8(truncatingIfNeeded: min(255, (Int(rgba[i - c]) * 255 + alpha / 2) / alpha)) }
-            }
+            rgba[i] = 255
             i += 4
         }
         return PdfRgbaImage(image.width, image.height, rgba, dpiX: image.dpiX, dpiY: image.dpiY)
+    }
+
+    /// True when no pixel has any transparency. With /SMaskInData 0 the alpha is dropped, which only shows the picture as the codecs
+    /// give it when it has none: ImageIO returns colour premultiplied, so a pixel with alpha 0 has lost its colour there.
+    static func opaque(_ image: PdfRgbaImage) -> Bool {
+        var i = 3
+        while i < image.rgba.count {
+            if image.rgba[i] != 255 { return false }
+            i += 4
+        }
+        return true
     }
 }

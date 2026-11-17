@@ -113,6 +113,7 @@ enum OptimizeKit {
 final class OptimizeFakeCodec: ImageCodec {
     var encodeFails = false
     var onDecode: (() -> Void)?
+    var alpha: UInt8 = 255
     private(set) var decodes = 0
     private(set) var lastQuality = 0
     private(set) var lastEncoded: PdfRgbaImage?
@@ -131,7 +132,7 @@ final class OptimizeFakeCodec: ImageCodec {
                 rgba[o] = UInt8(x * 255 / max(1, width - 1))
                 rgba[o + 1] = UInt8(y * 255 / max(1, height - 1))
                 rgba[o + 2] = 128
-                rgba[o + 3] = 255
+                rgba[o + 3] = alpha
             }
         }
         return PdfRgbaImage(width, height, rgba)

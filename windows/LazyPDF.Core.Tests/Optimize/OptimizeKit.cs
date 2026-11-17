@@ -124,6 +124,7 @@ internal sealed class OptimizeFakeCodec : IImageCodec
     public Action? OnDecode { get; init; }
     public int LastQuality { get; private set; }
     public PdfRgbaImage? LastEncoded { get; private set; }
+    public byte Alpha { get; init; } = 255;
 
     public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0)
     {
@@ -138,7 +139,7 @@ internal sealed class OptimizeFakeCodec : IImageCodec
             for (int x = 0; x < width; x++)
             {
                 int o = (y * width + x) * 4;
-                (rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3]) = ((byte)(x * 255 / Math.Max(1, width - 1)), (byte)(y * 255 / Math.Max(1, height - 1)), 128, 255);
+                (rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3]) = ((byte)(x * 255 / Math.Max(1, width - 1)), (byte)(y * 255 / Math.Max(1, height - 1)), 128, Alpha);
             }
         }
         return new PdfRgbaImage(width, height, rgba);

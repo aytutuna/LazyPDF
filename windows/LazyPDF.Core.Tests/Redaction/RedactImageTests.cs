@@ -199,21 +199,35 @@ public class RedactImageTests
     }
 
     [Theory]
-    [InlineData("/SMaskInData 0", false, 60)]
-    [InlineData("", false, 60)]
-    [InlineData("/SMaskInData 1", true, 60)]
-    [InlineData("/SMaskInData 2", true, 120)]
-    public void AJpxPictureKeepsItsAlphaAsSMaskInDataSays(string entry, bool softMask, int red)
+    [InlineData("/SMaskInData 0", 255, false)]
+    [InlineData("", 255, false)]
+    [InlineData("/SMaskInData 1", 128, true)]
+    public void AJpxPictureKeepsItsAlphaAsSMaskInDataSays(string entry, int alpha, bool softMask)
     {
         using var document = WithImage($"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode {entry}", [1, 2, 3]);
-        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 128))).Apply([TopLeft()]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, (byte)alpha))).Apply([TopLeft()]);
         using var output = RedactionKit.Open(result);
         var image = RedactionKit.Images(output).Single().Stream!;
 
         Assert.Equal(softMask, output.Stream(image.Dictionary, "SMask") is not null);
         Assert.False(image.Dictionary.ContainsKey("SMaskInData"));
-        Assert.Equal([red, red == 60 ? 40 : 80], output.Data(image)[(5 * 3)..(5 * 3 + 2)].Select(b => (int)b));
+        Assert.Equal([60, 40], output.Data(image)[(5 * 3)..(5 * 3 + 2)].Select(b => (int)b));
         Assert.Equal([0, 0, 0], output.Data(image)[..3].Select(b => (int)b));
+    }
+
+    [Theory]
+    [InlineData("/SMaskInData 2", 128)]
+    [InlineData("/SMaskInData 0", 0)]
+    [InlineData("", 100)]
+    public void AJpxPictureWhoseAlphaCannotBeReadAsTheFileSaysIsRemovedWhole(string entry, int alpha)
+    {
+        using var document = WithImage($"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode {entry}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, (byte)alpha))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
     }
 
     [Fact]
