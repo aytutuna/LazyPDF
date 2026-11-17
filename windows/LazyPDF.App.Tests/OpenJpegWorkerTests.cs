@@ -224,12 +224,15 @@ public sealed partial class OpenJpegTests
         AssertStillDecodes();
         WithLimit(TimeSpan.FromSeconds(1), () =>
         {
-            Task<PdfRgbaImage?> waiting;
+            PdfRgbaImage? image = null;
             var watch = Stopwatch.StartNew();
             lock (JpxWorker.Gate)
             {
-                waiting = Task.Run(() => OpenJpeg.Decode(Small(7)));
-                Assert.Null(waiting.Result);
+                // A thread of its own: waiting on a task can run it inline here, where the lock is already held.
+                var waiting = new Thread(() => image = OpenJpeg.Decode(Small(7)));
+                waiting.Start();
+                waiting.Join();
+                Assert.Null(image);
             }
 
             Assert.InRange(watch.Elapsed, TimeSpan.FromMilliseconds(900), TimeSpan.FromSeconds(8));
