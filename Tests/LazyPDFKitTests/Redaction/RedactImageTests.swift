@@ -205,7 +205,7 @@ final class RedactImageTests: XCTestCase {
     }
 
     func test_aJpxPictureWhoseAlphaCannotBeReadAsTheFileSaysIsRemovedWhole() throws {
-        let cases: [(String, UInt8)] = [("/SMaskInData 2", 128), ("/SMaskInData 0", 0), ("", 100)]
+        let cases: [(String, UInt8)] = [("/SMaskInData 2", 128), ("/SMaskInData 0", 0), ("/SMaskInData -1", 128), ("", 100)]
         for (entry, alpha) in cases {
             let document = try withImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode \(entry)", [1, 2, 3])
             let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 40, 20, alpha))).apply([topLeft()])
@@ -220,7 +220,7 @@ final class RedactImageTests: XCTestCase {
     func test_aCodedSoftMaskIsWrittenBackAsPlainGrayWithItsMatte() throws {
         for filter in ["JPXDecode", "DCTDecode"] {
             let document = try withImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3], more: { pdf in
-                pdf.stream(7, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /\(filter) /Matte [0]", [1, 2, 3])
+                pdf.stream(7, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /\(filter) /Matte [0 0 0]", [1, 2, 3])
             })
             let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 60, 60, 255))).apply([topLeft()])
             let output = try RedactionKit.open(result)
@@ -234,6 +234,42 @@ final class RedactImageTests: XCTestCase {
             XCTAssertNotNil(mask.dictionary["Matte"], filter)
             XCTAssertEqual(Array(data[0..<3]), [0, 0, 60], filter)
             XCTAssertEqual(data.count, 64, filter)
+        }
+    }
+
+    func test_aCodedSoftMaskKeepsOnlyWhatAPlainGrayMaskHas() throws {
+        for (filter, decode) in [("DCTDecode", true), ("JPXDecode", false)] {
+            let document = try withImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3], more: { pdf in
+                pdf.stream(7, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /\(filter) /Decode [1 0] /SMask 8 0 R /Mask 9 0 R /SMaskInData 1", [1, 2, 3])
+                pdf.stream(8, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8", self.gradient())
+                pdf.stream(9, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ImageMask true /BitsPerComponent 1", [UInt8](repeating: 0, count: 8))
+            })
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 60, 60, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+            let image = try XCTUnwrap(RedactionKit.images(output).first?.stream)
+            let mask = try XCTUnwrap(output.stream(image.dictionary, "SMask"))
+
+            XCTAssertEqual(mask.dictionary.containsKey("Decode"), decode, filter)
+            for key in ["SMask", "Mask", "SMaskInData"] { XCTAssertFalse(mask.dictionary.containsKey(key), "\(filter) \(key)") }
+            XCTAssertEqual(imageStreams(output).count, 2, filter)
+        }
+    }
+
+    func test_theMatteOfASoftMaskFollowsTheColourSpaceTheImageIsWrittenIn() throws {
+        let cases: [(String, String, String?)] = [
+            ("/DeviceRGB", "[0 0 0]", "[0 0 0]"), ("/DeviceRGB", "[0]", nil),
+            ("/DeviceGray", "[0.5]", "[0.5 0.5 0.5]"), ("/DeviceCMYK", "[0 0 0 0]", nil),
+        ]
+        for (space, matte, expected) in cases {
+            let document = try withImage("/ColorSpace \(space) /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3], more: { pdf in
+                pdf.stream(7, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Matte \(matte)", [1, 2, 3])
+            })
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 60, 60, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+            let image = try XCTUnwrap(RedactionKit.images(output).first?.stream)
+            let written = try XCTUnwrap(output.stream(image.dictionary, "SMask")).dictionary["Matte"]
+
+            XCTAssertEqual(written.map { "\($0)" }, expected, "\(space) \(matte)")
         }
     }
 

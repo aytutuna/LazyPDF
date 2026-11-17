@@ -86,7 +86,7 @@ final class ImageRedactor {
         var pixels = decodedPixels
         if jpx {
             let mode = JpxImage.maskInData(document, d)
-            if mode == 0 && !JpxImage.opaque(pixels) { return nil }
+            if mode <= 0 && !JpxImage.opaque(pixels) { return nil }
             pixels = JpxImage.alpha(pixels, mode)
         }
         var rgba = pixels.rgba
@@ -108,12 +108,23 @@ final class ImageRedactor {
             if jpx { copy.remove("Decode") }
             return try document.add(PdfStream(copy, data: PdfFilterEncoders.flate(gray)))
         }
+        fitMatte(copy, JpxImage.components(document, d))
         let reference = try ContentImages.addRgba(document, pixels.width, pixels.height, rgba)
         guard let made = document.get(reference.number) as? PdfStream else { return nil }
         for key in Self.maskKeys {
             if let mask = copy[key] { made.dictionary[key] = mask }
         }
         return reference
+    }
+
+    // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is dropped.
+    private func fitMatte(_ image: PdfDictionary, _ components: Int) {
+        guard let soft = document.stream(image, "SMask"), let matte = document.array(soft.dictionary, "Matte"), matte.items.count != 3 else { return }
+        if matte.items.count == 1 && components == 1 {
+            soft.dictionary["Matte"] = PdfArray([PdfObject](repeating: matte.items[0], count: 3))
+        } else {
+            soft.dictionary.remove("Matte")
+        }
     }
 
     private static func fits(_ width: Int, _ height: Int) -> Bool {

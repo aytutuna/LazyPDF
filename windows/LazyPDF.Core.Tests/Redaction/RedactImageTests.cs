@@ -100,7 +100,7 @@ public class RedactImageTests
     public void ACodedSoftMaskIsWrittenBackAsPlainGrayWithItsMatte(string filter)
     {
         using var document = WithImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
-            more: pdf => pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /{filter} /Matte [0]", [1, 2, 3]));
+            more: pdf => pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /{filter} /Matte [0 0 0]", [1, 2, 3]));
         var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
         using var output = RedactionKit.Open(result);
         var image = RedactionKit.Images(output).Single().Stream!;
@@ -112,6 +112,45 @@ public class RedactImageTests
         Assert.NotNull(mask.Dictionary["Matte"]);
         Assert.Equal([0, 0, 60], output.Data(mask)[..3].Select(b => (int)b));
         Assert.Equal(64, output.Data(mask).Length);
+    }
+
+    [Theory]
+    [InlineData("DCTDecode", true)]
+    [InlineData("JPXDecode", false)]
+    public void ACodedSoftMaskKeepsOnlyWhatAPlainGrayMaskHas(string filter, bool decode)
+    {
+        using var document = WithImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
+            more: pdf =>
+            {
+                pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /{filter} /Decode [1 0] /SMask 8 0 R /Mask 9 0 R /SMaskInData 1", [1, 2, 3]);
+                pdf.Stream(8, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8", Gradient());
+                pdf.Stream(9, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ImageMask true /BitsPerComponent 1", new byte[8]);
+            });
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+        var mask = output.Stream(image.Dictionary, "SMask")!;
+
+        Assert.Equal(decode, mask.Dictionary.ContainsKey("Decode"));
+        foreach (string key in new[] { "SMask", "Mask", "SMaskInData" }) Assert.False(mask.Dictionary.ContainsKey(key), key);
+        Assert.Equal(2, ImageStreams(output).Count());
+    }
+
+    [Theory]
+    [InlineData("/DeviceRGB", "[0 0 0]", "[0 0 0]")]
+    [InlineData("/DeviceRGB", "[0]", null)]
+    [InlineData("/DeviceGray", "[0.5]", "[0.5 0.5 0.5]")]
+    [InlineData("/DeviceCMYK", "[0 0 0 0]", null)]
+    public void TheMatteOfASoftMaskFollowsTheColourSpaceTheImageIsWrittenIn(string space, string matte, string? expected)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
+            more: pdf => pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Matte {matte}", [1, 2, 3]));
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+        var written = output.Stream(image.Dictionary, "SMask")!.Dictionary["Matte"];
+
+        Assert.Equal(expected, written?.ToString());
     }
 
     [Fact]
@@ -238,6 +277,7 @@ public class RedactImageTests
     [Theory]
     [InlineData("/SMaskInData 2", 128)]
     [InlineData("/SMaskInData 0", 0)]
+    [InlineData("/SMaskInData -1", 128)]
     [InlineData("", 100)]
     public void AJpxPictureWhoseAlphaCannotBeReadAsTheFileSaysIsRemovedWhole(string entry, int alpha)
     {

@@ -79,7 +79,7 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         if (jpx)
         {
             long mode = JpxImage.MaskInData(document, d);
-            if (mode == 0 && !JpxImage.Opaque(pixels)) return null;
+            if (mode <= 0 && !JpxImage.Opaque(pixels)) return null;
             pixels = JpxImage.Alpha(pixels, mode);
         }
         var rgba = pixels.Rgba;
@@ -105,6 +105,7 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             if (jpx) copy.Remove("Decode");
             return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(gray)));
         }
+        FitMatte(copy, JpxImage.Components(document, d));
         var reference = ContentImages.AddRgba(document, pixels.Width, pixels.Height, rgba);
         var made = (PdfStream)document.Get(reference.Number)!;
         foreach (string key in (ReadOnlySpan<string>)["SMask", "Mask"])
@@ -112,6 +113,14 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             if (copy[key] is { } mask) made.Dictionary[key] = mask;
         }
         return reference;
+    }
+
+    // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is dropped.
+    private void FitMatte(PdfDictionary image, int components)
+    {
+        if (document.Stream(image, "SMask") is not { } soft || document.Array(soft.Dictionary, "Matte") is not { } matte || matte.Items.Count == 3) return;
+        if (matte.Items.Count == 1 && components == 1) soft.Dictionary["Matte"] = new PdfArray([.. Enumerable.Repeat(matte.Items[0], 3)]);
+        else soft.Dictionary.Remove("Matte");
     }
 
     private static bool Fits(int width, int height) => width > 0 && height > 0 && (long)width * height <= PdfImageSamples.MaxPixels;
