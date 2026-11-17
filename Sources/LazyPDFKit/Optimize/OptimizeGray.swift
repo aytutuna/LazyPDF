@@ -463,7 +463,7 @@ final class OptimizeGray {
     // Pixels of a JPEG 2000 picture stand for it only in a space they can be read as, and without alpha: the JPEG written back has none.
     // One that drops its alpha under /SMaskInData 0 is left too when the codec's pixels have any (see JpxImage.opaque).
     private func decodable(_ dictionary: PdfDictionary, _ coded: String) -> Bool {
-        coded != "JPXDecode" || (JpxImage.readable(document, dictionary) && JpxImage.maskInData(document, dictionary) == 0)
+        coded != "JPXDecode" || (JpxImage.readable(document, dictionary) && JpxImage.maskInData(document, dictionary) <= 0)
     }
 
     private func grayImage(_ stream: PdfStream) {

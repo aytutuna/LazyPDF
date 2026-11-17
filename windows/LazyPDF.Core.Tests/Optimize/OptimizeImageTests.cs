@@ -184,6 +184,34 @@ public class OptimizeImageTests
         if (width == 16) Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(image));
     }
 
+    // The key is enough, whatever it says and however opaque the pixels are.
+    [Theory]
+    [InlineData("/SMaskInData 0")]
+    [InlineData("/SMaskInData 1")]
+    [InlineData("/SMaskInData -1")]
+    public void AnySMaskInDataKeyLeavesAJpxPictureAsStored(string entry)
+    {
+        string dictionary = $"/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode {entry}";
+        byte[] file = OptimizeKit.Build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf => pdf.Stream(5, dictionary, OptimizeKit.TinyJpeg));
+        var codec = new OptimizeFakeCodec();
+        var image = Run(file, Downsample(8, 10), out var after, codec);
+        Assert.Equal(16, after.Integer(image.Dictionary, "Width"));
+        Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(image));
+        Assert.Equal(0, codec.Decodes);
+    }
+
+    [Fact]
+    public void AGrayJpegWithAnInvertingDecodeIsLeft()
+    {
+        string dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Decode [1 0]";
+        byte[] file = OptimizeKit.Build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf => pdf.Stream(5, dictionary, OptimizeKit.TinyJpeg));
+        var codec = new OptimizeFakeCodec();
+        var image = Run(file, Downsample(8, 10), out var after, codec);
+        Assert.Equal(16, after.Integer(image.Dictionary, "Width"));
+        Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(image));
+        Assert.Equal(0, codec.Decodes);
+    }
+
     [Theory]
     [InlineData("DCTDecode")]
     [InlineData("JPXDecode")]

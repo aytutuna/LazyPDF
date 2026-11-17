@@ -177,6 +177,29 @@ final class OptimizeImageTests: XCTestCase {
         }
     }
 
+    // The key is enough, whatever it says and however opaque the pixels are.
+    func test_anySMaskInDataKeyLeavesAJpxPictureAsStored() throws {
+        for entry in ["/SMaskInData 0", "/SMaskInData 1", "/SMaskInData -1"] {
+            let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode \(entry)"
+            let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in pdf.stream(5, dictionary, OptimizeKit.tinyJpeg) })
+            let codec = OptimizeFakeCodec()
+            let (image, after) = try run(file, downsample(8, 10), codec: codec)
+            XCTAssertEqual(16, after.integer(image.dictionary, "Width"), entry)
+            XCTAssertEqual(OptimizeKit.tinyJpeg, after.rawData(image), entry)
+            XCTAssertEqual(0, codec.decodes, entry)
+        }
+    }
+
+    func test_aGrayJpegWithAnInvertingDecodeIsLeft() throws {
+        let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Decode [1 0]"
+        let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in pdf.stream(5, dictionary, OptimizeKit.tinyJpeg) })
+        let codec = OptimizeFakeCodec()
+        let (image, after) = try run(file, downsample(8, 10), codec: codec)
+        XCTAssertEqual(16, after.integer(image.dictionary, "Width"))
+        XCTAssertEqual(OptimizeKit.tinyJpeg, after.rawData(image))
+        XCTAssertEqual(0, codec.decodes)
+    }
+
     func test_aCodedSoftMaskStaysAsStoredWhileItsImageIsShrunk() throws {
         for filter in ["DCTDecode", "JPXDecode"] {
             let image = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /SMask 6 0 R"

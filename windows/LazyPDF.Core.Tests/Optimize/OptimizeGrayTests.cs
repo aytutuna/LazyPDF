@@ -151,11 +151,15 @@ public class OptimizeGrayTests
         Assert.Equal(OptimizeKit.TinyJpeg, after.RawData(OptimizeKit.Image(after)));
     }
 
-    [Fact]
-    public void AJpxPictureInDeviceRgbWithoutAlphaBecomesGrayThroughTheCodec()
+    // A value below 0 is read as 0, as JpxImage.Alpha does.
+    [Theory]
+    [InlineData("/SMaskInData 0")]
+    [InlineData("/SMaskInData -1")]
+    [InlineData("")]
+    public void AJpxPictureInDeviceRgbWithoutAlphaBecomesGrayThroughTheCodec(string entry)
     {
         byte[] file = OptimizeKit.Build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
-            pdf.Stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /SMaskInData 0 /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.TinyJpeg));
+            pdf.Stream(5, $"/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB {entry} /BitsPerComponent 8 /Filter /JPXDecode", OptimizeKit.TinyJpeg));
         var codec = new OptimizeFakeCodec();
         var result = Run(file, codec);
 

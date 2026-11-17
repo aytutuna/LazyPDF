@@ -396,7 +396,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
     // Pixels of a JPEG 2000 picture stand for it only in a space they can be read as, and without alpha: the JPEG written back has none.
     // One that drops its alpha under /SMaskInData 0 is left too when the codec's pixels have any (see JpxImage.Opaque).
     private bool Decodable(PdfDictionary dictionary, string coded) =>
-        coded != "JPXDecode" || JpxImage.Readable(document, dictionary) && JpxImage.MaskInData(document, dictionary) == 0;
+        coded != "JPXDecode" || JpxImage.Readable(document, dictionary) && JpxImage.MaskInData(document, dictionary) <= 0;
 
     private void GrayImage(PdfStream stream)
     {
