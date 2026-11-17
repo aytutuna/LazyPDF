@@ -40,11 +40,14 @@ internal static class ImageKit
 
     /// <summary>
     /// True when <paramref name="decode"/> is the /Decode the image's colour space has by default (ISO 32000-1 Table 90): 0 to 1 for
-    /// every component, 0 to 2^bpc - 1 for an Indexed space, and for Lab 0 to 100 and then the /Range of its dictionary.
+    /// every component, 0 to 2^bpc - 1 for an Indexed space, for Lab 0 to 100 and then the /Range of its dictionary, and for ICCBased the profile's /Range when it has 2N numbers.
     /// </summary>
     public static bool DefaultDecode(PdfDocument document, PdfDictionary image, double[] decode)
     {
-        var (family, _) = Describe(document, image["ColorSpace"]);
+        var (family, components) = Describe(document, image["ColorSpace"]);
+        if (document.Resolve(image["ColorSpace"]) is PdfArray { Items.Count: > 1 } icc && document.Resolve(icc.Items[0]) is PdfName { Value: "ICCBased" }
+            && document.Resolve(icc.Items[1]) is PdfStream profile && PdfFunction.Numbers(profile.Dictionary["Range"], document.Resolve) is { } own && own.Length == 2 * components)
+            return decode.SequenceEqual(own);
         if (family == ImageFamily.Indexed)
         {
             long bpc = document.Integer(image, "BitsPerComponent") ?? 8;

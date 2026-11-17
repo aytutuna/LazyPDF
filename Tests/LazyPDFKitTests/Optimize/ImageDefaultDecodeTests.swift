@@ -21,10 +21,13 @@ final class ImageDefaultDecodeTests: XCTestCase {
             (lab, 8, [0, 100, -100, 100, -100, 100], true),
             (ranged, 8, [0, 100, -50, 50, -60, 60], true),
             (ranged, 8, [0, 100, -100, 100, -100, 100], false),
+            ("[/ICCBased 6 0 R]", 8, [0, 1, -1, 1, 0, 1], true),
+            ("[/ICCBased 6 0 R]", 8, [0, 1, 0, 1, 0, 1], false),
         ]
         for (space, bpc, decode, expected) in cases {
             let file = OptimizeKit.build("q 10 0 0 10 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
                 pdf.stream(5, "/Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace \(space) /BitsPerComponent \(bpc) /Filter /FlateDecode", TestPdf.deflate([0, 0, 0]))
+                pdf.stream(6, "/N 3 /Range [0 1 -1 1 0 1]", [0])
             })
             let document = try PdfDocument.open(file)
 

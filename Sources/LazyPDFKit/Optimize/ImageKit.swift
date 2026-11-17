@@ -47,9 +47,13 @@ enum ImageKit {
     }
 
     /// True when `decode` is the /Decode the image's colour space has by default (ISO 32000-1 Table 90): 0 to 1 for every
-    /// component, 0 to 2^bpc - 1 for an Indexed space, and for Lab 0 to 100 and then the /Range of its dictionary.
+    /// component, 0 to 2^bpc - 1 for an Indexed space, for Lab 0 to 100 and then the /Range of its dictionary, and for ICCBased the profile's /Range when it has 2N numbers.
     static func defaultDecode(_ document: PdfDocument, _ image: PdfDictionary, _ decode: [Double]) -> Bool {
-        let family = describe(document, image["ColorSpace"]).family
+        let (family, components) = describe(document, image["ColorSpace"])
+        if let icc = document.resolve(image["ColorSpace"]) as? PdfArray, icc.items.count > 1, (document.resolve(icc.items[0]) as? PdfName)?.value == "ICCBased",
+           let profile = document.resolve(icc.items[1]) as? PdfStream, let own = PdfFunction.numbers(profile.dictionary["Range"], { document.resolve($0) }), own.count == 2 * components {
+            return decode == own
+        }
         if family == .indexed {
             let bpc = document.integer(image, "BitsPerComponent") ?? 8
             return decode.count == 2 && decode[0] == 0 && decode[1] == Double((1 << min(max(bpc, 1), 16)) - 1)
