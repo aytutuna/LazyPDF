@@ -80,6 +80,36 @@
   "This type does not lead to a standard type through the role map.": {
     "tr": "Bu tür, rol eşlemesi üzerinden standart bir türe ulaşmıyor."
   },
+  "The item is not in the tree.": {
+    "tr": "Öğe ağaçta değil."
+  },
+  "This item is not marked content.": {
+    "tr": "Bu öğe işaretli içerik değil."
+  },
+  "The content is drawn by a form XObject, which other places may share.": {
+    "tr": "İçerik, başka yerlerin de paylaşabileceği bir form XObject tarafından çiziliyor."
+  },
+  "The page content is shared with another page.": {
+    "tr": "Sayfa içeriği başka bir sayfayla paylaşılıyor."
+  },
+  "The page content cannot be edited safely.": {
+    "tr": "Sayfa içeriği güvenle düzenlenemiyor."
+  },
+  "Other tagged content lies inside or around this content.": {
+    "tr": "Bu içeriğin içinde veya çevresinde başka etiketli içerik var."
+  },
+  "The selection covers only part of content that is already marked.": {
+    "tr": "Seçim, zaten işaretli olan içeriğin yalnızca bir kısmını kapsıyor."
+  },
+  "The selection cuts through a line of text or a picture. Select whole lines or pictures.": {
+    "tr": "Seçim bir metin satırını ya da resmi ortadan kesiyor. Satırların veya resimlerin tamamını seçin."
+  },
+  "Nothing in the selection can be tagged.": {
+    "tr": "Seçimdeki hiçbir şey etiketlenemiyor."
+  },
+  "The page has too many marked sequences to tag more.": {
+    "tr": "Sayfada daha fazla etiketlemek için çok fazla işaretli dizi var."
+  },
   "Document is tagged": {
     "tr": "Belge etiketli"
   },

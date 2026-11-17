@@ -9,11 +9,16 @@
 "A Note element has no /ID." = "Bir Note öğesinde /ID yok.";
 "A PDF/A output intent has no /DestOutputProfile." = "Bir PDF/A çıktı amacında /DestOutputProfile yok.";
 "A PostScript XObject is used." = "Bir PostScript XObject kullanılıyor.";
+"A Ruby element holds only Ruby parts." = "Ruby öğesi yalnızca Ruby parçaları içerebilir.";
+"A Ruby part can only be inside a Ruby element." = "Ruby parçası yalnızca bir Ruby öğesinin içinde olabilir.";
 "A TrapNet annotation is not allowed." = "TrapNet ek açıklamasına izin verilmez.";
 "A TrueType CIDFont has no /CIDToGIDMap." = "Bir TrueType CIDFont'unda /CIDToGIDMap yok.";
 "A TrueType font must use WinAnsiEncoding or MacRomanEncoding." = "Bir TrueType yazı tipi WinAnsiEncoding ya da MacRomanEncoding kullanmalı.";
+"A Warichu element holds only Warichu parts." = "Warichu öğesi yalnızca Warichu parçaları içerebilir.";
+"A Warichu part can only be inside a Warichu element." = "Warichu parçası yalnızca bir Warichu öğesinin içinde olabilir.";
 "A Word, Excel or PowerPoint file" = "Bir Word, Excel veya PowerPoint dosyası";
 "A box I draw on the page" = "Sayfaya çizeceğim bir kutu";
+"A caption can only be inside a table, list, figure or formula." = "Alt yazı yalnızca bir tablonun, listenin, şeklin ya da formülün içinde olabilir.";
 "A change breaks its signatures or its certification. Change it only if that is fine." = "Değişiklik imzalarını veya onay durumunu bozar. Yalnızca sakıncası yoksa değiştirin.";
 "A code such as en-US or tr-TR." = "en-US veya tr-TR gibi bir kod.";
 "A color is one, three or four numbers from 0 to 1." = "Bir renk, 0 ile 1 arasında bir, üç veya dört sayıdır.";
@@ -35,12 +40,18 @@
 "A graphics state sets a halftone." = "Bir grafik durumu yarım ton ayarlıyor.";
 "A graphics state sets a transfer function." = "Bir grafik durumu aktarım işlevi ayarlıyor.";
 "A hexadecimal string has an odd number of digits or a character that is not a hex digit." = "Onaltılık bir dizenin basamak sayısı tek ya da içinde onaltılık basamak olmayan bir karakter var.";
+"A link needs a link annotation inside it." = "Bağlantının içinde bir bağlantı ek açıklaması olmalı.";
+"A list holds only list items and a caption." = "Liste yalnızca liste öğeleri ve bir alt yazı içerebilir.";
+"A list item can only be inside a list." = "Liste öğesi yalnızca bir listenin içinde olabilir.";
+"A list item holds only a label and a body." = "Liste öğesi yalnızca bir etiket ve bir gövde içerebilir.";
+"A list label or body can only be inside a list item." = "Liste etiketi ya da gövdesi yalnızca bir liste öğesinin içinde olabilir.";
 "A name is longer than 127 bytes." = "Bir ad 127 bayttan uzun.";
 "A note or field on page {1} could not keep its other text and was removed whole.|one" = "{1}. sayfada {0} not veya alan diğer metnini koruyamadı ve bütünüyle kaldırıldı.";
 "A note or field on page {1} could not keep its other text and was removed whole.|other" = "{1}. sayfada {0} not veya alan diğer metnini koruyamadı ve bütünüyle kaldırıldı.";
 "A page has an /AA entry." = "Bir sayfada /AA girdisi var.";
 "A page or form has a transparency group." = "Bir sayfada ya da formda saydamlık grubu var.";
 "A page with tagged content has no /StructParents." = "Etiketli içeriği olan sayfada /StructParents yok.";
+"A paragraph, heading or inline element holds only inline elements." = "Paragraf, başlık ya da satır içi öğe yalnızca satır içi öğeler içerebilir.";
 "A path that clips cannot be changed." = "Kırpan bir yol değiştirilemez.";
 "A picture on page {1} that could not be read was removed whole.|one" = "{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı.";
 "A picture on page {1} that could not be read was removed whole.|other" = "{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı.";
@@ -59,7 +70,15 @@
 "A subset Type 1 font has no /CharSet." = "Alt kümeli bir Type 1 yazı tipinde /CharSet yok.";
 "A symbolic TrueType font has an /Encoding." = "Simgesel bir TrueType yazı tipinde /Encoding var.";
 "A symbolic TrueType font has no (3,0) or (1,0) cmap." = "Simgesel bir TrueType yazı tipinde (3,0) ya da (1,0) cmap yok.";
+"A table cell can only be inside a table row." = "Tablo hücresi yalnızca bir tablo satırının içinde olabilir.";
+"A table holds only a caption, rows and table sections." = "Tablo yalnızca bir alt yazı, satırlar ve tablo bölümleri içerebilir.";
 "A table is changed one line at a time." = "Tablo her seferinde bir satır değiştirilir.";
+"A table of contents holds only items, another table of contents and a caption." = "İçindekiler tablosu yalnızca öğeler, başka bir içindekiler tablosu ve bir alt yazı içerebilir.";
+"A table of contents item can only be inside a table of contents." = "İçindekiler öğesi yalnızca bir içindekiler tablosunun içinde olabilir.";
+"A table row can only be inside a table or a table section." = "Tablo satırı yalnızca bir tablonun ya da tablo bölümünün içinde olabilir.";
+"A table row holds only header and data cells." = "Tablo satırı yalnızca başlık ve veri hücreleri içerebilir.";
+"A table section can only be inside a table." = "Tablo bölümü yalnızca bir tablonun içinde olabilir.";
+"A table section holds only rows." = "Tablo bölümü yalnızca satır içerebilir.";
 "A widget has an /A entry." = "Bir parçacıkta /A girdisi var.";
 "A {0} action is used." = "Bir {0} eylemi kullanılıyor.";
 "A {0} annotation has no /Contents." = "Bir {0} ek açıklamasında /Contents yok.";
@@ -484,6 +503,7 @@
 "Do not share this copy yet. Read the problems below. Flattening every marked page may clear them." = "Bu kopyayı henüz paylaşmayın. Aşağıdaki sorunları okuyun. İşaretli her sayfayı düzleştirmek sorunları giderebilir.";
 "Do the same to every file in a folder." = "Bir klasördeki her dosyaya aynısını yapın.";
 "Document" = "Belge";
+"Document can only be at the top of the tree." = "Belge yalnızca ağacın en üstünde olabilir.";
 "Document information" = "Belge bilgileri";
 "Document information and metadata" = "Belge bilgileri ve üst veri";
 "Document information changed" = "Belge bilgileri değişti";
@@ -1064,6 +1084,7 @@
 "Nothing found. Text inside pictures is not looked at." = "Bir şey bulunamadı. Resimlerin içindeki yazıya bakılmaz.";
 "Nothing has run yet." = "Henüz bir şey çalışmadı.";
 "Nothing imported" = "Hiçbir şey eklenmedi";
+"Nothing in the selection can be tagged." = "Seçimdeki hiçbir şey etiketlenemiyor.";
 "Nothing is marked yet." = "Henüz bir şey işaretlenmedi.";
 "Nothing is saved yet." = "Henüz kayıtlı bir şey yok.";
 "Nothing measured yet." = "Henüz ölçüm yok.";
@@ -1151,6 +1172,7 @@
 "Organize on the stage" = "Sayfaları büyük görünümde düzenle";
 "Organize pages" = "Sayfaları yönet";
 "Orientation" = "Yön";
+"Other tagged content lies inside or around this content." = "Bu içeriğin içinde veya çevresinde başka etiketli içerik var.";
 "Outlines" = "Anahat";
 "Output intent" = "Çıktı amacı";
 "Oval" = "Oval";
@@ -1231,6 +1253,7 @@
 "Pages {0} to {1} are numbered." = "{0}. ile {1}. sayfalar numaralanır.";
 "Paper" = "Kağıt";
 "Paragraph changed." = "Paragraf değişti.";
+"Part and Art can only be at the top or inside Document, Part or Art." = "Part ve Art yalnızca en üstte ya da Document, Part veya Art içinde olabilir.";
 "Part of this page could not be drawn sharply." = "Bu sayfanın bir kısmı net çizilemedi.";
 "Parts of the pages that can be shown or hidden." = "Sayfaların gösterilebilen ya da gizlenebilen parçaları.";
 "Passed" = "Geçti";
@@ -1805,6 +1828,7 @@
 "The clipboard holds text." = "Panoda metin var.";
 "The color is set outside this form." = "Renk bu formun dışında ayarlanmış.";
 "The comments in {0} are already in this file or belong to other pages." = "{0} içindeki yorumlar bu dosyada zaten var ya da başka sayfalara ait.";
+"The content is drawn by a form XObject, which other places may share." = "İçerik, başka yerlerin de paylaşabileceği bir form XObject tarafından çiziliyor.";
 "The content uses the operator {0}, which the standard does not define." = "İçerik, standardın tanımlamadığı {0} işlecini kullanıyor.";
 "The copies are not password protected." = "Kopyalar parolayla korunmuyor.";
 "The copy has no password" = "Kopyanın parolası yok";
@@ -1906,6 +1930,7 @@
 "The information dictionary has /{0}, which this level does not allow." = "Bilgi sözlüğünde bu düzeyin izin vermediği /{0} var.";
 "The integer {0} is outside the 32-bit range." = "{0} tamsayısı 32 bit aralığının dışında.";
 "The item is already in the tree." = "Öğe zaten ağaçta.";
+"The item is not in the tree." = "Öğe ağaçta değil.";
 "The keychain has no certificate with a private key for you. Use a .p12 file." = "Anahtar zincirinde sizin için özel anahtarlı bir sertifika yok. Bir .p12 dosyası kullanın.";
 "The keychain would not keep {0}. You can use it until you quit Lazy PDF." = "Anahtar zinciri {0} dosyasını saklamadı. Lazy PDF'den çıkana kadar kullanabilirsiniz.";
 "The language {0} is not a valid language tag." = "{0} geçerli bir dil etiketi değil.";
@@ -1932,8 +1957,11 @@
 "The owner of this file does not allow copying." = "Bu dosyanın sahibi kopyalamaya izin vermiyor.";
 "The owner of {0} did not allow it to be printed." = "{0} dosyasının sahibi yazdırılmasına izin vermedi.";
 "The page changed. Select the object again." = "Sayfa değişti. Nesneyi yeniden seçin.";
+"The page content cannot be edited safely." = "Sayfa içeriği güvenle düzenlenemiyor.";
+"The page content is shared with another page." = "Sayfa içeriği başka bir sayfayla paylaşılıyor.";
 "The page content is too large to check in full." = "Sayfa içeriği tam denetlenemeyecek kadar büyük.";
 "The page has annotations and its tab order does not follow the structure." = "Sayfada ek açıklamalar var ve sekme sırası yapıyı izlemiyor.";
+"The page has too many marked sequences to tag more." = "Sayfada daha fazla etiketlemek için çok fazla işaretli dizi var.";
 "The page is not in the file." = "Sayfa dosyada yok.";
 "The pages changed, so the marks no longer fit. Mark them again." = "Sayfalar değişti, bu yüzden işaretler artık uymuyor. Yeniden işaretleyin.";
 "The pages could not be changed. Save a copy of the file and try again." = "Sayfalar değiştirilemedi. Dosyanın bir kopyasını kaydedip yeniden deneyin.";
@@ -1966,6 +1994,8 @@
 "The security settings allow screen readers." = "Güvenlik ayarları ekran okuyuculara izin veriyor.";
 "The security settings do not allow assistive technology to extract text." = "Güvenlik ayarları yardımcı teknolojilerin metni almasına izin vermiyor.";
 "The security settings stop screen readers from reading the text. Allow text access for accessibility." = "Güvenlik ayarları ekran okuyucuların metni okumasını engelliyor. Erişilebilirlik için metin erişimine izin verin.";
+"The selection covers only part of content that is already marked." = "Seçim, zaten işaretli olan içeriğin yalnızca bir kısmını kapsıyor.";
+"The selection cuts through a line of text or a picture. Select whole lines or pictures." = "Seçim bir metin satırını ya da resmi ortadan kesiyor. Satırların veya resimlerin tamamını seçin.";
 "The server answered with an error ({0})." = "Sunucu bir hatayla yanıt verdi ({0}).";
 "The server could not be reached. Check the connection and try again." = "Sunucuya ulaşılamadı. Bağlantıyı denetleyip yeniden deneyin.";
 "The server did not answer in time. Try again later." = "Sunucu zamanında yanıt vermedi. Daha sonra yeniden deneyin.";
@@ -2044,6 +2074,7 @@
 "This device has no font for the text on the boxes. Clear that text and try again." = "Bu aygıtta kutulardaki metin için yazı tipi yok. Metni silip yeniden deneyin.";
 "This device has no text recognition language." = "Bu aygıtta metin tanıma dili yok.";
 "This device has no voice ready. Add one in Settings, under Spoken Content." = "Bu cihazda hazır bir ses yok. Ayarlar'da Konuşulan İçerik bölümünden bir ses ekleyin.";
+"This element holds only other elements, not content." = "Bu öğe içerik değil, yalnızca başka öğeler içerebilir.";
 "This field does not take that value. Check it and try again." = "Bu alan bu değeri kabul etmiyor. Değeri kontrol edip yeniden deneyin.";
 "This field is already signed. Choose another one." = "Bu alan zaten imzalı. Başka bir alan seçin.";
 "This field is not part of the form." = "Bu alan formun parçası değil.";
@@ -2083,6 +2114,7 @@
 "This form also has XFA data. Changing a field removes it." = "Bu formda XFA verisi de var. Bir alanı değiştirmek onu kaldırır.";
 "This is a dynamic XFA form. Lazy PDF cannot fill it." = "Bu dinamik bir XFA formu. Lazy PDF bunu dolduramaz.";
 "This is the signed version." = "Bu, imzalı sürümün kendisi.";
+"This item is not marked content." = "Bu öğe işaretli içerik değil.";
 "This kind of action cannot be set here." = "Bu tür bir işlem burada ayarlanamaz.";
 "This link cannot be opened." = "Bu bağlantı açılamıyor.";
 "This link does something else. Saving replaces it." = "Bu bağlantı başka bir iş yapıyor. Kaydetmek onu değiştirir.";
@@ -2102,6 +2134,7 @@
 "This signature needs a time stamp server." = "Bu imza bir zaman damgası sunucusu gerektiriyor.";
 "This text has replacement text." = "Bu metnin yerine geçen bir metni var.";
 "This text includes annotation text, which the page's content does not hold. Build the page without IncludeAnnotations to edit or redact it." = "Bu metin, sayfa içeriğinde bulunmayan ek açıklama metnini de içeriyor. Düzenlemek ya da karartmak için sayfayı IncludeAnnotations olmadan oluşturun.";
+"This type does not lead to a standard type through the role map." = "Bu tür, rol eşlemesi üzerinden standart bir türe ulaşmıyor.";
 "Thumbnail size" = "Küçük resim boyutu";
 "Thumbnails of every page." = "Her sayfanın küçük resmi.";
 "Thumbprint {0}" = "Parmak izi: {0}";

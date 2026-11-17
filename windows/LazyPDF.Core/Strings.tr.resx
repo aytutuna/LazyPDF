@@ -3922,6 +3922,9 @@
   <data name="Nothing imported" xml:space="preserve">
     <value>Hiçbir şey eklenmedi</value>
   </data>
+  <data name="Nothing in the selection can be tagged." xml:space="preserve">
+    <value>Seçimdeki hiçbir şey etiketlenemiyor.</value>
+  </data>
   <data name="Nothing is marked yet." xml:space="preserve">
     <value>Henüz bir şey işaretlenmedi.</value>
   </data>
@@ -4221,6 +4224,9 @@
   </data>
   <data name="Orientation" xml:space="preserve">
     <value>Yön</value>
+  </data>
+  <data name="Other tagged content lies inside or around this content." xml:space="preserve">
+    <value>Bu içeriğin içinde veya çevresinde başka etiketli içerik var.</value>
   </data>
   <data name="Outlines" xml:space="preserve">
     <value>Anahat</value>
@@ -6514,6 +6520,9 @@
   <data name="The comments in {0} are already in this file or belong to other pages." xml:space="preserve">
     <value>{0} içindeki yorumlar bu dosyada zaten var ya da başka sayfalara ait.</value>
   </data>
+  <data name="The content is drawn by a form XObject, which other places may share." xml:space="preserve">
+    <value>İçerik, başka yerlerin de paylaşabileceği bir form XObject tarafından çiziliyor.</value>
+  </data>
   <data name="The content uses the operator {0}, which the standard does not define." xml:space="preserve">
     <value>İçerik, standardın tanımlamadığı {0} işlecini kullanıyor.</value>
   </data>
@@ -6835,6 +6844,9 @@
   <data name="The item is already in the tree." xml:space="preserve">
     <value>Öğe zaten ağaçta.</value>
   </data>
+  <data name="The item is not in the tree." xml:space="preserve">
+    <value>Öğe ağaçta değil.</value>
+  </data>
   <data name="The keychain has no certificate with a private key for you. Use a .p12 file." xml:space="preserve">
     <value>Anahtar zincirinde sizin için özel anahtarlı bir sertifika yok. Bir .p12 dosyası kullanın.</value>
   </data>
@@ -6925,11 +6937,20 @@
   <data name="The page changed. Select the object again." xml:space="preserve">
     <value>Sayfa değişti. Nesneyi yeniden seçin.</value>
   </data>
+  <data name="The page content cannot be edited safely." xml:space="preserve">
+    <value>Sayfa içeriği güvenle düzenlenemiyor.</value>
+  </data>
+  <data name="The page content is shared with another page." xml:space="preserve">
+    <value>Sayfa içeriği başka bir sayfayla paylaşılıyor.</value>
+  </data>
   <data name="The page content is too large to check in full." xml:space="preserve">
     <value>Sayfa içeriği tam denetlenemeyecek kadar büyük.</value>
   </data>
   <data name="The page has annotations and its tab order does not follow the structure." xml:space="preserve">
     <value>Sayfada ek açıklamalar var ve sekme sırası yapıyı izlemiyor.</value>
+  </data>
+  <data name="The page has too many marked sequences to tag more." xml:space="preserve">
+    <value>Sayfada daha fazla etiketlemek için çok fazla işaretli dizi var.</value>
   </data>
   <data name="The page is not in the file." xml:space="preserve">
     <value>Sayfa dosyada yok.</value>
@@ -7038,6 +7059,12 @@
   </data>
   <data name="The security settings stop screen readers from reading the text. Allow text access for accessibility." xml:space="preserve">
     <value>Güvenlik ayarları ekran okuyucuların metni okumasını engelliyor. Erişilebilirlik için metin erişimine izin verin.</value>
+  </data>
+  <data name="The selection covers only part of content that is already marked." xml:space="preserve">
+    <value>Seçim, zaten işaretli olan içeriğin yalnızca bir kısmını kapsıyor.</value>
+  </data>
+  <data name="The selection cuts through a line of text or a picture. Select whole lines or pictures." xml:space="preserve">
+    <value>Seçim bir metin satırını ya da resmi ortadan kesiyor. Satırların veya resimlerin tamamını seçin.</value>
   </data>
   <data name="The server answered with an error ({0})." xml:space="preserve">
     <value>Sunucu bir hatayla yanıt verdi ({0}).</value>
@@ -7437,6 +7464,9 @@
   </data>
   <data name="This is the signed version." xml:space="preserve">
     <value>Bu, imzalı sürümün kendisi.</value>
+  </data>
+  <data name="This item is not marked content." xml:space="preserve">
+    <value>Bu öğe işaretli içerik değil.</value>
   </data>
   <data name="This kind of action cannot be set here." xml:space="preserve">
     <value>Bu tür bir işlem burada ayarlanamaz.</value>
