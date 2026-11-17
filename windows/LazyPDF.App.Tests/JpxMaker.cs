@@ -17,7 +17,7 @@ internal static class JpxMaker
     private delegate int SeekFn(long position, IntPtr user);
 
     /// <summary>One component: its subsampling, depth and the w x h samples (w = ceil(width / dx)).</summary>
-    public sealed record Comp(int Dx, int Dy, int Prec, bool Signed, int[] Samples, bool Alpha = false)
+    public sealed record Comp(int Dx, int Dy, int Prec, bool Signed, int[] Samples, int Alpha = 0)
     {
         public Comp(int prec, int[] samples) : this(1, 1, prec, false, samples) { }
     }
@@ -106,7 +106,7 @@ internal static class JpxMaker
             {
                 IntPtr data = Marshal.ReadIntPtr(list, i * 64 + 48);
                 Marshal.Copy(comps[i].Samples, 0, data, comps[i].Samples.Length);
-                if (comps[i].Alpha) Marshal.WriteInt16(list, i * 64 + 56, 1);
+                if (comps[i].Alpha != 0) Marshal.WriteInt16(list, i * 64 + 56, 1);
             }
 
             opj_set_default_encoder_parameters(parameters);
@@ -144,23 +144,40 @@ internal static class JpxMaker
     /// <summary>A JP2 file whose one 8-bit component is indices into an RGB palette.</summary>
     public static byte[] Paletted(int width, int height, int[] indices, byte[][] palette)
     {
+        var pclr = new List<byte> { (byte)(palette.Length >> 8), (byte)palette.Length, 3, 7, 7, 7 };
+        foreach (var entry in palette) pclr.AddRange(entry);
         byte[] code = Encode(width, height, Unspecified, false, false, new Comp(8, indices));
+        return Wrap(width, height, 1, code, ("colr", [1, 0, 0, .. Be(16)]), ("pclr", [.. pclr]), ("cmap", [0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 2]));
+    }
+
+    /// <summary>A codestream in a JP2 file with the given boxes in its header, after the image header.</summary>
+    public static byte[] Wrap(int width, int height, int components, byte[] code, params (string Type, byte[] Content)[] boxes)
+    {
         var file = new MemoryStream();
         Box(file, "jP  ", [0x0D, 0x0A, 0x87, 0x0A]);
         Box(file, "ftyp", [.. "jp2 "u8, 0, 0, 0, 0, .. "jp2 "u8]);
 
         var header = new MemoryStream();
-        Box(header, "ihdr", [.. Be(height), .. Be(width), 0, 1, 7, 7, 0, 0]);
-        Box(header, "colr", [1, 0, 0, .. Be(16)]);
-        var pclr = new List<byte> { (byte)(palette.Length >> 8), (byte)palette.Length, 3, 7, 7, 7 };
-        foreach (var entry in palette) pclr.AddRange(entry);
-        Box(header, "pclr", [.. pclr]);
-        Box(header, "cmap", [0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 2]);
+        Box(header, "ihdr", [.. Be(height), .. Be(width), (byte)(components >> 8), (byte)components, 7, 7, 0, 0]);
+        foreach (var (type, content) in boxes) Box(header, type, content);
         Box(file, "jp2h", header.ToArray());
 
         Box(file, "jp2c", code);
         return file.ToArray();
     }
+
+    /// <summary>A channel definition box: for each channel its type and association.</summary>
+    public static (string, byte[]) Cdef(params (int Type, int Association)[] channels)
+    {
+        var content = new List<byte> { (byte)(channels.Length >> 8), (byte)channels.Length };
+        for (int i = 0; i < channels.Length; i++)
+        {
+            content.AddRange([(byte)(i >> 8), (byte)i, (byte)(channels[i].Type >> 8), (byte)channels[i].Type, (byte)(channels[i].Association >> 8), (byte)channels[i].Association]);
+        }
+        return ("cdef", [.. content]);
+    }
+
+    public static (string, byte[]) Colr(int enumerated) => ("colr", [1, 0, 0, .. Be(enumerated)]);
 
     private static byte[] Be(int value) => [(byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value];
 

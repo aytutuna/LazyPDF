@@ -41,7 +41,7 @@ public sealed class OpenJpegTests
     {
         int[] alpha = Ramp(64, 255);
         var rgb = new Comp(8, Enumerable.Repeat(200, 64).ToArray());
-        var image = Read(Encode(8, 8, Srgb, true, false, rgb, rgb with { Samples = [.. Enumerable.Repeat(100, 64)] }, rgb with { Samples = [.. Enumerable.Repeat(50, 64)] }, new Comp(1, 1, 8, false, alpha, true)));
+        var image = Read(Encode(8, 8, Srgb, true, false, rgb, rgb with { Samples = [.. Enumerable.Repeat(100, 64)] }, rgb with { Samples = [.. Enumerable.Repeat(50, 64)] }, new Comp(1, 1, 8, false, alpha, 1)));
 
         for (int i = 0; i < 64; i++) Assert.Equal([200, 100, 50, alpha[i]], image.Rgba[(i * 4)..(i * 4 + 4)].Select(v => (int)v));
     }
@@ -123,6 +123,84 @@ public sealed class OpenJpegTests
         var image = Read(Paletted(8, 8, indices, palette));
 
         for (int i = 0; i < 64; i++) Assert.Equal([.. palette[i % 4], 255], image.Rgba[(i * 4)..(i * 4 + 4)]);
+    }
+
+    private static Comp Flat(int value) => new(8, Enumerable.Repeat(value, 64).ToArray());
+
+    [Fact]
+    public void PremultipliedOpacityIsUndoneInTheColour()
+    {
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(100), Flat(50), Flat(20), Flat(128));
+        var image = Read(Wrap(8, 8, 4, code, Colr(Srgb + 15), Cdef((0, 1), (0, 2), (0, 3), (2, 0))));
+
+        Assert.Equal([199, 100, 40, 128], image.Rgba[..4].Select(v => (int)v));
+    }
+
+    [Fact]
+    public void AnExtraChannelOfUnspecifiedTypeIsNeitherColourNorOpacity()
+    {
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(10), Flat(20), Flat(30), Flat(40));
+        var image = Read(Wrap(8, 8, 4, code, Colr(Srgb + 15), Cdef((0, 1), (0, 2), (0, 3), (65535, 65535))));
+
+        Assert.Equal([10, 20, 30, 255], image.Rgba[..4].Select(v => (int)v));
+    }
+
+    [Fact]
+    public void AllChannelsOfUnspecifiedTypeStillGiveTheColour()
+    {
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(10), Flat(20), Flat(30));
+        var image = Read(Wrap(8, 8, 3, code, Colr(Srgb + 15), Cdef((65535, 65535), (65535, 65535), (65535, 65535))));
+
+        Assert.Equal([10, 20, 30, 255], image.Rgba[..4].Select(v => (int)v));
+    }
+
+    [Fact]
+    public void FourComponentsWithoutAColourBoxAreRgbaWhenThePdfSaysThreeAreColour()
+    {
+        byte[] file = Encode(8, 8, Unspecified, false, false, Flat(10), Flat(20), Flat(30), Flat(200));
+
+        Assert.NotEqual([10, 20, 30, 200], Read(file).Rgba[..4].Select(v => (int)v));
+        Assert.Equal([10, 20, 30, 200], OpenJpeg.Decode(file, 3)!.Rgba[..4].Select(v => (int)v));
+        Assert.Equal([10, 10, 10, 20], OpenJpeg.Decode(Encode(8, 8, Unspecified, false, false, Flat(10), Flat(20)), 1)!.Rgba[..4].Select(v => (int)v));
+    }
+
+    [Fact]
+    public void AllComponentsSubsampledTheSameWayAreNotYcc()
+    {
+        var plane = new Comp(2, 2, 8, false, Enumerable.Repeat(200, 16).ToArray());
+        var rgb = Read(Encode(8, 8, Unspecified, false, false, plane, plane with { Samples = [.. Enumerable.Repeat(100, 16)] }, plane with { Samples = [.. Enumerable.Repeat(50, 16)] }));
+        Assert.Equal([200, 100, 50, 255], rgb.Rgba[..4].Select(v => (int)v));
+
+        var chroma = new Comp(2, 2, 8, false, Enumerable.Repeat(168, 16).ToArray());
+        var ycc = Read(Encode(8, 8, Unspecified, false, false, Flat(100), chroma, plane with { Samples = [.. Enumerable.Repeat(128, 16)] }));
+        Assert.NotEqual([100, 168, 128], ycc.Rgba[..3].Select(v => (int)v));
+    }
+
+    [Fact]
+    public void ACielabPictureIsNotRead()
+    {
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(50), Flat(128), Flat(128));
+
+        Assert.Null(OpenJpeg.Decode(Wrap(8, 8, 3, code, Colr(14))));
+    }
+
+    [Theory]
+    [InlineData(255)]
+    [InlineData(3)]
+    public void APaletteThatMakesMoreThanTheBudgetHoldsIsRefusedBeforeDecoding(int channels)
+    {
+        // A few hundred bytes of header over a picture the size of the pixel cap, with a palette of many channels.
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(0));
+        foreach (int at in new[] { 8, 12, 24, 28 }) Put(code, at, 11585);
+        var pclr = new List<byte> { 0, 1, (byte)channels };
+        pclr.AddRange(Enumerable.Repeat((byte)7, channels));
+        pclr.AddRange(Enumerable.Repeat((byte)1, channels));
+        var cmap = Enumerable.Range(0, channels).SelectMany(i => new byte[] { 0, 0, 1, (byte)i }).ToArray();
+        byte[] file = Wrap(11585, 11585, 1, code, Colr(Srgb + 15), ("pclr", [.. pclr]), ("cmap", cmap));
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Assert.Null(OpenJpeg.Decode(file));
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2));
     }
 
     [Fact]

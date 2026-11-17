@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Services;
@@ -120,8 +121,12 @@ internal static class OpenJpeg
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
     private static extern void opj_image_destroy(IntPtr image);
 
-    /// <summary>A JPEG 2000 file or codestream as RGBA, or null when it cannot be read or is over the pixel cap.</summary>
-    public static PdfRgbaImage? Decode(byte[] data)
+    /// <summary>
+    /// A JPEG 2000 file or codestream as RGBA, or null when it cannot be read, is a CIELab picture, or would hold more than
+    /// <see cref="PdfImageSamples.MaxPixels"/> samples of 4 bytes while decoded (a palette makes new components out of one).
+    /// <paramref name="components"/> is the colour space's component count from the PDF, 0 when it is not known.
+    /// </summary>
+    public static PdfRgbaImage? Decode(byte[] data, int components = 0)
     {
         int format = Format(data);
         if (format < 0) return null;
@@ -154,9 +159,10 @@ internal static class OpenJpeg
             var header = Marshal.PtrToStructure<Image>(image);
             long width = (long)header.X1 - header.X0, height = (long)header.Y1 - header.Y0;
             if (width < 1 || height < 1 || width * height > PdfImageSamples.MaxPixels || header.NumComps is 0 or > MaxComponents) return null;
+            if (IsLab(header) || !WithinBudget(header, ChannelSources(data))) return null;
 
             if (opj_decode(codec, stream, image) == 0 || opj_end_decompress(codec, stream) == 0) return null;
-            return ToRgba(Marshal.PtrToStructure<Image>(image), (int)width, (int)height);
+            return ToRgba(Marshal.PtrToStructure<Image>(image), (int)width, (int)height, components);
         }
         catch (Exception)
         {
@@ -181,9 +187,70 @@ internal static class OpenJpeg
         return -1;
     }
 
-    private static PdfRgbaImage? ToRgba(Image image, int width, int height)
+    // OpenJPEG hands CIELab on as an unknown colour space whose buffer starts with the enumerated space, 14, and has no length.
+    private static bool IsLab(Image image) => image.IccBuffer != IntPtr.Zero && image.IccLength == 0 && Marshal.ReadInt32(image.IccBuffer) == 14;
+
+    // The source component of each channel a cmap box makes, or null without one.
+    private static int[]? ChannelSources(byte[] file)
+    {
+        if (Format(file) != Jp2) return null;
+        if (FindBox(file, 0, file.Length, "jp2h") is not var (headerAt, headerEnd)) return null;
+        if (FindBox(file, headerAt, headerEnd, "cmap") is not var (at, end)) return null;
+        return [.. Enumerable.Range(0, (end - at) / 4).Select(i => file[at + 4 * i] << 8 | file[at + 4 * i + 1])];
+    }
+
+    // The content of the first box of a type between two offsets; a box that runs past the end is not read.
+    private static (int At, int End)? FindBox(byte[] file, int from, int to, string type)
+    {
+        for (long p = from; p + 8 <= to;)
+        {
+            long length = (long)file[p] << 24 | (long)file[p + 1] << 16 | (long)file[p + 2] << 8 | file[p + 3];
+            int header = 8;
+            if (length == 1)
+            {
+                if (p + 16 > to) return null;
+                length = 0;
+                for (int i = 8; i < 16; i++) length = length << 8 | file[p + i];
+                header = 16;
+            }
+            else if (length == 0) length = to - p;
+            if (length < header || length > to - p) return null;
+            if (Encoding.ASCII.GetString(file, (int)p + 4, 4) == type) return ((int)p + header, (int)(p + length));
+            p += length;
+        }
+        return null;
+    }
+
+    // The decoder keeps 4 bytes per sample of every component, and a palette's channels while the codestream's components
+    // are still held; together they stay within what a picture at the pixel cap takes in 4-byte samples.
+    private static bool WithinBudget(Image image, int[]? channels)
     {
         int count = (int)image.NumComps;
+        var sizes = new long[count];
+        long total = 0;
+        for (int i = 0; i < count; i++)
+        {
+            var c = Marshal.PtrToStructure<Component>(image.Comps + i * Marshal.SizeOf<Component>());
+            if (c.W > PdfImageSamples.MaxPixels || c.H > PdfImageSamples.MaxPixels) return false;
+            sizes[i] = (long)c.W * c.H;
+            total += sizes[i];
+        }
+        if (channels is not null)
+        {
+            if (channels.Length > MaxComponents) return false;
+            foreach (int source in channels)
+            {
+                if (source >= count) return false;
+                total += sizes[source];
+            }
+        }
+        return total <= PdfImageSamples.MaxPixels;
+    }
+
+    private static PdfRgbaImage? ToRgba(Image image, int width, int height, int hint)
+    {
+        int count = (int)image.NumComps;
+        if (count > MaxComponents) return null;
         var comps = new Component[count];
         for (int i = 0; i < count; i++)
         {
@@ -194,18 +261,24 @@ internal static class OpenJpeg
         }
 
         int space = image.ColorSpace;
-        // A YCC picture is the one whose chroma is subsampled, whatever the header says.
-        if (count == 3 && space is not (ClrSycc or ClrEycc) && comps[0].Dx == comps[0].Dy && comps[1].Dx != 1) space = ClrSycc;
+        // A YCC picture is the one whose chroma is subsampled differently from its luma, whatever the header says.
+        if (count == 3 && space is not (ClrSycc or ClrEycc) && (comps[1].Dx != comps[0].Dx || comps[1].Dy != comps[0].Dy)) space = ClrSycc;
 
-        var alphas = Enumerable.Range(0, count).Where(i => comps[i].Alpha != 0).ToList();
+        // A channel definition gives each component a type: 0 colour, 1 opacity, 2 premultiplied opacity, 65535 unspecified.
+        // When none says colour or opacity, the definition tells nothing and every component is colour.
+        var kinds = comps.Select(c => (int)c.Alpha).ToArray();
+        if (kinds.All(k => k is not (0 or 1 or 2))) Array.Clear(kinds);
+        var alphas = Enumerable.Range(0, count).Where(i => kinds[i] is 1 or 2).ToList();
         int alpha = alphas.Count > 0 ? alphas[0] : -1;
-        var colour = Enumerable.Range(0, count).Where(i => !alphas.Contains(i)).ToList();
-        if (alpha < 0)
+        var colour = Enumerable.Range(0, count).Where(i => kinds[i] == 0).ToList();
+        if (alpha < 0 && !kinds.Any(k => k is not 0))
         {
+            // The PDF's colour space says how many components are colour; one more is opacity.
             bool known = space is ClrGray or ClrSrgb or ClrSycc or ClrEycc;
-            if (count == 2 || known && count is 2 or 4) alpha = count - 1;
+            if (hint > 0 ? count == hint + 1 : count == 2 || known && count is 2 or 4) alpha = count - 1;
             if (alpha >= 0) colour.Remove(alpha);
         }
+        bool premultiplied = alpha >= 0 && kinds[alpha] == 2;
         if (colour.Count is 2) colour.RemoveAt(1);
         if (colour.Count is not (1 or 3 or 4)) return null;
         bool cmyk = colour.Count == 4;
@@ -252,6 +325,10 @@ internal static class OpenJpeg
                     rgba[o + 2] = (byte)v[2];
                 }
                 rgba[o + 3] = alpha < 0 ? (byte)255 : (byte)Sample(comps[alpha], rows[alpha], luts[alpha], image.X0 + x);
+                if (premultiplied && rgba[o + 3] is > 0 and < 255)
+                {
+                    for (int c = 0; c < 3; c++) rgba[o + c] = (byte)Math.Min(255, (rgba[o + c] * 255 + rgba[o + 3] / 2) / rgba[o + 3]);
+                }
             }
         }
         return new PdfRgbaImage(width, height, rgba);
