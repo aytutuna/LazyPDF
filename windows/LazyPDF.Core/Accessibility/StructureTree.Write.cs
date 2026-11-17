@@ -190,7 +190,10 @@ public sealed partial class StructureTree
         var entries = new Dictionary<string, PdfObject>(StringComparer.Ordinal);
         foreach (var element in all)
         {
-            if (!string.IsNullOrEmpty(element.Id)) entries.TryAdd(PdfNameTree.KeyOf(element.Id), element.Reference!);
+            if (string.IsNullOrEmpty(element.Id)) continue;
+            // The key is the /ID string as stored, since /Headers and /Ref hold the same bytes and decoding then encoding does not give them back.
+            string key = document.Resolve(element.Dictionary["ID"]) is PdfString raw ? System.Text.Encoding.Latin1.GetString(raw.Bytes) : PdfNameTree.KeyOf(element.Id);
+            entries.TryAdd(key, element.Reference!);
         }
         if (entries.Count == 0 && Dictionary["IDTree"] is null) return;
 
@@ -198,8 +201,9 @@ public sealed partial class StructureTree
         bool same = existing.Count == entries.Count
             && existing.All(e => entries.TryGetValue(e.Key, out var value) && value.ToString() == e.Value.ToString());
         if (same) return;
-        var root = PdfNameTree.Write(document, document.Dict(Dictionary, "IDTree"), entries);
-        if (Dictionary["IDTree"] is null) Dictionary["IDTree"] = document.Add(root);
+        var tree = document.Dict(Dictionary, "IDTree");
+        var root = PdfNameTree.Write(document, tree, entries);
+        if (tree is null) Dictionary["IDTree"] = document.Add(root);
     }
 
     // PDF integers stop at 2^31 - 1 (ISO 32000-1 Annex C), so a larger key is no key; it also keeps the next free number from overflowing.

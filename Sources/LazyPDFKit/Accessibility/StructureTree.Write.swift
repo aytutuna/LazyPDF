@@ -196,7 +196,8 @@ extension StructureTree {
         var entries: [String: PdfObject] = [:]
         for element in all {
             if let id = element.id, !id.isEmpty, let reference = element.reference {
-                let key = PdfNameTree.keyOf(id)
+                // The key is the /ID string as stored, since /Headers and /Ref hold the same bytes and decoding then encoding does not give them back.
+                let key = (document.resolve(element.dictionary["ID"]) as? PdfString).map { Latin1.string($0.bytes) } ?? PdfNameTree.keyOf(id)
                 if entries[key] == nil { entries[key] = reference }
             }
         }
@@ -208,8 +209,9 @@ extension StructureTree {
         }
         if same { return }
         let list = entries.map { (key: $0.key, value: $0.value) }
-        let root = try PdfNameTree.write(document, document.dict(dictionary, "IDTree"), list)
-        if dictionary["IDTree"] == nil { dictionary["IDTree"] = try document.add(root) }
+        let tree = document.dict(dictionary, "IDTree")
+        let root = try PdfNameTree.write(document, tree, list)
+        if tree == nil { dictionary["IDTree"] = try document.add(root) }
     }
 
     private static func keyOf(_ document: PdfDocument, _ owner: PdfDictionary, _ name: String) -> Int? {

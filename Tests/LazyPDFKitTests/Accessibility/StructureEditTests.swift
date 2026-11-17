@@ -311,4 +311,37 @@ final class StructureEditTests: XCTestCase {
         try read.write(again)
         XCTAssertTrue(PdfNameTree.read(again, read.dictionary["IDTree"]).isEmpty)
     }
+
+    func test_theIdTreeKeepsTheBytesOfAnId() throws {
+        let raw: [UInt8] = [0xFE, 0xFF, 0x00, 0x74, 0x00, 0x68, 0x00, 0x31]
+        let document = try TaggedFile.open()
+        let tree = try XCTUnwrap(StructureTree.read(document))
+        let first = tree.roots[0].children[0]
+        first.id = "th1"
+        first.dictionary["ID"] = PdfString(bytes: raw, isHex: true)
+        try tree.write(document)
+
+        let again = try AccessKit.reopen(document, rewrite: true)
+        let read = try XCTUnwrap(StructureTree.read(again))
+        read.roots[0].children[1].title = "second"
+        try read.write(again)
+
+        let entries = PdfNameTree.read(again, read.dictionary["IDTree"])
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(Latin1.bytes(entries[0].key), raw)
+        XCTAssertEqual((again.resolve(read.roots[0].children[0].dictionary["ID"]) as? PdfString)?.bytes, raw)
+    }
+
+    func test_anIdTreeThatIsNotADictionaryIsReplaced() throws {
+        let document = try TaggedFile.open()
+        let tree = try XCTUnwrap(StructureTree.read(document))
+        tree.dictionary["IDTree"] = PdfNumber(7)
+        tree.roots[0].children[0].id = "intro"
+        try tree.write(document)
+
+        XCTAssertTrue(document.resolve(tree.dictionary["IDTree"]) is PdfDictionary)
+        let entries = PdfNameTree.read(document, tree.dictionary["IDTree"])
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(PdfNameTree.textOf(entries[0].key), "intro")
+    }
 }

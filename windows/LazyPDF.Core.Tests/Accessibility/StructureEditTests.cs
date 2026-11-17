@@ -342,4 +342,38 @@ public class StructureEditTests
         read.Write(again);
         Assert.Empty(PdfNameTree.Read(again, read.Dictionary["IDTree"]));
     }
+
+    [Fact]
+    public void TheIdTreeKeepsTheBytesOfAnId()
+    {
+        byte[] raw = [0xFE, 0xFF, 0x00, 0x74, 0x00, 0x68, 0x00, 0x31];
+        using var document = TaggedFile.Open();
+        var tree = StructureTree.Read(document)!;
+        var first = tree.Roots[0].Children.First();
+        first.Id = "th1";
+        first.Dictionary["ID"] = new PdfString(raw, true);
+        tree.Write(document);
+
+        using var again = AccessKit.Reopen(document, rewrite: true);
+        var read = StructureTree.Read(again)!;
+        read.Roots[0].Children.ElementAt(1).Title = "second";
+        read.Write(again);
+
+        var entry = Assert.Single(PdfNameTree.Read(again, read.Dictionary["IDTree"]));
+        Assert.Equal(raw, System.Text.Encoding.Latin1.GetBytes(entry.Key));
+        Assert.Equal(raw, ((PdfString)again.Resolve(read.Roots[0].Children.First().Dictionary["ID"])!).Bytes);
+    }
+
+    [Fact]
+    public void AnIdTreeThatIsNotADictionaryIsReplaced()
+    {
+        using var document = TaggedFile.Open();
+        var tree = StructureTree.Read(document)!;
+        tree.Dictionary["IDTree"] = new PdfNumber(7);
+        tree.Roots[0].Children.First().Id = "intro";
+        tree.Write(document);
+
+        Assert.IsType<PdfDictionary>(document.Resolve(tree.Dictionary["IDTree"]));
+        Assert.Equal("intro", PdfNameTree.TextOf(Assert.Single(PdfNameTree.Read(document, tree.Dictionary["IDTree"])).Key));
+    }
 }
