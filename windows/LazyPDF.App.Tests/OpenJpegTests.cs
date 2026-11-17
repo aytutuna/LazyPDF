@@ -184,23 +184,93 @@ public sealed class OpenJpegTests
         Assert.Null(OpenJpeg.Decode(Wrap(8, 8, 3, code, Colr(14))));
     }
 
-    [Theory]
-    [InlineData(255)]
-    [InlineData(3)]
-    public void APaletteThatMakesMoreThanTheBudgetHoldsIsRefusedBeforeDecoding(int channels)
+    // A few hundred bytes of header over a picture the size of the pixel cap, with a palette of many channels.
+    private static (byte[] Code, byte[] Pclr, byte[] Cmap) HostilePalette(int channels)
     {
-        // A few hundred bytes of header over a picture the size of the pixel cap, with a palette of many channels.
         byte[] code = Encode(8, 8, Unspecified, false, false, Flat(0));
         foreach (int at in new[] { 8, 12, 24, 28 }) Put(code, at, 11585);
         var pclr = new List<byte> { 0, 1, (byte)channels };
         pclr.AddRange(Enumerable.Repeat((byte)7, channels));
         pclr.AddRange(Enumerable.Repeat((byte)1, channels));
         var cmap = Enumerable.Range(0, channels).SelectMany(i => new byte[] { 0, 0, 1, (byte)i }).ToArray();
-        byte[] file = Wrap(11585, 11585, 1, code, Colr(Srgb + 15), ("pclr", [.. pclr]), ("cmap", cmap));
+        return (code, [.. pclr], cmap);
+    }
 
+    private static void AssertRefusedFast(byte[] file)
+    {
         var watch = System.Diagnostics.Stopwatch.StartNew();
         Assert.Null(OpenJpeg.Decode(file));
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2));
+    }
+
+    [Theory]
+    [InlineData(255)]
+    [InlineData(3)]
+    public void APaletteThatMakesMoreThanTheBudgetHoldsIsRefusedBeforeDecoding(int channels)
+    {
+        var (code, pclr, cmap) = HostilePalette(channels);
+        AssertRefusedFast(Wrap(11585, 11585, 1, code, Colr(Srgb + 15), ("pclr", pclr), ("cmap", cmap)));
+    }
+
+    [Fact]
+    public void APaletteInABoxAfterTheHeaderIsRefused()
+    {
+        var (code, pclr, cmap) = HostilePalette(255);
+        var file = Wrap(11585, 11585, 1, code, Colr(Srgb + 15));
+        file = Before(file, code.Length, "cmap", cmap);
+        file = Before(file, code.Length + 8 + cmap.Length, "pclr", pclr);
+        AssertRefusedFast(file);
+    }
+
+    [Fact]
+    public void APaletteInASecondHeaderBoxIsRefused()
+    {
+        var (code, pclr, cmap) = HostilePalette(255);
+        var file = Before(Wrap(11585, 11585, 1, code, Colr(Srgb + 15)), code.Length, "jp2h", Boxes(("pclr", pclr), ("cmap", cmap)));
+        AssertRefusedFast(file);
+    }
+
+    [Fact]
+    public void ASecondHeaderBoxIsRefusedEvenWithoutAPalette()
+    {
+        byte[] code = Encode(8, 8, Gray, false, false, Flat(0));
+        Assert.NotNull(OpenJpeg.Decode(Wrap(8, 8, 1, code, Colr(Gray + 15))));
+        Assert.Null(OpenJpeg.Decode(Before(Wrap(8, 8, 1, code, Colr(Gray + 15)), code.Length, "jp2h", Boxes(Colr(Gray + 15)))));
+    }
+
+    [Fact]
+    public void ChannelDefinitionsThatAssociateColoursSwapTheChannels()
+    {
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(10), Flat(20), Flat(30));
+        byte[] cdef = [0, 3, 0, 0, 0, 0, 0, 3, 0, 1, 0, 0, 0, 2, 0, 2, 0, 0, 0, 1];
+        var image = Read(Wrap(8, 8, 3, code, Colr(Srgb + 15), ("cdef", cdef)));
+
+        Assert.Equal([30, 20, 10, 255], image.Rgba[..4].Select(v => (int)v));
+    }
+
+    private static void PutShort(byte[] data, int at, int value)
+    {
+        data[at] = (byte)(value >> 8);
+        data[at + 1] = (byte)value;
+    }
+
+    // Offsets in a codestream's SIZ: image size 8 and 12, tile size 24 and 28, component count 40.
+    [Theory]
+    [InlineData(false, 255, 257, 1, 1, 16384)]
+    [InlineData(true, 255, 257, 1, 1, 16384)]
+    [InlineData(false, 255, 257, 1, 1, 3)]
+    [InlineData(true, 4096, 4096, 1, 1, 1)]
+    [InlineData(false, 8, 8, 0, 8, 3)]
+    [InlineData(false, 8, 8, 8, 8, 6)]
+    public void AHeaderThatMakesTheDecoderAllocateTooMuchIsRefusedBeforeOpenJpegReadsIt(bool jp2, int width, int height, int tileWidth, int tileHeight, int components)
+    {
+        byte[] code = Encode(8, 8, Unspecified, false, false, Flat(1), Flat(2), Flat(3));
+        Put(code, 8, width);
+        Put(code, 12, height);
+        Put(code, 24, tileWidth);
+        Put(code, 28, tileHeight);
+        PutShort(code, 40, components);
+        AssertRefusedFast(jp2 ? Wrap(width, height, 3, code, Colr(Srgb + 15)) : code);
     }
 
     [Fact]

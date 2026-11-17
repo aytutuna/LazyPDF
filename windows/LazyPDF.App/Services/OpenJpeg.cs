@@ -18,6 +18,8 @@ internal static class OpenJpeg
     // Room for opj_dparameters_t, which is 8252 bytes.
     private const int DecoderParametersSize = 8300;
     private const int MaxComponents = 5;
+    private const int FlagsOffset = 8248, IgnoreColourBoxes = 1;
+    private const long MaxTileSamples = 1 << 16;
 
     private static readonly byte[] Jp2Signature = [0, 0, 0, 0x0C, 0x6A, 0x50, 0x20, 0x20, 0x0D, 0x0A, 0x87, 0x0A];
     private static readonly MessageFn Quiet = (_, _) => { };
@@ -129,7 +131,7 @@ internal static class OpenJpeg
     public static PdfRgbaImage? Decode(byte[] data, int components = 0)
     {
         int format = Format(data);
-        if (format < 0) return null;
+        if (format < 0 || !ReadStructure(data, format, out var colour)) return null;
         IntPtr parameters = IntPtr.Zero, codec = IntPtr.Zero, stream = IntPtr.Zero, image = IntPtr.Zero;
         var source = new Source(data);
         ReadFn read = source.Read;
@@ -139,6 +141,8 @@ internal static class OpenJpeg
         {
             parameters = Marshal.AllocHGlobal(DecoderParametersSize);
             opj_set_default_decoder_parameters(parameters);
+            // Palette and channel boxes are applied below, so OpenJPEG never expands a palette itself.
+            Marshal.WriteInt32(parameters, FlagsOffset, Marshal.ReadInt32(parameters, FlagsOffset) | IgnoreColourBoxes);
             codec = opj_create_decompress(format);
             if (codec == IntPtr.Zero) return null;
             opj_set_info_handler(codec, Quiet, IntPtr.Zero);
@@ -159,10 +163,10 @@ internal static class OpenJpeg
             var header = Marshal.PtrToStructure<Image>(image);
             long width = (long)header.X1 - header.X0, height = (long)header.Y1 - header.Y0;
             if (width < 1 || height < 1 || width * height > PdfImageSamples.MaxPixels || header.NumComps is 0 or > MaxComponents) return null;
-            if (IsLab(header) || !WithinBudget(header, ChannelSources(data))) return null;
+            if (IsLab(header) || Channels((int)header.NumComps, colour) is not { } channels || !WithinBudget(header, channels, colour.Palette is not null && colour.Mappings is not null)) return null;
 
             if (opj_decode(codec, stream, image) == 0 || opj_end_decompress(codec, stream) == 0) return null;
-            return ToRgba(Marshal.PtrToStructure<Image>(image), (int)width, (int)height, components);
+            return ToRgba(Marshal.PtrToStructure<Image>(image), channels, colour.Palette, (int)width, (int)height, components);
         }
         catch (Exception)
         {
@@ -190,40 +194,244 @@ internal static class OpenJpeg
     // OpenJPEG hands CIELab on as an unknown colour space whose buffer starts with the enumerated space, 14, and has no length.
     private static bool IsLab(Image image) => image.IccBuffer != IntPtr.Zero && image.IccLength == 0 && Marshal.ReadInt32(image.IccBuffer) == 14;
 
-    // The source component of each channel a cmap box makes, or null without one.
-    private static int[]? ChannelSources(byte[] file)
+    private sealed record Palette(int Entries, int Columns, int[] Size, bool[] Signed, uint[] Values);
+
+    private sealed record Mapping(int Component, int Type, int Column);
+
+    private readonly record struct Definition(int Channel, int Type, int Association);
+
+    // What the colour boxes of a JP2 file ask for. A palette counts only together with its component mapping.
+    private sealed record Colour(Palette? Palette, Mapping[]? Mappings, Definition[]? Definitions);
+
+    // One channel of the picture: a codestream component, or a column of the palette read through one. A Prec of 0 means the
+    // component's own depth; with a palette the depth and sign come from the palette box, direct channels included.
+    private sealed class Channel(int source, bool mapped, int column, int prec, bool signed)
     {
-        if (Format(file) != Jp2) return null;
-        if (FindBox(file, 0, file.Length, "jp2h") is not var (headerAt, headerEnd)) return null;
-        if (FindBox(file, headerAt, headerEnd, "cmap") is not var (at, end)) return null;
-        return [.. Enumerable.Range(0, (end - at) / 4).Select(i => file[at + 4 * i] << 8 | file[at + 4 * i + 1])];
+        public int Source = source, Column = column, Prec = prec;
+        public bool Mapped = mapped, Signed = signed;
+        public int Kind;
+        public Component Comp;
     }
 
-    // The content of the first box of a type between two offsets; a box that runs past the end is not read.
-    private static (int At, int End)? FindBox(byte[] file, int from, int to, string type)
+    private static readonly Colour NoColour = new(null, null, null);
+
+    // Reads what OpenJPEG would use of the file's boxes, and gives false for what it would refuse and for a layout that puts
+    // colour boxes where the library reads them without looking at their place. The SIZ of the codestream is checked before the
+    // library sees it, since it allocates a record per tile and per component of every tile while reading the header.
+    private static bool ReadStructure(byte[] file, int format, out Colour colour)
     {
-        for (long p = from; p + 8 <= to;)
+        colour = NoColour;
+        int codestream = 0;
+        if (format == Jp2)
         {
-            long length = (long)file[p] << 24 | (long)file[p + 1] << 16 | (long)file[p + 2] << 8 | file[p + 3];
-            int header = 8;
-            if (length == 1)
+            bool header = false;
+            codestream = -1;
+            for (long p = 0; p + 8 <= file.Length && codestream < 0;)
             {
-                if (p + 16 > to) return null;
-                length = 0;
-                for (int i = 8; i < 16; i++) length = length << 8 | file[p + i];
-                header = 16;
+                if (!ReadBox(file, p, file.Length, out string type, out int at, out long end)) return false;
+                if (type == "jp2c")
+                {
+                    if (!header) return false;
+                    codestream = at;
+                    continue;
+                }
+                if (end > file.Length) return false;
+                if (type == "jp2h")
+                {
+                    if (header || !ReadColour(file, at, (int)end, out colour)) return false;
+                    header = true;
+                }
+                else if (type is "ihdr" or "colr" or "bpcc" or "pclr" or "cmap" or "cdef") return false;
+                p = end;
             }
-            else if (length == 0) length = to - p;
-            if (length < header || length > to - p) return null;
-            if (Encoding.ASCII.GetString(file, (int)p + 4, 4) == type) return ((int)p + header, (int)(p + length));
-            p += length;
+            if (codestream < 0) return false;
         }
-        return null;
+        return Siz(file, codestream);
     }
 
-    // The decoder keeps 4 bytes per sample of every component, and a palette's channels while the codestream's components
-    // are still held; together they stay within what a picture at the pixel cap takes in 4-byte samples.
-    private static bool WithinBudget(Image image, int[]? channels)
+    // The type of the box at p and where its content starts and ends. A length of 0 runs to the end.
+    private static bool ReadBox(byte[] file, long p, long to, out string type, out int at, out long end)
+    {
+        type = "";
+        at = 0;
+        end = 0;
+        if (p + 8 > to) return false;
+        long length = U32(file, p);
+        int header = 8;
+        if (length == 1)
+        {
+            if (p + 16 > to) return false;
+            length = 0;
+            for (int i = 8; i < 16; i++) length = length << 8 | file[p + i];
+            header = 16;
+        }
+        else if (length == 0) length = to - p;
+        if (length < header) return false;
+        type = Encoding.Latin1.GetString(file, (int)p + 4, 4);
+        at = (int)p + header;
+        end = p + length;
+        return true;
+    }
+
+    private static int U16(byte[] d, long at) => d[at] << 8 | d[at + 1];
+
+    private static uint U32(byte[] d, long at) => (uint)d[at] << 24 | (uint)d[at + 1] << 16 | (uint)d[at + 2] << 8 | d[at + 3];
+
+    // The boxes of the JP2 header, read as OpenJPEG reads them; false where it would fail.
+    private static bool ReadColour(byte[] file, int from, int to, out Colour colour)
+    {
+        colour = NoColour;
+        Palette? palette = null;
+        Mapping[]? mappings = null;
+        Definition[]? definitions = null;
+        for (long p = from; p < to;)
+        {
+            if (!ReadBox(file, p, to, out string type, out int at, out long end) || end > to) return false;
+            long size = end - at;
+            if (type == "pclr")
+            {
+                if (palette is not null || size < 3) return false;
+                int entries = U16(file, at), columns = file[at + 2];
+                if (entries is 0 or > 1024 || columns == 0 || size < 3 + columns) return false;
+                var bits = new int[columns];
+                var signed = new bool[columns];
+                for (int i = 0; i < columns; i++)
+                {
+                    bits[i] = (file[at + 3 + i] & 0x7F) + 1;
+                    signed[i] = (file[at + 3 + i] & 0x80) != 0;
+                }
+                var values = new uint[entries * columns];
+                long q = at + 3 + columns;
+                for (int i = 0; i < values.Length; i++)
+                {
+                    int bytes = Math.Min(4, (bits[i % columns] + 7) >> 3);
+                    if (q + bytes > end) return false;
+                    uint value = 0;
+                    for (int k = 0; k < bytes; k++) value = value << 8 | file[q++];
+                    values[i] = value;
+                }
+                palette = new Palette(entries, columns, bits, signed, values);
+            }
+            else if (type == "cmap")
+            {
+                if (palette is null || mappings is not null || size < palette.Columns * 4) return false;
+                mappings = [.. Enumerable.Range(0, palette.Columns).Select(i => new Mapping(U16(file, at + 4 * i), file[at + 4 * i + 2], file[at + 4 * i + 3]))];
+            }
+            else if (type == "cdef")
+            {
+                if (definitions is not null || size < 2) return false;
+                int n = U16(file, at);
+                if (n == 0 || size < 2 + n * 6) return false;
+                definitions = [.. Enumerable.Range(0, n).Select(i => new Definition(U16(file, at + 2 + 6 * i), U16(file, at + 4 + 6 * i), U16(file, at + 6 + 6 * i)))];
+            }
+            p = end;
+        }
+        colour = new Colour(palette, mappings, definitions);
+        return true;
+    }
+
+    // The SIZ marker segment, which must follow SOC. Refuses what OpenJPEG would refuse, and a header that makes it allocate a lot
+    // before any budget is looked at: more components than a picture here may have, or a great many tiles.
+    private static bool Siz(byte[] d, int at)
+    {
+        const int Fixed = 38;
+        if (at < 0 || (long)at + 4 + Fixed > d.Length || d[at] != 0xFF || d[at + 1] != 0x4F || d[at + 2] != 0xFF || d[at + 3] != 0x51) return false;
+        int p = at + 4, count = U16(d, p + 36);
+        if (count is 0 or > MaxComponents || U16(d, p) != Fixed + 3 * count || (long)p + Fixed + 3 * count > d.Length) return false;
+        long x = U32(d, p + 4), y = U32(d, p + 8), x0 = U32(d, p + 12), y0 = U32(d, p + 16);
+        long tx = U32(d, p + 20), ty = U32(d, p + 24), tx0 = U32(d, p + 28), ty0 = U32(d, p + 32);
+        if (x <= x0 || y <= y0 || tx == 0 || ty == 0 || tx0 > x0 || ty0 > y0 || tx0 + tx <= x0 || ty0 + ty <= y0) return false;
+        for (int i = 0; i < count; i++)
+        {
+            if (d[p + Fixed + 3 * i + 1] == 0 || d[p + Fixed + 3 * i + 2] == 0) return false;
+        }
+        long width = x - x0, height = y - y0;
+        if (width > PdfImageSamples.MaxPixels || height > PdfImageSamples.MaxPixels || width * height > PdfImageSamples.MaxPixels) return false;
+        long across = (x - tx0 + tx - 1) / tx, down = (y - ty0 + ty - 1) / ty;
+        return across <= MaxTileSamples && down <= MaxTileSamples && across * down * count <= MaxTileSamples;
+    }
+
+    // The channels the picture has once the palette and channel definitions are applied, as OpenJPEG would make them; null where
+    // it would refuse the file. numComps is the codestream's component count.
+    private static Channel[]? Channels(int numComps, Colour colour)
+    {
+        var palette = colour.Palette;
+        var mappings = colour.Mappings;
+        bool mapped = palette is not null && mappings is not null;
+        int count = mapped ? palette!.Columns : numComps;
+
+        if (colour.Definitions is { } checking)
+        {
+            foreach (var d in checking)
+            {
+                if (d.Channel >= count || d.Association is > 0 and not 65535 && d.Association - 1 >= count) return null;
+            }
+            for (int c = 0; c < count; c++)
+            {
+                if (!checking.Any(d => d.Channel == c)) return null;
+            }
+        }
+
+        var channels = new Channel[count];
+        if (mapped)
+        {
+            var used = new bool[count];
+            bool sane = true;
+            for (int i = 0; i < count; i++)
+            {
+                var (component, type, column) = mappings![i];
+                if (component >= numComps) sane = false;
+                if (type is not (0 or 1) || column >= count) sane = false;
+                else if (used[column] && type == 1) sane = false;
+                else if (type == 0 && column != 0) sane = false;
+                else if (type == 1 && column != i) sane = false;
+                else used[column] = true;
+            }
+            for (int i = 0; i < count; i++)
+            {
+                if (!used[i] && mappings![i].Type != 0) sane = false;
+            }
+            if (!sane || palette!.Size.Any(bits => bits > 16)) return null;
+            // A one-component picture whose mapping leaves a column out is read as a plain palette.
+            bool plain = numComps == 1 && used.Contains(false);
+            for (int i = 0; i < count; i++) channels[i] = new Channel(mappings![i].Component, plain || mappings[i].Type == 1, i, palette.Size[i], palette.Signed[i]);
+        }
+        else
+        {
+            for (int i = 0; i < count; i++) channels[i] = new Channel(i, false, 0, 0, false);
+        }
+
+        if (colour.Definitions is { } definitions)
+        {
+            var info = (Definition[])definitions.Clone();
+            for (int i = 0; i < info.Length; i++)
+            {
+                int cn = info[i].Channel, asoc = info[i].Association;
+                if (asoc is 0 or 65535)
+                {
+                    channels[cn].Kind = info[i].Type;
+                    continue;
+                }
+                int acn = asoc - 1;
+                if (cn != acn && info[i].Type == 0)
+                {
+                    (channels[cn], channels[acn]) = (channels[acn], channels[cn]);
+                    for (int j = i + 1; j < info.Length; j++)
+                    {
+                        if (info[j].Channel == cn) info[j] = info[j] with { Channel = acn };
+                        else if (info[j].Channel == acn) info[j] = info[j] with { Channel = cn };
+                    }
+                }
+                channels[cn].Kind = info[i].Type;
+            }
+        }
+        return channels;
+    }
+
+    // The decoder keeps 4 bytes per sample of every codestream component. A palette's channels are counted on top, though they
+    // are read through their source component and never copied, so together they stay within what a picture at the pixel cap
+    // takes in 4-byte samples.
+    private static bool WithinBudget(Image image, Channel[] channels, bool palette)
     {
         int count = (int)image.NumComps;
         var sizes = new long[count];
@@ -235,29 +443,38 @@ internal static class OpenJpeg
             sizes[i] = (long)c.W * c.H;
             total += sizes[i];
         }
-        if (channels is not null)
+        if (channels.Length > MaxComponents) return false;
+        foreach (var channel in channels)
         {
-            if (channels.Length > MaxComponents) return false;
-            foreach (int source in channels)
-            {
-                if (source >= count) return false;
-                total += sizes[source];
-            }
+            if (channel.Source >= count) return false;
+            if (palette) total += sizes[channel.Source];
         }
         return total <= PdfImageSamples.MaxPixels;
     }
 
-    private static PdfRgbaImage? ToRgba(Image image, int width, int height, int hint)
+    private static PdfRgbaImage? ToRgba(Image image, Channel[] channels, Palette? palette, int width, int height, int hint)
     {
-        int count = (int)image.NumComps;
-        if (count > MaxComponents) return null;
+        int count = channels.Length;
+        if (count is 0 or > MaxComponents) return null;
+        var sources = new Component[image.NumComps];
+        for (int i = 0; i < sources.Length; i++)
+        {
+            sources[i] = Marshal.PtrToStructure<Component>(image.Comps + i * Marshal.SizeOf<Component>());
+            ref var c = ref sources[i];
+            if (c.Data == IntPtr.Zero || c.Dx < 1 || c.Dy < 1 || c.W < 1 || c.H < 1) return null;
+            if (c.W > (width + c.Dx - 1) / c.Dx + 1 || c.H > (height + c.Dy - 1) / c.Dy + 1) return null;
+        }
         var comps = new Component[count];
         for (int i = 0; i < count; i++)
         {
-            comps[i] = Marshal.PtrToStructure<Component>(image.Comps + i * Marshal.SizeOf<Component>());
-            ref var c = ref comps[i];
-            if (c.Data == IntPtr.Zero || c.Dx < 1 || c.Dy < 1 || c.W < 1 || c.H < 1 || c.Prec is < 1 or > 16) return null;
-            if (c.W > (width + c.Dx - 1) / c.Dx + 1 || c.H > (height + c.Dy - 1) / c.Dy + 1) return null;
+            var channel = channels[i];
+            comps[i] = channel.Comp = sources[channel.Source];
+            if (channel.Prec == 0)
+            {
+                channel.Prec = (int)comps[i].Prec;
+                channel.Signed = comps[i].Sgnd != 0;
+            }
+            if (channel.Prec is < 1 or > 16) return null;
         }
 
         int space = image.ColorSpace;
@@ -266,7 +483,7 @@ internal static class OpenJpeg
 
         // A channel definition gives each component a type: 0 colour, 1 opacity, 2 premultiplied opacity, 65535 unspecified.
         // When none says colour or opacity, the definition tells nothing and every component is colour.
-        var kinds = comps.Select(c => (int)c.Alpha).ToArray();
+        var kinds = channels.Select(c => c.Kind).ToArray();
         if (kinds.All(k => k is not (0 or 1 or 2))) Array.Clear(kinds);
         var alphas = Enumerable.Range(0, count).Where(i => kinds[i] is 1 or 2).ToList();
         int alpha = alphas.Count > 0 ? alphas[0] : -1;
@@ -284,7 +501,7 @@ internal static class OpenJpeg
         bool cmyk = colour.Count == 4;
 
         var luts = new byte[count][];
-        for (int i = 0; i < count; i++) luts[i] = Lut(comps[i]);
+        for (int i = 0; i < count; i++) luts[i] = Lut(channels[i].Prec);
 
         var rgba = new byte[width * height * 4];
         var rows = new int[count][];
@@ -301,7 +518,7 @@ internal static class OpenJpeg
             int o = y * width * 4;
             for (int x = 0; x < width; x++, o += 4)
             {
-                for (int k = 0; k < colour.Count; k++) v[k] = Sample(comps[colour[k]], rows[colour[k]], luts[colour[k]], image.X0 + x);
+                for (int k = 0; k < colour.Count; k++) v[k] = Sample(channels[colour[k]], palette, rows[colour[k]], luts[colour[k]], image.X0 + x);
                 if (colour.Count == 1)
                 {
                     rgba[o] = rgba[o + 1] = rgba[o + 2] = (byte)v[0];
@@ -324,7 +541,7 @@ internal static class OpenJpeg
                     rgba[o + 1] = (byte)v[1];
                     rgba[o + 2] = (byte)v[2];
                 }
-                rgba[o + 3] = alpha < 0 ? (byte)255 : (byte)Sample(comps[alpha], rows[alpha], luts[alpha], image.X0 + x);
+                rgba[o + 3] = alpha < 0 ? (byte)255 : (byte)Sample(channels[alpha], palette, rows[alpha], luts[alpha], image.X0 + x);
                 if (premultiplied && rgba[o + 3] is > 0 and < 255)
                 {
                     for (int c = 0; c < 3; c++) rgba[o + c] = (byte)Math.Min(255, (rgba[o + c] * 255 + rgba[o + 3] / 2) / rgba[o + 3]);
@@ -334,18 +551,20 @@ internal static class OpenJpeg
         return new PdfRgbaImage(width, height, rgba);
     }
 
-    private static int Sample(Component c, int[] row, byte[] lut, long x)
+    private static int Sample(Channel channel, Palette? palette, int[] row, byte[] lut, long x)
     {
+        var c = channel.Comp;
         int cx = Math.Clamp((int)(x / c.Dx) - (int)c.X0, 0, row.Length - 1);
         long value = row[cx];
-        if (c.Sgnd != 0) value += 1L << (int)(c.Prec - 1);
+        if (channel.Mapped) value = palette!.Values[Math.Clamp(value, 0, palette.Entries - 1) * palette.Columns + channel.Column];
+        if (channel.Signed) value += 1L << (channel.Prec - 1);
         return lut[Math.Clamp(value, 0, lut.Length - 1)];
     }
 
     // A sample of any depth as a byte, 0 to the depth's top mapped onto 0 to 255.
-    private static byte[] Lut(Component c)
+    private static byte[] Lut(int prec)
     {
-        int top = (1 << (int)c.Prec) - 1;
+        int top = (1 << prec) - 1;
         var lut = new byte[top + 1];
         for (int i = 0; i <= top; i++) lut[i] = (byte)((i * 255 + top / 2) / top);
         return lut;

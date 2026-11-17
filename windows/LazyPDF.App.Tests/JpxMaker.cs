@@ -166,6 +166,21 @@ internal static class JpxMaker
         return file.ToArray();
     }
 
+    /// <summary>Boxes of a header, one after the other.</summary>
+    public static byte[] Boxes(params (string Type, byte[] Content)[] boxes)
+    {
+        var all = new MemoryStream();
+        foreach (var (type, content) in boxes) Box(all, type, content);
+        return all.ToArray();
+    }
+
+    /// <summary>A file made by <see cref="Wrap"/> with a box of its own put in front of the codestream box.</summary>
+    public static byte[] Before(byte[] file, int codeLength, string type, byte[] content)
+    {
+        int at = file.Length - 8 - codeLength;
+        return [.. file[..at], .. Boxes((type, content)), .. file[at..]];
+    }
+
     /// <summary>A channel definition box: for each channel its type and association.</summary>
     public static (string, byte[]) Cdef(params (int Type, int Association)[] channels)
     {
