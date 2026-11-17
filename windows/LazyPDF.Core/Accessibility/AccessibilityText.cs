@@ -7,6 +7,34 @@ public static class AccessibilityText
     internal static string IntoItself => Loc.T("An element cannot go into itself.");
     internal static string TreeTooLarge => Loc.T("The structure tree is too large to edit.");
 
+    public static string PlacementReason(string key) => key switch
+    {
+        TagRules.RootOnly => Loc.T("Document can only be at the top of the tree."),
+        TagRules.TopLevel => Loc.T("Part and Art can only be at the top or inside Document, Part or Art."),
+        TagRules.NeedsTable => Loc.T("A table section can only be inside a table."),
+        TagRules.NeedsTableOrPart => Loc.T("A table row can only be inside a table or a table section."),
+        TagRules.NeedsRow => Loc.T("A table cell can only be inside a table row."),
+        TagRules.NeedsList => Loc.T("A list item can only be inside a list."),
+        TagRules.NeedsItem => Loc.T("A list label or body can only be inside a list item."),
+        TagRules.NeedsCaptionParent => Loc.T("A caption can only be inside a table, list, figure or formula."),
+        TagRules.NeedsToc => Loc.T("A table of contents item can only be inside a table of contents."),
+        TagRules.NeedsRuby => Loc.T("A Ruby part can only be inside a Ruby element."),
+        TagRules.NeedsWarichu => Loc.T("A Warichu part can only be inside a Warichu element."),
+        TagRules.TableKids => Loc.T("A table holds only a caption, rows and table sections."),
+        TagRules.PartKids => Loc.T("A table section holds only rows."),
+        TagRules.RowKids => Loc.T("A table row holds only header and data cells."),
+        TagRules.ListKids => Loc.T("A list holds only list items and a caption."),
+        TagRules.ItemKids => Loc.T("A list item holds only a label and a body."),
+        TagRules.TocKids => Loc.T("A table of contents holds only items, another table of contents and a caption."),
+        TagRules.RubyKids => Loc.T("A Ruby element holds only Ruby parts."),
+        TagRules.WarichuKids => Loc.T("A Warichu element holds only Warichu parts."),
+        TagRules.TextKids => Loc.T("A paragraph, heading or inline element holds only inline elements."),
+        TagRules.NoContent => Loc.T("This element holds only other elements, not content."),
+        TagRules.LinkObject => Loc.T("A link needs a link annotation inside it."),
+        TagRules.Unmapped => Loc.T("This type does not lead to a standard type through the role map."),
+        _ => key,
+    };
+
     public static string Name(AccessibilityRule rule) => rule switch
     {
         AccessibilityRule.Tagged => Loc.T("Document is tagged"),

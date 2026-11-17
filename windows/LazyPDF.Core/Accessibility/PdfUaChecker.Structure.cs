@@ -3,11 +3,6 @@ namespace LazyPDF.Core;
 // The tags: role map, nesting, headings, alternate text and notes (ISO 14289-1 7.1 to 7.9).
 internal sealed partial class PdfUaChecker
 {
-    private static readonly string[] TableParts = ["THead", "TBody", "TFoot"];
-
-    // Types whose own parent is checked, so a wrong child is not reported a second time from the parent.
-    private static readonly string[] Placed = ["THead", "TBody", "TFoot", "TR", "TH", "TD", "LI", "Lbl", "LBody"];
-
     private void CheckStructure()
     {
         if (_tree is null) return;
@@ -79,31 +74,15 @@ internal sealed partial class PdfUaChecker
             if (!table && !list) continue;
             string checkpoint = table ? "09-004" : "09-005", clause = "7.2";
 
-            bool placed = t switch
-            {
-                "THead" or "TBody" or "TFoot" => parent == "Table",
-                "TR" => parent == "Table" || TableParts.Contains(parent),
-                "TH" or "TD" => parent == "TR",
-                "LI" => parent == "L",
-                "Lbl" or "LBody" => parent == "LI",
-                _ => true,
-            };
-            if (!placed) Add(checkpoint, clause, Place(element), element.Parent is null ? PdfUaText.MisnestedTop(t) : PdfUaText.Misnested(t, parent));
+            // A type whose own parent is checked is not reported a second time from the parent.
+            if (TagRules.ChecksOwnParent(t) && TagRules.ParentRule(parent, t) is not null)
+                Add(checkpoint, clause, Place(element), element.Parent is null ? PdfUaText.MisnestedTop(t) : PdfUaText.Misnested(t, parent));
 
-            string[]? allowed = t switch
-            {
-                "Table" => ["Caption", "TR", "THead", "TBody", "TFoot"],
-                "THead" or "TBody" or "TFoot" => ["TR"],
-                "TR" => ["TH", "TD"],
-                "L" => ["LI", "Caption"],
-                "LI" => ["Lbl", "LBody"],
-                _ => null,
-            };
-            if (allowed is null) continue;
+            if (!TagRules.HasFixedKids(t)) continue;
             foreach (var child in element.Children)
             {
                 string c = type(child);
-                if (!allowed.Contains(c) && !Placed.Contains(c)) Add(checkpoint, clause, Place(child), PdfUaText.Misnested(c, t));
+                if (!TagRules.ChecksOwnParent(c) && TagRules.KidRule(t, c) is not null) Add(checkpoint, clause, Place(child), PdfUaText.Misnested(c, t));
             }
         }
     }

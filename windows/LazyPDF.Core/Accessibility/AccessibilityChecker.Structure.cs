@@ -76,16 +76,16 @@ public static partial class AccessibilityChecker
         foreach (var child in table.Children)
         {
             string t = type(child);
+            if (TagRules.KidRule("Table", t) is not null) return false;
             if (t == "TR") rows.Add(child);
-            else if (t is "THead" or "TBody" or "TFoot")
+            else if (t != "Caption")
             {
                 foreach (var row in child.Children)
                 {
-                    if (type(row) != "TR") return false;
+                    if (TagRules.KidRule(t, type(row)) is not null) return false;
                     rows.Add(row);
                 }
             }
-            else if (t != "Caption") return false;
         }
         if (rows.Count == 0) return false;
 
@@ -93,7 +93,7 @@ public static partial class AccessibilityChecker
         foreach (var row in rows)
         {
             var cells = row.Children.ToList();
-            if (cells.Count == 0 || cells.Any(c => type(c) is not ("TH" or "TD"))) return false;
+            if (cells.Count == 0 || cells.Any(c => TagRules.KidRule("TR", type(c)) is not null)) return false;
             if (cells.Any(c => HasSpan(document, c))) return true;
             widths.Add(cells.Count);
         }
@@ -120,9 +120,10 @@ public static partial class AccessibilityChecker
         {
             bool ok = type(e) switch
             {
-                "L" => e.Children.All(c => type(c) is "LI" or "Caption"),
-                "LI" => type(e.Parent ?? e) == "L" && e.Children.All(c => type(c) is "Lbl" or "LBody" or "L"),
-                "Lbl" or "LBody" => e.Parent is { } parent && type(parent) == "LI",
+                "L" => e.Children.All(c => TagRules.KidRule("L", type(c)) is null),
+                "LI" => TagRules.ParentRule(e.Parent is { } up ? type(up) : "", "LI") is null
+                    && e.Children.All(c => TagRules.KidRule("LI", type(c)) is null || type(c) == "L"),
+                "Lbl" or "LBody" => e.Parent is { } parent && TagRules.ParentRule(type(parent), type(e)) is null,
                 _ => true,
             };
             if (!ok) found.Add(PageOf(e), e.Reference);

@@ -11,6 +11,75 @@
   "The structure tree is too large to edit.": {
     "tr": "Yapı ağacı düzenlenemeyecek kadar büyük."
   },
+  "Document can only be at the top of the tree.": {
+    "tr": "Belge yalnızca ağacın en üstünde olabilir."
+  },
+  "Part and Art can only be at the top or inside Document, Part or Art.": {
+    "tr": "Part ve Art yalnızca en üstte ya da Document, Part veya Art içinde olabilir."
+  },
+  "A table section can only be inside a table.": {
+    "tr": "Tablo bölümü yalnızca bir tablonun içinde olabilir."
+  },
+  "A table row can only be inside a table or a table section.": {
+    "tr": "Tablo satırı yalnızca bir tablonun ya da tablo bölümünün içinde olabilir."
+  },
+  "A table cell can only be inside a table row.": {
+    "tr": "Tablo hücresi yalnızca bir tablo satırının içinde olabilir."
+  },
+  "A list item can only be inside a list.": {
+    "tr": "Liste öğesi yalnızca bir listenin içinde olabilir."
+  },
+  "A list label or body can only be inside a list item.": {
+    "tr": "Liste etiketi ya da gövdesi yalnızca bir liste öğesinin içinde olabilir."
+  },
+  "A caption can only be inside a table, list, figure or formula.": {
+    "tr": "Alt yazı yalnızca bir tablonun, listenin, şeklin ya da formülün içinde olabilir."
+  },
+  "A table of contents item can only be inside a table of contents.": {
+    "tr": "İçindekiler öğesi yalnızca bir içindekiler tablosunun içinde olabilir."
+  },
+  "A Ruby part can only be inside a Ruby element.": {
+    "tr": "Ruby parçası yalnızca bir Ruby öğesinin içinde olabilir."
+  },
+  "A Warichu part can only be inside a Warichu element.": {
+    "tr": "Warichu parçası yalnızca bir Warichu öğesinin içinde olabilir."
+  },
+  "A table holds only a caption, rows and table sections.": {
+    "tr": "Tablo yalnızca bir alt yazı, satırlar ve tablo bölümleri içerebilir."
+  },
+  "A table section holds only rows.": {
+    "tr": "Tablo bölümü yalnızca satır içerebilir."
+  },
+  "A table row holds only header and data cells.": {
+    "tr": "Tablo satırı yalnızca başlık ve veri hücreleri içerebilir."
+  },
+  "A list holds only list items and a caption.": {
+    "tr": "Liste yalnızca liste öğeleri ve bir alt yazı içerebilir."
+  },
+  "A list item holds only a label and a body.": {
+    "tr": "Liste öğesi yalnızca bir etiket ve bir gövde içerebilir."
+  },
+  "A table of contents holds only items, another table of contents and a caption.": {
+    "tr": "İçindekiler tablosu yalnızca öğeler, başka bir içindekiler tablosu ve bir alt yazı içerebilir."
+  },
+  "A Ruby element holds only Ruby parts.": {
+    "tr": "Ruby öğesi yalnızca Ruby parçaları içerebilir."
+  },
+  "A Warichu element holds only Warichu parts.": {
+    "tr": "Warichu öğesi yalnızca Warichu parçaları içerebilir."
+  },
+  "A paragraph, heading or inline element holds only inline elements.": {
+    "tr": "Paragraf, başlık ya da satır içi öğe yalnızca satır içi öğeler içerebilir."
+  },
+  "This element holds only other elements, not content.": {
+    "tr": "Bu öğe içerik değil, yalnızca başka öğeler içerebilir."
+  },
+  "A link needs a link annotation inside it.": {
+    "tr": "Bağlantının içinde bir bağlantı ek açıklaması olmalı."
+  },
+  "This type does not lead to a standard type through the role map.": {
+    "tr": "Bu tür, rol eşlemesi üzerinden standart bir türe ulaşmıyor."
+  },
   "Document is tagged": {
     "tr": "Belge etiketli"
   },
