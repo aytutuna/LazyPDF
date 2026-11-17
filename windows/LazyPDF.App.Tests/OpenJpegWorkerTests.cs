@@ -87,13 +87,13 @@ public sealed partial class OpenJpegTests
     {
         long cap = JpxWorker.MemoryCap;
         JpxWorker.Reset();
-        JpxWorker.MemoryCap = 256L << 20;
+        JpxWorker.MemoryCap = 400L << 20;
         try
         {
-            // The runtime itself fits in the cap; 600 MB on top of it does not.
+            // The runtime itself fits in the cap; 800 MB on top of it does not.
             Assert.NotNull(OpenJpeg.Decode(Small(1)));
             int kills = JpxWorker.Kills;
-            Assert.Null(JpxWorker.Request(JpxChild.Allocate, 600, []));
+            Assert.Null(JpxWorker.Request(JpxChild.Allocate, 800, []));
             Assert.Equal(kills + 1, JpxWorker.Kills);
         }
         finally
@@ -107,8 +107,9 @@ public sealed partial class OpenJpegTests
     [Fact]
     public void CallersAtTheSameTimeTakeTurnsAndEachGetsItsOwnPicture()
     {
-        var results = new PdfRgbaImage?[16];
-        Parallel.For(0, results.Length, new ParallelOptions { MaxDegreeOfParallelism = 8 }, i => results[i] = OpenJpeg.Decode(Small(i)));
+        byte[][] files = [.. Enumerable.Range(0, 16).Select(Small)];
+        var results = new PdfRgbaImage?[files.Length];
+        Parallel.For(0, results.Length, new ParallelOptions { MaxDegreeOfParallelism = 8 }, i => results[i] = OpenJpeg.Decode(files[i]));
 
         for (int i = 0; i < results.Length; i++)
         {
