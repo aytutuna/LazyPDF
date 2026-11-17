@@ -144,17 +144,17 @@ final class ImageIOCodecTests: XCTestCase {
     func test_aDctStreamIsDecodedAsAJpeg() throws {
         let jpeg = codec.encodeJpeg(gradient(32, 32), 90)
 
-        let image = try XCTUnwrap(codec.decode(jpeg, "DCTDecode"))
+        let image = try XCTUnwrap(codec.decode(jpeg, "DCTDecode", 0))
 
         XCTAssertEqual(image.width, 32)
         XCTAssertEqual(image.height, 32)
-        XCTAssertNil(codec.decode(jpeg, "CCITTFaxDecode"))
+        XCTAssertNil(codec.decode(jpeg, "CCITTFaxDecode", 0))
     }
 
     func test_whatIsNotAPictureGivesNil() {
         XCTAssertNil(codec.decodeFile([]))
         XCTAssertNil(codec.decodeFile(Array("this is text, not a picture".utf8)))
-        XCTAssertNil(codec.decode([1, 2, 3], "DCTDecode"))
+        XCTAssertNil(codec.decode([1, 2, 3], "DCTDecode", 0))
     }
 
     func test_thePicturesOfAPdfFromPicturesRoundTrip() throws {
