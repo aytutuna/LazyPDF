@@ -40,7 +40,7 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         }
     }
 
-    private PdfReference? Copy(PdfStream image, List<List<(double X, double Y)>> unit, int depth)
+    private PdfReference? Copy(PdfStream image, List<List<(double X, double Y)>> unit, int depth, bool soft = false)
     {
         // A mask has no masks of its own to speak of; a loop of them is a trap.
         if (depth > MaxMaskDepth) return null;
@@ -53,7 +53,8 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             if (d[key] is { } value) copy[key] = value;
         }
         copy["Filter"] = new PdfName("FlateDecode");
-        if (!Masks(d, copy, unit, depth)) return null;
+        // A coded soft mask is written back as plain gray, which has no soft mask of its own to cut.
+        if (!(soft && decoded.Codec is not null) && !Masks(d, copy, unit, depth)) return null;
 
         if (decoded.Codec is null)
         {
@@ -91,6 +92,19 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
                 (rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]) = (0, 0, 0, 255);
             }
         }
+        if (soft)
+        {
+            // ISO 32000-1 11.6.5.2: a soft mask is a DeviceGray image, 8 bits, with no /SMask or /Mask; /Matte stays.
+            var gray = new byte[pixels.Width * pixels.Height];
+            for (int i = 0; i < gray.Length; i++) gray[i] = rgba[4 * i];
+            copy["Width"] = new PdfNumber(pixels.Width);
+            copy["Height"] = new PdfNumber(pixels.Height);
+            copy["ColorSpace"] = new PdfName("DeviceGray");
+            copy["BitsPerComponent"] = new PdfNumber(8);
+            foreach (string key in (ReadOnlySpan<string>)["SMask", "Mask", "SMaskInData"]) copy.Remove(key);
+            if (jpx) copy.Remove("Decode");
+            return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(gray)));
+        }
         var reference = ContentImages.AddRgba(document, pixels.Width, pixels.Height, rgba);
         var made = (PdfStream)document.Get(reference.Number)!;
         foreach (string key in (ReadOnlySpan<string>)["SMask", "Mask"])
@@ -108,7 +122,7 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         foreach (string key in (ReadOnlySpan<string>)["SMask", "Mask"])
         {
             if (document.Stream(source, key) is not { } mask) continue;
-            var reference = Copy(mask, unit, depth + 1);
+            var reference = Copy(mask, unit, depth + 1, key == "SMask");
             if (reference is null) return false;
             copy[key] = reference;
         }

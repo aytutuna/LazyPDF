@@ -43,7 +43,7 @@ final class ImageRedactor {
         }
     }
 
-    private func copy(_ image: PdfStream, _ unit: [[MarkPoint]], _ depth: Int) throws -> PdfReference? {
+    private func copy(_ image: PdfStream, _ unit: [[MarkPoint]], _ depth: Int, soft: Bool = false) throws -> PdfReference? {
         // A mask has no masks of its own to speak of; a loop of them is a trap.
         if depth > Self.maxMaskDepth { return nil }
         let d = image.dictionary
@@ -54,7 +54,8 @@ final class ImageRedactor {
             if let value = d[key] { copy[key] = value }
         }
         copy["Filter"] = PdfName("FlateDecode")
-        if try !copyMasks(d, copy, unit, depth) { return nil }
+        // A coded soft mask is written back as plain gray, which has no soft mask of its own to cut.
+        if try !(soft && decoded.codec != nil) && !copyMasks(d, copy, unit, depth) { return nil }
 
         guard let name = decoded.codec else {
             let width = Int(Int32(truncatingIfNeeded: document.integer(d, "Width") ?? 0))
@@ -95,6 +96,18 @@ final class ImageRedactor {
                 (rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]) = (0, 0, 0, 255)
             }
         }
+        if soft {
+            // ISO 32000-1 11.6.5.2: a soft mask is a DeviceGray image, 8 bits, with no /SMask or /Mask; /Matte stays.
+            var gray = [UInt8](repeating: 0, count: pixels.width * pixels.height)
+            for i in 0..<gray.count { gray[i] = rgba[4 * i] }
+            copy["Width"] = PdfNumber(pixels.width)
+            copy["Height"] = PdfNumber(pixels.height)
+            copy["ColorSpace"] = PdfName("DeviceGray")
+            copy["BitsPerComponent"] = PdfNumber(8)
+            for key in ["SMask", "Mask", "SMaskInData"] { copy.remove(key) }
+            if jpx { copy.remove("Decode") }
+            return try document.add(PdfStream(copy, data: PdfFilterEncoders.flate(gray)))
+        }
         let reference = try ContentImages.addRgba(document, pixels.width, pixels.height, rgba)
         guard let made = document.get(reference.number) as? PdfStream else { return nil }
         for key in Self.maskKeys {
@@ -111,7 +124,7 @@ final class ImageRedactor {
     private func copyMasks(_ source: PdfDictionary, _ copy: PdfDictionary, _ unit: [[MarkPoint]], _ depth: Int) throws -> Bool {
         for key in Self.maskKeys {
             guard let mask = document.stream(source, key) else { continue }
-            guard let reference = try self.copy(mask, unit, depth + 1) else { return false }
+            guard let reference = try self.copy(mask, unit, depth + 1, soft: key == "SMask") else { return false }
             copy[key] = reference
         }
         return true

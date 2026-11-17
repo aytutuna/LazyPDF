@@ -94,6 +94,26 @@ public class RedactImageTests
         Assert.Equal(2, ImageStreams(output).Count());
     }
 
+    [Theory]
+    [InlineData("JPXDecode")]
+    [InlineData("DCTDecode")]
+    public void ACodedSoftMaskIsWrittenBackAsPlainGrayWithItsMatte(string filter)
+    {
+        using var document = WithImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
+            more: pdf => pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /{filter} /Matte [0]", [1, 2, 3]));
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+        var mask = output.Stream(image.Dictionary, "SMask")!;
+
+        Assert.Equal("DeviceGray", output.Name(mask.Dictionary, "ColorSpace"));
+        Assert.Equal(8, output.Integer(mask.Dictionary, "BitsPerComponent"));
+        Assert.False(mask.Dictionary.ContainsKey("SMask"));
+        Assert.NotNull(mask.Dictionary["Matte"]);
+        Assert.Equal([0, 0, 60], output.Data(mask)[..3].Select(b => (int)b));
+        Assert.Equal(64, output.Data(mask).Length);
+    }
+
     [Fact]
     public void SharedImageGetsAPrivateCopyForTheMarkedUse()
     {

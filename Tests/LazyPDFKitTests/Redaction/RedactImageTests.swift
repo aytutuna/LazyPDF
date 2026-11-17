@@ -217,6 +217,26 @@ final class RedactImageTests: XCTestCase {
         }
     }
 
+    func test_aCodedSoftMaskIsWrittenBackAsPlainGrayWithItsMatte() throws {
+        for filter in ["JPXDecode", "DCTDecode"] {
+            let document = try withImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3], more: { pdf in
+                pdf.stream(7, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /\(filter) /Matte [0]", [1, 2, 3])
+            })
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 60, 60, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+            let image = try XCTUnwrap(RedactionKit.images(output).first?.stream)
+            let mask = try XCTUnwrap(output.stream(image.dictionary, "SMask"))
+            let data = try output.data(mask)
+
+            XCTAssertEqual(output.name(mask.dictionary, "ColorSpace"), "DeviceGray", filter)
+            XCTAssertEqual(output.integer(mask.dictionary, "BitsPerComponent"), 8, filter)
+            XCTAssertFalse(mask.dictionary.containsKey("SMask"), filter)
+            XCTAssertNotNil(mask.dictionary["Matte"], filter)
+            XCTAssertEqual(Array(data[0..<3]), [0, 0, 60], filter)
+            XCTAssertEqual(data.count, 64, filter)
+        }
+    }
+
     func test_imageOutsideTheMarkIsLeftAlone() throws {
         let data = gradient()
         let document = try withImage("/ColorSpace /DeviceGray /BitsPerComponent 8", data)
