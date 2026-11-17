@@ -128,6 +128,8 @@ public final class AppViewModel {
 
     /// Called when Lazy Print did not take the document: the window prints it itself.
     @ObservationIgnored public var systemPrintRequested: (@MainActor (DocumentTab) -> Void)?
+    /// Called when the XFA notice's button asks for the file in another app; the platform shell picks the app.
+    @ObservationIgnored public var openElsewhereRequested: (@MainActor (DocumentTab) -> Void)?
     @ObservationIgnored var printCopyOwners: [String: WeakTab] = [:]
 
     public init(renderers: @escaping () -> DocumentRenderer, codec: ImageCodec, fonts: FontSource, sisters: SisterApps,

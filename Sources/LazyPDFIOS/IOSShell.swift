@@ -98,6 +98,8 @@ final class IOSShell {
             sheet = SheetRequest(kind: .printLayout(tab))
         }, share: { [self] tab in
             share(tab)
+        }, openElsewhere: { [self] tab in
+            share(tab)
         }, importCertificate: { [self] in
             await IOSCertificateImport.run(certificates, problem: vm.showProblem)
         }, certificateList: certificateList, openFiles: { [self] urls in

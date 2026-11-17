@@ -32,8 +32,8 @@ internal static class FormEdits
 {
     public static PdfForm Read(DocumentTab tab, IFontSource fonts) => PdfForm.Read(tab.Document, fonts);
 
-    // What a person should hear when the file opens; the Forms panel says the same about XFA once it is shown.
-    public static (string Title, string Text)? OpenNotice(PdfDocument document, string title)
+    // What a person should hear when the file opens.
+    public static (string Title, string Text, bool Xfa)? OpenNotice(PdfDocument document, string title)
     {
         PdfForm form;
         try
@@ -44,9 +44,9 @@ internal static class FormEdits
         {
             return null;
         }
-        if (form.Xfa == XfaKind.Dynamic) return (Loc.T("Form cannot be filled"), FormText.DynamicXfa);
+        if (form.Xfa == XfaKind.Dynamic) return (Loc.T("XFA form"), Loc.T("Lazy PDF shows the pages this file keeps for other viewers. Open it in an app that supports XFA to see the whole form."), true);
         if (form.Scripts.Any(s => !s.Ran))
-            return (Loc.T("Form scripts will not run"), Loc.T("{0} has scripts in its form. Lazy PDF does not run them, so some fields may not calculate or check what is typed.", title));
+            return (Loc.T("Form scripts will not run"), Loc.T("{0} has scripts in its form. Lazy PDF does not run them, so some fields may not calculate or check what is typed.", title), false);
         return null;
     }
 

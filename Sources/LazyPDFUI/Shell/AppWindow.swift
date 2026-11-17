@@ -115,6 +115,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         .preferredColorScheme(colorScheme)
         .onAppear {
             vm.systemPrintRequested = commands.print
+            vm.openElsewhereRequested = commands.openElsewhere
             vm.checkRecovery()
         }
         .onChange(of: scenePhase) { _, phase in

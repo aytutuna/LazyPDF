@@ -16,7 +16,41 @@ final class OpenFormNoticeTests: XCTestCase {
     func test_aDynamicXfaFormIsExplained() async throws {
         let document = try PdfDocument.open(FormPdfs.dynamicXfa())
 
-        XCTAssertEqual(AppViewModel.formNotice(document)?.1, FormText.dynamicXfa)
+        XCTAssertEqual(AppViewModel.formNotice(document)?.0, L10n.t("XFA form"))
+    }
+
+    func test_aStaticXfaFormIsQuiet() async throws {
+        let document = try PdfDocument.open(try FormPdfs.staticXfa())
+
+        XCTAssertNil(AppViewModel.formNotice(document))
+    }
+
+    func test_openingADynamicXfaFormOffersAnotherApp() async throws {
+        let f = ViewModelFixture(self)
+        var asked: DocumentTab?
+        f.vm.openElsewhereRequested = { asked = $0 }
+        await f.vm.open(f.dir.file("x.pdf", FormPdfs.dynamicXfa()))
+
+        XCTAssertEqual(f.vm.message?.title, L10n.t("XFA form"))
+        XCTAssertEqual(f.vm.message?.action?.text, L10n.t("Open in another app"))
+        f.vm.message?.action?.run()
+        XCTAssertTrue(asked === f.vm.activeDocument)
+    }
+
+    func test_openingAStaticXfaFormShowsNoBanner() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.dir.file("x.pdf", try FormPdfs.staticXfa()))
+
+        XCTAssertNil(f.vm.message)
+    }
+
+    func test_reloadingADynamicXfaFormDoesNotBringTheBannerBack() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.dir.file("x.pdf", FormPdfs.dynamicXfa()))
+        f.vm.dismissMessage()
+        await f.vm.reload(f.vm.activeDocument!)
+
+        XCTAssertNil(f.vm.message)
     }
 
     func test_aScriptThatCannotRunIsReported() async throws {

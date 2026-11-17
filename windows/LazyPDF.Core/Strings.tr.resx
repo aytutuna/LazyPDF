@@ -2539,9 +2539,6 @@
   <data name="Form" xml:space="preserve">
     <value>Form</value>
   </data>
-  <data name="Form cannot be filled" xml:space="preserve">
-    <value>Form doldurulamıyor</value>
-  </data>
   <data name="Form cannot be read" xml:space="preserve">
     <value>Form okunamıyor</value>
   </data>
@@ -3069,6 +3066,9 @@
   </data>
   <data name="Lazy PDF draws web pages with the Microsoft Edge WebView2 Runtime, and this computer does not have it. Install it from Microsoft, then try again." xml:space="preserve">
     <value>Lazy PDF web sayfalarını Microsoft Edge WebView2 Çalışma Zamanı ile çizer ve bu bilgisayarda yüklü değil. Microsoft'tan yükleyip yeniden deneyin.</value>
+  </data>
+  <data name="Lazy PDF shows the pages this file keeps for other viewers. Open it in an app that supports XFA to see the whole form." xml:space="preserve">
+    <value>Lazy PDF, bu dosyanın diğer görüntüleyiciler için sakladığı sayfaları gösterir. Formun tamamını görmek için XFA destekleyen bir uygulamada açın.</value>
   </data>
   <data name="Lazy PDF will ask before opening links again." xml:space="preserve">
     <value>Lazy PDF bağlantıları açmadan önce yeniden soracak.</value>
@@ -4086,6 +4086,9 @@
   </data>
   <data name="Open files" xml:space="preserve">
     <value>Açık dosyalar</value>
+  </data>
+  <data name="Open in another app" xml:space="preserve">
+    <value>Başka uygulamada aç</value>
   </data>
   <data name="Open in new tabs" xml:space="preserve">
     <value>Yeni sekmelerde aç</value>

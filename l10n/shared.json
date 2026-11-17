@@ -1459,6 +1459,9 @@
   "XFA form": {
     "tr": "XFA formu"
   },
+  "Open in another app": {
+    "tr": "Başka uygulamada aç"
+  },
   "This text includes annotation text, which the page's content does not hold. Build the page without IncludeAnnotations to edit or redact it.": {
     "tr": "Bu metin, sayfa içeriğinde bulunmayan ek açıklama metnini de içeriyor. Düzenlemek ya da karartmak için sayfayı IncludeAnnotations olmadan oluşturun."
   },
@@ -8495,8 +8498,8 @@
   "The certificate was judged as of {0}, the time the signer gave. Nothing proves that time.": {
     "tr": "Sertifika, imzacının bildirdiği {0} tarihine göre değerlendirildi. Bu tarihi hiçbir şey kanıtlamıyor."
   },
-  "Form cannot be filled": {
-    "tr": "Form doldurulamıyor"
+  "Lazy PDF shows the pages this file keeps for other viewers. Open it in an app that supports XFA to see the whole form.": {
+    "tr": "Lazy PDF, bu dosyanın diğer görüntüleyiciler için sakladığı sayfaları gösterir. Formun tamamını görmek için XFA destekleyen bir uygulamada açın."
   },
   "Form scripts will not run": {
     "tr": "Form betikleri çalışmayacak"
