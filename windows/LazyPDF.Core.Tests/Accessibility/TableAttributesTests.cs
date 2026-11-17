@@ -297,4 +297,58 @@ public class TableAttributesTests
         Assert.Equal(0, tree.MakeHeaderRow(rows[0].Children.First()));
         Assert.All(rows[0].Children, c => Assert.Equal("TD", c.Type));
     }
+
+    [Fact]
+    public void ClearingAValueAlsoClearsItInLaterDictionaries()
+    {
+        var (document, tree, _, rows) = Grid();
+        using var _d = document;
+        var cell = rows[0].Children.First();
+        var first = Dict("Table", ("Scope", Name("Column")));
+        var second = Dict("Table", ("RowSpan", Num(3)), ("Scope", Name("Row")), ("Headers", Strings("a")));
+        cell.Dictionary["A"] = new PdfArray([first, new PdfNumber(0), second, new PdfNumber(1)]);
+
+        tree.SetTableAttributes(cell, tree.GetTableAttributes(cell) with { RowSpan = 1, Headers = [] });
+        Assert.Null(tree.GetTableAttributes(cell).RowSpan);
+        Assert.Empty(tree.GetTableAttributes(cell).Headers!);
+        Assert.Equal(TableScope.Column, tree.GetTableAttributes(cell).Scope);
+
+        tree.SetTableAttributes(cell, tree.GetTableAttributes(cell) with { Scope = null });
+        Assert.Null(tree.GetTableAttributes(cell).Scope);
+        Assert.Null(cell.Dictionary["A"]);
+    }
+
+    [Fact]
+    public void LaterDictionariesKeepWhatIsNotATableValue()
+    {
+        var (document, tree, _, rows) = Grid();
+        using var _d = document;
+        var cell = rows[0].Children.First();
+        var second = Dict("Table", ("RowSpan", Num(3)), ("Summary", PdfText.ToObject("s")));
+        var shared = document.Add(second);
+        cell.Dictionary["A"] = new PdfArray([Dict("Table", ("Scope", Name("Row"))), shared]);
+
+        tree.SetTableAttributes(cell, new TableAttributes(TableScope.Row));
+
+        Assert.Equal(3, ((PdfNumber)second["RowSpan"]!).Integer);
+        Assert.Null(tree.GetTableAttributes(cell).RowSpan);
+        Assert.Equal("s", PdfText.Read(document, (PdfDictionary)document.Resolve(((PdfArray)cell.Dictionary["A"]!).Items[1])!, "Summary"));
+    }
+
+    [Fact]
+    public void HeadersKeepTheirStoredBytes()
+    {
+        var (document, tree, _, rows) = Grid();
+        using var _d = document;
+        var cell = rows[1].Children.First();
+        byte[] raw = [0xFE, 0xFF, 0x00, 0x74, 0x00, 0x68, 0x00, 0x31];
+        cell.Dictionary["A"] = Dict("Table", ("Headers", new PdfArray([new PdfString(raw, true)])));
+
+        tree.SetTableAttributes(cell, tree.GetTableAttributes(cell) with { Scope = TableScope.Row });
+        tree.SetTableAttributes(cell, tree.GetTableAttributes(cell) with { Headers = ["th1", "new"] });
+
+        var headers = ((PdfArray)((PdfDictionary)cell.Dictionary["A"]!)["Headers"]!).Items;
+        Assert.Equal(raw, ((PdfString)headers[0]).Bytes);
+        Assert.Equal("new", PdfText.Decode(((PdfString)headers[1]).Bytes));
+    }
 }

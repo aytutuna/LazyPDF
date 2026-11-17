@@ -257,4 +257,59 @@ final class TableAttributesTests: XCTestCase {
         XCTAssertEqual(tree.makeHeaderRow(rows[0].children[0]), 0)
         for c in rows[0].children { XCTAssertEqual(c.type, "TD") }
     }
+
+    func test_clearingAValueAlsoClearsItInLaterDictionaries() throws {
+        let (_, tree, _, rows) = try grid()
+        let cell = rows[0].children[0]
+        let first = dict("Table", [("Scope", PdfName("Column"))])
+        let second = dict("Table", [("RowSpan", PdfNumber(3)), ("Scope", PdfName("Row")), ("Headers", strings(["a"]))])
+        cell.dictionary["A"] = PdfArray([first, PdfNumber(0), second, PdfNumber(1)])
+
+        var attributes = tree.tableAttributes(cell)
+        attributes.rowSpan = 1
+        attributes.headers = []
+        tree.setTableAttributes(cell, attributes)
+        XCTAssertNil(tree.tableAttributes(cell).rowSpan)
+        XCTAssertTrue(tree.tableAttributes(cell).headers.isEmpty)
+        XCTAssertEqual(tree.tableAttributes(cell).scope, .column)
+
+        attributes = tree.tableAttributes(cell)
+        attributes.scope = nil
+        tree.setTableAttributes(cell, attributes)
+        XCTAssertNil(tree.tableAttributes(cell).scope)
+        XCTAssertNil(cell.dictionary["A"])
+    }
+
+    func test_laterDictionariesKeepWhatIsNotATableValue() throws {
+        let (document, tree, _, rows) = try grid()
+        let cell = rows[0].children[0]
+        let second = dict("Table", [("RowSpan", PdfNumber(3)), ("Summary", PdfText.toObject("s"))])
+        let shared = try document.add(second)
+        cell.dictionary["A"] = PdfArray([dict("Table", [("Scope", PdfName("Row"))]), shared])
+
+        tree.setTableAttributes(cell, TableAttributes(scope: .row))
+
+        XCTAssertNotNil(second["RowSpan"])
+        XCTAssertNil(tree.tableAttributes(cell).rowSpan)
+        let stored = try XCTUnwrap(document.resolve((cell.dictionary["A"] as? PdfArray)?.items[1]) as? PdfDictionary)
+        XCTAssertEqual(PdfText.read(document, stored, "Summary"), "s")
+    }
+
+    func test_headersKeepTheirStoredBytes() throws {
+        let (_, tree, _, rows) = try grid()
+        let cell = rows[1].children[0]
+        let raw: [UInt8] = [0xFE, 0xFF, 0x00, 0x74, 0x00, 0x68, 0x00, 0x31]
+        cell.dictionary["A"] = dict("Table", [("Headers", PdfArray([PdfString(bytes: raw, isHex: true)]))])
+
+        var attributes = tree.tableAttributes(cell)
+        attributes.scope = .row
+        tree.setTableAttributes(cell, attributes)
+        attributes = tree.tableAttributes(cell)
+        attributes.headers = ["th1", "new"]
+        tree.setTableAttributes(cell, attributes)
+
+        let headers = try XCTUnwrap(((cell.dictionary["A"] as? PdfDictionary)?["Headers"] as? PdfArray)?.items)
+        XCTAssertEqual((headers[0] as? PdfString)?.bytes, raw)
+        XCTAssertEqual(PdfText.decode((headers[1] as? PdfString)?.bytes ?? []), "new")
+    }
 }

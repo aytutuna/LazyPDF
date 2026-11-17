@@ -26,6 +26,7 @@ public struct TableAttributes: Equatable {
 
 extension StructureTree {
     private static let maxSpan = 100_000
+    private static let tableKeys = ["Scope", "RowSpan", "ColSpan", "Headers"]
 
     /// The table attributes of `element`. /A may be one dictionary, an array of them or an array with a revision number after
     /// each; dictionaries of other owners are skipped, a value that is not valid is not set and, when more dictionaries are
@@ -53,8 +54,8 @@ extension StructureTree {
         return value
     }
 
-    /// Writes `attributes` into the first /A dictionary of `element` that is for tables, adding one when there is none;
-    /// dictionaries of other owners and revision numbers stay as they were. A span of 1 is the default and is not stored.
+    /// Writes `attributes` into the first /A dictionary of `element` that is for tables, adding one when there is none, and
+    /// takes those values out of the later ones; dictionaries of other owners and revision numbers stay as they were. A span of 1 is the default and is not stored.
     /// What /A held that is not a dictionary or an array is dropped.
     public func setTableAttributes(_ element: StructElement, _ attributes: TableAttributes) {
         let current = document.resolve(element.dictionary["A"])
@@ -67,6 +68,29 @@ extension StructureTree {
             items = []
         }
         let at = items.firstIndex(where: isTable)
+        var original: [String: PdfString] = [:]
+        for dictionary in tableDictionaries(element) {
+            guard let list = document.array(dictionary, "Headers") else { continue }
+            for case let string as PdfString in list.items.prefix(Self.maxNodes).map({ document.resolve($0) }) {
+                let text = PdfText.decode(string.bytes)
+                if original[text] == nil { original[text] = string }
+            }
+        }
+
+        // Reading takes the first table dictionary that has a value, so a later one must not keep what is cleared or changed here.
+        for i in stride(from: items.count - 1, to: (at ?? -1), by: -1) {
+            guard isTable(items[i]), let later = document.resolve(items[i]) as? PdfDictionary,
+                  Self.tableKeys.contains(where: { later[$0] != nil }) else { continue }
+            let rest = PdfDictionary()
+            for entry in later.entries where !Self.tableKeys.contains(entry.key) { rest[entry.key] = entry.value }
+            if rest.count == 1 {
+                items.remove(at: i)
+                if i < items.count && items[i] is PdfNumber { items.remove(at: i) }
+            } else {
+                items[i] = rest
+            }
+        }
+
         let table = PdfDictionary()
         if let at, let old = document.resolve(items[at]) as? PdfDictionary {
             for entry in old.entries { table[entry.key] = entry.value }
@@ -75,7 +99,7 @@ extension StructureTree {
         table["Scope"] = attributes.scope.map { PdfName($0.rawValue) }
         table["RowSpan"] = (attributes.rowSpan ?? 0) > 1 ? PdfNumber(attributes.rowSpan!) : nil
         table["ColSpan"] = (attributes.colSpan ?? 0) > 1 ? PdfNumber(attributes.colSpan!) : nil
-        table["Headers"] = attributes.headers.isEmpty ? nil : PdfArray(attributes.headers.map { PdfText.toObject($0) as PdfObject })
+        table["Headers"] = attributes.headers.isEmpty ? nil : PdfArray(attributes.headers.map { original[$0] ?? PdfText.toObject($0) as PdfObject })
 
         let empty = table.count == 1
         if let at {

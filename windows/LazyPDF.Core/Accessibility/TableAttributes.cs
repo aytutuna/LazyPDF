@@ -8,6 +8,7 @@ public sealed record TableAttributes(TableScope? Scope = null, IReadOnlyList<str
 public sealed partial class StructureTree
 {
     private const int MaxSpan = 100_000;
+    private static readonly string[] TableKeys = ["Scope", "RowSpan", "ColSpan", "Headers"];
 
     /// <summary>
     /// The table attributes of <paramref name="element"/>. /A may be one dictionary, an array of them or an array
@@ -39,7 +40,7 @@ public sealed partial class StructureTree
 
     /// <summary>
     /// Writes <paramref name="attributes"/> into the first /A dictionary of <paramref name="element"/> that is for tables,
-    /// adding one when there is none; dictionaries of other owners and revision numbers stay as they were.
+    /// adding one when there is none, and takes those values out of the later ones; dictionaries of other owners and revision numbers stay as they were.
     /// A span of 1 is the default and is not stored. What /A held that is not a dictionary or an array is dropped.
     /// </summary>
     public void SetTableAttributes(StructElement element, TableAttributes attributes)
@@ -52,6 +53,33 @@ public sealed partial class StructureTree
             _ => new List<PdfObject>(),
         };
         int at = items.FindIndex(IsTable);
+        var original = new Dictionary<string, PdfString>(StringComparer.Ordinal);
+        foreach (var (dictionary, _) in TableDictionaries(element))
+        {
+            if (_document.Array(dictionary, "Headers") is not { } list) continue;
+            foreach (var s in list.Items.Take(MaxNodes).Select(_document.Resolve).OfType<PdfString>()) original.TryAdd(PdfText.Decode(s.Bytes), s);
+        }
+
+        // Reading takes the first table dictionary that has a value, so a later one must not keep what is cleared or changed here.
+        for (int i = items.Count - 1; i > at; i--)
+        {
+            if (!IsTable(items[i]) || _document.Resolve(items[i]) is not PdfDictionary later || !TableKeys.Any(k => later[k] is not null)) continue;
+            var rest = new PdfDictionary();
+            foreach (var (key, value) in later.Entries)
+            {
+                if (!TableKeys.Contains(key)) rest[key] = value;
+            }
+            if (rest.Entries.Count() == 1)
+            {
+                items.RemoveAt(i);
+                if (i < items.Count && items[i] is PdfNumber) items.RemoveAt(i);
+            }
+            else
+            {
+                items[i] = rest;
+            }
+        }
+
         var table = new PdfDictionary();
         if (at >= 0 && _document.Resolve(items[at]) is PdfDictionary old)
         {
@@ -61,7 +89,7 @@ public sealed partial class StructureTree
         PutName(table, "Scope", attributes.Scope?.ToString());
         PutNumber(table, "RowSpan", attributes.RowSpan);
         PutNumber(table, "ColSpan", attributes.ColSpan);
-        if (attributes.Headers is { Count: > 0 } headers) table["Headers"] = new PdfArray(headers.Select(h => (PdfObject)PdfText.ToObject(h)).ToList());
+        if (attributes.Headers is { Count: > 0 } headers) table["Headers"] = new PdfArray(headers.Select(h => original.TryGetValue(h, out var kept) ? kept : (PdfObject)PdfText.ToObject(h)).ToList());
         else table.Remove("Headers");
 
         bool empty = table.Entries.Count() == 1;
