@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace LazyPDF.App.Services;
 
 /// <summary>
@@ -14,8 +16,13 @@ internal static class JpxChild
     // Tests only: what a hostile file could do to the process. They are reachable by whoever writes to the pipe, who owns the process anyway.
     public const byte Crash = 1, Hang = 2, Allocate = 3;
 
+    // The child has no message loop; one call tells Windows it is up, so the busy cursor does not follow every start.
+    [DllImport("user32")]
+    private static extern bool PeekMessageW(byte[] message, IntPtr window, uint min, uint max, uint remove);
+
     public static int Run()
     {
+        PeekMessageW(new byte[48], IntPtr.Zero, 0, 0, 0);
         using var input = Console.OpenStandardInput();
         using var output = Console.OpenStandardOutput();
         output.WriteByte(Ready);
