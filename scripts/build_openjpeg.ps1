@@ -27,8 +27,10 @@ function Find-VcVars([string] $arch) {
 }
 
 $newest = (Get-ChildItem $sources -File | Measure-Object LastWriteTime -Maximum).Maximum
-$script = (Get-Item $PSCommandPath).LastWriteTime
-if ($script -gt $newest) { $newest = $script }
+$alloc = Join-Path $native 'openjpeg_alloc.c'
+foreach ($f in @((Get-Item $PSCommandPath), (Get-Item $alloc))) {
+    if ($f.LastWriteTime -gt $newest) { $newest = $f.LastWriteTime }
+}
 
 foreach ($a in $Arch) {
     $bin = Join-Path $native "bin\$a"
@@ -41,7 +43,8 @@ foreach ($a in $Arch) {
     New-Item -ItemType Directory -Path $bin, $obj -Force | Out-Null
     $vcvars = Find-VcVars $a
     $target = if ($a -eq 'x64') { 'x64' } else { 'x64_arm64' }
-    $files = (Get-ChildItem $sources -Filter *.c | ForEach-Object { "`"$($_.FullName)`"" }) -join ' '
+    # Our budgeted allocator stands in for the upstream opj_malloc.c.
+    $files = (@(Get-ChildItem $sources -Filter *.c | Where-Object Name -ne 'opj_malloc.c' | ForEach-Object FullName) + $alloc | ForEach-Object { "`"$_`"" }) -join ' '
     $batch = Join-Path $obj 'build.cmd'
     Set-Content $batch -Encoding ascii @(
         '@echo off',
