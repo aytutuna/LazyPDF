@@ -7,7 +7,8 @@ using static LazyPDF.App.Tests.JpxMaker;
 namespace LazyPDF.App.Tests;
 
 // JPEG 2000 read through the bundled OpenJPEG. The files are made with its own encoder, losslessly.
-public sealed class OpenJpegTests
+[Collection("JpxWorker")]
+public sealed partial class OpenJpegTests
 {
     private static int[] Ramp(int count, int top) => [.. Enumerable.Range(0, count).Select(i => i * top / (count - 1))];
 
@@ -21,11 +22,11 @@ public sealed class OpenJpegTests
 
     // A codestream by hand: SIZ, COD without decomposition levels, QCD, optional extra main header segments, and one tile-part with
     // no packets and optional header segments of its own. Only its structure matters, so it never holds a picture.
-    private static byte[] Hostile(int width, int height, int tile, int blockExp, bool smallPrecincts, byte[]? extra = null, int components = 1, byte[]? tileExtra = null, int layers = 1)
+    private static byte[] Hostile(int width, int height, int tile, int blockExp, bool smallPrecincts, byte[]? extra = null, int components = 1, byte[]? tileExtra = null, int layers = 1, byte[]? beforeCod = null)
     {
         byte[] siz = [.. Be16(0xFF51), .. Be16(38 + 3 * components), 0, 0, .. Be32(width), .. Be32(height), .. Be32(0), .. Be32(0), .. Be32(tile), .. Be32(tile), .. Be32(0), .. Be32(0), .. Be16(components), .. Enumerable.Repeat(new byte[] { 7, 1, 1 }, components).SelectMany(b => b)];
         byte[] qcd = [.. Be16(0xFF5C), .. Be16(4), 0x40, 0x40];
-        return [.. Be16(0xFF4F), .. siz, .. Cod(layers, blockExp, smallPrecincts), .. qcd, .. extra ?? [], .. Be16(0xFF90), .. Be16(10), 0, 0, .. Be32(0), 0, 1, .. tileExtra ?? [], .. Be16(0xFF93), .. Be16(0xFFD9)];
+        return [.. Be16(0xFF4F), .. siz, .. beforeCod ?? [], .. Cod(layers, blockExp, smallPrecincts), .. qcd, .. extra ?? [], .. Be16(0xFF90), .. Be16(10), 0, 0, .. Be32(0), 0, 1, .. tileExtra ?? [], .. Be16(0xFF93), .. Be16(0xFFD9)];
     }
 
     // The precincts of a small-precinct segment: one sample at the lowest resolution, two above it.
@@ -49,7 +50,7 @@ public sealed class OpenJpegTests
     private static void AssertRefused(byte[] file, long budget)
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        Assert.Null(OpenJpeg.Decode(file, 0, budget));
+        Assert.Null(OpenJpeg.DecodeHere(file, 0, budget));
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), watch.Elapsed.ToString());
         Assert.Equal((nuint)0, OpenJpeg.lazypdf_opj_used());
     }
@@ -58,15 +59,15 @@ public sealed class OpenJpegTests
     public void AnMctRecordCopiedIntoEveryTileStaysWithinTheBudget() =>
         AssertRefused(Hostile(64, 64, 1, 4, false, MctRecord()), 16 << 20);
 
-    // The real budget, through the public Decode: 2048 x 2048 one-sample precincts are 2^22 packets, which the packet bound lets
-    // through, and their code-block and tag tree records are more than the budget holds.
+    // The real budget, in this process: 2048 x 2048 one-sample precincts are 2^22 packets, and their code-block and tag tree
+    // records are more than the budget holds.
     [Fact]
     public void TinyPrecinctsAndBlocksStayWithinTheBudget()
     {
         byte[] file = Hostile(2048, 2048, 2048, 0, true);
         Assert.True(OpenJpeg.Plausible(file));
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        Assert.Null(OpenJpeg.Decode(file));
+        Assert.Null(OpenJpeg.DecodeHere(file, 0));
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30), watch.Elapsed.ToString());
         Assert.Equal((nuint)0, OpenJpeg.lazypdf_opj_used());
     }
@@ -78,7 +79,7 @@ public sealed class OpenJpegTests
         byte[] file = Hostile(255, 257, 1, 4, false, MctRecord());
         Assert.True(OpenJpeg.Plausible(file));
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        Assert.Null(OpenJpeg.Decode(file));
+        Assert.Null(OpenJpeg.DecodeHere(file, 0));
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30), watch.Elapsed.ToString());
         Assert.Equal((nuint)0, OpenJpeg.lazypdf_opj_used());
     }
@@ -97,67 +98,6 @@ public sealed class OpenJpegTests
         Assert.True(OpenJpeg.DecodeBudget >= needed, OpenJpeg.DecodeBudget.ToString());
     }
 
-    // A 92 x 92 tile of one-sample precincts is 8464 packets a layer. At 65535 layers that takes hours to walk, which the
-    // memory budget does not stop.
-    [Theory]
-    [InlineData(65535)]
-    [InlineData(1025)]
-    [InlineData(1024)]
-    public void TooManyLayersOrPacketsAreRefusedBeforeDecoding(int layers)
-    {
-        byte[] file = Hostile(92, 92, 92, 0, true, layers: layers);
-        AssertRefusedFast(file);
-        Assert.False(OpenJpeg.Plausible(file));
-    }
-
-    [Fact]
-    public void LayersAndPrecinctsUnderTheBoundAreAccepted()
-    {
-        // 400 layers of 8464 packets is 3.4 million; 1000 layers of one packet a tile is next to nothing.
-        Assert.True(OpenJpeg.Plausible(Hostile(92, 92, 92, 0, true, layers: 400)));
-        Assert.True(OpenJpeg.Plausible(Hostile(92, 92, 92, 0, false, layers: 1000)));
-    }
-
-    [Fact]
-    public void ATilePartHeaderThatRestatesTheCodingIsCounted()
-    {
-        // The tile's own COC cuts the first component into one-sample precincts, which the main header knew nothing of.
-        Assert.False(OpenJpeg.Plausible(Hostile(92, 92, 92, 0, false, layers: 1000, tileExtra: Coc(0, true))));
-        Assert.False(OpenJpeg.Plausible(Hostile(92, 92, 92, 0, false, tileExtra: Cod(1000, 0, true))));
-        // A COD of its own that has no precincts takes the main header's away again, a main COC's too.
-        Assert.True(OpenJpeg.Plausible(Hostile(92, 92, 92, 0, true, layers: 1000, tileExtra: Cod(1000, 0, false))));
-        Assert.True(OpenJpeg.Plausible(Hostile(92, 92, 92, 0, false, extra: Coc(0, true), layers: 1000, tileExtra: Cod(1000, 0, false))));
-        Assert.False(OpenJpeg.Plausible(Hostile(92, 92, 92, 0, false, extra: Coc(0, true), layers: 1000)));
-    }
-
-    [Fact]
-    public void ACodOpenJpegWouldRefuseIsRefused()
-    {
-        Assert.True(OpenJpeg.Plausible(Hostile(64, 64, 64, 0, false, extra: Cod(1, 0, false, 32))));
-        Assert.False(OpenJpeg.Plausible(Hostile(64, 64, 64, 0, false, extra: Cod(1, 0, false, 33))));
-        Assert.False(OpenJpeg.Plausible(Hostile(64, 64, 64, 0, false, extra: Cod(1025, 0, false))));
-        Assert.False(OpenJpeg.Plausible(Hostile(64, 64, 64, 0, false, extra: Cod(1, 9, false))));
-        // An exponent of 0 above the lowest resolution.
-        Assert.False(OpenJpeg.Plausible(Hostile(64, 64, 64, 0, false, extra: Cod(1, 0, true, 1, [0, 0x10]))));
-        Assert.True(OpenJpeg.Plausible(Hostile(64, 64, 64, 0, false, extra: Cod(1, 0, true, 1, [0, 0x11]))));
-    }
-
-    [Fact]
-    public void AMalformedMarkerLengthGivesNull()
-    {
-        Assert.True(OpenJpeg.Plausible(Hostile(64, 64, 64, 0, false, extra: [.. Be16(0xFF64), .. Be16(6), 1, 2, 3, 4])));
-        foreach (int length in new[] { 0, 1, 7, 60000, 65535 })
-        {
-            Assert.False(OpenJpeg.Plausible(Hostile(64, 64, 64, 0, false, extra: [.. Be16(0xFF64), .. Be16(length), 1, 2, 3, 4])), length.ToString());
-        }
-        byte[] file = Hostile(64, 64, 64, 0, false);
-        Assert.False(OpenJpeg.Plausible(file[..30]));
-        Assert.False(OpenJpeg.Plausible(file[..^4]));
-        // Psot of 5, below the 14 bytes of a SOT and a SOD; its low half sits 8 bytes from the end.
-        PutShort(file, file.Length - 8, 5);
-        Assert.False(OpenJpeg.Plausible(file));
-    }
-
     [Fact]
     public void RealLayeredAndPrecinctPartitionedPicturesStillDecode()
     {
@@ -168,7 +108,6 @@ public sealed class OpenJpegTests
         {
             int[] r = Noise(), g = ramp, b = Noise();
             byte[] file = Layered(96, 96, layers, precinct, new Comp(8, r), new Comp(8, g), new Comp(8, b));
-            Assert.True(OpenJpeg.Plausible(file), $"{layers} layers, precincts {precinct}");
             var image = Read(file);
             for (int i = 0; i < r.Length; i++) Assert.Equal([r[i], g[i], b[i], 255], image.Rgba[(i * 4)..(i * 4 + 4)].Select(v => (int)v));
         }
@@ -179,9 +118,17 @@ public sealed class OpenJpegTests
         AssertRefusedFast(Hostile(256, 257, 1, 4, false, MctRecord()));
 
     [Fact]
+    public void ACutOffSizIsRefused()
+    {
+        byte[] file = Hostile(64, 64, 64, 0, false);
+        Assert.True(OpenJpeg.Plausible(file));
+        Assert.False(OpenJpeg.Plausible(file[..30]));
+    }
+
+    [Fact]
     public void ADecodeThatSucceedsLeavesNothingCharged()
     {
-        Read(Encode(8, 8, Gray, false, false, new Comp(8, Ramp(64, 255))));
+        Assert.NotNull(OpenJpeg.DecodeHere(Encode(8, 8, Gray, false, false, new Comp(8, Ramp(64, 255))), 0));
         Assert.Equal((nuint)0, OpenJpeg.lazypdf_opj_used());
     }
 

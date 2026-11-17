@@ -70,6 +70,12 @@ internal static class JpxWorker
         return new PdfRgbaImage(width, height, rgba);
     }
 
+    /// <summary>Ends the running child, so the next decode starts a new one with the current settings. For tests.</summary>
+    internal static void Reset()
+    {
+        lock (Gate) Stop();
+    }
+
     private static Child Start()
     {
         string[] command = CommandLine ?? Own();

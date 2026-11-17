@@ -74,6 +74,9 @@ internal static class JpxMaker
     /// <summary>A codestream of <paramref name="layers"/> quality layers (the last one lossless) cut into precincts of <paramref name="precinct"/> samples at every resolution.</summary>
     public static byte[] Layered(int width, int height, int layers, int precinct, params Comp[] comps) => Encode(width, height, 0, Gray, false, false, comps, layers, precinct);
 
+    /// <summary>A codestream of <paramref name="layers"/> layers cut into tiles of <paramref name="tile"/> x <paramref name="tile"/> samples.</summary>
+    public static byte[] TiledLayered(int width, int height, int tile, int layers, params Comp[] comps) => Encode(width, height, tile, Gray, false, false, comps, layers);
+
     private static byte[] Encode(int width, int height, int tile, int colorSpace, bool jp2, bool mct, Comp[] comps, int layers = 1, int precinct = 0)
     {
         var output = new MemoryStream();
