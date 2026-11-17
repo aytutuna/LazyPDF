@@ -5,11 +5,12 @@ import Foundation
 // become /Artifact. Operations are joined into one sequence only while nothing that would have to nest differently (a text
 // object, a graphics state, other marked content) lies between them, so the result is well nested whatever the page does.
 
-/// Text to put into a content stream at a byte position. At one position the order decides: closings (0) before openings (1).
+/// Text to put into a content stream at a byte position, in place of the `skip` bytes after it. At one position the order decides: closings (0) before openings (1).
 struct ContentInsertion {
     let position: Int
     let order: Int
     let text: String
+    var skip = 0
 }
 
 final class ContentTagger {
@@ -21,16 +22,18 @@ final class ContentTagger {
     private let streams: [[ContentOperation]]
     private let claims: [Int: TagNode]
     private let newMcid: (TagNode) -> Int
+    private let tagArtifacts: Bool
     private var open: [Bool] = []
     private var skip = 0
     private var running = false
     private var target: TagNode?
     private var stream = 0, first = 0, last = 0
 
-    init(_ streams: [[ContentOperation]], _ claims: [Int: TagNode], _ newMcid: @escaping (TagNode) -> Int) {
+    init(_ streams: [[ContentOperation]], _ claims: [Int: TagNode], _ newMcid: @escaping (TagNode) -> Int, artifacts: Bool = true) {
         self.streams = streams
         self.claims = claims
         self.newMcid = newMcid
+        tagArtifacts = artifacts
         insertions = streams.map { _ in [] }
     }
 
@@ -38,6 +41,9 @@ final class ContentTagger {
     private(set) var insertions: [[ContentInsertion]]
 
     private(set) var artifacts = 0
+
+    /// The sequences given to a node, in drawing order: stream, byte position of the opening and the /MCID.
+    private(set) var sequences: [(stream: Int, position: Int, mcid: Int)] = []
 
     func run() {
         var global = 0
@@ -116,8 +122,11 @@ final class ContentTagger {
         let operations = streams[stream]
         let begin: String
         if let target {
-            begin = "/\(target.type) <</MCID \(newMcid(target))>> BDC "
+            let mcid = newMcid(target)
+            sequences.append((stream, operations[first].start, mcid))
+            begin = "/\(target.type) <</MCID \(mcid)>> BDC "
         } else {
+            if !tagArtifacts { return }
             begin = "/Artifact BMC "
             artifacts += 1
         }
@@ -137,7 +146,7 @@ final class ContentTagger {
             let position = min(max(insertion.position, at), data.count)
             output.append(contentsOf: data[at..<position])
             output.append(contentsOf: Array(insertion.text.utf8))
-            at = position
+            at = min(position + insertion.skip, data.count)
         }
         output.append(contentsOf: data[at...])
         return output
