@@ -20,11 +20,6 @@ internal static class OpenJpeg
     private const int MaxComponents = 5;
     private const int FlagsOffset = 8248, IgnoreColourBoxes = 1;
     private const long MaxTileSamples = 1 << 16;
-    private const int MaxLayers = 1024, MaxLevels = 32;
-    // The packets of all tiles OpenJPEG may be asked to walk. A real picture has a few dozen layers at most and precincts of
-    // 2^7 or the default, so a 16384 x 8192 RGB picture of 30 layers in 128 pixel precincts is about 1 million. The memory
-    // budget does not limit this work, which runs at some millions of packets a second.
-    private const long MaxPackets = 1 << 22;
     // What one decode may allocate inside OpenJPEG: the image and the tile buffers of the largest picture accepted, plus slack.
     internal const long DecodeBudget = 8 * PdfImageSamples.MaxPixels + (128L << 20);
 
@@ -142,11 +137,21 @@ internal static class OpenJpeg
     /// <summary>
     /// A JPEG 2000 file or codestream as RGBA, or null when it cannot be read, is a CIELab picture, or would hold more than
     /// <see cref="PdfImageSamples.MaxPixels"/> samples of 4 bytes while decoded (a palette makes new components out of one).
-    /// <paramref name="components"/> is the colour space's component count from the PDF, 0 when it is not known.
+    /// <paramref name="components"/> is the colour space's component count from the PDF, 0 when it is not known. The cheap
+    /// header checks run here; the decode itself runs in a child process (<see cref="JpxWorker"/>), so no file can hang or
+    /// crash this one.
     /// </summary>
-    public static PdfRgbaImage? Decode(byte[] data, int components = 0) => Decode(data, components, DecodeBudget);
+    public static PdfRgbaImage? Decode(byte[] data, int components = 0)
+    {
+        int format = Format(data);
+        if (format < 0 || !ReadStructure(data, format, out _)) return null;
+        return JpxWorker.Decode(data, components);
+    }
 
-    internal static PdfRgbaImage? Decode(byte[] data, int components, long budget)
+    /// <summary>The decode itself, in this process: what the child runs.</summary>
+    internal static PdfRgbaImage? DecodeHere(byte[] data, int components) => DecodeHere(data, components, DecodeBudget);
+
+    internal static PdfRgbaImage? DecodeHere(byte[] data, int components, long budget)
     {
         int format = Format(data);
         if (format < 0 || !ReadStructure(data, format, out var colour)) return null;
@@ -270,7 +275,7 @@ internal static class OpenJpeg
             }
             if (codestream < 0) return false;
         }
-        return Siz(file, codestream) is { } frame && WithinPackets(file, frame);
+        return Siz(file, codestream);
     }
 
     // The type of the box at p and where its content starts and ends. A length of 0 runs to the end.
@@ -354,182 +359,29 @@ internal static class OpenJpeg
         return true;
     }
 
-    private sealed record Frame(long X, long Y, long X0, long Y0, long TX, long TY, long TX0, long TY0, long[] Dx, long[] Dy, int End)
-    {
-        public long Across => (X - TX0 + TX - 1) / TX;
-
-        public long Tiles => Across * ((Y - TY0 + TY - 1) / TY);
-    }
-
-    // The coding style of one component: its decomposition levels and, for each resolution, the precinct exponents (width in the
-    // low nibble, height in the high one). No list means the default of 2^15.
-    private sealed record Style(int Levels, byte[]? Precincts);
-
-    // The layers and styles of a tile or of the main header. A COC for a component beats a COD, wherever each one stands.
-    private sealed class Coding(int components)
-    {
-        private readonly bool[] own = new bool[components];
-        public int Layers;
-        public readonly Style?[] Styles = new Style?[components];
-
-        public Coding(Coding main) : this(main.Styles.Length)
-        {
-            Layers = main.Layers;
-            main.Styles.CopyTo(Styles, 0);
-        }
-
-        public void Cod(int layers, Style style)
-        {
-            Layers = layers;
-            for (int c = 0; c < Styles.Length; c++)
-            {
-                if (!own[c]) Styles[c] = style;
-            }
-        }
-
-        public void Coc(int component, Style style)
-        {
-            Styles[component] = style;
-            own[component] = true;
-        }
-    }
-
     // The SIZ marker segment, which must follow SOC. Refuses what OpenJPEG would refuse, and a header that makes it allocate a lot
     // before any budget is looked at: more components than a picture here may have, or a great many tiles.
-    private static Frame? Siz(byte[] d, int at)
+    private static bool Siz(byte[] d, int at)
     {
         const int Fixed = 38;
-        if (at < 0 || (long)at + 4 + Fixed > d.Length || d[at] != 0xFF || d[at + 1] != 0x4F || d[at + 2] != 0xFF || d[at + 3] != 0x51) return null;
+        if (at < 0 || (long)at + 4 + Fixed > d.Length || d[at] != 0xFF || d[at + 1] != 0x4F || d[at + 2] != 0xFF || d[at + 3] != 0x51) return false;
         int p = at + 4, count = U16(d, p + 36);
-        if (count is 0 or > MaxComponents || U16(d, p) != Fixed + 3 * count || (long)p + Fixed + 3 * count > d.Length) return null;
+        if (count is 0 or > MaxComponents || U16(d, p) != Fixed + 3 * count || (long)p + Fixed + 3 * count > d.Length) return false;
         long x = U32(d, p + 4), y = U32(d, p + 8), x0 = U32(d, p + 12), y0 = U32(d, p + 16);
         long tx = U32(d, p + 20), ty = U32(d, p + 24), tx0 = U32(d, p + 28), ty0 = U32(d, p + 32);
-        if (x <= x0 || y <= y0 || tx == 0 || ty == 0 || tx0 > x0 || ty0 > y0 || tx0 + tx <= x0 || ty0 + ty <= y0) return null;
-        var dx = new long[count];
-        var dy = new long[count];
+        if (x <= x0 || y <= y0 || tx == 0 || ty == 0 || tx0 > x0 || ty0 > y0 || tx0 + tx <= x0 || ty0 + ty <= y0) return false;
         for (int i = 0; i < count; i++)
         {
-            dx[i] = d[p + Fixed + 3 * i + 1];
-            dy[i] = d[p + Fixed + 3 * i + 2];
-            if (dx[i] == 0 || dy[i] == 0) return null;
+            if (d[p + Fixed + 3 * i + 1] == 0 || d[p + Fixed + 3 * i + 2] == 0) return false;
         }
         long width = x - x0, height = y - y0;
-        if (width > PdfImageSamples.MaxPixels || height > PdfImageSamples.MaxPixels || width * height > PdfImageSamples.MaxPixels) return null;
-        var frame = new Frame(x, y, x0, y0, tx, ty, tx0, ty0, dx, dy, p + Fixed + 3 * count);
-        return frame.Across <= MaxTileSamples && frame.Tiles <= MaxTileSamples && frame.Tiles * count <= MaxTileSamples ? frame : null;
+        if (width > PdfImageSamples.MaxPixels || height > PdfImageSamples.MaxPixels || width * height > PdfImageSamples.MaxPixels) return false;
+        long across = (x - tx0 + tx - 1) / tx, tiles = across * ((y - ty0 + ty - 1) / ty);
+        return across <= MaxTileSamples && tiles <= MaxTileSamples && tiles * count <= MaxTileSamples;
     }
 
-    // The checks on a bare codestream before OpenJPEG reads it: its SIZ, and the packets its tiles would have to walk.
-    internal static bool Plausible(byte[] codestream) => Siz(codestream, 0) is { } frame && WithinPackets(codestream, frame);
-
-    // Reads the main header and every tile-part header, following each SOT to the next tile-part, and refuses a codestream whose
-    // tiles hold more than MaxPackets packets (ITU-T T.800 B.6) or whose COD or COC OpenJPEG would refuse.
-    private static bool WithinPackets(byte[] d, Frame frame)
-    {
-        int count = frame.Dx.Length;
-        var main = new Coding(count);
-        bool cod = false;
-        long p = frame.End;
-        for (; ; p += 2 + U16(d, p + 2))
-        {
-            if (p + 4 > d.Length) return false;
-            int marker = U16(d, p);
-            if (marker == 0xFF90) break;
-            if (marker >> 8 != 0xFF || U16(d, p + 2) < 2 || p + 2 + U16(d, p + 2) > d.Length) return false;
-            if (!ReadStyle(d, p, count, marker, main)) return false;
-            cod |= marker == 0xFF52;
-        }
-        if (!cod) return false;
-
-        var tiles = new Dictionary<long, Coding>();
-        while (p + 12 <= d.Length && U16(d, p) == 0xFF90)
-        {
-            long tile = U16(d, p + 4), part = U32(d, p + 6);
-            if (U16(d, p + 2) != 10 || tile >= frame.Tiles || part is > 0 and < 14) return false;
-            long end = part == 0 ? d.Length : Math.Min(part + p, d.Length);
-            if (!tiles.TryGetValue(tile, out var coding)) tiles[tile] = coding = new Coding(main);
-            long q = p + 12;
-            for (; ; q += 2 + U16(d, q + 2))
-            {
-                if (q + 2 > end) return false;
-                int marker = U16(d, q);
-                if (marker == 0xFF93) break;
-                if (q + 4 > end || marker >> 8 != 0xFF || U16(d, q + 2) < 2 || q + 2 + U16(d, q + 2) > end) return false;
-                if (!ReadStyle(d, q, count, marker, coding)) return false;
-            }
-            p = end;
-        }
-
-        long packets = 0;
-        foreach (var (tile, coding) in tiles)
-        {
-            packets += Packets(frame, tile, coding);
-            if (packets > MaxPackets) return false;
-        }
-        return true;
-    }
-
-    // A COD or COC segment at p goes into the coding; any other marker is left alone. False for one OpenJPEG would refuse.
-    private static bool ReadStyle(byte[] d, long p, int count, int marker, Coding coding)
-    {
-        if (marker is not (0xFF52 or 0xFF53)) return true;
-        bool isCod = marker == 0xFF52;
-        long at = p + 4, size = U16(d, p + 2) - 2;
-        int skip = isCod ? 0 : 1, component = 0;
-        // A COD has Scod and then the progression order, layers and colour transform; a COC has the component and Scoc.
-        long head = isCod ? 5 : 1, spcod = at + skip + head;
-        if (size < skip + head + 5) return false;
-        if (!isCod)
-        {
-            component = d[at];
-            if (component >= count) return false;
-        }
-        int layers = isCod ? U16(d, at + 2) : 1, levels = d[spcod];
-        int xcb = d[spcod + 1] + 2, ycb = d[spcod + 2] + 2;
-        if (layers is < 1 or > MaxLayers || levels > MaxLevels || xcb > 10 || ycb > 10 || xcb + ycb > 12) return false;
-        byte[]? precincts = null;
-        if ((d[at + skip] & 1) != 0)
-        {
-            if (size < skip + head + 5 + levels + 1) return false;
-            precincts = d[(int)(spcod + 5)..(int)(spcod + 6 + levels)];
-            // An exponent of 0 is only for the lowest resolution (Table A.21).
-            for (int i = 1; i < precincts.Length; i++)
-            {
-                if ((precincts[i] & 15) == 0 || precincts[i] >> 4 == 0) return false;
-            }
-        }
-        var style = new Style(levels, precincts);
-        if (isCod) coding.Cod(layers, style);
-        else coding.Coc(component, style);
-        return true;
-    }
-
-    private static long CeilDiv(long value, long by) => (value + by - 1) / by;
-
-    private static long CeilShift(long value, int shift) => (value + (1L << shift) - 1) >> shift;
-
-    // Packets of one tile: its layers times the precincts of every resolution of every component (T.800 B.6).
-    private static long Packets(Frame frame, long tile, Coding coding)
-    {
-        long p = tile % frame.Across, q = tile / frame.Across;
-        long x0 = Math.Max(frame.TX0 + p * frame.TX, frame.X0), x1 = Math.Min(frame.TX0 + (p + 1) * frame.TX, frame.X);
-        long y0 = Math.Max(frame.TY0 + q * frame.TY, frame.Y0), y1 = Math.Min(frame.TY0 + (q + 1) * frame.TY, frame.Y);
-        long precincts = 0;
-        for (int c = 0; c < frame.Dx.Length; c++)
-        {
-            var style = coding.Styles[c]!;
-            long cx0 = CeilDiv(x0, frame.Dx[c]), cx1 = CeilDiv(x1, frame.Dx[c]), cy0 = CeilDiv(y0, frame.Dy[c]), cy1 = CeilDiv(y1, frame.Dy[c]);
-            for (int r = 0; r <= style.Levels; r++)
-            {
-                int level = style.Levels - r;
-                long rx0 = CeilShift(cx0, level), rx1 = CeilShift(cx1, level), ry0 = CeilShift(cy0, level), ry1 = CeilShift(cy1, level);
-                int px = style.Precincts is null ? 15 : style.Precincts[r] & 15, py = style.Precincts is null ? 15 : style.Precincts[r] >> 4;
-                long wide = rx1 > rx0 ? CeilShift(rx1, px) - (rx0 >> px) : 0, high = ry1 > ry0 ? CeilShift(ry1, py) - (ry0 >> py) : 0;
-                precincts += wide * high;
-            }
-        }
-        return precincts * coding.Layers;
-    }
+    // The check on a bare codestream before OpenJPEG reads it: its SIZ.
+    internal static bool Plausible(byte[] codestream) => Siz(codestream, 0);
 
     // The channels the picture has once the palette and channel definitions are applied, as OpenJPEG would make them; null where
     // it would refuse the file. numComps is the codestream's component count.
