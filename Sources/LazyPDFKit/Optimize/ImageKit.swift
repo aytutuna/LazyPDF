@@ -46,6 +46,22 @@ enum ImageKit {
         return (.unknown, 0)
     }
 
+    /// True when `decode` is the /Decode the image's colour space has by default (ISO 32000-1 Table 90): 0 to 1 for every
+    /// component, 0 to 2^bpc - 1 for an Indexed space, and for Lab 0 to 100 and then the /Range of its dictionary.
+    static func defaultDecode(_ document: PdfDocument, _ image: PdfDictionary, _ decode: [Double]) -> Bool {
+        let family = describe(document, image["ColorSpace"]).family
+        if family == .indexed {
+            let bpc = document.integer(image, "BitsPerComponent") ?? 8
+            return decode.count == 2 && decode[0] == 0 && decode[1] == Double((1 << min(max(bpc, 1), 16)) - 1)
+        }
+        if family == .lab, let lab = document.resolve(image["ColorSpace"]) as? PdfArray, lab.items.count > 1 {
+            var range: [Double] = [-100, 100, -100, 100]
+            if let labs = document.resolve(lab.items[1]) as? PdfDictionary, let own = PdfFunction.numbers(labs["Range"], { document.resolve($0) }) { range = own }
+            return decode.count == 6 && decode[0] == 0 && decode[1] == 100 && range.count >= 4 && Array(decode[2...]) == Array(range[0..<4])
+        }
+        return stride(from: 0, to: decode.count, by: 2).allSatisfy { $0 + 1 < decode.count && decode[$0] == 0 && decode[$0 + 1] == 1 }
+    }
+
     /// The samples of an image at 8 bits each, rows packed; 16-bit samples keep their high byte, fewer bits are scaled to the full range.
     static func unpack(_ data: [UInt8], _ width: Int, _ height: Int, _ components: Int, _ bpc: Int) -> [UInt8] {
         let perRow = width * components

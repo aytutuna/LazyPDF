@@ -325,6 +325,80 @@ final class RedactImageTests: XCTestCase {
         }
     }
 
+    // A codec shows an Adobe-marked CMYK file as a JPEG file looks, the page shows the stored inks: the two are inverses unless a
+    // reversing /Decode goes with the marker.
+    func test_aCmykJpegIsKeptOnlyWhereTheCodecShowsWhatThePageShows() throws {
+        let cases: [(String, Bool, Bool)] = [
+            ("", false, true), ("", true, false),
+            ("/Decode [0 1 0 1 0 1 0 1]", false, true), ("/Decode [0 1 0 1 0 1 0 1]", true, false),
+            ("/Decode [1 0 1 0 1 0 1 0]", true, true),
+        ]
+        for (decode, adobe, kept) in cases {
+            let document = try withImage("/ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /DCTDecode \(decode)", adobe ? adobeJpeg : [1, 2, 3])
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 40, 20, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+
+            XCTAssertEqual(RedactionKit.images(output).count == 1, kept, "\(decode) \(adobe)")
+            XCTAssertEqual(result.report.pages[0].wholeImages, kept ? 0 : 1, "\(decode) \(adobe)")
+        }
+    }
+
+    func test_aDctPictureInASpaceThePixelsCannotShowIsRemovedWhole() throws {
+        let cases: [(String, String)] = [
+            ("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", ""),
+            ("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", "/Decode [0 255]"),
+            ("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]", ""),
+            ("[/DeviceN [/A /B] /DeviceRGB <</FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Length 15>>]", ""),
+            ("[/Lab <</WhitePoint [0.95 1 1.09]>>]", ""),
+        ]
+        for (space, decode) in cases {
+            let document = try withImage("/ColorSpace \(space) /BitsPerComponent 8 /Filter /DCTDecode \(decode)", [1, 2, 3])
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(1, 2, 3, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+
+            XCTAssertTrue(RedactionKit.images(output).isEmpty, "\(space) \(decode)")
+            XCTAssertTrue(imageStreams(output).isEmpty, "\(space) \(decode)")
+            XCTAssertEqual(result.report.pages[0].wholeImages, 1, "\(space) \(decode)")
+        }
+    }
+
+    // The key is matched on the raw samples; the copy holds the samples after /Decode, as RGB.
+    func test_aColourKeyOfAJpegIsCarriedOverWithItsDecode() throws {
+        let cases: [(String, String, String, String)] = [
+            ("/DeviceGray", "[10 20]", "", "10 20 10 20 10 20"),
+            ("/DeviceGray", "[10 20]", "/Decode [1 0]", "235 245 235 245 235 245"),
+            ("/DeviceGray", "[10 20]", "/Decode [0 1]", "10 20 10 20 10 20"),
+            ("/DeviceRGB", "[1 2 3 4 5 6]", "", "1 2 3 4 5 6"),
+            ("/DeviceRGB", "[1 2 3 4 5 6]", "/Decode [1 0 0 1 1 0]", "253 254 3 4 249 250"),
+        ]
+        for (space, key, decode, expected) in cases {
+            let document = try withImage("/ColorSpace \(space) /BitsPerComponent 8 /Filter /DCTDecode /Mask \(key) \(decode)", [1, 2, 3])
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 40, 20, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+            let image = try XCTUnwrap(RedactionKit.images(output).first?.stream)
+
+            let written = try XCTUnwrap(output.resolve(image.dictionary["Mask"]) as? PdfArray)
+            XCTAssertEqual(written.items.map { String(Int(($0 as! PdfNumber).value)) }.joined(separator: " "), expected, "\(space) \(key) \(decode)")
+        }
+    }
+
+    func test_aColourKeyThatCannotBeCarriedOverRemovesThePictureWhole() throws {
+        let cases: [(String, String, String, String)] = [
+            ("/ColorSpace /DeviceCMYK", "[1 2 3 4 5 6 7 8]", "", "DCTDecode"),
+            ("/ColorSpace /DeviceRGB", "[1 2 3 4 5 6]", "/Decode [0 0.5 0 1 0 1]", "DCTDecode"),
+            ("/ColorSpace /DeviceRGB", "[1 2 3 4]", "", "DCTDecode"),
+            ("/ColorSpace /DeviceRGB", "[1 2 3 4 5 6]", "", "JPXDecode"),
+        ]
+        for (space, key, decode, filter) in cases {
+            let document = try withImage("\(space) /BitsPerComponent 8 /Filter /\(filter) /Mask \(key) \(decode)", [1, 2, 3])
+            let result = try PdfRedactor(document, nil, FakeCodec(eight(60, 40, 20, 255))).apply([topLeft()])
+            let output = try RedactionKit.open(result)
+
+            XCTAssertTrue(RedactionKit.images(output).isEmpty, "\(space) \(key) \(decode) \(filter)")
+            XCTAssertEqual(result.report.pages[0].wholeImages, 1, "\(space) \(key) \(decode) \(filter)")
+        }
+    }
+
     // A JPX picture usually has no /ColorSpace, so its component count is not known from the dictionary.
     func test_withNoColourSpaceTheMatteIsRepeatedOrKeptByItsLength() throws {
         let cases: [(String, String?)] = [("[0.5]", "[0.5 0.5 0.5]"), ("[0 0 0]", "[0 0 0]"), ("[0 0]", nil), ("[0 0 0 0]", nil)]

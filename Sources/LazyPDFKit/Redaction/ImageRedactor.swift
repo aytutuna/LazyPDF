@@ -81,6 +81,11 @@ final class ImageRedactor {
         // A picture whose colour space the pixels cannot show is not rewritten: the caller removes it.
         let jpx = name == "JPXDecode"
         if jpx && !JpxImage.readable(document, d) { return nil }
+        if !jpx && !soft && !DctImage.readable(document, d) { return nil }
+        if !soft, let colourKey = document.resolve(d["Mask"]) as? PdfArray {
+            guard let mapped = self.colourKey(d, colourKey, jpx) else { return nil }
+            copy["Mask"] = mapped
+        }
         guard let decodedPixels = codec?.decode(decoded.data, name, jpx ? JpxImage.components(document, d) : 0), Self.fits(decodedPixels.width, decodedPixels.height),
               decodedPixels.rgba.count == decodedPixels.width * decodedPixels.height * 4 else { return nil }
         var pixels = decodedPixels
@@ -122,14 +127,14 @@ final class ImageRedactor {
 
     // A picture of a DCT file is written back as RGB with no /Decode, so the /Decode goes onto the codec's samples first. That
     // works where a codec channel is a component of the colour space: gray, which the codec gives as R = G = B, and RGB. A CMYK
-    // picture keeps what the codec made of it only under the inversion the Adobe marker already undid; any other /Decode on a
-    // picture the codec converted cannot be carried over, so the picture is one that cannot be decoded here.
+    // picture keeps what the codec made of it only where the page shows the same (see DctImage.cmykAsShown): the RGB inverse
+    // cannot stand in for the ink inverse otherwise, and any other /Decode on a picture the codec converted cannot be carried
+    // over, so the picture is one that cannot be decoded here.
     private func withDecode(_ image: PdfDictionary, _ jpeg: [UInt8], _ pixels: PdfRgbaImage) -> PdfRgbaImage? {
-        guard let decode = PdfFunction.numbers(image["Decode"], { self.document.resolve($0) }) else { return pixels }
-        let identity = stride(from: 0, to: decode.count, by: 2).allSatisfy { $0 + 1 < decode.count && decode[$0] == 0 && decode[$0 + 1] == 1 }
-        if identity { return pixels }
+        let decode = PdfFunction.numbers(image["Decode"], { self.document.resolve($0) })
         let (family, components) = ImageKit.describe(document, image["ColorSpace"])
-        if family == .cmyk { return ExportImageMerge.inverts(decode) && ExportImageMerge.hasAdobeMarker(jpeg) ? pixels : nil }
+        if family == .cmyk { return DctImage.cmykAsShown(document, image, jpeg) ? pixels : nil }
+        guard let decode, !ImageKit.defaultDecode(document, image, decode) else { return pixels }
         if family != .gray && family != .rgb { return nil }
         if decode.count < 2 * components { return pixels }
         var rgba = pixels.rgba
@@ -143,6 +148,30 @@ final class ImageRedactor {
             i += 4
         }
         return PdfRgbaImage(pixels.width, pixels.height, rgba, dpiX: pixels.dpiX, dpiY: pixels.dpiY)
+    }
+
+    // The picture is written back as RGB with /Decode applied, so a colour key (matched on the raw samples, ISO 32000-1 8.9.6.4)
+    // becomes an RGB key on the decoded ones: a gray key is repeated for the three channels and a component with a reversing
+    // /Decode swaps its range end for end. Any other /Decode, a CMYK key, a key on a JPEG 2000 picture, whose samples may be of
+    // any depth, and a key that does not fit its colour space cannot be carried over.
+    private func colourKey(_ image: PdfDictionary, _ key: PdfArray, _ jpx: Bool) -> PdfArray? {
+        let (family, components) = ImageKit.describe(document, image["ColorSpace"])
+        guard !jpx, family == .gray || family == .rgb, let values = PdfFunction.numbers(key, { self.document.resolve($0) }),
+              values.count == 2 * components, (document.integer(image, "BitsPerComponent") ?? 8) == 8 else { return nil }
+        let decode = PdfFunction.numbers(image["Decode"], { self.document.resolve($0) })
+        let decoded = decode.map { $0.count >= 2 * components && !ImageKit.defaultDecode(document, image, $0) } ?? false
+        var mapped: [PdfObject] = []
+        for c in 0..<3 {
+            let j = components == 1 ? 0 : c
+            var (low, high) = (values[2 * j], values[2 * j + 1])
+            if decoded, let decode {
+                if decode[2 * j] == 1 && decode[2 * j + 1] == 0 { (low, high) = (255 - high, 255 - low) }
+                else if decode[2 * j] != 0 || decode[2 * j + 1] != 1 { return nil }
+            }
+            mapped.append(PdfNumber(low))
+            mapped.append(PdfNumber(high))
+        }
+        return PdfArray(mapped)
     }
 
     // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is

@@ -462,8 +462,11 @@ final class OptimizeGray {
 
     // Pixels of a JPEG 2000 picture stand for it only in a space they can be read as, and without alpha: the JPEG written back has none.
     // One that drops its alpha under /SMaskInData 0 is left too when the codec's pixels have any (see JpxImage.opaque).
-    private func decodable(_ dictionary: PdfDictionary, _ coded: String) -> Bool {
-        coded != "JPXDecode" || (JpxImage.readable(document, dictionary) && JpxImage.maskInData(document, dictionary) <= 0)
+    // A DCT picture in a space the pixels cannot show, or a CMYK one the codec shows as its inverse, is left as stored too.
+    private func decodable(_ dictionary: PdfDictionary, _ coded: String, _ data: [UInt8]) -> Bool {
+        if coded == "JPXDecode" { return JpxImage.readable(document, dictionary) && JpxImage.maskInData(document, dictionary) <= 0 }
+        return DctImage.readable(document, dictionary)
+            && (ImageKit.describe(document, dictionary["ColorSpace"]).family != .cmyk || DctImage.cmykAsShown(document, dictionary, data))
     }
 
     private func grayImage(_ stream: PdfStream) {
@@ -489,7 +492,7 @@ final class OptimizeGray {
                 plain.remove("Mask")
                 pixels = try PdfImageSamples.toRgba(plain, decoded.data, { self.document.resolve($0) }, { try self.document.data($0) })
             } else if let name = coded, name == "DCTDecode" || name == "JPXDecode", !dictionary.containsKey("Decode"),
-                      let codec, decodable(dictionary, name), let image = codec.decode(decoded.data, name, name == "JPXDecode" ? components : 0),
+                      let codec, decodable(dictionary, name, decoded.data), let image = codec.decode(decoded.data, name, name == "JPXDecode" ? components : 0),
                       name != "JPXDecode" || JpxImage.opaque(image) {
                 pixels = image
             } else {

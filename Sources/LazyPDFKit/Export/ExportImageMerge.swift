@@ -36,7 +36,7 @@ final class ExportImageMerge {
     func showsAsFile(_ dictionary: PdfDictionary, _ jpeg: [UInt8]) throws -> Bool {
         if present(dictionary["SMask"]) || present(dictionary["Mask"]) || document.bool(dictionary, "ImageMask") == true { return false }
         let decode = PdfFunction.numbers(dictionary["Decode"], resolve)
-        let identity = decode.map { Self.pairs($0, $0.count).allSatisfy { $0 == (0, 1) } } ?? true
+        let identity = decode.map { ImageKit.defaultDecode(document, dictionary, $0) } ?? true
         do {
             let space = try self.space(dictionary)
             if space is SampleColorSpace.Cmyk { return identity ? !Self.hasAdobeMarker(jpeg) : Self.inverts(decode) && Self.hasAdobeMarker(jpeg) }

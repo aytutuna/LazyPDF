@@ -128,6 +128,42 @@ final class OptimizeGrayTests: XCTestCase {
         }
     }
 
+    private func marked(_ jpeg: [UInt8]) -> [UInt8] {
+        Array(jpeg[..<2]) + [0xFF, 0xEE, 0, 14, 0x41, 0x64, 0x6F, 0x62, 0x65, 0, 100, 0, 0, 0, 0, 2] + Array(jpeg[2...])
+    }
+
+    // The codec's pixels of a JPEG are not what the page shows in these spaces, so the picture stays as stored.
+    func test_aJpegThePixelsCannotStandForIsLeftAsStored() throws {
+        let cases: [(String, Bool)] = [
+            ("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", false),
+            ("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]", false),
+            ("[/Lab <</WhitePoint [0.95 1 1.09]>>]", false),
+            ("/DeviceCMYK", true),
+        ]
+        for (space, adobe) in cases {
+            let jpeg = adobe ? marked(OptimizeKit.tinyJpeg) : OptimizeKit.tinyJpeg
+            let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
+                pdf.stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace \(space) /BitsPerComponent 8 /Filter /DCTDecode", jpeg)
+            })
+            let codec = OptimizeFakeCodec()
+            let result = try run(file, codec)
+
+            XCTAssertNil(codec.lastEncoded, space)
+            let after = try PdfDocument.open(result.bytes)
+            XCTAssertEqual(jpeg, after.rawData(try OptimizeKit.image(after)), space)
+        }
+    }
+
+    func test_anUnmarkedCmykJpegBecomesGray() throws {
+        let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
+            pdf.stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /DCTDecode", OptimizeKit.tinyJpeg)
+        })
+        let codec = OptimizeFakeCodec()
+        _ = try run(file, codec)
+
+        XCTAssertNotNil(codec.lastEncoded)
+    }
+
     func test_aJpxPictureWhoseCodecPixelsHaveAlphaIsLeftAsStoredWhenTheFileDropsIt() throws {
         for entry in ["/SMaskInData 0", ""] {
             let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in

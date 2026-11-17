@@ -190,6 +190,25 @@ final class OptimizeImageTests: XCTestCase {
         }
     }
 
+    // A JPEG in a space that is not gray or RGB is left as stored, and so is one with a colour key, which would not fit the RGB written.
+    func test_aJpegInASpaceOrWithAKeyThePixelsCannotCarryIsLeft() throws {
+        let cases = [
+            "/ColorSpace [/Indexed /DeviceRGB 1 <000000FFFFFF>]",
+            "/ColorSpace [/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]",
+            "/ColorSpace [/Lab <</WhitePoint [0.95 1 1.09]>>]",
+            "/ColorSpace /DeviceGray /Mask [10 20]",
+        ]
+        for entries in cases {
+            let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 \(entries) /BitsPerComponent 8 /Filter /DCTDecode"
+            let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in pdf.stream(5, dictionary, OptimizeKit.tinyJpeg) })
+            let codec = OptimizeFakeCodec()
+            let (image, after) = try run(file, downsample(8, 10), codec: codec)
+            XCTAssertEqual(16, after.integer(image.dictionary, "Width"), entries)
+            XCTAssertEqual(OptimizeKit.tinyJpeg, after.rawData(image), entries)
+            XCTAssertEqual(0, codec.decodes, entries)
+        }
+    }
+
     func test_aGrayJpegWithAnInvertingDecodeIsLeft() throws {
         let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Decode [1 0]"
         let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in pdf.stream(5, dictionary, OptimizeKit.tinyJpeg) })
