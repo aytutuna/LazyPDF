@@ -8,7 +8,8 @@ internal static class JpxMaker
     public const int Unspecified = 0, Srgb = 1, Gray = 2, Sycc = 3, Cmyk = 5;
 
     // Offsets in opj_cparameters_t and opj_image_t on 64-bit Windows.
-    private const int ParametersSize = 18800, DistoAlloc = 20, NumLayers = 4796, Rates = 4800, NumResolution = 5600, Irreversible = 5616, Mct = 18698;
+    private const int ParametersSize = 18800, DistoAlloc = 20, Csty = 48, NumLayers = 4796, Rates = 4800, NumResolution = 5600, Irreversible = 5616;
+    private const int ResSpec = 5628, PrecinctWidth = 5632, PrecinctHeight = 5764, Mct = 18698;
 
     private delegate nuint WriteFn(IntPtr buffer, nuint count, IntPtr user);
 
@@ -70,7 +71,10 @@ internal static class JpxMaker
     /// <summary>A codestream cut into tiles of <paramref name="tile"/> x <paramref name="tile"/> samples.</summary>
     public static byte[] Tiled(int width, int height, int tile, params Comp[] comps) => Encode(width, height, tile, Gray, false, false, comps);
 
-    private static byte[] Encode(int width, int height, int tile, int colorSpace, bool jp2, bool mct, Comp[] comps)
+    /// <summary>A codestream of <paramref name="layers"/> quality layers (the last one lossless) cut into precincts of <paramref name="precinct"/> samples at every resolution.</summary>
+    public static byte[] Layered(int width, int height, int layers, int precinct, params Comp[] comps) => Encode(width, height, 0, Gray, false, false, comps, layers, precinct);
+
+    private static byte[] Encode(int width, int height, int tile, int colorSpace, bool jp2, bool mct, Comp[] comps, int layers = 1, int precinct = 0)
     {
         var output = new MemoryStream();
         IntPtr parameters = Marshal.AllocHGlobal(ParametersSize), layout = Marshal.AllocHGlobal(comps.Length * 36);
@@ -122,8 +126,16 @@ internal static class JpxMaker
                 Marshal.WriteInt32(parameters, 16, tile);
             }
             Marshal.WriteInt32(parameters, DistoAlloc, 1);
-            Marshal.WriteInt32(parameters, NumLayers, 1);
-            Marshal.WriteInt32(parameters, Rates, 0);
+            Marshal.WriteInt32(parameters, NumLayers, layers);
+            // Compression ratios falling to 0 for the last layer, which keeps everything.
+            for (int i = 0; i < layers; i++) Marshal.WriteInt32(parameters, Rates + 4 * i, BitConverter.SingleToInt32Bits(4 * (layers - 1 - i)));
+            if (precinct > 0)
+            {
+                Marshal.WriteInt32(parameters, Csty, 1);
+                Marshal.WriteInt32(parameters, ResSpec, 1);
+                Marshal.WriteInt32(parameters, PrecinctWidth, precinct);
+                Marshal.WriteInt32(parameters, PrecinctHeight, precinct);
+            }
             Marshal.WriteInt32(parameters, NumResolution, 3);
             Marshal.WriteInt32(parameters, Irreversible, 0);
             Marshal.WriteByte(parameters, Mct, mct ? (byte)1 : (byte)0);
