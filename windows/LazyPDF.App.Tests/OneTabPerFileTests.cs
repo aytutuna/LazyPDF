@@ -62,6 +62,22 @@ public sealed class OneTabPerFileTests
     }
 
     [Fact]
+    public async Task AskingAgainForTheSecondLockedFileShowsItsQuestion()
+    {
+        using var f = new ViewModelFixture();
+        byte[] locked = File.ReadAllBytes(Pdfs.Fixture("locked.pdf"));
+        string x = f.Dir.File("x.pdf", locked);
+        string y = f.Dir.File("y.pdf", locked);
+        await f.Vm.OpenAsync(x);
+        await f.Vm.OpenAsync(y);
+        Assert.Equal("x.pdf", f.Vm.PasswordRequest!.Name);
+
+        await f.Vm.OpenAsync(y);
+
+        Assert.Equal("y.pdf", f.Vm.PasswordRequest!.Name);
+    }
+
+    [Fact]
     public async Task ALockedFileAskedForUnderAnotherSpellingAddsNoSecondQuestion()
     {
         using var f = new ViewModelFixture();

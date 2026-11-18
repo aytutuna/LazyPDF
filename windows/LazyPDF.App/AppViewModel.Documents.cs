@@ -130,7 +130,7 @@ public sealed partial class AppViewModel
             {
                 if (_registry.FindOpen(path, null) is { } open)
                 {
-                    open.Owner.Reveal(open.Tab);
+                    open.Owner.Reveal(open.Tab, path, null);
                     return;
                 }
                 if (_registry.ClaimPath(path, out pathClaim) is not { } winner) break;
@@ -171,7 +171,7 @@ public sealed partial class AppViewModel
                 if (_registry.FindOpen(path, id) is { } open)
                 {
                     if (open.Tab is { Path: { } old } same && !File.Exists(old)) open.Owner.FollowMove(same, old, path, source);
-                    else open.Owner.Reveal(open.Tab);
+                    else open.Owner.Reveal(open.Tab, path, id);
                     return;
                 }
                 if (_registry.ClaimFile(id, out fileClaim) is not { } waited) break;
@@ -224,14 +224,25 @@ public sealed partial class AppViewModel
     internal OpenHit? Holds(string? path, string? fileId)
     {
         if (Documents.FirstOrDefault(d => SamePath(d.Path, path) || fileId is not null && d.FileId == fileId) is { } tab) return new(this, tab);
-        if (_pending.Any(p => SamePath(p.Source.Path, path) || fileId is not null && p.Source.FileId == fileId)) return new(this, null);
-        return null;
+        return PendingFor(path, fileId) is null ? null : new(this, null);
     }
 
-    internal void Reveal(DocumentTab? tab)
+    private PendingOpen? PendingFor(string? path, string? fileId) =>
+        _pending.FirstOrDefault(p => SamePath(p.Source.Path, path) || fileId is not null && p.Source.FileId == fileId);
+
+    /// <summary>Brings the tab forward; without one, the question of the file that waits for its password, which has to be the one shown.</summary>
+    internal void Reveal(DocumentTab? tab, string? path = null, string? fileId = null)
     {
         if (tab is not null) ActiveTab = tab;
-        else NotifyAll();
+        else
+        {
+            if (PendingFor(path, fileId) is { } waiting && _pending.IndexOf(waiting) > 0)
+            {
+                _pending.Remove(waiting);
+                _pending.Insert(0, waiting);
+            }
+            NotifyAll();
+        }
         BringForward?.Invoke(tab);
     }
 
