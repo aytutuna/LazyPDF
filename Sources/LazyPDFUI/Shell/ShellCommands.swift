@@ -3,9 +3,9 @@ import Foundation
 import LazyPDFApp
 
 public extension Notification.Name {
-    /// Posted by the platform's menu; the window answers with its About sheet.
+    /// Posted by the platform's menu with the window's AppViewModel as the object; that window answers with its About sheet.
     static let showAbout = Notification.Name("LazyPDFShowAbout")
-    /// Posted by the platform's menu; the window answers with its Settings sheet.
+    /// Posted by the platform's menu with the window's AppViewModel as the object; that window answers with its Settings sheet.
     static let showSettings = Notification.Name("LazyPDFShowSettings")
 }
 

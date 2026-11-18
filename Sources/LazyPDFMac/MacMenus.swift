@@ -125,13 +125,13 @@ struct MacMenus: Commands {
         CommandGroup(replacing: .appInfo) {
             Button(L10n.t("About Lazy PDF")) {
                 shell.showWindow()
-                NotificationCenter.default.post(name: .showAbout, object: nil)
+                NotificationCenter.default.post(name: .showAbout, object: vm)
             }
         }
         CommandGroup(replacing: .appSettings) {
             Button(L10n.t("Settings…")) {
                 shell.showWindow()
-                NotificationCenter.default.post(name: .showSettings, object: nil)
+                NotificationCenter.default.post(name: .showSettings, object: vm)
             }
             .keyboardShortcut(",")
         }
