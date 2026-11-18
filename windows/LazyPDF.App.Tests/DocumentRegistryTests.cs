@@ -11,29 +11,6 @@ public sealed class DocumentRegistryTests
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern bool CreateHardLinkW(string link, string existing, nint reserved);
 
-    private sealed class Pair : IDisposable
-    {
-        public Pair()
-        {
-            var registry = new DocumentRegistry();
-            A = new ViewModelFixture(registry);
-            B = new ViewModelFixture(registry);
-            A.Vm.BringForward = tab => ForwardedA.Add(tab);
-            B.Vm.BringForward = tab => ForwardedB.Add(tab);
-        }
-
-        public ViewModelFixture A { get; }
-        public ViewModelFixture B { get; }
-        public List<DocumentTab?> ForwardedA { get; } = [];
-        public List<DocumentTab?> ForwardedB { get; } = [];
-
-        public void Dispose()
-        {
-            A.Dispose();
-            B.Dispose();
-        }
-    }
-
     // The same file by a path that goes through a folder and back.
     private static string Spelled(string path)
     {
@@ -45,7 +22,7 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task AFileOpenInOneWindowIsBroughtForwardNotOpenedInAnother()
     {
-        using var p = new Pair();
+        using var p = new TwoWindows();
         string path = p.A.Pdf();
         await p.A.Vm.OpenAsync(path);
         var tab = p.A.Vm.ActiveDocument;
@@ -62,7 +39,7 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task AnotherSpellingOfTheFileIsFoundInTheOtherWindow()
     {
-        using var p = new Pair();
+        using var p = new TwoWindows();
         string path = p.A.Pdf();
         await p.A.Vm.OpenAsync(path);
 
@@ -75,7 +52,7 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task AHardLinkToAnOpenFileIsFoundInTheOtherWindow()
     {
-        using var p = new Pair();
+        using var p = new TwoWindows();
         string path = p.A.Pdf();
         string link = Path.Combine(Path.GetDirectoryName(path)!, "link.pdf");
         Assert.True(CreateHardLinkW(link, path, 0));
@@ -90,7 +67,7 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task AMovedFileIsFollowedByTheTabInTheOtherWindow()
     {
-        using var p = new Pair();
+        using var p = new TwoWindows();
         string path = p.A.Pdf();
         string moved = Path.Combine(Path.GetDirectoryName(path)!, "moved.pdf");
         await p.A.Vm.OpenAsync(path);
@@ -108,7 +85,7 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task TwoWindowsOpeningTheSameFileAtOnceEndWithOneTab()
     {
-        using var p = new Pair();
+        using var p = new TwoWindows();
         string path = p.A.Pdf();
 
         await Task.WhenAll(p.A.Vm.OpenAsync(path), p.B.Vm.OpenAsync(path));
@@ -120,7 +97,7 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task TwoSpellingsOpeningAtOnceInTwoWindowsEndWithOneTab()
     {
-        using var p = new Pair();
+        using var p = new TwoWindows();
         string path = p.A.Pdf();
 
         await Task.WhenAll(p.A.Vm.OpenAsync(path), p.B.Vm.OpenAsync(Spelled(path)));
@@ -131,7 +108,7 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task AFileWaitingForItsPasswordInOneWindowAsksNothingInAnother()
     {
-        using var p = new Pair();
+        using var p = new TwoWindows();
         string path = p.A.Dir.File("locked.pdf", File.ReadAllBytes(Pdfs.Fixture("locked.pdf")));
         await p.A.Vm.OpenAsync(path);
 
@@ -145,7 +122,7 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task AFileThatFailedToOpenCanBeOpenedByTheOtherWindow()
     {
-        using var p = new Pair();
+        using var p = new TwoWindows();
         string path = p.A.Dir.File("bad.pdf", [1, 2, 3]);
         await p.A.Vm.OpenAsync(path);
         File.WriteAllBytes(path, Pdfs.Text(1));
@@ -158,12 +135,10 @@ public sealed class DocumentRegistryTests
     [Fact]
     public async Task ATabIsFoundByItsIdInTheWindowThatHoldsIt()
     {
-        var registry = new DocumentRegistry();
-        using var a = new ViewModelFixture(registry);
-        using var b = new ViewModelFixture(registry);
-        await b.Vm.OpenAsync(b.Pdf());
+        using var p = new TwoWindows();
+        await p.B.Vm.OpenAsync(p.B.Pdf());
 
-        Assert.Same(b.Vm, registry.Find(b.Vm.ActiveDocument!.Id));
-        Assert.Null(registry.Find(Guid.NewGuid()));
+        Assert.Same(p.B.Vm, p.Registry.Find(p.B.Vm.ActiveDocument!.Id));
+        Assert.Null(p.Registry.Find(Guid.NewGuid()));
     }
 }

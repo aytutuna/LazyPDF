@@ -31,6 +31,55 @@ public sealed class DocumentRegistry
         return null;
     }
 
+    /// <summary>
+    /// Moves the tab itself from one window to another, inserted at <paramref name="index"/>; nothing is copied, so the
+    /// edits, undo history, recovery copy and password go with it. Refusals and failures say why in the source window
+    /// and leave the tab where it was. <paramref name="targetFree"/> is the target window's own check (see
+    /// <see cref="AppViewModel.CanAdopt"/>).
+    /// </summary>
+    internal bool Transfer(DocumentTab tab, AppViewModel from, AppViewModel to, int index, bool targetFree = true)
+    {
+        if (ReferenceEquals(from, to) || Find(tab.Id) != from) return false;
+        string? reason;
+        if (!from.CanRelease(tab, out reason) || !to.CanAdopt(targetFree, out reason))
+        {
+            from.ShowNotice(Loc.T("Tab not moved"), reason);
+            return false;
+        }
+        var before = from.ActiveTab;
+        int at = from.Strip.IndexOf(tab);
+        try
+        {
+            from.Release(tab);
+            to.Adopt(tab, index);
+            return true;
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Trace.TraceError(e.ToString());
+        }
+        // The tab goes back the way it came: out of the target first, so it is never in two strips.
+        Quietly(() => to.Release(tab), to.Strip.Contains(tab));
+        Quietly(() => from.Adopt(tab, at), !from.Strip.Contains(tab));
+        Quietly(() => from.ActiveTab = before, from.Strip.Contains(before));
+        Quietly(() => from.ShowProblem(new Problem(Loc.T("Tab not moved"), Loc.T("Something went wrong, so {0} stays in this window.", tab.Title))), true);
+        return false;
+    }
+
+    // A window that fails to draw has already changed its strip by then, so a failure here is only logged.
+    private static void Quietly(Action step, bool needed)
+    {
+        if (!needed) return;
+        try
+        {
+            step();
+        }
+        catch (Exception e)
+        {
+            System.Diagnostics.Trace.TraceError(e.ToString());
+        }
+    }
+
     /// <summary>Takes the right to open <paramref name="path"/>; when another open has it, returns the task that ends when that one does.</summary>
     internal Task? ClaimPath(string path, out IDisposable? claim) => Take(_paths, path, out claim);
 

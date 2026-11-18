@@ -1,3 +1,4 @@
+using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
 
@@ -133,6 +134,35 @@ internal sealed class ViewModelFixture : IDisposable
     }
 
     public void Dispose() => Dir.Dispose();
+}
+
+/// <summary>Two view models as two windows would have them: one registry and one recovery store between them.</summary>
+internal sealed class TwoWindows : IDisposable
+{
+    public TwoWindows()
+    {
+        Registry = new DocumentRegistry();
+        Recovery = new RecoveryStore(Folder.Sub("recovery"));
+        A = new ViewModelFixture(Registry, Recovery);
+        B = new ViewModelFixture(Registry, Recovery);
+        A.Vm.BringForward = tab => ForwardedA.Add(tab);
+        B.Vm.BringForward = tab => ForwardedB.Add(tab);
+    }
+
+    private TempDir Folder { get; } = new();
+    public DocumentRegistry Registry { get; }
+    public RecoveryStore Recovery { get; }
+    public ViewModelFixture A { get; }
+    public ViewModelFixture B { get; }
+    public List<DocumentTab?> ForwardedA { get; } = [];
+    public List<DocumentTab?> ForwardedB { get; } = [];
+
+    public void Dispose()
+    {
+        A.Dispose();
+        B.Dispose();
+        Folder.Dispose();
+    }
 }
 
 /// <summary>PDFs for the tests, built by Core.</summary>

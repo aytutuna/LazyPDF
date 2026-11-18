@@ -649,6 +649,9 @@
   <data name="Another file" xml:space="preserve">
     <value>Başka dosya</value>
   </data>
+  <data name="Answer the question about {0} first." xml:space="preserve">
+    <value>Önce {0} hakkındaki soruyu yanıtlayın.</value>
+  </data>
   <data name="Any status" xml:space="preserve">
     <value>Tüm durumlar</value>
   </data>
@@ -6046,6 +6049,9 @@
   <data name="Something went wrong" xml:space="preserve">
     <value>Bir şeyler ters gitti</value>
   </data>
+  <data name="Something went wrong, so {0} stays in this window." xml:space="preserve">
+    <value>Bir sorun çıktı, bu yüzden {0} bu pencerede kalıyor.</value>
+  </data>
   <data name="Space across" xml:space="preserve">
     <value>Yatay dağıt</value>
   </data>
@@ -6213,6 +6219,9 @@
   </data>
   <data name="System" xml:space="preserve">
     <value>Sistem</value>
+  </data>
+  <data name="Tab not moved" xml:space="preserve">
+    <value>Sekme taşınmadı</value>
   </data>
   <data name="Tab order follows structure" xml:space="preserve">
     <value>Sekme sırası yapıyı izliyor</value>
@@ -6483,6 +6492,9 @@
   </data>
   <data name="The CIDFont has no /CIDSystemInfo." xml:space="preserve">
     <value>CIDFont'ta /CIDSystemInfo yok.</value>
+  </data>
+  <data name="The Home tab stays where it is." xml:space="preserve">
+    <value>Ana sayfa sekmesi yerinde kalır.</value>
   </data>
   <data name="The Note /ID {0} is used twice." xml:space="preserve">
     <value>Note /ID değeri {0} iki kez kullanılmış.</value>
@@ -7050,6 +7062,9 @@
   </data>
   <data name="The original is unchanged. Save the copy to keep it." xml:space="preserve">
     <value>Özgün dosya değişmedi. Kopyayı kaydederek saklayın.</value>
+  </data>
+  <data name="The other window is busy. Try again when it is done." xml:space="preserve">
+    <value>Diğer pencere meşgul. İşi bitince yeniden deneyin.</value>
   </data>
   <data name="The output does not open." xml:space="preserve">
     <value>Çıktı açılmıyor.</value>
@@ -8077,6 +8092,9 @@
   <data name="Wait for the job to end, or cancel it, then close." xml:space="preserve">
     <value>İşin bitmesini bekleyin ya da iptal edin, sonra kapatın.</value>
   </data>
+  <data name="Wait for the job to end, or cancel it, then move the tab." xml:space="preserve">
+    <value>İşin bitmesini bekleyin ya da iptal edin, sonra sekmeyi taşıyın.</value>
+  </data>
   <data name="Waiting to be added" xml:space="preserve">
     <value>Eklenmeyi bekleyen</value>
   </data>
@@ -8856,6 +8874,9 @@
   </data>
   <data name="{0} is a name the file keeps for itself. Choose another." xml:space="preserve">
     <value>{0} adını dosya kendisi için kullanıyor. Başka bir ad seçin.</value>
+  </data>
+  <data name="{0} is being reloaded. Try again in a moment." xml:space="preserve">
+    <value>{0} yeniden yükleniyor. Biraz sonra yeniden deneyin.</value>
   </data>
   <data name="{0} is encrypted for the holders of certain certificates. Pick the certificate that can open it." xml:space="preserve">
     <value>{0}, belirli sertifikaların sahipleri için şifrelenmiş. Onu açabilen sertifikayı seçin.</value>

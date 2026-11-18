@@ -621,6 +621,66 @@ public sealed partial class AppViewModel
         NotifyAll();
     }
 
+    /// <summary>
+    /// True when the tab can leave this window now. It cannot while a job runs, it is being reloaded or replaced, or a
+    /// question about closing it is up; the reason says which.
+    /// </summary>
+    internal bool CanRelease(ITab tab, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string? reason)
+    {
+        reason = null;
+        if (tab is not DocumentTab document || !Strip.Contains(document)) reason = Loc.T("The Home tab stays where it is.");
+        else if (IsBusy) reason = Loc.T("Wait for the job to end, or cancel it, then move the tab.");
+        else if (_reloading.Contains(document) || _pending.Any(p => ReferenceEquals(p.Replacing, document)) || _parsing.Any(p => ReferenceEquals(p.Replacing, document)))
+            reason = Loc.T("{0} is being reloaded. Try again in a moment.", document.Title);
+        else if (ReferenceEquals(CloseQuestion, document) || _closeQueue.Contains(document)) reason = Loc.T("Answer the question about {0} first.", document.Title);
+        return reason is null;
+    }
+
+    /// <summary>
+    /// True when a tab can arrive in this window now. <paramref name="windowFree"/> is the window's own answer: false
+    /// while it is disabled by a dialog, runs an action, shows an overlay or holds typed text in a tool.
+    /// </summary>
+    internal bool CanAdopt(bool windowFree, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string? reason)
+    {
+        bool free = windowFree && !IsBusy && !_exiting && CloseQuestion is null && _closeQueue.Count == 0 && _pending.Count == 0;
+        reason = free ? null : Loc.T("The other window is busy. Try again when it is done.");
+        return free;
+    }
+
+    /// <summary>
+    /// Takes the tab out of the strip without closing it: its session, undo history, renderer and recovery copy stay
+    /// with the tab, which is handed to another window. Returns where it was.
+    /// </summary>
+    internal int Release(DocumentTab tab)
+    {
+        int index = Strip.IndexOf(tab);
+        bool wasActive = ReferenceEquals(_activeTab, tab);
+        Strip.RemoveAt(index);
+        if (wasActive) _activeTab = Strip[Math.Min(index, Strip.Count - 1)];
+        if (ReferenceEquals(_lastDocument, tab)) _lastDocument = Documents.LastOrDefault();
+        DropAction();
+        if (ReferenceEquals(_messageTab, tab))
+        {
+            _message = null;
+            _messageTab = null;
+        }
+        _warnedAboutDisk.Remove(tab);
+        tab.Changed -= Tab_Changed;
+        RememberView(tab);
+        NotifyAll();
+        return index;
+    }
+
+    /// <summary>Puts a tab released by another window into the strip at <paramref name="index"/> and makes it the active one.</summary>
+    internal void Adopt(DocumentTab tab, int index)
+    {
+        Strip.Insert(Math.Clamp(index, 1, Strip.Count), tab);
+        tab.Changed += Tab_Changed;
+        _lastDocument = tab;
+        ActiveTab = tab;
+        NotifyAll();
+    }
+
     /// <summary>True when the window can close now; otherwise asks about the first document with unsaved changes and goes on from there.</summary>
     public bool RequestExit()
     {

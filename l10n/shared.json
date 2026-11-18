@@ -9309,5 +9309,26 @@
   },
   "Close tag {0}": {
     "tr": "{0} etiketini kapat"
+  },
+  "The Home tab stays where it is.": {
+    "tr": "Ana sayfa sekmesi yerinde kalır."
+  },
+  "Wait for the job to end, or cancel it, then move the tab.": {
+    "tr": "İşin bitmesini bekleyin ya da iptal edin, sonra sekmeyi taşıyın."
+  },
+  "{0} is being reloaded. Try again in a moment.": {
+    "tr": "{0} yeniden yükleniyor. Biraz sonra yeniden deneyin."
+  },
+  "Answer the question about {0} first.": {
+    "tr": "Önce {0} hakkındaki soruyu yanıtlayın."
+  },
+  "The other window is busy. Try again when it is done.": {
+    "tr": "Diğer pencere meşgul. İşi bitince yeniden deneyin."
+  },
+  "Tab not moved": {
+    "tr": "Sekme taşınmadı"
+  },
+  "Something went wrong, so {0} stays in this window.": {
+    "tr": "Bir sorun çıktı, bu yüzden {0} bu pencerede kalıyor."
   }
 }
