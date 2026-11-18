@@ -222,6 +222,41 @@ public class TagContentTests
     }
 
     [Fact]
+    public void TwoClaimedSequencesWithTheSameNumberTakeOneNewNumberEach()
+    {
+        string content = "/P <</MCID 0>> BDC BT /F1 11 Tf 72 700 Td (One) Tj ET EMC\n/P <</MCID 0>> BDC BT /F1 11 Tf 72 650 Td (Two) Tj ET EMC\n";
+        using var document = Open(Make([content], Tree("<</Type /StructElem /S /P /P PARENT /Pg PAGE /K 0>>"), structure: true));
+        string drawing = Drawing(document);
+        var tree = StructureTree.Read(document)!;
+        var lines = TextPage.Create(document, document.Pages[0]).Lines;
+
+        var result = tree.TagSelection(0, [lines[0].Range, lines[1].Range], "Div", tree.Roots[0]);
+
+        Assert.Null(result.Reason);
+        Assert.Equal("P:0 Div:1", Tags(document));
+        Assert.Equal(drawing, Drawing(document));
+        Assert.Equal("Div(mcid0,mcid1)", Kinds(tree.Roots[0]));
+    }
+
+    [Fact]
+    public void RenumberingASequenceKeepsItsOtherProperties()
+    {
+        string content = "/Span <</MCID 4 /ActualText (fi) /Lang (en-US)>> BDC BT /F1 11 Tf 72 700 Td (Hello world) Tj ET EMC\n";
+        using var document = Open(Make([content]));
+        var tree = StructureTree.Create(document);
+        var line = TextPage.Create(document, document.Pages[0]).Lines[0].Range;
+
+        Assert.Null(tree.TagSelection(0, [line], "P", null).Reason);
+
+        var begin = ContentParser.Parse(document.Pages[0].Contents()).First(o => o.Operator == "BDC");
+        var properties = Assert.IsType<PdfDictionary>(begin.Operands[1]);
+        Assert.Equal("P", Assert.IsType<PdfName>(begin.Operands[0]).Value);
+        Assert.Equal(0, Assert.IsType<PdfNumber>(properties["MCID"]).Integer);
+        Assert.Equal("fi", System.Text.Encoding.ASCII.GetString(Assert.IsType<PdfString>(properties["ActualText"]).Bytes));
+        Assert.IsType<PdfString>(properties["Lang"]);
+    }
+
+    [Fact]
     public void ASelectionThatCutsAStringIsRefusedWithTheContentUntouched()
     {
         using var document = Open(Make([Words]));
@@ -333,6 +368,7 @@ public class TagContentTests
 
         Assert.Null(result.Reason);
         Assert.Equal("P:0 P:1 Artifact", Tags(document));
+        Assert.DoesNotContain("Pagination", TestPdf.Text(document.Pages[0].Contents()));
         Assert.Equal(drawing, Drawing(document));
         Assert.True(AccessKit.IsBalanced(document, 0));
         Assert.Equal("P(mcid0),P(mcid1)", Kinds(tree.Roots[0]));

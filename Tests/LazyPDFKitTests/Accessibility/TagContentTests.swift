@@ -214,6 +214,37 @@ final class TagContentTests: XCTestCase {
         XCTAssertEqual(tags(document), "Body T\u{E9}xt:0")
     }
 
+    func test_twoClaimedSequencesWithTheSameNumberTakeOneNewNumberEach() throws {
+        let content = "/P <</MCID 0>> BDC BT /F1 11 Tf 72 700 Td (One) Tj ET EMC\n/P <</MCID 0>> BDC BT /F1 11 Tf 72 650 Td (Two) Tj ET EMC\n"
+        let document = try open(make([content], tree("<</Type /StructElem /S /P /P PARENT /Pg PAGE /K 0>>"), structure: true))
+        let before = drawing(document)
+        let tree = try XCTUnwrap(StructureTree.read(document))
+        let lines = TextPage.create(document, document.pages[0]).lines
+
+        let result = try tree.tagSelection(0, [lines[0].range, lines[1].range], "Div", tree.roots[0])
+
+        XCTAssertNil(result.reason)
+        XCTAssertEqual(tags(document), "P:0 Div:1")
+        XCTAssertEqual(drawing(document), before)
+        XCTAssertEqual(kinds(tree.roots[0]), "Div(mcid0,mcid1)")
+    }
+
+    func test_renumberingASequenceKeepsItsOtherProperties() throws {
+        let content = "/Span <</MCID 4 /ActualText (fi) /Lang (en-US)>> BDC BT /F1 11 Tf 72 700 Td (Hello world) Tj ET EMC\n"
+        let document = try open(make([content]))
+        let tree = StructureTree.create(document)
+        let line = TextPage.create(document, document.pages[0]).lines[0].range
+
+        XCTAssertNil(try tree.tagSelection(0, [line], "P", nil).reason)
+
+        let begin = try XCTUnwrap(ContentParser.parse(document.pages[0].contents()).first { $0.operator == "BDC" })
+        let properties = try XCTUnwrap(begin.operands[1] as? PdfDictionary)
+        XCTAssertEqual((begin.operands[0] as? PdfName)?.value, "P")
+        XCTAssertEqual((properties["MCID"] as? PdfNumber)?.integer, 0)
+        XCTAssertEqual((properties["ActualText"] as? PdfString)?.bytes, Array("fi".utf8))
+        XCTAssertNotNil(properties["Lang"] as? PdfString)
+    }
+
     func test_aSelectionThatCutsAStringIsRefusedWithTheContentUntouched() throws {
         let document = try open(make([words]))
         let tree = StructureTree.create(document)
@@ -311,6 +342,7 @@ final class TagContentTests: XCTestCase {
 
         XCTAssertNil(result.reason)
         XCTAssertEqual(tags(document), "P:0 P:1 Artifact")
+        XCTAssertFalse(String(decoding: document.pages[0].contents(), as: UTF8.self).contains("Pagination"))
         XCTAssertEqual(drawing(document), before)
         XCTAssertTrue(AccessKit.isBalanced(document, 0))
         XCTAssertEqual(kinds(tree.roots[0]), "P(mcid0),P(mcid1)")

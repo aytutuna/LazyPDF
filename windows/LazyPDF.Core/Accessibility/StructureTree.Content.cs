@@ -79,6 +79,21 @@ public sealed partial class StructureTree
         return kept.Entries.Any() ? $"/Artifact {kept} BDC" : "/Artifact BMC";
     }
 
+    // Keeps the other properties of the list (/ActualText, /Alt, /Lang, ...) so what assistive technology reads does not change.
+    private static string Renumbered(ContentOperation op, string type, int mcid, Func<string, PdfDictionary?> properties)
+    {
+        var dictionary = op.Operands.Count > 1 ? op.Operands[1] switch { PdfDictionary d => d, PdfName n => properties(n.Value), _ => null } : null;
+        bool artifact = op.Operands[0] is PdfName { Value: "Artifact" };
+        var kept = new PdfDictionary();
+        foreach (var (key, value) in dictionary?.Entries ?? [])
+        {
+            if (key == "MCID" || value is PdfReference || (artifact && ArtifactKeys.Contains(key))) continue;
+            kept[key] = value;
+        }
+        kept["MCID"] = new PdfNumber(mcid);
+        return $"{new PdfName(type)} {kept} BDC";
+    }
+
     /// <summary>
     /// Tags the characters of <paramref name="ranges"/> (indexes into <see cref="TextPage.Chars"/> of
     /// <c>TextPage.Create(document, page)</c>, as the viewer's selection gives them) as a new element of
@@ -162,14 +177,14 @@ public sealed partial class StructureTree
         foreach (var sequence in claimed)
         {
             var (stream, op) = page.At(sequence.Begin);
-            if (sequence.Mcid is { } id && named.TryGetValue(id, out var existing))
+            if (sequence.Mcid is { } id && named.TryGetValue(id, out var existing) && !moved.Contains(existing))
             {
                 moved.Add(existing);
                 order.Add((stream, op.Start, existing));
                 continue;
             }
             int fresh = Fresh();
-            edits[stream].Add(new ContentInsertion(op.Start, 1, $"{new PdfName(type)} <</MCID {fresh}>> BDC", op.End - op.Start));
+            edits[stream].Add(new ContentInsertion(op.Start, 1, Renumbered(op, type, fresh, page.Properties()), op.End - op.Start));
             order.Add((stream, op.Start, new StructContent(pageIndex, fresh)));
         }
         if (order.Count == 0) return Refused(TagContent.EmptySelection);

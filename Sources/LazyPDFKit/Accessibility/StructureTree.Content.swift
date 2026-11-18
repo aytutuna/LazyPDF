@@ -94,6 +94,26 @@ extension StructureTree {
         return kept.count > 0 ? "/Artifact \(kept) BDC" : "/Artifact BMC"
     }
 
+    // Keeps the other properties of the list (/ActualText, /Alt, /Lang, ...) so what assistive technology reads does not change.
+    private static func renumbered(_ op: ContentOperation, _ type: String, _ mcid: Int, _ properties: (String) -> PdfDictionary?) -> String {
+        var dictionary: PdfDictionary?
+        if op.operands.count > 1 {
+            if let d = op.operands[1] as? PdfDictionary {
+                dictionary = d
+            } else if let n = op.operands[1] as? PdfName {
+                dictionary = properties(n.value)
+            }
+        }
+        let artifact = (op.operands[0] as? PdfName)?.value == "Artifact"
+        let kept = PdfDictionary()
+        for (key, value) in dictionary?.entries ?? [] {
+            if key == "MCID" || value is PdfReference || (artifact && artifactKeys.contains(key)) { continue }
+            kept[key] = value
+        }
+        kept["MCID"] = PdfNumber(mcid)
+        return "\(PdfName(type)) \(kept) BDC"
+    }
+
     /// Tags the characters of `ranges` (indexes into `TextPage.chars` of `TextPage.create(document, page)`, as the viewer's
     /// selection gives them) as a new element of `type`; see `tagArea` for the rules.
     public func tagSelection(_ pageIndex: Int, _ ranges: [TextRange], _ type: String, _ parent: StructElement?, _ index: Int = -1) throws -> TagSelectionResult {
@@ -178,13 +198,13 @@ extension StructureTree {
         var moved: [StructContent] = []
         for sequence in claimed {
             let (stream, op) = page.at(sequence.begin)
-            if let id = sequence.mcid, let existing = named[id] {
+            if let id = sequence.mcid, let existing = named[id], !moved.contains(where: { $0 === existing }) {
                 moved.append(existing)
                 order.append((stream, op.start, existing))
                 continue
             }
             let number = fresh()
-            edits[stream].append(ContentInsertion(position: op.start, order: 1, text: "\(PdfName(type)) <</MCID \(number)>> BDC", skip: op.end - op.start))
+            edits[stream].append(ContentInsertion(position: op.start, order: 1, text: Self.renumbered(op, type, number, page.properties()), skip: op.end - op.start))
             order.append((stream, op.start, StructContent(pageIndex, number)))
         }
         if order.isEmpty { return refused(TagContent.emptySelection) }
