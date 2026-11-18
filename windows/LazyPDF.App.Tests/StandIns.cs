@@ -96,11 +96,11 @@ internal sealed class FakeSisters : ISisterApps
 /// <summary>The view model with fakes for the system, and folders of its own for what it writes.</summary>
 internal sealed class ViewModelFixture : IDisposable
 {
-    public ViewModelFixture()
+    public ViewModelFixture(DocumentRegistry? registry = null, RecoveryStore? recovery = null)
     {
         Dir = new TempDir();
         Vm = new AppViewModel(() => NewRenderer(), new FakeCodec(), new FakeFonts(), Sisters,
-                              Dir.Sub("settings"), Dir.Sub("recovery"), Dir.Sub("print"));
+                              Dir.Sub("settings"), Dir.Sub("recovery"), Dir.Sub("print"), recovery, registry);
     }
 
     public TempDir Dir { get; }

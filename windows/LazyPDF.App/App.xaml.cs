@@ -12,6 +12,8 @@ public partial class App : Application
     /// <summary>One instance per user session.</summary>
     private const string InstanceMutexName = @"Local\LazyPDF.App";
 
+    private readonly DocumentRegistry _registry = new();
+    private readonly RecoveryStore _recovery = new();
     private Mutex? _instance;
     private InstanceChannel? _channel;
 
@@ -70,6 +72,8 @@ public partial class App : Application
         // Apply the saved appearance before the first window is created.
         ThemeService.Initialize();
         base.OnStartup(e);
+        // Built here rather than through StartupUri so the first window shares the registry and recovery store.
+        new MainWindow(_registry, _recovery).Show();
     }
 
     // WPF fires an access key on a plain letter unless a text box has focus; a stray key must not discard work. Enter and Escape reach the default and cancel buttons the same way and stay.

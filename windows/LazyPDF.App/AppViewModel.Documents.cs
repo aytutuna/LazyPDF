@@ -39,7 +39,6 @@ public sealed partial class AppViewModel
     private readonly List<PendingOpen> _pending = [];
     private readonly List<CancellationTokenSource> _reads = [];
     private readonly List<PendingOpen> _parsing = [];
-    private readonly HashSet<string> _opening = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<DocumentTab, DiskStamp?> _warnedAboutDisk = [];
     private readonly HashSet<DocumentTab> _reloading = [];
     private readonly List<string> _closedFiles = [];
@@ -102,12 +101,18 @@ public sealed partial class AppViewModel
     public async Task OpenAsync(string path)
     {
         string name = System.IO.Path.GetFileName(path);
-        if (TabOf(path) is { } already)
+        IDisposable? pathClaim;
+        while (true)
         {
-            ActiveTab = already;
-            return;
+            if (_registry.FindOpen(path, null) is { } open)
+            {
+                open.Owner.Reveal(open.Tab);
+                return;
+            }
+            if (_registry.ClaimPath(path, out pathClaim) is not { } winner) break;
+            // The open that has the file ends with a tab, a password question or nothing; look again then.
+            await winner;
         }
-        if (_pending.Any(p => SamePath(p.Source.Path, path)) || !_opening.Add(path)) return;
         using var reading = new CancellationTokenSource();
         _reads.Add(reading);
         OpeningState? shown = null;
@@ -129,6 +134,7 @@ public sealed partial class AppViewModel
             NotifyAll();
         }
         PendingOpen? pending = null;
+        IDisposable? fileClaim = null;
         try
         {
             OpenSource source;
@@ -153,28 +159,23 @@ public sealed partial class AppViewModel
                 }
                 return;
             }
+            // The identity is only known now; claim it in the same stretch as the look, so two spellings of one file cannot both pass.
+            while (source.FileId is { } id)
+            {
+                if (_registry.FindOpen(path, id) is { } open)
+                {
+                    if (open.Tab is { Path: { } old } same && !File.Exists(old)) open.Owner.FollowMove(same, old, path, source);
+                    else open.Owner.Reveal(open.Tab);
+                    return;
+                }
+                if (_registry.ClaimFile(id, out fileClaim) is not { } winner) break;
+                await winner;
+            }
             if (reading.IsCancellationRequested)
             {
                 SetStatus(Loc.T("Canceled."));
                 return;
             }
-            if (source.FileId is not null && Documents.FirstOrDefault(d => d.FileId == source.FileId) is { } same)
-            {
-                if (same.Path is { } old && !File.Exists(old))
-                {
-                    same.MoveTo(path, source.Stamp, source.Hash);
-                    _recentFiles.Remove(old);
-                    _recentFiles.Add(path);
-                    JumpLists.Note(path);
-                    Recent = BuildRecent();
-                    ActiveTab = same;
-                    ShowNotice(Loc.T("File moved"), Loc.T("{0} was moved. This tab now follows it.", same.Title));
-                    return;
-                }
-                ActiveTab = same;
-                return;
-            }
-            if (source.FileId is not null && _pending.Any(p => p.Source.FileId == source.FileId)) return;
             fraction = null;
             if (shown is not null)
             {
@@ -188,7 +189,8 @@ public sealed partial class AppViewModel
         finally
         {
             finished = true;
-            _opening.Remove(path);
+            fileClaim?.Dispose();
+            pathClaim?.Dispose();
             _reads.Remove(reading);
             if (pending is not null) _parsing.Remove(pending);
             if (shown is not null && ReferenceEquals(Opening, shown))
@@ -197,6 +199,33 @@ public sealed partial class AppViewModel
                 NotifyAll();
             }
         }
+    }
+
+    // A file read again under another name where the tab's own file is gone: the tab follows it.
+    private void FollowMove(DocumentTab tab, string old, string path, OpenSource source)
+    {
+        tab.MoveTo(path, source.Stamp, source.Hash);
+        _recentFiles.Remove(old);
+        _recentFiles.Add(path);
+        JumpLists.Note(path);
+        Recent = BuildRecent();
+        Reveal(tab);
+        ShowNotice(Loc.T("File moved"), Loc.T("{0} was moved. This tab now follows it.", tab.Title));
+    }
+
+    /// <summary>The tab this view model holds for the file, or a pending open; null when it holds neither.</summary>
+    internal OpenHit? Holds(string? path, string? fileId)
+    {
+        if (Documents.FirstOrDefault(d => SamePath(d.Path, path) || fileId is not null && d.FileId == fileId) is { } tab) return new(this, tab);
+        if (_pending.Any(p => SamePath(p.Source.Path, path) || fileId is not null && p.Source.FileId == fileId)) return new(this, null);
+        return null;
+    }
+
+    internal void Reveal(DocumentTab? tab)
+    {
+        if (tab is not null) ActiveTab = tab;
+        else NotifyAll();
+        BringForward?.Invoke(tab);
     }
 
     private DocumentTab? TabOf(string path) => Documents.FirstOrDefault(d => SamePath(d.Path, path));

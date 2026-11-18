@@ -25,6 +25,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private readonly DocumentOpener _opener;
     private readonly ISisterApps _sisters;
     private readonly RecoveryStore _recovery;
+    private readonly DocumentRegistry _registry;
     private readonly RecentFiles _recentFiles;
     private readonly string? _settingsDirectory;
     private readonly string _printDirectory;
@@ -48,14 +49,17 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private readonly SynchronizationContext? _context = SynchronizationContext.Current;
 
     public AppViewModel(Func<IDocumentRenderer> renderers, IImageCodec codec, IFontSource fonts, ISisterApps sisters,
-                        string? settingsDirectory = null, string? recoveryDirectory = null, string? printDirectory = null)
+                        string? settingsDirectory = null, string? recoveryDirectory = null, string? printDirectory = null,
+                        RecoveryStore? recovery = null, DocumentRegistry? registry = null)
     {
         _renderers = renderers;
         _opener = new DocumentOpener(codec, fonts);
         _sisters = sisters;
         _settingsDirectory = settingsDirectory;
         _printDirectory = printDirectory ?? AppFolders.PrintCopies;
-        _recovery = new RecoveryStore(recoveryDirectory);
+        _recovery = recovery ?? new RecoveryStore(recoveryDirectory);
+        _registry = registry ?? new DocumentRegistry();
+        _registry.Add(this);
         _recentFiles = new RecentFiles(settingsDirectory);
         var preferences = AppPreferencesStore.Load(settingsDirectory ?? StoreFiles.DefaultDirectory);
         _sidePanelId = preferences.SidePanel;
@@ -72,6 +76,9 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>Set by the window: brings it and the tab to the front when a file is opened that this view model already holds.</summary>
+    internal Action<DocumentTab?>? BringForward { get; set; }
 
     /// <summary>The Home tab first, then the open documents in the order shown.</summary>
     public ObservableCollection<ITab> Strip { get; } = [HomeTab.Instance];

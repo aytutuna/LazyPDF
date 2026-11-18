@@ -26,7 +26,7 @@ public partial class MainWindow : Window
     private bool _homeShown;
     private string _statusShown = "";
 
-    public MainWindow() : this(NewViewModel(out var thumbnails), thumbnails)
+    public MainWindow(DocumentRegistry registry, RecoveryStore recovery) : this(NewViewModel(out var thumbnails, registry, recovery), thumbnails)
     {
     }
 
@@ -51,6 +51,9 @@ public partial class MainWindow : Window
         _vm.ToolOpened += (_, _) => FocusInspector();
         _vm.CloseRequested += (_, tab) => RequestClose(tab);
         _vm.SystemPrintRequested += ViewModel_SystemPrintRequested;
+        _vm.BringForward = _ => OpenFiles([]);
+        WindowHub.Register(this);
+        Closed += (_, _) => WindowHub.Unregister(this);
         Loaded += Window_Loaded;
     }
 
@@ -110,15 +113,16 @@ public partial class MainWindow : Window
 
     private void ToolStrip_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateToolStripMode(e.NewSize.Width);
 
-    private static AppViewModel NewViewModel(out Thumbnails thumbnails)
+    private static AppViewModel NewViewModel(out Thumbnails thumbnails, DocumentRegistry registry, RecoveryStore recovery)
     {
         Func<IDocumentRenderer> renderers = () => new WindowsPageRenderer();
         thumbnails = new Thumbnails(renderers);
-        return new AppViewModel(renderers, new WicImageCodec(), new SystemFontSource(), new SisterApps());
+        return new AppViewModel(renderers, new WicImageCodec(), new SystemFontSource(), new SisterApps(), recovery: recovery, registry: registry);
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        WindowHub.Active = this;
         _vm.CheckRecovery();
         RefreshFromViewModel();
         OpenFiles(App.StartupFiles);
