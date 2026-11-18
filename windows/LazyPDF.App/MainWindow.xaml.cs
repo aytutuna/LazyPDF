@@ -27,7 +27,6 @@ public partial class MainWindow : Window
     private string _statusShown = "";
 
     private readonly Point? _opensAt;
-    private bool _ownedWorkAsked;
 
     /// <summary>The first window does the start-up work: the crash offer, the files of the command line and of the last session. A secondary one starts empty, at <paramref name="at"/> or beside the window in use.</summary>
     public MainWindow(DocumentRegistry registry, RecoveryStore recovery, bool primary = true, Point? at = null)
@@ -209,7 +208,6 @@ public partial class MainWindow : Window
     {
         // This window was closing for good and no longer is.
         if (_exitTabs is not null) WindowHub.EndExit();
-        _ownedWorkAsked = false;
         _exitTabs = null;
         _exitActive = null;
     }
@@ -435,7 +433,7 @@ public partial class MainWindow : Window
             if (_held.Count > 0) _vm.ShowNotice(Loc.T("Still working"), Loc.T("Wait for the job to end, or cancel it, then close."));
             return;
         }
-        if (!_ownedWorkAsked && _vm.HasOwnedWork && !WindowHub.Exiting)
+        if (AsksAboutOwnedWork(_exitTabs is not null, _vm.HasOwnedWork, WindowHub.Exiting))
         {
             string question = Loc.T(Tools.Batch.BatchWindow.IsRunning(_vm) ? "A batch is running. Close anyway?" : "A comparison window is open. Close anyway?");
             if (MessageBox.Show(this, question, "Lazy PDF", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
@@ -443,7 +441,6 @@ public partial class MainWindow : Window
                 e.Cancel = true;
                 return;
             }
-            _ownedWorkAsked = true;
         }
         // Handing in can show a notice, which forgets the session, so it comes first.
         if (!HandInTyping(_vm.ActiveDocument))
@@ -483,6 +480,9 @@ public partial class MainWindow : Window
             p.LastActive = p.ReopenLast ? active : null;
         });
     }
+
+    // Once the unsaved questions have begun the tabs are being closed, and the window comes back to Closing when they are answered.
+    internal static bool AsksAboutOwnedWork(bool exitUnderway, bool hasOwnedWork, bool appEnding) => !exitUnderway && hasOwnedWork && !appEnding;
 
     internal static WindowPlacement PlacementOf(bool maximized, Rect current, Rect restore)
     {

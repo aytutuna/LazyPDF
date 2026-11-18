@@ -50,4 +50,11 @@ internal static class WindowHub
 
     /// <summary>A window did not close after all.</summary>
     public static void EndExit() => Exiting = false;
+
+    /// <summary>Forgets the windows' shared state, for tests that build windows of their own.</summary>
+    internal static void Reset()
+    {
+        Exiting = false;
+        Active = null;
+    }
 }
