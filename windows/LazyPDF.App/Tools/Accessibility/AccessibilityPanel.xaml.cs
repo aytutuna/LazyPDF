@@ -60,7 +60,10 @@ public partial class AccessibilityPanel : ToolPanel
         _readTicket++;
         StopReading();
         _report = null;
+        StopDraw();
         DropTree();
+        TagFilterBox.Text = "";
+        _view = null;
         _figureNumber = 0;
         CheckList.ItemsSource = null;
         TagTree.Items.Clear();
@@ -84,6 +87,16 @@ public partial class AccessibilityPanel : ToolPanel
         FiguresView.Visibility = Show(ShowFigures);
         ReadView.Visibility = Show(ShowRead);
         if (ShowRead.IsChecked != true) StopReading();
+        if (ShowTags.IsChecked != true)
+        {
+            StopDraw();
+            _boxTicket++;
+            ClearMarks();
+        }
+        else if (_tree is not null)
+        {
+            _ = ShowMarksAsync(SelectedKid);
+        }
         Refresh();
     }
 

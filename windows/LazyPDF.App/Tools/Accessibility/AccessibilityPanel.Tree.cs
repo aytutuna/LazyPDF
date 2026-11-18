@@ -18,6 +18,7 @@ public partial class AccessibilityPanel
         int ticket = ++_treeTicket;
         _treeStale = false;
         var before = _state.Checked;
+        if (TagTree.Items.Count > 0) _view = CaptureTags();
         DropTree();
         TagTree.Items.Clear();
         FigureList.ItemsSource = null;
@@ -62,5 +63,10 @@ public partial class AccessibilityPanel
     }
 
     // The copy is let go, not disposed: a picture being found may still be reading it.
-    private void DropTree() => (_tree, _treeCopy, _figures, _treeCount, _treeFailed) = (null, null, [], 0, false);
+    private void DropTree()
+    {
+        (_tree, _treeCopy, _figures, _treeCount, _treeFailed) = (null, null, [], 0, false);
+        _boxTicket++;
+        ClearMarks();
+    }
 }

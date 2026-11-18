@@ -74,8 +74,79 @@
 
         <StackPanel x:Name="TagsView" Margin="0,12,0,0" Visibility="Collapsed">
             <TextBlock x:Name="TagsNote" Style="{StaticResource BodyText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
-            <TreeView x:Name="TagTree" MaxHeight="320" Margin="0,8,0,0" AutomationProperties.Name="{loc:T Tag tree}"
-                      SelectedItemChanged="TagTree_SelectedItemChanged" />
+            <DockPanel x:Name="TagsReadOnlyRow" Margin="0,8,0,0" Visibility="Collapsed">
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE72E;" />
+                <TextBlock x:Name="TagsReadOnly" Style="{StaticResource ReasonText}" TextWrapping="Wrap" />
+            </DockPanel>
+            <StackPanel x:Name="TagsTools" Visibility="Collapsed">
+                <TextBlock Text="{loc:T Filter}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                <TextBox x:Name="TagFilterBox" AutomationProperties.Name="{loc:T Filter}" TextChanged="TagFilter_TextChanged" />
+                <WrapPanel x:Name="TagButtons" Margin="0,8,0,0">
+                    <Button x:Name="TagUp" Tag="MoveUp" Content="{loc:T Move up}" AutomationProperties.Name="{loc:T Move up}" Margin="0,0,8,4" Click="TagCommand_Click" />
+                    <Button x:Name="TagDown" Tag="MoveDown" Content="{loc:T Move down}" AutomationProperties.Name="{loc:T Move down}" Margin="0,0,8,4" Click="TagCommand_Click" />
+                    <Button x:Name="TagIndent" Tag="Indent" Content="{loc:T Indent}" AutomationProperties.Name="{loc:T Indent}" Margin="0,0,8,4" Click="TagCommand_Click" />
+                    <Button x:Name="TagOutdent" Tag="Outdent" Content="{loc:T Outdent}" AutomationProperties.Name="{loc:T Outdent}" Margin="0,0,8,4" Click="TagCommand_Click" />
+                    <Button x:Name="TagDelete" Tag="Delete" Content="{loc:T Delete}" AutomationProperties.Name="{loc:T Delete}" Margin="0,0,8,4" Click="TagCommand_Click" />
+                    <Button x:Name="TagDeleteArtifact" Tag="DeleteAsArtifact" Content="{loc:T Delete as artifact}" AutomationProperties.Name="{loc:T Delete as artifact}" Margin="0,0,8,4" Click="TagCommand_Click" />
+                    <Button x:Name="TagArtifact" Tag="MarkAsArtifact" Content="{loc:T Mark as artifact}" AutomationProperties.Name="{loc:T Mark as artifact}" Margin="0,0,8,4" Click="TagCommand_Click" />
+                    <Button x:Name="TagHeaderRow" Tag="MakeHeaderRow" Content="{loc:T Make header row}" AutomationProperties.Name="{loc:T Make header row}" Margin="0,0,8,4" Click="TagCommand_Click" />
+                </WrapPanel>
+                <TextBlock x:Name="TagMessage" Style="{StaticResource ReasonText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" Margin="0,4,0,0" />
+            </StackPanel>
+            <TreeView x:Name="TagTree" MaxHeight="320" Margin="0,8,0,0" AutomationProperties.Name="{loc:T Tag tree}" AllowDrop="True"
+                      SelectedItemChanged="TagTree_SelectedItemChanged" PreviewKeyDown="TagTree_PreviewKeyDown"
+                      PreviewMouseLeftButtonDown="TagTree_PreviewMouseLeftButtonDown" PreviewMouseRightButtonDown="TagTree_PreviewMouseRightButtonDown"
+                      PreviewMouseMove="TagTree_PreviewMouseMove" DragOver="TagTree_DragOver" Drop="TagTree_Drop">
+                <TreeView.ContextMenu>
+                    <ContextMenu x:Name="TagMenu" Opened="TagMenu_Opened">
+                        <MenuItem Tag="MoveUp" Header="{loc:T Move up}" InputGestureText="Alt+Up" Click="TagCommand_Click" />
+                        <MenuItem Tag="MoveDown" Header="{loc:T Move down}" InputGestureText="Alt+Down" Click="TagCommand_Click" />
+                        <MenuItem Tag="Indent" Header="{loc:T Indent}" InputGestureText="Alt+Right" Click="TagCommand_Click" />
+                        <MenuItem Tag="Outdent" Header="{loc:T Outdent}" InputGestureText="Alt+Left" Click="TagCommand_Click" />
+                        <Separator />
+                        <MenuItem Tag="Delete" Header="{loc:T Delete}" InputGestureText="Del" Click="TagCommand_Click" />
+                        <MenuItem Tag="DeleteAsArtifact" Header="{loc:T Delete as artifact}" InputGestureText="Ctrl+Del" Click="TagCommand_Click" />
+                        <MenuItem Tag="MarkAsArtifact" Header="{loc:T Mark as artifact}" Click="TagCommand_Click" />
+                        <MenuItem Tag="MakeHeaderRow" Header="{loc:T Make header row}" Click="TagCommand_Click" />
+                    </ContextMenu>
+                </TreeView.ContextMenu>
+            </TreeView>
+
+            <StackPanel x:Name="TagEditor" Margin="0,12,0,0" Visibility="Collapsed" TextBoxBase.TextChanged="TagField_Changed"
+                        Selector.SelectionChanged="TagField_Changed" PreviewKeyDown="TagEditor_PreviewKeyDown">
+                <TextBlock Text="{loc:T Type}" Style="{StaticResource FieldLabelText}" />
+                <ComboBox x:Name="TagType" IsEditable="True" AutomationProperties.Name="{loc:T Type}" />
+                <TextBlock Text="{loc:T Title}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                <TextBox x:Name="TagTitle" AutomationProperties.Name="{loc:T Title}" />
+                <TextBlock Text="{loc:T Alternate text}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                <TextBox x:Name="TagAlt" AutomationProperties.Name="{loc:T Alternate text}" />
+                <TextBlock Text="{loc:T Replacement text}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                <TextBox x:Name="TagActual" AutomationProperties.Name="{loc:T Replacement text}" />
+                <TextBlock Text="{loc:T Language}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                <TextBox x:Name="TagLang" AutomationProperties.Name="{loc:T Language}" />
+                <StackPanel x:Name="TagCell" Visibility="Collapsed">
+                    <TextBlock Text="{loc:T Scope}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                    <ComboBox x:Name="TagScope" AutomationProperties.Name="{loc:T Scope}" />
+                    <TextBlock Text="{loc:T Row span}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                    <TextBox x:Name="TagRowSpan" AutomationProperties.Name="{loc:T Row span}" />
+                    <TextBlock Text="{loc:T Column span}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                    <TextBox x:Name="TagColSpan" AutomationProperties.Name="{loc:T Column span}" />
+                    <TextBlock Text="{loc:T Header cells}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                    <TextBox x:Name="TagHeaders" AutomationProperties.Name="{loc:T Header cells}" />
+                </StackPanel>
+                <TextBlock x:Name="TagFieldMessage" Style="{StaticResource ReasonText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" Margin="0,4,0,0" />
+                <Button x:Name="TagApply" Content="{loc:T Apply}" AutomationProperties.Name="{loc:T Apply}" HorizontalAlignment="Left" Margin="0,8,0,0" Click="TagApply_Click" />
+            </StackPanel>
+
+            <StackPanel x:Name="TagSelectionTools" Margin="0,12,0,0" Visibility="Collapsed">
+                <TextBlock Text="{loc:T Tag the selection as}" Style="{StaticResource FieldLabelText}" />
+                <ComboBox x:Name="TagAs" IsEditable="True" AutomationProperties.Name="{loc:T Tag the selection as}" />
+                <WrapPanel Margin="0,8,0,0">
+                    <Button x:Name="TagSelect" Content="{loc:T Tag selection}" AutomationProperties.Name="{loc:T Tag selection}" Margin="0,0,8,4" Click="TagSelection_Click" />
+                    <Button x:Name="TagDraw" Content="{loc:T Tag drawn area}" AutomationProperties.Name="{loc:T Tag drawn area}" Margin="0,0,8,4" Click="TagDraw_Click" />
+                    <Button x:Name="TagSelectionArtifact" Content="{loc:T Selection as artifact}" AutomationProperties.Name="{loc:T Selection as artifact}" Margin="0,0,8,4" Click="TagSelectionArtifact_Click" />
+                </WrapPanel>
+            </StackPanel>
         </StackPanel>
 
         <StackPanel x:Name="FiguresView" Margin="0,12,0,0" Visibility="Collapsed">

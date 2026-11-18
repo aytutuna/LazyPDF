@@ -9168,5 +9168,131 @@
   },
   "Tag the file": {
     "tr": "Dosyayı etiketle"
+  },
+  "Change tag": {
+    "tr": "Etiketi değiştir"
+  },
+  "That cannot be done to this tag.": {
+    "tr": "Bu etikete bu yapılamaz."
+  },
+  "The tag is no longer in the file.": {
+    "tr": "Etiket artık dosyada yok."
+  },
+  "Tags not changed": {
+    "tr": "Etiketler değiştirilmedi"
+  },
+  "Move tag": {
+    "tr": "Etiketi taşı"
+  },
+  "Select the text on the page first.": {
+    "tr": "Önce sayfada metni seçin."
+  },
+  "The type is empty.": {
+    "tr": "Tür boş."
+  },
+  "Tag selection": {
+    "tr": "Seçimi etiketle"
+  },
+  "Mark as artifact": {
+    "tr": "Yapay öğe olarak işaretle"
+  },
+  "Drag on the page over what to tag.": {
+    "tr": "Etiketlenecek yerin üzerinde sayfada sürükleyin."
+  },
+  "Tag area": {
+    "tr": "Alanı etiketle"
+  },
+  "Not set": {
+    "tr": "Ayarlanmadı"
+  },
+  "Row": {
+    "tr": "Satır"
+  },
+  "Column": {
+    "tr": "Sütun"
+  },
+  "Both": {
+    "tr": "İkisi de"
+  },
+  "The first {0} matches are shown.": {
+    "tr": "İlk {0} eşleşme gösteriliyor."
+  },
+  "{0} tags match.": {
+    "tr": "{0} etiket eşleşiyor."
+  },
+  "Indent": {
+    "tr": "İçeri al"
+  },
+  "Outdent": {
+    "tr": "Dışarı al"
+  },
+  "Delete as artifact": {
+    "tr": "Yapay öğe olarak sil"
+  },
+  "Make header row": {
+    "tr": "Başlık satırı yap"
+  },
+  "Alternate text": {
+    "tr": "Alternatif metin"
+  },
+  "Replacement text": {
+    "tr": "Yerine geçen metin"
+  },
+  "Scope": {
+    "tr": "Kapsam"
+  },
+  "Row span": {
+    "tr": "Satır aralığı"
+  },
+  "Column span": {
+    "tr": "Sütun aralığı"
+  },
+  "Header cells": {
+    "tr": "Başlık hücreleri"
+  },
+  "Tag the selection as": {
+    "tr": "Seçimi şu türle etiketle"
+  },
+  "Tag drawn area": {
+    "tr": "Çizilen alanı etiketle"
+  },
+  "Selection as artifact": {
+    "tr": "Seçimi yapay öğe yap"
+  },
+  "The file is encrypted, so its tags cannot be changed here.": {
+    "tr": "Dosya şifreli olduğundan etiketleri burada değiştirilemez."
+  },
+  "The tree is too large to edit, so it is read-only.": {
+    "tr": "Ağaç düzenlenemeyecek kadar büyük, bu yüzden salt okunur."
+  },
+  "Move tag up": {
+    "tr": "Etiketi yukarı taşı"
+  },
+  "Move tag down": {
+    "tr": "Etiketi aşağı taşı"
+  },
+  "Indent tag": {
+    "tr": "Etiketi içeri al"
+  },
+  "Outdent tag": {
+    "tr": "Etiketi dışarı al"
+  },
+  "Delete tag": {
+    "tr": "Etiketi sil"
+  },
+  "Delete tag as artifact": {
+    "tr": "Etiketi yapay öğe olarak sil"
+  },
+  "A span is a whole number from 1.": {
+    "tr": "Aralık 1 veya daha büyük bir tam sayıdır."
+  },
+  "Marked content, page {0}": {
+    "tr": "İşaretli içerik, sayfa {0}"
+  },
+  "Marked content": {
+    "tr": "İşaretli içerik"
+  },
+  "Annotation, page {0}": {
+    "tr": "Ek açıklama, sayfa {0}"
   }
 }
