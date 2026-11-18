@@ -1,12 +1,17 @@
 #if os(macOS)
 import XCTest
 import AppKit
+import Observation
 @testable import LazyPDFMac
 import LazyPDFApp
 import LazyPDFKit
 import LazyPDFUI
 
 // Not in the Windows tests: the Mac holds one shell for each window, and only one of them is the primary.
+
+private final class ChangeCount: @unchecked Sendable {
+    var count = 0
+}
 
 @MainActor
 final class WindowHubTests: XCTestCase {
@@ -279,19 +284,19 @@ final class WindowHubTests: XCTestCase {
         let hub = WindowHub()
         let primary = try XCTUnwrap(hub.claim(nil))
         await primary.vm.open(try file("a.pdf"))
-        var changes = 0
+        let changes = ChangeCount()
         func watch() {
-            withObservationTracking({ _ = hub.targets(besides: primary) }, onChange: { changes += 1 })
+            withObservationTracking({ _ = hub.targets(besides: primary) }, onChange: { changes.count += 1 })
         }
 
         watch()
         let id = hub.roster.park(try XCTUnwrap(primary.vm.activeDocument), from: primary.vm, at: 1)
         let second = try XCTUnwrap(hub.claim(id))
-        XCTAssertEqual(changes, 1)
+        XCTAssertEqual(changes.count, 1)
 
         watch()
         hub.windowGone(second)
-        XCTAssertEqual(changes, 2)
+        XCTAssertEqual(changes.count, 2)
     }
 
     func test_anEmptiedWindowThatWaitedForASheetClosesWhenTheWindowEndsIt() async throws {
