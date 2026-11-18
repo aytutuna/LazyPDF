@@ -28,6 +28,10 @@ extension AppViewModel {
     /// True while a file is being opened here, so an emptied window is not closed under it.
     public var isOpening: Bool { !opening.isEmpty }
 
+    /// True while something here still needs the window: a file opening or waiting to open, a job, question or sheet, or a
+    /// message the person has not dismissed.
+    public var keepsWindow: Bool { isOpening || !held.isEmpty || holdsFiles || message != nil }
+
     /// The checks that belong to the window a tab leaves, run before a window is made for it. False, with the reason shown
     /// here, when it stays.
     public func mayRelease(_ tab: DocumentTab) -> Bool {

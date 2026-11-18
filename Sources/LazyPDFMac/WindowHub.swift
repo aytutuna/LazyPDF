@@ -184,12 +184,12 @@ final class WindowHub {
         }
     }
 
-    /// A window made for a tab goes when the tab leaves it. While a file is being opened, a question is up or a sheet is
-    /// open there it waits, and the shell asks again when that is over.
+    /// A window made for a tab goes when the tab leaves it. While a file is being opened or held, a question is up, a sheet
+    /// is open or a message is showing there it waits, and the shell asks again when that is over.
     func closeEmpty(_ shell: MacShell) {
         shell.closeWhenIdle = false
         guard !shell.isPrimary, !shell.closing, shell.window != nil, shell.vm.documents.isEmpty else { return }
-        if shell.vm.isOpening || shell.vm.isBlocked || shell.vm.sheetOpen || !shell.isFree {
+        if shell.vm.keepsWindow || !shell.isFree {
             shell.closeWhenIdle = true
             return
         }

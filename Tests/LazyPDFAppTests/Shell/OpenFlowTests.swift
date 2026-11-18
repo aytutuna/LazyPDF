@@ -326,4 +326,21 @@ final class OpenFlowTests: XCTestCase {
 
         XCTAssertEqual(f.vm.documents.map(\.title), ["a.pdf"])
     }
+
+    func test_aWindowIsKeptForHeldFilesAndForAMessageUntilItIsDismissed() async {
+        let f = ViewModelFixture(self)
+        XCTAssertFalse(f.vm.keepsWindow)
+
+        f.vm.actionRunning = true
+        await f.vm.openOrHold(f.pdf("a.pdf"), access: nil)
+        f.vm.actionRunning = false
+        XCTAssertTrue(f.vm.keepsWindow)
+        await f.vm.releaseHeld()
+        XCTAssertFalse(f.vm.keepsWindow)
+
+        await f.vm.open(URL(fileURLWithPath: "/no/such/file.pdf"))
+        XCTAssertTrue(f.vm.keepsWindow)
+        f.vm.dismissMessage()
+        XCTAssertFalse(f.vm.keepsWindow)
+    }
 }
