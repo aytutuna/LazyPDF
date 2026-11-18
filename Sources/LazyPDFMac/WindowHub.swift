@@ -158,7 +158,9 @@ final class WindowHub {
         return showing.enumerated().compactMap { number, target in
             guard target !== shell else { return nil }
             let name = L10n.t("Window {0}: {1}", String(number + 1), target.window?.title ?? "Lazy PDF")
-            return TabMoveTarget(id: target.id, name: name, move: { [unowned self, unowned shell, unowned target] tab in
+            return TabMoveTarget(id: target.id, name: name, move: { [weak self, weak shell, weak target] tab in
+                // The menu may have been built before the window was closed.
+                guard let self, let shell, let target, self.shells[target.id] != nil, target.window != nil else { return }
                 self.move(tab, from: shell, to: target)
             })
         }

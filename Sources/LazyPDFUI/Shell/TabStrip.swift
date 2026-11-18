@@ -67,9 +67,13 @@ struct TabStrip: View {
 
     private func moves(for tab: any StripTab) -> TabMoves? {
         guard let document = tab as? DocumentTab, let newWindow = moveToNewWindow else { return nil }
-        let targets: [TabMoveTarget] = windowTargets?() ?? []
-        return TabMoves(newWindow: { newWindow(document) }, targets: targets.map { target in
-            TabMoves.Entry(id: target.id, name: target.name, move: { target.move(document) })
+        let targets = windowTargets
+        // Asked when the menu opens: windows come and go while this strip stays as it is.
+        return TabMoves(newWindow: { newWindow(document) }, targets: {
+            let list: [TabMoveTarget] = targets?() ?? []
+            return list.map { target in
+                TabMoves.Entry(id: target.id, name: target.name, move: { target.move(document) })
+            }
         })
     }
 
@@ -88,7 +92,7 @@ private struct TabMoves {
     }
 
     let newWindow: @MainActor () -> Void
-    let targets: [Entry]
+    let targets: () -> [Entry]
 }
 
 private struct TabItem: View {
@@ -134,10 +138,11 @@ private struct TabItem: View {
         .contentShape(Rectangle())
         .contextMenu {
             if let moves {
+                let targets = moves.targets()
                 Button(L10n.t("Move to new window"), action: moves.newWindow)
-                if !moves.targets.isEmpty {
+                if !targets.isEmpty {
                     Menu(L10n.t("Move to window")) {
-                        ForEach(moves.targets) { target in
+                        ForEach(targets) { target in
                             Button(target.name, action: target.move)
                         }
                     }
