@@ -157,6 +157,7 @@ final class WindowRosterTests: XCTestCase {
         XCTAssertTrue(f.vm.documents.first === clean)
         f.vm.closeAllTabs()
         XCTAssertTrue(f.renderers[0].disposed)
+        XCTAssertTrue(f.vm.documents.isEmpty)
     }
 
     func test_cancellingTheQuestionOfALaterWindowLeavesTheEarlierOnesOpen() async throws {

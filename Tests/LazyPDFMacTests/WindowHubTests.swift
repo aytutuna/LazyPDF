@@ -80,6 +80,28 @@ final class WindowHubTests: XCTestCase {
         XCTAssertTrue(hub.claim(nil) === primary)
     }
 
+    func test_theRedButtonOfThePrimaryEmptiesItAndLeavesItReadyForTheSameFile() async throws {
+        let hub = WindowHub()
+        let primary = try XCTUnwrap(hub.claim(nil))
+        let url = try file("a.pdf")
+        await primary.vm.open([url, try file("b.pdf")])
+        let id = hub.roster.park(primary.vm.documents[1], from: primary.vm, at: 1)
+        let second = try XCTUnwrap(hub.claim(id))
+        let primaryWindow = NSWindow()
+        let secondWindow = NSWindow()
+        primary.attach(primaryWindow)
+        second.attach(secondWindow)
+        secondWindow.orderFront(nil)
+
+        let closes = try XCTUnwrap(primaryWindow.delegate).windowShouldClose?(primaryWindow)
+
+        XCTAssertEqual(closes, false)
+        XCTAssertTrue(primary.vm.documents.isEmpty)
+        await second.vm.open(url)
+        XCTAssertNotNil(second.vm.tab(of: url))
+        XCTAssertEqual(second.vm.documents.count, 2)
+    }
+
     func test_quittingWithNothingUnsavedAnswersAtOnce() async throws {
         let hub = WindowHub()
         let primary = try XCTUnwrap(hub.claim(nil))

@@ -26,6 +26,7 @@ final class MacShell {
     var closing = false
     var filesFromOutside = false
     private var restored = false
+    private var hadWindow = false
     var noteRecent: (URL) -> Void = { NSDocumentController.shared.noteNewRecentDocumentURL($0) }
 
     init(hub: WindowHub, id: UUID, primary: Bool) {
@@ -77,6 +78,7 @@ final class MacShell {
 
     func attach(_ window: NSWindow) {
         self.window = window
+        hadWindow = true
         update(WindowState(vm.activeDocument))
         restoreSession()
         closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { !self.vm.documents.isEmpty },
@@ -86,9 +88,22 @@ final class MacShell {
 
     // Another window is showing, so the red button closes this one once its own tabs have been answered for.
     private func closeFromButton() -> Bool {
-        if vm.requestExit() { return true }
+        if vm.requestExit() { return finishClose() }
         closing = vm.closeQuestion != nil
         return false
+    }
+
+    // The primary is never closed: it is hidden, empty, and comes back for Finder's files and the Dock. Returns whether
+    // the window should still be closed by the system.
+    private func finishClose() -> Bool {
+        if !isPrimary { return true }
+        window?.orderOut(nil)
+        return false
+    }
+
+    /// The close of this window has been answered for.
+    func closeWindow() {
+        if isPrimary { window?.orderOut(nil) } else { window?.close() }
     }
 
     func update(_ state: WindowState) {
@@ -110,7 +125,12 @@ final class MacShell {
     }
 
     func showWindow() {
-        window?.makeKeyAndOrderFront(nil)
+        // A window that was closed for good has nothing to show; the scene is asked for a new one.
+        guard let window else {
+            if hadWindow { hub.reopenWindow(of: self) }
+            return
+        }
+        window.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
     }
 

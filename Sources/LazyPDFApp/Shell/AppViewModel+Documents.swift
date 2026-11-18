@@ -485,12 +485,11 @@ extension AppViewModel {
         return false
     }
 
-    /// Lets go of every tab without asking, for the end of the app or of a window whose tabs were all answered for.
+    /// Closes every tab without asking, for the end of the app or of a window whose tabs were all answered for. The tabs leave
+    /// the strip, so a window that stays has nothing of them left.
     public func closeAllTabs() {
-        for tab in documents {
-            rememberView(tab)
-            tab.dispose()
-        }
+        exiting = false
+        for tab in documents { close(tab) }
     }
 
     /// Looks at the active document's file: when another program changed or removed it, the info bar says so (once for each

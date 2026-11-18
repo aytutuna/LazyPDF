@@ -72,6 +72,12 @@ final class WindowHub {
         registry.remove(shell.vm)
     }
 
+    /// Asks the scene for a window for a shell whose own has gone.
+    func reopenWindow(of shell: MacShell) {
+        openWindow?(shell.id)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+
     /// Kept from a live view, since `openWindow` is a SwiftUI action the delegate cannot reach.
     func captureOpenWindow(_ open: @escaping (UUID) -> Void) {
         openWindow = open
@@ -172,7 +178,7 @@ final class WindowHub {
             }
         } else if shell.closing {
             shell.closing = false
-            shell.window?.close()
+            shell.closeWindow()
         } else {
             NSApp.terminate(nil)
         }
