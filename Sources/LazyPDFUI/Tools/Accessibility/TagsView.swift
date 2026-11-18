@@ -84,13 +84,28 @@ private struct TagTree: View {
     }
 
     private var list: some View {
-        List {
-            rows
-        }
+        content
         .listStyle(.plain)
         .frame(height: 320)
         .accessibilityLabel(L10n.t("Tag tree"))
         .onKeyPress(phases: .down) { press in handle(press) }
+    }
+
+    // On the Mac the list keeps the pick, so the arrow keys move it and the list can take the keyboard.
+    @ViewBuilder private var content: some View {
+        #if os(macOS)
+        List(selection: picked) { rows }
+        #else
+        List { rows }
+        #endif
+    }
+
+    private var picked: Binding<String?> {
+        Binding(
+            get: { model.selectedTag },
+            set: { id in
+                if let id, id != model.selectedTag, let row = model.tagRows.first(where: { $0.id == id }) { model.select(row) }
+            })
     }
 
     @ViewBuilder private var rows: some View {
@@ -109,15 +124,17 @@ private struct TagTree: View {
     }
 
     private static func command(for press: KeyPress) -> TagCommand? {
-        if press.modifiers == .option {
+        // Arrow keys carry the numeric pad flag and Forward Delete the function flag; neither is a key the user pressed.
+        let modifiers = press.modifiers.subtracting([.numericPad, .function])
+        if modifiers == .option {
             if press.key == .upArrow { return .moveUp }
             if press.key == .downArrow { return .moveDown }
             if press.key == .rightArrow { return .indent }
             if press.key == .leftArrow { return .outdent }
         }
         if press.key == .delete || press.key == .deleteForward {
-            if press.modifiers.isEmpty { return .delete }
-            if press.modifiers == .control { return .deleteAsArtifact }
+            if modifiers.isEmpty { return .delete }
+            if modifiers == .control { return .deleteAsArtifact }
         }
         return nil
     }
