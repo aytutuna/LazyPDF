@@ -198,7 +198,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             InfoBar(vm: vm)
             HStack(spacing: 8) {
                 TabStrip(vm: vm, close: requestClose, moveToNewWindow: commands.moveToNewWindow, windowTargets: commands.windowTargets,
-                         dragging: commands.tabDragging)
+                         dragging: frozen ? nil : commands.tabDragging)
                 if vm.documents.count > 1 {
                     DocumentSwitcher(vm: vm, showsTitle: false)
                         .menuStyle(.borderlessButton)
