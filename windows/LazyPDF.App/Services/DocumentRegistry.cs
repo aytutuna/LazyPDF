@@ -20,6 +20,8 @@ public sealed class DocumentRegistry
 
     internal void Add(AppViewModel model) => _models.Add(model);
 
+    internal void Remove(AppViewModel model) => _models.Remove(model);
+
     /// <summary>The view model whose strip has the tab with this id; null when none has it.</summary>
     internal AppViewModel? Find(Guid id) => _models.FirstOrDefault(m => m.Documents.Any(d => d.Id == id));
 

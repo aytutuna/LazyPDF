@@ -173,4 +173,20 @@ public sealed class DocumentRegistryTests
         Assert.Equal(path, Assert.Single(p.A.Vm.Documents).Path);
         Assert.True(AppViewModel.NeedsName(p.B.Vm.ActiveDocument!));
     }
+
+    [Fact]
+    public async Task AWindowThatHasClosedHoldsNoFileAndNoTabId()
+    {
+        using var p = new TwoWindows();
+        string path = p.A.Pdf();
+        await p.A.Vm.OpenAsync(path);
+        var tab = p.A.Vm.ActiveDocument!;
+
+        p.A.Vm.LeaveRegistry();
+        await p.B.Vm.OpenAsync(path);
+
+        Assert.Null(p.Registry.Find(tab.Id));
+        Assert.Single(p.B.Vm.Documents);
+        Assert.Empty(p.ForwardedA);
+    }
 }

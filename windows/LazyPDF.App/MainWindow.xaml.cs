@@ -53,7 +53,11 @@ public partial class MainWindow : Window
         _vm.SystemPrintRequested += ViewModel_SystemPrintRequested;
         _vm.BringForward = _ => OpenFiles([]);
         WindowHub.Register(this);
-        Closed += (_, _) => WindowHub.Unregister(this);
+        Closed += (_, _) =>
+        {
+            WindowHub.Unregister(this);
+            _vm.LeaveRegistry();
+        };
         Loaded += Window_Loaded;
     }
 

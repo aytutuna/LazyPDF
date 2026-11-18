@@ -230,6 +230,13 @@ public sealed partial class AppViewModel
     private PendingOpen? PendingFor(string? path, string? fileId) =>
         _pending.FirstOrDefault(p => SamePath(p.Source.Path, path) || fileId is not null && p.Source.FileId == fileId);
 
+    /// <summary>For a window that has closed: its files are no longer found here, and nothing is brought forward in it.</summary>
+    internal void LeaveRegistry()
+    {
+        _registry.Remove(this);
+        BringForward = null;
+    }
+
     /// <summary>Brings the tab forward; without one, the question of the file that waits for its password, which has to be the one shown.</summary>
     internal void Reveal(DocumentTab? tab, string? path = null, string? fileId = null)
     {
