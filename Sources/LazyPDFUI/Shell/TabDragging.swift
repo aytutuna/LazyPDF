@@ -212,8 +212,9 @@ private struct TabDragSource: NSViewRepresentable {
             guard let tab = dragged, let window else { return }
             dragged = nil
             let strip = window.convertToScreen(convert(bounds, to: nil))
-            // A cancel with Escape ends the session on the key press, a drop on the button release.
-            let escaped = NSApp.currentEvent?.type == .keyDown
+            // AppKit handles Escape inside the drag, so the current event may not be the key press; ask for the key as well.
+            let escape = CGKeyCode(0x35)
+            let escaped = NSApp.currentEvent?.type == .keyDown || CGEventSource.keyState(.combinedSessionState, key: escape)
             dragging?.ended(tab, TabDragEnd(screen: screenPoint, strip: strip, taken: !operation.isEmpty, escaped: escaped))
         }
     }

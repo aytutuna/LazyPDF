@@ -257,5 +257,22 @@ final class WindowHubTests: XCTestCase {
 
         XCTAssertTrue(first.vm.documents.contains { $0 === other })
     }
+
+    func test_onlyADragNobodyTookAndLetGoFarFromTheStripOpensAWindow() async throws {
+        let hub = WindowHub()
+        let (first, _) = try await twoWindows(hub)
+        var opened = 0
+        hub.captureOpenWindow { _ in opened += 1 }
+        let strip = CGRect(x: 0, y: 0, width: 800, height: 30)
+        let escaped = TabDragEnd(screen: CGPoint(x: 0, y: 900), strip: strip, taken: false, escaped: true)
+        let far = TabDragEnd(screen: CGPoint(x: 0, y: 900), strip: strip, taken: false, escaped: false)
+
+        hub.dragEnded(first.vm.documents[0], from: first, taken)
+        hub.dragEnded(first.vm.documents[0], from: first, escaped)
+        XCTAssertEqual(opened, 0)
+
+        hub.dragEnded(first.vm.documents[0], from: first, far)
+        XCTAssertEqual(opened, 1)
+    }
 }
 #endif
