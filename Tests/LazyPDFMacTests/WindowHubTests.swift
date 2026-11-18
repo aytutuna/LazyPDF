@@ -4,6 +4,7 @@ import AppKit
 @testable import LazyPDFMac
 import LazyPDFApp
 import LazyPDFKit
+import LazyPDFUI
 
 // Not in the Windows tests: the Mac holds one shell for each window, and only one of them is the primary.
 
