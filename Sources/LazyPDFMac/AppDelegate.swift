@@ -14,7 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        MacShell.shared.handle(urls)
+        WindowHub.shared.handle(urls)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -22,7 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        MacShell.shared.terminateReply()
+        WindowHub.shared.terminateReply()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -30,8 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag { MacShell.shared.showWindow() }
-        return true
+        WindowHub.shared.reopen(hasVisibleWindows: flag)
     }
 }
 #endif

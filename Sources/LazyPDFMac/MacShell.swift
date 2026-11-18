@@ -6,39 +6,46 @@ import LazyPDFApp
 import LazyPDFKit
 import LazyPDFUI
 
-// The Mac's counterpart of MainWindow.xaml.cs and App.xaml.cs: the one AppViewModel with the system's services, the file
-// panels and the printing it asks for, and the way files and addresses reach it.
+// The Mac's counterpart of MainWindow.xaml.cs: the AppViewModel of one window with the system's services, the file panels
+// and the printing it asks for, and the way files and addresses reach it. Each window has its own; WindowHub holds them.
 
 @MainActor
 final class MacShell {
-    static let shared = MacShell()
-
+    let id: UUID
+    let isPrimary: Bool
     let vm: AppViewModel
     let viewer: ViewerModel
     let folders: AppFolders
     let panels: ToolPanels
+    private unowned let hub: WindowHub
     private let certificates: MacCertificates
     private(set) var commands = ShellCommands()
-    private weak var window: NSWindow?
+    private(set) weak var window: NSWindow?
     private var closeGuard: CloseGuard?
-    private var terminateAnswer = false
-    private var exitSession: LastSession?
-    private var filesFromOutside = false
+    /// The red button asked this window to close and a question about its tabs is up.
+    var closing = false
+    var filesFromOutside = false
     private var restored = false
     var noteRecent: (URL) -> Void = { NSDocumentController.shared.noteNewRecentDocumentURL($0) }
 
-    private init() {
-        let folders = DefaultAppFolders()
+    init(hub: WindowHub, id: UUID, primary: Bool) {
+        self.hub = hub
+        self.id = id
+        isPrimary = primary
+        let folders = hub.folders
         let sisters = MacSisterApps()
-        let certificates = MacCertificates()
+        let certificates = hub.certificates
         let vm = AppViewModel(renderers: { PdfKitRenderer() }, codec: ImageIOCodec(), fonts: CoreTextFontSource(), sisters: sisters,
-                              certificates: certificates, bookmarks: MacBookmarks(), folders: folders)
+                              certificates: certificates, bookmarks: MacBookmarks(), folders: folders, recovery: hub.recovery,
+                              toolState: hub.toolState, registry: hub.registry)
+        vm.offersRecovery = primary
         sisters.printFailed = { [weak vm] in vm?.lazyPrintFailed($0) }
         self.vm = vm
         self.certificates = certificates
         self.folders = folders
-        let panels = ToolPanels(host: vm, folders: folders)
+        let panels = ToolPanels(host: vm, folders: folders, state: hub.toolState)
         self.panels = panels
+        vm.released = { [weak panels] in panels?.release($0) }
         vm.handInTyping = { panels.handIn() }
         vm.handInOnSwitch = { panels.handInOnSwitch() }
         let made = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { NSWorkspace.shared.open($0) },
@@ -51,7 +58,8 @@ final class MacShell {
         vm.filePicker = services
         vm.fileExporter = services
         vm.clipboard = services
-        vm.exitRequested = { [unowned self] in self.finishExit() }
+        vm.bringForward = { [unowned self] _ in self.showWindow() }
+        vm.exitRequested = { [unowned self] in self.hub.exitFinished(self) }
         commands = ShellCommands(open: { [unowned self] in self.openWithPanel() },
                                  create: { [unowned self] in self.present { CreateSheet(host: self.vm, close: $0) } },
                                  batch: { [unowned self] in self.present { BatchSheet(host: self.vm, folders: self.folders, close: $0) } },
@@ -63,7 +71,7 @@ final class MacShell {
                                  importCertificate: { [unowned self] in self.importCertificate() },
                                  openFiles: { [unowned self] in self.open($0) })
         #if LAZYPDF_UITESTS
-        openTestFile()
+        if primary { openTestFile() }
         #endif
     }
 
@@ -71,7 +79,16 @@ final class MacShell {
         self.window = window
         update(WindowState(vm.activeDocument))
         restoreSession()
-        closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { !self.vm.documents.isEmpty }) { NSApp.terminate(nil) }
+        closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { !self.vm.documents.isEmpty },
+                                       quit: { NSApp.terminate(nil) }, others: { self.hub.hasOtherVisibleWindow(self) || (!self.isPrimary && self.vm.documents.isEmpty) },
+                                       closeHere: { self.closeFromButton() })
+    }
+
+    // Another window is showing, so the red button closes this one once its own tabs have been answered for.
+    private func closeFromButton() -> Bool {
+        if vm.requestExit() { return true }
+        closing = vm.closeQuestion != nil
+        return false
     }
 
     func update(_ state: WindowState) {
@@ -80,9 +97,10 @@ final class MacShell {
         window?.isDocumentEdited = state.dirty
     }
 
-    // Files Finder hands over at launch arrive about when the window does, so they get a turn first and win.
+    // Files Finder hands over at launch arrive about when the window does, so they get a turn first and win. Only the primary
+    // restores: a second window starts empty.
     private func restoreSession() {
-        if restored { return }
+        if restored || !isPrimary { return }
         restored = true
         Task {
             await Task.yield()
@@ -296,42 +314,9 @@ final class MacShell {
         NSSharingServicePicker(items: [file]).show(relativeTo: .zero, of: view, preferredEdge: .minY)
     }
 
-    func terminateReply() -> NSApplication.TerminateReply {
-        // Answering the close question closes the tabs one by one, so the session is taken before it starts.
-        let session = exitSession ?? vm.lastSession()
-        if vm.requestExit() {
-            vm.keep(session)
-            exitSession = nil
-            return .terminateNow
-        }
-        // A job that is still running answers with a notice and no question; quitting waits for the person to try again.
-        if vm.closeQuestion == nil {
-            exitSession = nil
-            return .terminateCancel
-        }
-        exitSession = session
-        terminateAnswer = true
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        return .terminateLater
-    }
-
-    private func finishExit() {
-        if terminateAnswer {
-            terminateAnswer = false
-            if let exitSession { vm.keep(exitSession) }
-            exitSession = nil
-            NSApp.reply(toApplicationShouldTerminate: true)
-        } else {
-            NSApp.terminate(nil)
-        }
-    }
-
-    /// Quit was waiting on the close question and the person answered Cancel.
+    /// The close question went away: its answer was Cancel, or the tab was closed and the window finished.
     func closeQuestionChanged() {
-        guard terminateAnswer, vm.closeQuestion == nil else { return }
-        terminateAnswer = false
-        exitSession = nil
-        NSApp.reply(toApplicationShouldTerminate: false)
+        hub.closeQuestionChanged(self)
     }
 
     #if LAZYPDF_UITESTS

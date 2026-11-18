@@ -8,8 +8,11 @@ import LazyPDFUI
 // keep their own buttons.
 
 struct MacMenus: Commands {
-    let shell: MacShell
+    let hub: WindowHub
+    @FocusedValue(\.macShell) private var focused: MacShell?
 
+    // The window with the keyboard; the primary when none has it, as with the menus of a hidden window.
+    private var shell: MacShell { focused ?? hub.primaryShell() }
     private var vm: AppViewModel { shell.vm }
     private var viewer: ViewerModel { shell.viewer }
     private var actions: FileActions { FileActions(vm: vm, commands: shell.commands) }

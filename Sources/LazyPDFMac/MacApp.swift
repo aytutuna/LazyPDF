@@ -6,7 +6,6 @@ import LazyPDFUI
 /// The Mac app. The Xcode project's app target (mac/project.yml) and Sources/LazyPDF only start it.
 public struct MacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    private let shell = MacShell.shared
 
     public init() {
         // The tab strip is the app's own.
@@ -14,12 +13,51 @@ public struct MacApp: App {
     }
 
     public var body: some Scene {
-        // One window, as on Windows: a second would show every question twice.
-        Window("Lazy PDF", id: "main") {
-            MacWindow(shell: shell)
+        // The value is the window's id. It is nil for the window the system opens, and whatever a restored window was given.
+        WindowGroup("Lazy PDF", id: "doc", for: UUID.self) { $value in
+            MacWindowRoot(value: value)
         }
         .defaultSize(width: 1280, height: 820)
-        .commands { MacMenus(shell: shell) }
+        .commands { MacMenus(hub: WindowHub.shared) }
+    }
+}
+
+struct FocusedShellKey: FocusedValueKey {
+    typealias Value = MacShell
+}
+
+extension FocusedValues {
+    var macShell: MacShell? {
+        get { self[FocusedShellKey.self] }
+        set { self[FocusedShellKey.self] = newValue }
+    }
+}
+
+/// Asks the hub for the shell of its window when it appears. A window the hub has no use for closes at once.
+struct MacWindowRoot: View {
+    let value: UUID?
+    @State private var shell: MacShell?
+    @State private var asked = false
+    @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Group {
+            if let shell {
+                MacWindow(shell: shell)
+            } else {
+                Color.clear
+            }
+        }
+        .onAppear {
+            WindowHub.shared.captureOpenWindow { openWindow(value: $0) }
+            if asked { return }
+            asked = true
+            if let claimed = WindowHub.shared.claim(value) { shell = claimed } else { dismiss() }
+        }
+        .onDisappear {
+            if let shell { WindowHub.shared.windowGone(shell) }
+        }
     }
 }
 
@@ -57,6 +95,7 @@ struct MacWindow: View {
         }
         .onChange(of: WindowState(vm.activeDocument), initial: true) { _, state in shell.update(state) }
         .onChange(of: vm.closeQuestion == nil) { shell.closeQuestionChanged() }
+        .focusedSceneValue(\.macShell, shell)
         .background(WindowHook { shell.attach($0) })
     }
 }

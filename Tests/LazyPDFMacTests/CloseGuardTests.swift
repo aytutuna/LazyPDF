@@ -42,6 +42,22 @@ final class CloseGuardTests: XCTestCase {
         XCTAssertEqual(quits, 0)
     }
 
+    func test_withAnotherWindowShowingTheButtonClosesThisOneAfterItsOwnQuestion() {
+        let window = window()
+        window.makeKeyAndOrderFront(nil)
+        var quits = 0
+        var answered = false
+
+        let guarded = CloseGuard.ensure(on: window, existing: nil, hasTabs: { true }, quit: { quits += 1 },
+                                        others: { true }, closeHere: { answered })
+
+        XCTAssertFalse(guarded.windowShouldClose(window))
+        answered = true
+        XCTAssertTrue(guarded.windowShouldClose(window))
+        XCTAssertEqual(quits, 0)
+        XCTAssertTrue(window.isVisible)
+    }
+
     func test_theDelegateBeforeItStillHearsTheWindow() {
         let window = window()
         let original = Original()

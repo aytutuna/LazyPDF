@@ -37,7 +37,7 @@ final class MacAddressTests: XCTestCase {
 @MainActor
 final class MacSystemRecentsTests: XCTestCase {
     func test_anOpenedFileIsHandedToTheSystemRecentList() async throws {
-        let shell = MacShell.shared
+        let shell = WindowHub().primaryShell()
         var noted: [URL] = []
         shell.noteRecent = { noted.append($0) }
         defer { shell.noteRecent = { NSDocumentController.shared.noteNewRecentDocumentURL($0) } }
@@ -56,7 +56,7 @@ final class MacSystemRecentsTests: XCTestCase {
 @MainActor
 final class MacWindowStateTests: XCTestCase {
     func test_theWindowFollowsTheActiveDocument() async throws {
-        let shell = MacShell.shared
+        let shell = WindowHub().primaryShell()
         let window = NSWindow()
         shell.attach(window)
         let file = FileManager.default.temporaryDirectory.appendingPathComponent("window-\(UUID().uuidString).pdf")
