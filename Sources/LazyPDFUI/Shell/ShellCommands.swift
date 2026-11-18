@@ -9,6 +9,19 @@ public extension Notification.Name {
     static let showSettings = Notification.Name("LazyPDFShowSettings")
 }
 
+/// Another window of the app that a tab can be moved to, as the tab's menu lists it.
+public struct TabMoveTarget: Identifiable {
+    public let id: UUID
+    public let name: String
+    public let move: @MainActor (DocumentTab) -> Void
+
+    public init(id: UUID, name: String, move: @escaping @MainActor (DocumentTab) -> Void) {
+        self.id = id
+        self.name = name
+        self.move = move
+    }
+}
+
 /// What the window asks of the platform shell because it needs a system panel or a security-scoped grant: choosing files,
 /// naming a copy, printing. The shell starts access to a chosen file before it opens it, as AppViewModel.open expects.
 public struct ShellCommands {
@@ -38,6 +51,10 @@ public struct ShellCommands {
     /// Opens files dropped on the window; nil lets the window open them without a grant of their own.
     public var openFiles: (@MainActor ([URL]) -> Void)?
 
+    /// Moves the tab into a window of its own, and the other windows it can go to; nil where there is only one window.
+    public var moveToNewWindow: (@MainActor (DocumentTab) -> Void)?
+    public var windowTargets: (@MainActor () -> [TabMoveTarget])?
+
     public init(open: @escaping @MainActor () -> Void = {}, create: @escaping @MainActor () -> Void = {},
                 batch: @escaping @MainActor () -> Void = {}, saveAs: @escaping @MainActor (DocumentTab) async -> Bool = { _ in false },
                 saveCompact: @escaping @MainActor (DocumentTab) -> Void = { _ in },
@@ -46,7 +63,9 @@ public struct ShellCommands {
                 openElsewhere: (@MainActor (DocumentTab) -> Void)? = nil,
                 importCertificate: (@MainActor () async -> CertificateChoice?)? = nil,
                 certificateList: CertificateListModel? = nil,
-                openFiles: (@MainActor ([URL]) -> Void)? = nil) {
+                openFiles: (@MainActor ([URL]) -> Void)? = nil,
+                moveToNewWindow: (@MainActor (DocumentTab) -> Void)? = nil,
+                windowTargets: (@MainActor () -> [TabMoveTarget])? = nil) {
         self.open = open
         self.create = create
         self.batch = batch
@@ -58,6 +77,8 @@ public struct ShellCommands {
         self.importCertificate = importCertificate
         self.certificateList = certificateList
         self.openFiles = openFiles
+        self.moveToNewWindow = moveToNewWindow
+        self.windowTargets = windowTargets
     }
 }
 #endif

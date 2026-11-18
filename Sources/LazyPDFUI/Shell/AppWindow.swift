@@ -197,7 +197,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         VStack(spacing: 0) {
             InfoBar(vm: vm)
             HStack(spacing: 8) {
-                TabStrip(vm: vm, close: requestClose)
+                TabStrip(vm: vm, close: requestClose, moveToNewWindow: commands.moveToNewWindow, windowTargets: commands.windowTargets)
                 if vm.documents.count > 1 {
                     DocumentSwitcher(vm: vm, showsTitle: false)
                         .menuStyle(.borderlessButton)

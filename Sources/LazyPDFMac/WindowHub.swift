@@ -1,6 +1,8 @@
 #if os(macOS)
 import AppKit
 import LazyPDFApp
+import LazyPDFKit
+import LazyPDFUI
 
 // The windows of the app, as App.xaml.cs and WindowHub.cs hold them on Windows: one shell for each window, the services they
 // share, the one primary window that restores the session and takes what Finder sends, and the quit that asks window by
@@ -55,10 +57,16 @@ final class WindowHub {
         case .secondary:
             if let known = shells[id] { return known }
             let shell = add(MacShell(hub: self, id: id, primary: false))
-            if roster.arrived(id, shell.vm, registry: registry) == false {
+            switch roster.arrived(id, shell.vm, registry: registry) {
+            case false?:
                 // The checks that held when the window was asked for failed now: the tab stays where it was.
                 windowGone(shell)
                 return nil
+            case true?:
+                shell.vm.setStatus(L10n.t("Moved {0} to a new window.", shell.vm.activeDocument?.title ?? ""))
+                closeEmptied()
+            case nil:
+                break
             }
             return shell
         }
@@ -94,6 +102,41 @@ final class WindowHub {
         Task {
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             self.roster.forget(id)
+        }
+    }
+
+    /// The menu route: checks first, so a refused move opens no window, then a window for the tab.
+    func moveToNewWindow(_ tab: DocumentTab, from shell: MacShell) {
+        guard shell.vm.mayRelease(tab) else { return }
+        tearOut(tab, from: shell)
+    }
+
+    /// Moves `tab` to another window, at the end of its strip unless told otherwise.
+    func move(_ tab: DocumentTab, from shell: MacShell, to target: MacShell, at index: Int = Int.max) {
+        guard shell.vm.mayRelease(tab),
+              registry.transfer(tab, from: shell.vm, to: target.vm, at: index, targetFree: target.isFree) else { return }
+        target.vm.setStatus(L10n.t("Moved {0} to another window.", tab.title))
+        target.showWindow()
+        closeEmptied()
+    }
+
+    /// The windows `shell` can send a tab to, numbered as the Window menu lists them.
+    func targets(besides shell: MacShell) -> [TabMoveTarget] {
+        let showing = ordered.filter { $0.window?.isVisible == true || $0.window?.isMiniaturized == true }
+        return showing.enumerated().compactMap { number, target in
+            guard target !== shell else { return nil }
+            let name = L10n.t("Window {0}: {1}", String(number + 1), target.window?.title ?? "Lazy PDF")
+            return TabMoveTarget(id: target.id, name: name, move: { [unowned self, unowned shell, unowned target] tab in
+                self.move(tab, from: shell, to: target)
+            })
+        }
+    }
+
+    // A window made for a tab goes when the tab leaves it, unless something is still being opened or asked there.
+    private func closeEmptied() {
+        for shell in ordered where !shell.isPrimary && shell.window != nil && shell.vm.documents.isEmpty
+            && !shell.vm.isOpening && !shell.vm.isBlocked {
+            shell.closeWindow()
         }
     }
 

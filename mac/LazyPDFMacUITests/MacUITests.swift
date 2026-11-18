@@ -110,4 +110,39 @@ final class MacUITests: XCTestCase {
             XCTAssertTrue(app.staticTexts[title].waitForExistence(timeout: 10), title)
         }
     }
+
+    private func waitForWindows(_ app: XCUIApplication, _ count: Int) {
+        let reached = NSPredicate { _, _ in app.windows.count == count }
+        wait(for: [expectation(for: reached, evaluatedWith: nil)], timeout: 20)
+    }
+
+    func testMoveToNewWindowShowsTheTabThereAndHomeHere() throws {
+        let app = try launch(opening: true)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
+
+        tab(app).rightClick()
+        app.menuItems["Move to new window"].click()
+
+        waitForWindows(app, 2)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 20))
+        XCTAssertTrue(element(app, "Moved plain-3.pdf to a new window.").waitForExistence(timeout: 20))
+        XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
+    }
+
+    func testMoveToWindowSendsTheTabBackAndTheEmptiedWindowCloses() throws {
+        let app = try launch(opening: true)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
+        tab(app).rightClick()
+        app.menuItems["Move to new window"].click()
+        waitForWindows(app, 2)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 20))
+
+        tab(app).rightClick()
+        app.menuItems["Move to window"].click()
+        app.menuItems.matching(NSPredicate(format: "title BEGINSWITH %@", "Window ")).firstMatch.click()
+
+        waitForWindows(app, 1)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 20))
+        XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 20))
+    }
 }

@@ -155,5 +155,50 @@ final class WindowHubTests: XCTestCase {
         XCTAssertFalse(primary.vm.documents[0].isDisposed)
         XCTAssertEqual(second.vm.documents.count, 1)
     }
+
+    func test_moveToWindowKeepsTheTabAndSaysSoInTheTarget() async throws {
+        let hub = WindowHub()
+        let primary = try XCTUnwrap(hub.claim(nil))
+        await primary.vm.open([try file("a.pdf"), try file("b.pdf")])
+        let id = hub.roster.park(primary.vm.documents[1], from: primary.vm, at: 1)
+        let second = try XCTUnwrap(hub.claim(id))
+        let tab = try XCTUnwrap(primary.vm.documents.first)
+
+        hub.move(tab, from: primary, to: second)
+
+        XCTAssertTrue(primary.vm.documents.isEmpty)
+        XCTAssertTrue(second.vm.documents.last === tab)
+        XCTAssertEqual(second.vm.statusFull, "Moved \(tab.title) to another window.")
+        XCTAssertTrue(hub.registry.find(tab.id) === second.vm)
+    }
+
+    func test_aRefusedMoveSaysWhyInTheSourceAndKeepsTheTab() async throws {
+        let hub = WindowHub()
+        let primary = try XCTUnwrap(hub.claim(nil))
+        await primary.vm.open([try file("a.pdf"), try file("b.pdf")])
+        let id = hub.roster.park(primary.vm.documents[1], from: primary.vm, at: 1)
+        let second = try XCTUnwrap(hub.claim(id))
+        let tab = try XCTUnwrap(primary.vm.documents.first)
+        primary.vm.actionRunning = true
+
+        hub.move(tab, from: primary, to: second)
+
+        XCTAssertTrue(primary.vm.documents.first === tab)
+        XCTAssertEqual(primary.vm.message?.title, "Tab not moved")
+        XCTAssertEqual(second.vm.documents.count, 1)
+    }
+
+    func test_aTabAsksItsChecksBeforeAWindowIsMadeForIt() async throws {
+        let hub = WindowHub()
+        let primary = try XCTUnwrap(hub.claim(nil))
+        await primary.vm.open(try file("a.pdf"))
+        let tab = try XCTUnwrap(primary.vm.activeDocument)
+        primary.vm.actionRunning = true
+
+        hub.moveToNewWindow(tab, from: primary)
+
+        XCTAssertEqual(primary.vm.message?.title, "Tab not moved")
+        XCTAssertTrue(primary.vm.documents.first === tab)
+    }
 }
 #endif

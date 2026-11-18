@@ -70,7 +70,9 @@ final class MacShell {
                                  share: { [unowned self] in self.share($0) },
                                  openElsewhere: { [unowned self] in self.openElsewhere($0) },
                                  importCertificate: { [unowned self] in self.importCertificate() },
-                                 openFiles: { [unowned self] in self.open($0) })
+                                 openFiles: { [unowned self] in self.open($0) },
+                                 moveToNewWindow: { [unowned self] in self.hub.moveToNewWindow($0, from: self) },
+                                 windowTargets: { [unowned self] in self.hub.targets(besides: self) })
         #if LAZYPDF_UITESTS
         if primary { openTestFile() }
         #endif
@@ -85,6 +87,9 @@ final class MacShell {
                                        quit: { NSApp.terminate(nil) }, others: { [weak self] in self?.otherWindowShows() ?? false },
                                        closeHere: { [weak self] in self?.closeFromButton() ?? true })
     }
+
+    /// False while a sheet of this window is up, which a moved tab must not arrive under.
+    var isFree: Bool { window?.attachedSheet == nil }
 
     private func otherWindowShows() -> Bool {
         hub.hasOtherVisibleWindow(self) || (!isPrimary && vm.documents.isEmpty)

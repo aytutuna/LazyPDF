@@ -14,6 +14,8 @@ private struct TabEntry: Identifiable {
 struct TabStrip: View {
     let vm: AppViewModel
     let close: (DocumentTab) -> Void
+    var moveToNewWindow: (@MainActor (DocumentTab) -> Void)?
+    var windowTargets: (@MainActor () -> [TabMoveTarget])?
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -37,7 +39,7 @@ struct TabStrip: View {
         let selected = vm.activeTab === tab
         let view = TabItem(tab: tab, selected: selected, select: { vm.select(tab) }, close: {
             if let document = tab as? DocumentTab { close(document) }
-        })
+        }, moves: moves(for: tab))
         .dropDestination(for: String.self) { ids, _ in
             move(ids, to: vm.strip.firstIndex { $0 === tab } ?? vm.strip.count - 1)
         }
@@ -48,6 +50,14 @@ struct TabStrip: View {
         }
     }
 
+    private func moves(for tab: any StripTab) -> TabMoves? {
+        guard let document = tab as? DocumentTab, let newWindow = moveToNewWindow else { return nil }
+        let targets: [TabMoveTarget] = windowTargets?() ?? []
+        return TabMoves(newWindow: { newWindow(document) }, targets: targets.map { target in
+            TabMoves.Entry(id: target.id, name: target.name, move: { target.move(document) })
+        })
+    }
+
     private func move(_ ids: [String], to index: Int) -> Bool {
         guard let id = ids.first, let tab = vm.documents.first(where: { $0.id.uuidString == id }) else { return false }
         vm.moveTab(tab, to: index)
@@ -55,11 +65,23 @@ struct TabStrip: View {
     }
 }
 
+private struct TabMoves {
+    struct Entry: Identifiable {
+        let id: UUID
+        let name: String
+        let move: @MainActor () -> Void
+    }
+
+    let newWindow: @MainActor () -> Void
+    let targets: [Entry]
+}
+
 private struct TabItem: View {
     let tab: any StripTab
     let selected: Bool
     let select: () -> Void
     let close: () -> Void
+    let moves: TabMoves?
 
     var body: some View {
         HStack(spacing: 4) {
@@ -96,6 +118,17 @@ private struct TabItem: View {
         }
         .contentShape(Rectangle())
         .contextMenu {
+            if let moves {
+                Button(L10n.t("Move to new window"), action: moves.newWindow)
+                if !moves.targets.isEmpty {
+                    Menu(L10n.t("Move to window")) {
+                        ForEach(moves.targets) { target in
+                            Button(target.name, action: target.move)
+                        }
+                    }
+                }
+                Divider()
+            }
             if tab.canClose {
                 Button(L10n.t("Close"), action: close)
             }

@@ -184,6 +184,7 @@
 "Annotations" = "Ek açıklamalar";
 "Another button of this field already uses {0}. Choose another value." = "Bu alanın başka bir düğmesi zaten şu değeri kullanıyor: {0}. Başka bir değer seçin.";
 "Another file" = "Başka dosya";
+"Answer the question about {0} first." = "Önce {0} hakkındaki soruyu yanıtlayın.";
 "Any status" = "Tüm durumlar";
 "Appearance" = "Görünüm";
 "Appearances were drawn for {0} annotations." = "{0} ek açıklama için görünüm çizildi.";
@@ -389,6 +390,7 @@
 "Clipboard.pdf" = "Pano.pdf";
 "Close" = "Kapat";
 "Close tag {0}" = "{0} etiketini kapat";
+"Close the comparison first." = "Önce karşılaştırmayı kapatın.";
 "Close the search bar" = "Arama çubuğunu kapat";
 "Close the side panel" = "Yan paneli kapat";
 "Close the tool" = "Aracı kapat";
@@ -1003,9 +1005,13 @@
 "Move tag" = "Etiketi taşı";
 "Move tag down" = "Etiketi aşağı taşı";
 "Move tag up" = "Etiketi yukarı taşı";
+"Move to new window" = "Yeni pencereye taşı";
+"Move to window" = "Pencereye taşı";
 "Move up" = "Yukarı taşı";
 "Moved" = "Taşındı";
 "Moved from page {0}" = "{0}. sayfadan taşındı";
+"Moved {0} to a new window." = "{0} yeni pencereye taşındı.";
+"Moved {0} to another window." = "{0} başka bir pencereye taşındı.";
 "Moved." = "Taşındı.";
 "Name" = "Ad";
 "Name of the set" = "Kümenin adı";
@@ -1690,6 +1696,7 @@
 "Some objects were left as they were: {0}" = "Bazı nesneler olduğu gibi bırakıldı: {0}";
 "Some pages were not searched" = "Bazı sayfalar aranmadı";
 "Something went wrong" = "Bir şeyler ters gitti";
+"Something went wrong, so {0} stays in this window." = "Bir sorun çıktı, bu yüzden {0} bu pencerede kalıyor.";
 "Spacing changed." = "Aralık değişti.";
 "Split" = "Böl";
 "Split by" = "Bölme ölçütü";
@@ -1738,6 +1745,7 @@
 "Summary of {0} of {1} comments saved." = "{1} yorumdan {0} tanesinin özeti kaydedildi.";
 "Summary saved." = "Özet kaydedildi.";
 "System" = "Sistem";
+"Tab not moved" = "Sekme taşınmadı";
 "Tab order follows structure" = "Sekme sırası yapıyı izliyor";
 "Tab order on this page" = "Bu sayfadaki sekme sırası";
 "Table {0} (p{1})" = "Tablo {0} (s. {1})";
@@ -1819,6 +1827,7 @@
 "The /N of an annotation must be a stream." = "Bir ek açıklamanın /N değeri akış olmalı.";
 "The /Order of a configuration leaves out some groups." = "Bir yapılandırmanın /Order değeri bazı grupları dışarıda bırakıyor.";
 "The CIDFont has no /CIDSystemInfo." = "CIDFont'ta /CIDSystemInfo yok.";
+"The Home tab stays where it is." = "Ana sayfa sekmesi yerinde kalır.";
 "The Note /ID {0} is used twice." = "Note /ID değeri {0} iki kez kullanılmış.";
 "The PDF/UA check stopped at 1000 findings." = "PDF/UA denetimi 1000 bulguda durdu.";
 "The Print flag of the annotation is not set." = "Ek açıklamanın Print bayrağı ayarlı değil.";
@@ -1995,6 +2004,7 @@
 "The oldest and strictest. No transparency." = "En eski ve en katı olanı. Saydamlık yok.";
 "The optional content has no default configuration." = "İsteğe bağlı içeriğin varsayılan yapılandırması yok.";
 "The original is unchanged. Save the copy to keep it." = "Özgün dosya değişmedi. Kopyayı kaydederek saklayın.";
+"The other window is busy. Try again when it is done." = "Diğer pencere meşgul. İşi bitince yeniden deneyin.";
 "The output does not open." = "Çıktı açılmıyor.";
 "The output intents use different profiles." = "Çıktı amaçları farklı profiller kullanıyor.";
 "The owner of this file does not allow copying." = "Bu dosyanın sahibi kopyalamaya izin vermiyor.";
@@ -2279,6 +2289,7 @@
 "View signed version" = "İmzalı sürümü göster";
 "View the signer's certificate" = "İmzalayanın sertifikasını göster";
 "Wait for the job to end, or cancel it, then close." = "İşin bitmesini bekleyin ya da iptal edin, sonra kapatın.";
+"Wait for the job to end, or cancel it, then move the tab." = "İşin bitmesini bekleyin ya da iptal edin, sonra sekmeyi taşıyın.";
 "Waiting to be added" = "Eklenmeyi bekleyen";
 "Was: " = "Önceki: ";
 "Watch a folder" = "Klasör izle";
@@ -2319,6 +2330,7 @@
 "Width in mm" = "Genişlik (mm)";
 "Width in percent of the page" = "Sayfanın yüzde kaçı genişlik";
 "Will open when you are done here." = "Burada işiniz bitince açılacak.";
+"Window {0}: {1}" = "Pencere {0}: {1}";
 "Word file cannot be read" = "Word dosyası okunamıyor";
 "Word file is not supported" = "Word dosyası desteklenmiyor";
 "Word or phrase" = "Sözcük veya ifade";
@@ -2496,6 +2508,7 @@
 "{0} holds removed text." = "{0} kaldırılan metni içeriyor.";
 "{0} integers beyond 32 bits were cut to the limit." = "32 bit sınırını aşan {0} tamsayı sınıra çekildi.";
 "{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder." = "{0} bir dosya değil, klasör. İçindeki dosyaları açın ya da bir klasörün tamamında çalışmak için Toplu işlem'i kullanın.";
+"{0} is being reloaded. Try again in a moment." = "{0} yeniden yükleniyor. Biraz sonra yeniden deneyin.";
 "{0} is encrypted for the holders of certain certificates. Pick the certificate that can open it." = "{0}, belirli sertifikaların sahipleri için şifrelenmiş. Onu açabilen sertifikayı seçin.";
 "{0} is locked for certificate holders. Pick one that opens it." = "{0} sertifika sahipleri için kilitli. Dosyayı açan bir sertifika seçin.";
 "{0} is locked. Type its password." = "{0} kilitli. Parolasını yazın.";
