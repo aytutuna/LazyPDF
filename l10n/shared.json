@@ -9351,5 +9351,8 @@
   },
   "Moved {0} to another window.": {
     "tr": "{0} başka bir pencereye taşındı."
+  },
+  "Window {0}: {1}": {
+    "tr": "Pencere {0}: {1}"
   }
 }

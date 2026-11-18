@@ -8257,6 +8257,9 @@
   <data name="Will open when you are done here." xml:space="preserve">
     <value>Burada işiniz bitince açılacak.</value>
   </data>
+  <data name="Window {0}: {1}" xml:space="preserve">
+    <value>Pencere {0}: {1}</value>
+  </data>
   <data name="Windows" xml:space="preserve">
     <value>Windows</value>
   </data>

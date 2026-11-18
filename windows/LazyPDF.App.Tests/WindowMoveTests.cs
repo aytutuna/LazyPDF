@@ -8,7 +8,7 @@ using Xunit;
 namespace LazyPDF.App.Tests;
 
 // Moving a tab to a new window or another window from the tab's menu. Most windows are only built; a tear-out and the
-// cases that need an owner for a batch window show real ones.
+// cases that need an owner for a batch window or a minimized target show real ones.
 [Collection("Application")]
 public sealed class WindowMoveTests
 {
@@ -25,7 +25,7 @@ public sealed class WindowMoveTests
 
         Assert.Contains("Move to new window", Headers(menu));
         var submenu = menu.Items.OfType<MenuItem>().Single(i => (string)i.Header == "Move to window");
-        Assert.Equal([rig.B.Title], Headers(submenu));
+        Assert.Equal([$"Window 2: {rig.B.Title}"], Headers(submenu));
     });
 
     [Fact]
@@ -195,6 +195,61 @@ public sealed class WindowMoveTests
         rig.Both.B.Vm.CancelPending();
         await Dispatcher.Yield(DispatcherPriority.Background);
         Assert.DoesNotContain(rig.B, WindowHub.Windows);
+    });
+
+    [Fact]
+    public Task AMinimizedTargetIsRestoredWhenATabMovesToIt() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        rig.B.Show();
+        rig.B.WindowState = WindowState.Minimized;
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("a.pdf"));
+
+        Assert.True(rig.A.MoveTab(rig.Both.A.Vm.ActiveDocument!, rig.B, int.MaxValue));
+
+        Assert.Equal(WindowState.Normal, rig.B.WindowState);
+    });
+
+    [Fact]
+    public Task ATearOutThatFailsPartWayLeavesTheTabAndNoWindow() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("a.pdf"));
+        var tab = rig.Both.A.Vm.ActiveDocument!;
+        int before = WindowHub.Windows.Count;
+        rig.Both.A.Vm.Released += (_, _) => throw new InvalidOperationException("cannot let go");
+
+        Assert.False(rig.A.TearOut(tab));
+
+        Assert.Equal(before, WindowHub.Windows.Count);
+        Assert.Same(rig.Both.A.Vm, rig.Both.Registry.Find(tab.Id));
+        Assert.Contains(tab, rig.Both.A.Vm.Documents);
+        Assert.Equal("Tab not moved", rig.Both.A.Vm.Message?.Title);
+    });
+
+    [Fact]
+    public Task AReorderInOneStripChecksNothingWhileAJobRuns() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("a.pdf"));
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("b.pdf"));
+        var first = rig.Both.A.Vm.Documents.First();
+        var finish = new TaskCompletionSource();
+        var started = new TaskCompletionSource();
+        var run = rig.Both.A.Vm.RunBusyAsync("Working", async _ =>
+        {
+            started.SetResult();
+            await finish.Task;
+        });
+        await started.Task;
+
+        rig.A.DropTab(first, null);
+
+        // A move out of the window would have said "Tab not moved" here.
+        Assert.Equal(first, rig.Both.A.Vm.Documents.Last());
+        Assert.Null(rig.Both.A.Vm.Message);
+        finish.SetResult();
+        await run;
     });
 
     private static readonly Rect Strip = new(100, 50, 800, 36);

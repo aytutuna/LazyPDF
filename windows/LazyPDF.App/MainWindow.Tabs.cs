@@ -115,10 +115,14 @@ public partial class MainWindow
     {
         if (!CanLeave(tab) || !_vm.Registry.Transfer(tab, _vm, target._vm, index, target.CanTakeTab())) return false;
         target._vm.SetStatus(Loc.T("Moved {0} to another window.", tab.Title));
-        target.Activate();
+        target.OpenFiles([]);
         target.Dispatcher.BeginInvoke(target.FocusActiveTab, System.Windows.Threading.DispatcherPriority.Loaded);
         CloseWhenEmpty();
-        if (IsLoaded) Dispatcher.BeginInvoke(FocusActiveTab, System.Windows.Threading.DispatcherPriority.Loaded);
+        // Keyboard focus here would pull the activation back from the window the tab went to.
+        if (IsLoaded) Dispatcher.BeginInvoke(() =>
+        {
+            if (IsActive) FocusActiveTab();
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
         return true;
     }
 
@@ -187,8 +191,10 @@ public partial class MainWindow
             foreach (var window in windows)
             {
                 var target = window;
-                var entry = new MenuItem { Header = target.Title.Replace("_", "__") };
-                AutomationProperties.SetName(entry, target.Title);
+                string name = Loc.T("Window {0}: {1}", WindowHub.Windows.ToList().IndexOf(target) + 1, target.Title);
+                var entry = new MenuItem { Header = name.Replace("_", "__") };
+                AutomationProperties.SetName(entry, name);
+                if (target._vm.ActiveDocument?.Path is { } path) AutomationProperties.SetHelpText(entry, path);
                 entry.Click += (_, _) => MoveTab(tab, target, int.MaxValue);
                 submenu.Items.Add(entry);
             }
@@ -354,7 +360,8 @@ public partial class MainWindow
 
     private void ShowDropMarker(ITab? before)
     {
-        int index = before is null ? _vm.Strip.Count : _vm.Strip.IndexOf(before);
+        // Home stays first, so a tab dropped on it lands after it.
+        int index = before is null ? _vm.Strip.Count : Math.Max(1, _vm.Strip.IndexOf(before));
         double x = 0;
         if (index >= _vm.Strip.Count)
         {
