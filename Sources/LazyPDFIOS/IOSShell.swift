@@ -47,7 +47,7 @@ final class IOSShell {
         self.folders = folders
         let model = AppViewModel(renderers: { PdfKitRenderer() }, codec: ImageIOCodec(), fonts: CoreTextFontSource(),
                                  sisters: IOSSisterApps(), certificates: keys, bookmarks: IOSBookmarks(), folders: folders)
-        let panels = ToolPanels(host: model, folders: folders)
+        let panels = ToolPanels(host: model, folders: folders, state: model.toolState)
         vm = model
         self.panels = panels
         certificateList = CertificateListModel(list: { keys.choices() }, delete: { keys.remove($0) }, add: { problem in

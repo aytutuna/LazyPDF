@@ -105,4 +105,22 @@ final class TabToolStateTests: XCTestCase {
 
         XCTAssertEqual(state.combine.count, 1)
     }
+
+    func test_aTabThatIsReleasedAndAdoptedKeepsItsEntries() async throws {
+        let f = ViewModelFixture(self)
+        let registry = DocumentRegistry()
+        let state = TabToolState()
+        let a = f.makeViewModel(registry: registry, toolState: state)
+        let b = f.makeViewModel(registry: registry, toolState: state)
+        await a.open(f.pdf())
+        let tab = try XCTUnwrap(a.activeDocument)
+        state.combine[tab] = [CombineEntry("a.pdf", 1, nil)]
+
+        XCTAssertTrue(registry.transfer(tab, from: a, to: b, at: 1))
+
+        XCTAssertEqual(b.toolState.combine[tab]?.count, 1)
+        b.close(tab)
+        state.combine.prune()
+        XCTAssertEqual(state.combine.count, 0)
+    }
 }

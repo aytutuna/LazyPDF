@@ -201,10 +201,10 @@ final class ViewModelFixture {
         set { log.draws = newValue }
     }
 
-    func makeViewModel() -> AppViewModel {
+    func makeViewModel(registry: DocumentRegistry? = nil, toolState: TabToolState = TabToolState()) -> AppViewModel {
         let log = log
         return AppViewModel(renderers: { log.next() }, codec: FakeCodec(), fonts: FakeFonts(), sisters: sisters,
-                            certificates: keys, bookmarks: bookmarks, folders: folders)
+                            certificates: keys, bookmarks: bookmarks, folders: folders, toolState: toolState, registry: registry)
     }
 
     func pdf(_ name: String = "a.pdf", pages: Int = 1) -> URL {

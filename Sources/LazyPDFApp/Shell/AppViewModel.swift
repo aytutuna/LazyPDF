@@ -61,6 +61,9 @@ public final class AppViewModel {
     @ObservationIgnored let sisters: SisterApps
     @ObservationIgnored let certificates: CertificateKeys
     @ObservationIgnored let recovery: RecoveryStore
+    @ObservationIgnored public let toolState: TabToolState
+    /// The windows of the process, when there is more than one; nil for a shell with a single window.
+    @ObservationIgnored public let registry: DocumentRegistry?
     @ObservationIgnored let recentFiles: RecentFiles
     @ObservationIgnored let bookmarks: Bookmarks
     @ObservationIgnored let thumbnails: Thumbnails
@@ -101,6 +104,8 @@ public final class AppViewModel {
     public internal(set) var reopenLast: Bool
     public internal(set) var message: InfoMessage?
     @ObservationIgnored var messageSerial = 0
+    @ObservationIgnored weak var messageTab: DocumentTab?
+    @ObservationIgnored var reloading = Set<ObjectIdentifier>()
     @ObservationIgnored var heldMessage: Int?
     @ObservationIgnored var held: [(url: URL, access: FileAccess?, asCopy: Bool)] = []
     private var status = ""
@@ -126,6 +131,11 @@ public final class AppViewModel {
     /// the system takes the time back.
     @ObservationIgnored public var backgroundWork: ((_ name: String, _ expired: @escaping @MainActor () -> Void) -> (() -> Void))?
 
+    /// Called when a file that is open in this window was asked for again from another one: the shell brings the window forward.
+    @ObservationIgnored public var bringForward: (@MainActor (DocumentTab) -> Void)?
+    /// Called before a tab leaves this window, while it is still in the strip: the shell lets go of what it shows of it.
+    @ObservationIgnored public var released: (@MainActor (DocumentTab) -> Void)?
+
     /// Called when Lazy Print did not take the document: the window prints it itself.
     @ObservationIgnored public var systemPrintRequested: (@MainActor (DocumentTab) -> Void)?
     /// Called when the XFA notice's button asks for the file in another app; the platform shell picks the app.
@@ -133,14 +143,17 @@ public final class AppViewModel {
     @ObservationIgnored var printCopyOwners: [String: WeakTab] = [:]
 
     public init(renderers: @escaping () -> DocumentRenderer, codec: ImageCodec, fonts: FontSource, sisters: SisterApps,
-                certificates: CertificateKeys, bookmarks: Bookmarks, folders: AppFolders) {
+                certificates: CertificateKeys, bookmarks: Bookmarks, folders: AppFolders, recovery: RecoveryStore? = nil,
+                toolState: TabToolState = TabToolState(), registry: DocumentRegistry? = nil) {
         self.renderers = renderers
         opener = DocumentOpener(codec, fonts)
         self.sisters = sisters
         self.certificates = certificates
         settings = folders.settings
         printDirectory = folders.printCopies
-        recovery = RecoveryStore(directory: folders.recovery)
+        self.recovery = recovery ?? RecoveryStore(directory: folders.recovery)
+        self.toolState = toolState
+        self.registry = registry
         self.bookmarks = bookmarks
         thumbnails = Thumbnails(renderers, directory: folders.thumbnails)
         recentFiles = RecentFiles(directory: folders.settings, bookmarks: bookmarks)
@@ -150,6 +163,7 @@ public final class AppViewModel {
         appearance = preferences.appearance
         reopenLast = preferences.reopenLast
         recent = buildRecent()
+        registry?.add(self)
     }
 
     /// The Home tab first, then the open documents in the order shown.
@@ -172,7 +186,7 @@ public final class AppViewModel {
         show(tab)
     }
 
-    private func show(_ tab: any StripTab) {
+    func show(_ tab: any StripTab) {
         activeTab = tab
         dropAction()
         if let document = tab as? DocumentTab { lastDocument = document }
@@ -261,6 +275,7 @@ public final class AppViewModel {
 
     public func showNotice(_ title: String, _ text: String, _ action: NoticeAction? = nil) {
         messageSerial += 1
+        messageTab = activeDocument
         message = InfoMessage(title: title, text: text, isError: false, action: action)
         notifyAll()
     }

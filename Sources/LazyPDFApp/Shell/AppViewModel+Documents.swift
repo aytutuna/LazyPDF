@@ -116,6 +116,12 @@ extension AppViewModel {
             showOpened(already)
             return
         }
+        if let (owner, there) = registry?.tab(of: url, besides: self) {
+            owner.show(there)
+            owner.bringForward?(there)
+            return
+        }
+        if registry?.isOpening(url, besides: self) == true { return }
         let key = RecentFiles.folded(url)
         if pending.contains(where: { Self.same($0.source.url, url) }) || !opening.insert(key).inserted { return }
         defer { opening.remove(key) }
@@ -231,7 +237,7 @@ extension AppViewModel {
         if let old = pending.replacing {
             taken = index(of: old) == nil
         } else {
-            taken = url.map { self.tab(of: $0) != nil } ?? false
+            taken = url.map { self.tab(of: $0) != nil || registry?.tab(of: $0, besides: self) != nil } ?? false
         }
         if taken {
             renderer.close()
@@ -455,7 +461,7 @@ extension AppViewModel {
         return true
     }
 
-    private func rememberView(_ tab: DocumentTab) {
+    func rememberView(_ tab: DocumentTab) {
         if let url = tab.url, tab.pageCount > 1 { recentFiles.rememberView(url, page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit) }
     }
 
@@ -513,6 +519,9 @@ extension AppViewModel {
     /// unsaved changes are dropped then, not before. False when the tab was not replaced.
     public func tryReload(_ tab: DocumentTab) async -> Bool {
         guard let url = tab.url, index(of: tab) != nil else { return false }
+        let key = ObjectIdentifier(tab)
+        reloading.insert(key)
+        defer { reloading.remove(key) }
         let source: OpenSource
         do {
             let opener = opener
