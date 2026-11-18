@@ -79,6 +79,8 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     internal DocumentRegistry Registry => _registry;
 
+    internal RecoveryStore Recovery => _recovery;
+
     /// <summary>Raised as a tab is about to go to another window, so the window drops what it holds for it.</summary>
     internal event EventHandler<DocumentTab>? Released;
 

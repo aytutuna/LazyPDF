@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 
 namespace LazyPDF.App;
 
@@ -87,16 +88,57 @@ public partial class MainWindow
         return (handle == IntPtr.Zero || IsWindowEnabled(handle)) && !Modal && !_actionRunning && HandedInOnSwitch();
     }
 
-    /// <summary>Moves a tab to another window. False, with the reason shown here, when it stays.</summary>
-    internal bool MoveTab(DocumentTab tab, MainWindow target, int index)
+    // The checks that belong to the window the tab leaves; they run before a window is made for it.
+    private bool CanLeave(DocumentTab tab)
     {
         if (_actionRunning)
         {
             _vm.ShowNotice(Loc.T("Tab not moved"), Loc.T("Wait for the job to end, or cancel it, then move the tab."));
             return false;
         }
-        return HandInTyping(tab) && _vm.Registry.Transfer(tab, _vm, target._vm, index, target.CanTakeTab());
+        if (!HandInTyping(tab)) return false;
+        if (_vm.CanRelease(tab, out var reason)) return true;
+        _vm.ShowNotice(Loc.T("Tab not moved"), reason);
+        return false;
     }
+
+    /// <summary>Moves a tab to another window. False, with the reason shown here, when it stays.</summary>
+    internal bool MoveTab(DocumentTab tab, MainWindow target, int index)
+    {
+        if (!CanLeave(tab) || !_vm.Registry.Transfer(tab, _vm, target._vm, index, target.CanTakeTab())) return false;
+        _vm.Registry.Find(tab.Id)?.SetStatus(Loc.T("Moved {0} to another window.", tab.Title));
+        target.Activate();
+        CloseWhenEmpty();
+        return true;
+    }
+
+    /// <summary>Moves a tab into a window of its own, at <paramref name="at"/> (device-independent pixels) or beside this one. False when it stays; then no window appears.</summary>
+    internal bool TearOut(DocumentTab tab, Point? at = null)
+    {
+        if (!CanLeave(tab)) return false;
+        var window = new MainWindow(_vm.Registry, _vm.Recovery, primary: false, at);
+        if (!_vm.Registry.Transfer(tab, _vm, window._vm, 1))
+        {
+            window.Close();
+            return false;
+        }
+        window.Show();
+        window._vm.SetStatus(Loc.T("Moved {0} to a new window.", tab.Title));
+        window.Dispatcher.BeginInvoke(window.FocusActiveTab, System.Windows.Threading.DispatcherPriority.Loaded);
+        CloseWhenEmpty();
+        return true;
+    }
+
+    // A window made for a tab goes when the tab leaves it, unless it still owns a batch window, which it waits for.
+    private void CloseWhenEmpty()
+    {
+        if (IsPrimary || _vm.Documents.Any()) return;
+        if (Tools.Batch.BatchWindow.WhenClosed(_vm, CloseWhenEmpty)) return;
+        Close();
+    }
+
+    private void FocusActiveTab() =>
+        (TabList.ItemContainerGenerator.ContainerFromItem(_vm.ActiveTab) as ListBoxItem)?.Focus();
 
     private void TabList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
@@ -105,10 +147,32 @@ public partial class MainWindow
             e.Handled = true;
             return;
         }
+        TabList.ContextMenu = TabMenu(tab);
+    }
+
+    internal ContextMenu TabMenu(DocumentTab tab)
+    {
         int index = _vm.Strip.IndexOf(tab);
         var others = _vm.Documents.Where(d => !ReferenceEquals(d, tab)).ToList();
         var right = _vm.Strip.Skip(index + 1).OfType<DocumentTab>().ToList();
         var menu = new ContextMenu();
+        AddItem(menu, Loc.T("Move to new window"), !_vm.IsBusy, () => TearOut(tab));
+        var windows = WindowHub.Windows.Where(w => !ReferenceEquals(w, this)).ToList();
+        if (windows.Count > 0)
+        {
+            var submenu = new MenuItem { Header = Loc.T("Move to window") };
+            AutomationProperties.SetName(submenu, submenu.Header.ToString());
+            foreach (var window in windows)
+            {
+                var target = window;
+                var entry = new MenuItem { Header = target.Title.Replace("_", "__") };
+                AutomationProperties.SetName(entry, target.Title);
+                entry.Click += (_, _) => MoveTab(tab, target, int.MaxValue);
+                submenu.Items.Add(entry);
+            }
+            menu.Items.Add(submenu);
+        }
+        menu.Items.Add(new Separator());
         AddItem(menu, Loc.T("Close"), !_vm.IsBusy, () => RequestClose(tab));
         AddItem(menu, Loc.T("Close other tabs"), !_vm.IsBusy && others.Count > 0, () => RequestCloseMany(others));
         AddItem(menu, Loc.T("Close tabs to the right"), !_vm.IsBusy && right.Count > 0, () => RequestCloseMany(right));
@@ -117,7 +181,7 @@ public partial class MainWindow
         AddItem(menu, Loc.T("Show in folder"), tab.Path is not null, () => ShowInFolder(tab.Path!));
         menu.Items.Add(new Separator());
         AddItem(menu, Loc.T("Reopen closed tab"), _vm.ClosedFiles.Count > 0, () => _ = _vm.ReopenClosedAsync());
-        TabList.ContextMenu = menu;
+        return menu;
     }
 
     private static void AddItem(ContextMenu menu, string header, bool enabled, Action run)

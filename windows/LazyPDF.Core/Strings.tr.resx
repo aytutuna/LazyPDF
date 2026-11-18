@@ -3643,6 +3643,12 @@
   <data name="Move tag up" xml:space="preserve">
     <value>Etiketi yukarı taşı</value>
   </data>
+  <data name="Move to new window" xml:space="preserve">
+    <value>Yeni pencereye taşı</value>
+  </data>
+  <data name="Move to window" xml:space="preserve">
+    <value>Pencereye taşı</value>
+  </data>
   <data name="Move up" xml:space="preserve">
     <value>Yukarı taşı</value>
   </data>
@@ -3651,6 +3657,12 @@
   </data>
   <data name="Moved from page {0}" xml:space="preserve">
     <value>{0}. sayfadan taşındı</value>
+  </data>
+  <data name="Moved {0} to a new window." xml:space="preserve">
+    <value>{0} yeni pencereye taşındı.</value>
+  </data>
+  <data name="Moved {0} to another window." xml:space="preserve">
+    <value>{0} başka bir pencereye taşındı.</value>
   </data>
   <data name="Moved." xml:space="preserve">
     <value>Taşındı.</value>

@@ -40,6 +40,14 @@ public partial class BatchWindow : Window, IToolHost
     /// <summary>True while a batch started from this view model's window is running.</summary>
     internal static bool IsRunning(AppViewModel vm) => Opened.TryGetValue(vm, out var open) && open._busy is not null;
 
+    /// <summary>When this view model's batch window is open, runs <paramref name="then"/> once it has closed and returns true.</summary>
+    internal static bool WhenClosed(AppViewModel vm, Action then)
+    {
+        if (!Opened.TryGetValue(vm, out var open)) return false;
+        open.Closed += (_, _) => then();
+        return true;
+    }
+
     private void RefreshRun() => RunButton.IsEnabled = _busy is null && Panel.Action!.CanRun();
 
     private async void RunButton_Click(object sender, RoutedEventArgs e) => await Panel.Action!.Run();

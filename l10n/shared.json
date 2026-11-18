@@ -9339,5 +9339,17 @@
   },
   "A comparison window is open. Close anyway?": {
     "tr": "Bir karşılaştırma penceresi açık. Yine de kapatılsın mı?"
+  },
+  "Move to new window": {
+    "tr": "Yeni pencereye taşı"
+  },
+  "Move to window": {
+    "tr": "Pencereye taşı"
+  },
+  "Moved {0} to a new window.": {
+    "tr": "{0} yeni pencereye taşındı."
+  },
+  "Moved {0} to another window.": {
+    "tr": "{0} başka bir pencereye taşındı."
   }
 }

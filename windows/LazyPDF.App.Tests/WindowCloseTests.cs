@@ -13,7 +13,7 @@ namespace LazyPDF.App.Tests;
 public sealed class WindowCloseTests
 {
     /// <summary>Two main windows over two view models that share a registry, with preferences in a folder of their own.</summary>
-    private sealed class Rig : IDisposable
+    internal sealed class Rig : IDisposable
     {
         private readonly TempDir _prefs = new();
         private readonly string _saved = StoreFiles.DefaultDirectory;
