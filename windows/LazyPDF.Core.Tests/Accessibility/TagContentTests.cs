@@ -257,6 +257,33 @@ public class TagContentTests
     }
 
     [Fact]
+    public void AnOperatorInAnotherStreamThanItsOperandsIsRefusedForTagging()
+    {
+        using var document = Open(Make(["BT /F1 11 Tf 72 700 Td (Hello world)", " Tj ET"]));
+        var tree = StructureTree.Create(document);
+        byte[] before = document.Pages[0].Contents();
+
+        Assert.Equal(TagContent.Unreadable, tree.TagArea(0, new PdfRect(0, 0, 612, 792), "P", null).Reason);
+
+        Assert.Equal(before, document.Pages[0].Contents());
+        Assert.Empty(tree.Roots);
+    }
+
+    [Fact]
+    public void ATreeAlreadyAtTheParentTreeLimitRefusesNewContent()
+    {
+        using var document = Open(Make([Words], Tree("<</Type /StructElem /S /P /P PARENT /Pg PAGE>>"), structure: true));
+        var tree = StructureTree.Read(document)!;
+        for (int stream = 3; stream <= 6; stream++) tree.Add(tree.Roots[0].Children.First(), new StructContent(0, 1_000_000, new PdfReference(stream, 0)));
+        byte[] before = document.Pages[0].Contents();
+
+        Assert.Equal(TagContent.TooLarge, tree.TagArea(0, new PdfRect(0, 0, 612, 792), "P", tree.Roots[0]).Reason);
+
+        Assert.Equal(before, document.Pages[0].Contents());
+        Assert.Single(tree.Roots[0].Children);
+    }
+
+    [Fact]
     public void ASelectionThatCutsAStringIsRefusedWithTheContentUntouched()
     {
         using var document = Open(Make([Words]));

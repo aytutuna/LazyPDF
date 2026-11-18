@@ -245,6 +245,29 @@ final class TagContentTests: XCTestCase {
         XCTAssertNotNil(properties["Lang"] as? PdfString)
     }
 
+    func test_anOperatorInAnotherStreamThanItsOperandsIsRefusedForTagging() throws {
+        let document = try open(make(["BT /F1 11 Tf 72 700 Td (Hello world)", " Tj ET"]))
+        let tree = StructureTree.create(document)
+        let before = document.pages[0].contents()
+
+        XCTAssertEqual(try tree.tagArea(0, PdfRect(0, 0, 612, 792), "P", nil).reason, TagContent.unreadable)
+
+        XCTAssertEqual(document.pages[0].contents(), before)
+        XCTAssertTrue(tree.roots.isEmpty)
+    }
+
+    func test_aTreeAlreadyAtTheParentTreeLimitRefusesNewContent() throws {
+        let document = try open(make([words], tree("<</Type /StructElem /S /P /P PARENT /Pg PAGE>>"), structure: true))
+        let structure = try XCTUnwrap(StructureTree.read(document))
+        for stream in 3...6 { try structure.add(structure.roots[0].children[0], StructContent(0, 1_000_000, PdfReference(stream, 0))) }
+        let before = document.pages[0].contents()
+
+        XCTAssertEqual(try structure.tagArea(0, PdfRect(0, 0, 612, 792), "P", structure.roots[0]).reason, TagContent.tooLarge)
+
+        XCTAssertEqual(document.pages[0].contents(), before)
+        XCTAssertEqual(structure.roots[0].children.count, 1)
+    }
+
     func test_aSelectionThatCutsAStringIsRefusedWithTheContentUntouched() throws {
         let document = try open(make([words]))
         let tree = StructureTree.create(document)
