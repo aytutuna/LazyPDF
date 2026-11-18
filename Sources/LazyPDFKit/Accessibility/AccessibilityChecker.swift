@@ -23,7 +23,7 @@ public enum AccessibilityChecker {
     }
 
     // ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\z
-    static func isLanguageTag(_ text: String) -> Bool {
+    public static func isLanguageTag(_ text: String) -> Bool {
         let units = Array(text.utf16)
         let parts = units.split(separator: 0x2D, omittingEmptySubsequences: false)
         guard let first = parts.first, first.count >= 2, first.count <= 3, first.allSatisfy({ isAsciiLetter($0) }) else { return false }
