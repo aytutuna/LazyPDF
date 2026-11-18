@@ -459,13 +459,18 @@ public partial class MainWindow : Window
             return;
         }
         var session = tabs.Where(d => d.Path is not null).Select(d => d.Path!).ToList();
+        // A window closed a moment ago in this pass: the taskbar's Close all windows, so the files of all of them are written once.
+        if (!WindowHub.Exiting && WindowHub.ClosedTogether) WindowHub.BeginExit(_vm.Registry);
         if (WindowHub.Windows.Count > 1 && !WindowHub.Exiting)
         {
             // One window of several closing on purpose: its files are not part of the next start, but Ctrl+Shift+T in the window that stays brings them back.
             if (WindowHub.Survivor(this) is { } stays)
                 foreach (string path in session) stays._vm.RememberClosed(path);
+            WindowHub.NoteClosed(session, _exitActive?.Path);
             return;
         }
+        // The first window's place is the one the next start uses.
+        if (WindowHub.Exiting && !IsPrimary) return;
         // RestoreBounds is empty once the window has closed, so the place is taken here.
         var placement = PlacementOf(WindowState == WindowState.Maximized, new Rect(Left, Top, Width, Height), RestoreBounds);
         string? active = _exitActive?.Path;

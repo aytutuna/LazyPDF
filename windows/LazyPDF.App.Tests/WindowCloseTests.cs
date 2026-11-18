@@ -25,6 +25,8 @@ public sealed class WindowCloseTests
             Both = new TwoWindows();
             A = new MainWindow(Both.A.Vm, null, primary: true);
             B = new MainWindow(Both.B.Vm, null, primary: false);
+            // A window that was never shown has no place, and one that cannot be written is not saved.
+            (A.Left, A.Top, B.Left, B.Top) = (10, 10, 40, 40);
         }
 
         public TwoWindows Both { get; }
@@ -127,5 +129,63 @@ public sealed class WindowCloseTests
         rig.A.Close();
         rig.B.Close();
         Assert.Equal([edited.Path!, rig.Both.B.Dir.Sub("y.pdf")], rig.Saved.LastFiles);
+    });
+
+    [Fact]
+    public Task ClosingAllWindowsTogetherWritesTheFilesOfBoth() => Sta.Run(async () =>
+    {
+        using var rig = new Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("x.pdf"));
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("y.pdf"));
+
+        rig.A.Close();
+        rig.B.Close();
+
+        Assert.Equal([rig.Both.A.Dir.Sub("x.pdf"), rig.Both.B.Dir.Sub("y.pdf")], rig.Saved.LastFiles);
+    });
+
+    [Fact]
+    public Task WindowsClosedOneAtATimeKeepOnlyTheLastOnesFiles() => Sta.Run(async () =>
+    {
+        using var rig = new Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("x.pdf"));
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("y.pdf"));
+
+        rig.A.Close();
+        WindowHub.EndPass();
+        Assert.Empty(rig.Saved.LastFiles);
+        rig.B.Close();
+
+        Assert.Equal([rig.Both.B.Dir.Sub("y.pdf")], rig.Saved.LastFiles);
+        Assert.Equal([rig.Both.A.Dir.Sub("x.pdf")], rig.Both.B.Vm.ClosedFiles);
+    });
+
+    [Fact]
+    public Task ASecondaryThatClosesLeavesItsFilesToReopenInTheWindowThatStays() => Sta.Run(async () =>
+    {
+        using var rig = new Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("x.pdf"));
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("y.pdf"));
+
+        rig.B.Close();
+
+        Assert.Empty(rig.Saved.LastFiles);
+        Assert.Equal([rig.Both.B.Dir.Sub("y.pdf")], rig.Both.A.Vm.ClosedFiles);
+        Assert.Single(WindowHub.Windows);
+    });
+
+    [Fact]
+    public Task WhenTheAppEndsTheFirstWindowsPlaceIsKept() => Sta.Run(async () =>
+    {
+        using var rig = new Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("x.pdf"));
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("y.pdf"));
+        rig.A.Left = 100;
+        WindowHub.BeginExit(rig.Both.Registry, session: true);
+
+        rig.A.Close();
+        rig.B.Close();
+
+        Assert.Equal(100, rig.Saved.Window!.Left);
     });
 }

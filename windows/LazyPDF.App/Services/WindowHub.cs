@@ -16,6 +16,11 @@ internal static class WindowHub
     /// <summary>True while the whole app is ending, so the windows closing one after another keep nothing of their own.</summary>
     public static bool Exiting { get; private set; }
 
+    // What windows closed on purpose in this pass of the message loop held; 'Close all windows' closes them one after another in it.
+    private static List<string>? _closedFiles;
+    private static string? _closedActive;
+    private static int _pass;
+
     // WPF closes every window after SessionEnding whatever a window answers, so that exit is never called off.
     private static bool _sessionEnding;
 
@@ -45,11 +50,44 @@ internal static class WindowHub
         if (Exiting) return;
         Exiting = true;
         var (files, active) = registry.Session();
+        if (_closedFiles is not null)
+        {
+            files = [.. _closedFiles.Concat(files).Distinct(StringComparer.OrdinalIgnoreCase)];
+            active = _closedActive ?? active;
+        }
         AppPreferencesStore.Update(p =>
         {
             p.LastFiles = p.ReopenLast ? files : [];
             p.LastActive = p.ReopenLast ? active : null;
         });
+    }
+
+    /// <summary>True when another window closed on purpose a moment ago, in the same pass of the message loop: the windows are closing together.</summary>
+    public static bool ClosedTogether => _closedFiles is not null;
+
+    /// <summary>A window is closing on its own and leaves <paramref name="files"/>; a window closing right after it is part of a close of all.</summary>
+    public static void NoteClosed(IEnumerable<string> files, string? active)
+    {
+        if (_closedFiles is null)
+        {
+            _closedFiles = [];
+            _closedActive = active;
+            int pass = ++_pass;
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+            {
+                if (pass == _pass) EndPass();
+            });
+        }
+        _closedFiles.AddRange(files);
+    }
+
+    /// <summary>The queued closes have all run. Windows still open then were not part of an exit, so what was written for one is theirs to rewrite.</summary>
+    internal static void EndPass()
+    {
+        _pass++;
+        _closedFiles = null;
+        _closedActive = null;
+        if (_windows.Count > 0 && !_sessionEnding) Exiting = false;
     }
 
     /// <summary>A window did not close after all. An exit that came with the end of the Windows session carries on.</summary>
@@ -62,6 +100,9 @@ internal static class WindowHub
     internal static void Reset()
     {
         Exiting = _sessionEnding = false;
+        _closedFiles = null;
+        _closedActive = null;
+        _pass++;
         Active = null;
     }
 }
