@@ -23,7 +23,8 @@ final class MacUITests: XCTestCase {
     }
 
     private func window(_ app: XCUIApplication, showing label: String) -> XCUIElement {
-        app.windows.containing(NSPredicate(format: "label == %@", label)).firstMatch
+        // A static text on the Mac carries its words in value, not label.
+        app.windows.containing(NSPredicate(format: "label == %@ OR value == %@", label, label)).firstMatch
     }
 
     private func choose(_ app: XCUIApplication, menu: String, item: String) {
