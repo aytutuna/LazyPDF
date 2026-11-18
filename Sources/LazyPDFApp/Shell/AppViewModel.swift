@@ -116,6 +116,9 @@ public final class AppViewModel {
     @ObservationIgnored var opening = Set<String>()
     @ObservationIgnored var warnedAboutDisk: [ObjectIdentifier: DiskStamp?] = [:]
     @ObservationIgnored var exiting = false
+    @ObservationIgnored var disposesOnExit = true
+    /// Off for a window that is not the first: the crash leftovers are offered once, by the window that opened first.
+    @ObservationIgnored public var offersRecovery = true
     @ObservationIgnored var signingField: String?
     @ObservationIgnored var returnTool: String?
     @ObservationIgnored var taggingRequested = false

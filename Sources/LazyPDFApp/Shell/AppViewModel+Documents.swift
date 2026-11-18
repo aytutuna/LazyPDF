@@ -437,11 +437,13 @@ extension AppViewModel {
     }
 
     /// True when the window can close now; otherwise asks about the first document with unsaved changes and goes on from
-    /// there.
-    public func requestExit() -> Bool {
+    /// there. With `dispose` false the tabs stay open once everything is answered, for an exit that several windows have to
+    /// agree on first; `closeAllTabs` ends them.
+    public func requestExit(dispose: Bool = true) -> Bool {
         if waitForJob() { return false }
         if !handIn() { return false }
         exiting = true
+        disposesOnExit = dispose
         return !continueExit(raise: false)
     }
 
@@ -477,13 +479,18 @@ extension AppViewModel {
             notifyAll()
             return true
         }
+        if disposesOnExit { closeAllTabs() }
+        exiting = false
+        if raise { exitRequested?() }
+        return false
+    }
+
+    /// Lets go of every tab without asking, for the end of the app or of a window whose tabs were all answered for.
+    public func closeAllTabs() {
         for tab in documents {
             rememberView(tab)
             tab.dispose()
         }
-        exiting = false
-        if raise { exitRequested?() }
-        return false
     }
 
     /// Looks at the active document's file: when another program changed or removed it, the info bar says so (once for each
