@@ -216,7 +216,8 @@ private struct MiddleClickCatcher: NSViewRepresentable {
 
 extension View {
     func closesOnMiddleClick(enabled: Bool, _ action: @escaping () -> Void) -> some View {
-        overlay { if enabled { MiddleClickCatcher(action: action) } }
+        // Hidden, or the accessibility hit test finds the catcher instead of the tab's button under it.
+        overlay { if enabled { MiddleClickCatcher(action: action).accessibilityHidden(true) } }
     }
 }
 #else
