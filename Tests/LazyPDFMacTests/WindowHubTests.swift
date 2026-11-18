@@ -306,6 +306,7 @@ final class WindowHubTests: XCTestCase {
         let id = hub.roster.park(primary.vm.documents[1], from: primary.vm, at: 1)
         let second = try XCTUnwrap(hub.claim(id))
         let window = NSWindow()
+        window.isReleasedWhenClosed = false
         second.attach(window)
         second.vm.sheetOpen = true
         second.vm.close(try XCTUnwrap(second.vm.activeDocument))
