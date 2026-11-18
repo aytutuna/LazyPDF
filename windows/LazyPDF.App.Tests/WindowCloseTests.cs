@@ -100,4 +100,32 @@ public sealed class WindowCloseTests
 
         Assert.DoesNotContain(rig.B, WindowHub.Windows);
     });
+
+    private static async Task<DocumentTab> OpenEdited(ViewModelFixture f, string name)
+    {
+        await f.Vm.OpenAsync(f.Pdf(name));
+        var tab = f.Vm.ActiveDocument!;
+        Pdfs.Retitle(tab.Session, name);
+        tab.Commit("Properties");
+        return tab;
+    }
+
+    [Fact]
+    public Task AnEndedWindowsSessionIsNotCalledOffByAWindowThatDeclinesToClose() => Sta.Run(async () =>
+    {
+        using var rig = new Rig();
+        var edited = await OpenEdited(rig.Both.A, "x.pdf");
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("y.pdf"));
+        WindowHub.BeginExit(rig.Both.Registry, session: true);
+
+        // The question is up, then the answer keeps the document; WPF closes the window all the same.
+        rig.A.Close();
+        rig.Both.A.Vm.CancelClose();
+
+        Assert.True(WindowHub.Exiting);
+        rig.Both.A.Vm.Close(edited);
+        rig.A.Close();
+        rig.B.Close();
+        Assert.Equal([edited.Path!, rig.Both.B.Dir.Sub("y.pdf")], rig.Saved.LastFiles);
+    });
 }

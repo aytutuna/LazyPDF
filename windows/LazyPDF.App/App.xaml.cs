@@ -73,7 +73,7 @@ public partial class App : Application
         ThemeService.Initialize();
         base.OnStartup(e);
         JumpLists.Install();
-        SessionEnding += (_, _) => WindowHub.BeginExit(_registry);
+        SessionEnding += (_, _) => WindowHub.BeginExit(_registry, session: true);
         // Built here rather than through StartupUri so the first window shares the registry and recovery store.
         new MainWindow(_registry, _recovery).Show();
     }

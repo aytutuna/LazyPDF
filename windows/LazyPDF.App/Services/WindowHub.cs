@@ -16,6 +16,9 @@ internal static class WindowHub
     /// <summary>True while the whole app is ending, so the windows closing one after another keep nothing of their own.</summary>
     public static bool Exiting { get; private set; }
 
+    // WPF closes every window after SessionEnding whatever a window answers, so that exit is never called off.
+    private static bool _sessionEnding;
+
     public static void Register(MainWindow window) => _windows.Add(window);
 
     public static void Unregister(MainWindow window)
@@ -36,8 +39,9 @@ internal static class WindowHub
     /// The app is ending with every window: what the next start reopens is the union of all of them, written now, once,
     /// since the first window to close would otherwise hand its files to the next and only the last would be kept.
     /// </summary>
-    public static void BeginExit(DocumentRegistry registry)
+    public static void BeginExit(DocumentRegistry registry, bool session = false)
     {
+        _sessionEnding |= session;
         if (Exiting) return;
         Exiting = true;
         var (files, active) = registry.Session();
@@ -48,13 +52,16 @@ internal static class WindowHub
         });
     }
 
-    /// <summary>A window did not close after all.</summary>
-    public static void EndExit() => Exiting = false;
+    /// <summary>A window did not close after all. An exit that came with the end of the Windows session carries on.</summary>
+    public static void EndExit()
+    {
+        if (!_sessionEnding) Exiting = false;
+    }
 
     /// <summary>Forgets the windows' shared state, for tests that build windows of their own.</summary>
     internal static void Reset()
     {
-        Exiting = false;
+        Exiting = _sessionEnding = false;
         Active = null;
     }
 }
