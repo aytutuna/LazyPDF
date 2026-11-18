@@ -25,6 +25,7 @@ final class WindowHub {
     private var quitQueue: [MacShell]?
     private var quitSession: LastSession?
     private var quitAsking = false
+    private var quitRechecked = false
 
     init() {
         recovery = RecoveryStore(directory: folders.recovery)
@@ -139,19 +140,26 @@ final class WindowHub {
 
     // Every window is asked before any of them lets go of its tabs, so a Cancel in the last one leaves the others open.
     private func askNext() -> NSApplication.TerminateReply {
-        while let shell = quitQueue?.first {
-            if shell.vm.requestExit(dispose: false) {
-                quitQueue?.removeFirst()
-                continue
+        while true {
+            while let shell = quitQueue?.first {
+                if shell.vm.requestExit(dispose: false) {
+                    quitQueue?.removeFirst()
+                    continue
+                }
+                // A job that is still running answers with a notice and no question; quitting waits for another try.
+                if shell.vm.closeQuestion == nil {
+                    endQuit()
+                    return .terminateCancel
+                }
+                quitAsking = true
+                quitRechecked = false
+                shell.showWindow()
+                return .terminateLater
             }
-            // A job that is still running answers with a notice and no question; quitting waits for another try.
-            if shell.vm.closeQuestion == nil {
-                endQuit()
-                return .terminateCancel
-            }
-            quitAsking = true
-            shell.showWindow()
-            return .terminateLater
+            // The other windows stay usable while a question is up, so each is asked once more after the last answer.
+            if quitRechecked { break }
+            quitRechecked = true
+            quitQueue = ordered
         }
         if let session = quitSession { primaryShell().vm.keep(session) }
         for shell in ordered { shell.vm.closeAllTabs() }
@@ -163,6 +171,7 @@ final class WindowHub {
         quitQueue = nil
         quitSession = nil
         quitAsking = false
+        quitRechecked = false
     }
 
     /// A window ran out of tabs to ask about: the quit goes on to the next one, a close of that window completes, and

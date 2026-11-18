@@ -16,6 +16,13 @@ final class WindowHubTests: XCTestCase {
         return url
     }
 
+    private func edit(_ tab: DocumentTab, _ title: String) throws {
+        var metadata = DocumentMetadata.read(tab.session.document)
+        metadata.title = title
+        try metadata.write(tab.session.document)
+        try tab.commit("Properties")
+    }
+
     func test_theFirstWindowGetsThePrimaryShellFilesMayHaveReachedAlready() {
         let hub = WindowHub()
         let early = hub.primaryShell()
@@ -108,6 +115,24 @@ final class WindowHubTests: XCTestCase {
         await primary.vm.open(try file("a.pdf"))
 
         XCTAssertEqual(hub.terminateReply(), .terminateNow)
+    }
+
+    func test_aWindowEditedWhileAnotherIsBeingAskedIsAskedToo() async throws {
+        let hub = WindowHub()
+        let primary = try XCTUnwrap(hub.claim(nil))
+        await primary.vm.open([try file("a.pdf"), try file("b.pdf")])
+        let id = hub.roster.park(primary.vm.documents[1], from: primary.vm, at: 1)
+        let second = try XCTUnwrap(hub.claim(id))
+        let late = try XCTUnwrap(primary.vm.activeDocument)
+        let asked = try XCTUnwrap(second.vm.activeDocument)
+        try edit(asked, "Changed")
+
+        XCTAssertEqual(hub.terminateReply(), .terminateLater)
+        try edit(late, "Edited")
+        second.vm.close(asked)
+
+        XCTAssertTrue(primary.vm.closeQuestion === late)
+        XCTAssertFalse(late.isDisposed)
     }
 
     func test_quittingAsksWindowByWindowAndACancelKeepsEveryTab() async throws {
