@@ -18,9 +18,10 @@ public partial class CombinePanel : ToolPanel
 {
     private const string EntryFormat = "LazyPDF.CombineEntry";
 
-    // Each document keeps its own list, so a look at another tab does not lose the files that were picked.
-    private readonly ConditionalWeakTable<DocumentTab, ObservableCollection<CombineEntry>> _lists = [];
+    // Each document keeps its own list, so a look at another tab, or a move to another window, does not lose the files that were picked.
+    private static readonly ConditionalWeakTable<DocumentTab, ObservableCollection<CombineEntry>> Lists = [];
     private ObservableCollection<CombineEntry> _entries = [];
+    private readonly System.Collections.Specialized.NotifyCollectionChangedEventHandler _entriesChanged;
     private string? _folder;
     private Point _dragStart;
     private CombineEntry? _dragEntry;
@@ -31,6 +32,7 @@ public partial class CombinePanel : ToolPanel
     public CombinePanel()
     {
         InitializeComponent();
+        _entriesChanged = (_, _) => Refresh();
     }
 
     private bool Splitting => ModeSplit.IsChecked == true;
@@ -44,12 +46,13 @@ public partial class CombinePanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
-        if (!_lists.TryGetValue(Tab, out var list))
+        if (!Lists.TryGetValue(Tab, out var list))
         {
             list = [new CombineEntry(Tab.Title, Tab.PageCount, null)];
-            list.CollectionChanged += (_, _) => Refresh();
-            _lists.Add(Tab, list);
+            Lists.Add(Tab, list);
         }
+        // The list outlives this panel, so the panel that shows it listens for as long as it shows it.
+        list.CollectionChanged += _entriesChanged;
         _entries = list;
         Files.ItemsSource = list;
         // The file may have lost or gained pages while another tab was shown.
@@ -57,7 +60,11 @@ public partial class CombinePanel : ToolPanel
         Refresh();
     }
 
-    protected override void OnDetach() => Tab!.Changed -= Tab_Changed;
+    protected override void OnDetach()
+    {
+        Tab!.Changed -= Tab_Changed;
+        _entries.CollectionChanged -= _entriesChanged;
+    }
 
     private void Tab_Changed(object? sender, EventArgs e)
     {

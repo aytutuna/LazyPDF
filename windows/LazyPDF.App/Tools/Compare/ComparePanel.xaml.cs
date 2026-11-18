@@ -19,7 +19,7 @@ public partial class ComparePanel : ToolPanel
     private readonly Func<IDocumentRenderer> _renderers;
     private readonly IFontSource _fonts;
     private readonly ToolAction _action;
-    private readonly ConditionalWeakTable<DocumentTab, HeldComparison> _held = [];
+    private static readonly ConditionalWeakTable<DocumentTab, HeldComparison> Held = [];
     private CompareFlow? _flow;
     private HeldComparison? _shown;
     private string? _path;
@@ -53,7 +53,7 @@ public partial class ComparePanel : ToolPanel
         HideUnlock();
         _other = null;
         ShowTabs();
-        _held.TryGetValue(Tab, out var held);
+        Held.TryGetValue(Tab, out var held);
         SetPath(held?.Path);
         Show(held);
         RaiseActionChanged();
@@ -86,13 +86,13 @@ public partial class ComparePanel : ToolPanel
             if (here && flow.Locked is { } locked) AskToUnlock(locked, password is not null || request.Certificate is not null);
             return;
         }
-        if (_held.TryGetValue(tab, out var old))
+        if (Held.TryGetValue(tab, out var old))
         {
             old.Dispose();
-            _held.Remove(tab);
+            Held.Remove(tab);
         }
         var held = new HeldComparison(made, request.Path, !request.FileIsOlder, revision);
-        _held.Add(tab, held);
+        Held.Add(tab, held);
         if (!here) return;
         HideUnlock();
         Show(held);

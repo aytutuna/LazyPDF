@@ -22,8 +22,7 @@ internal static class Sta
         {
             LazyPDF.App.App.Unattended = true;
             var app = new LazyPDF.App.App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-            // The application has queued its start, which opens the window named by StartupUri. InitializeComponent
-            // sets that name, so it runs after the start and no window is opened.
+            // The unattended start opens no window; the resources still have to be loaded.
             app.Dispatcher.InvokeAsync(() =>
             {
                 app.InitializeComponent();
