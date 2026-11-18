@@ -87,6 +87,7 @@ final class MacShell {
     func attach(_ window: NSWindow) {
         self.window = window
         hadWindow = true
+        hub.windowList.bump()
         if let point = placeAt {
             placeAt = nil
             window.setFrameTopLeftPoint(NSPoint(x: point.x - 80, y: point.y + 20))
@@ -133,6 +134,7 @@ final class MacShell {
 
     func update(_ state: WindowState) {
         window?.title = state.title
+        hub.windowList.bump()
         window?.representedURL = state.url
         window?.isDocumentEdited = state.dirty
     }

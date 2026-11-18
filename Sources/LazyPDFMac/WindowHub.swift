@@ -1,5 +1,6 @@
 #if os(macOS)
 import AppKit
+import Observation
 import LazyPDFApp
 import LazyPDFKit
 import LazyPDFUI
@@ -7,6 +8,15 @@ import LazyPDFUI
 // The windows of the app, as App.xaml.cs and WindowHub.cs hold them on Windows: one shell for each window, the services they
 // share, the one primary window that restores the session and takes what Finder sends, and the quit that asks window by
 // window.
+
+/// Read by anything built from the list of windows, so it is drawn again when a window comes, goes or is renamed.
+@MainActor
+@Observable
+final class WindowListRevision {
+    private(set) var value = 0
+
+    func bump() { value += 1 }
+}
 
 @MainActor
 final class WindowHub {
@@ -18,6 +28,7 @@ final class WindowHub {
     let folders = DefaultAppFolders()
     let certificates = MacCertificates()
     let recovery: RecoveryStore
+    let windowList = WindowListRevision()
 
     private var shells: [UUID: MacShell] = [:]
     private var order: [UUID] = []
@@ -47,6 +58,7 @@ final class WindowHub {
     private func add(_ shell: MacShell, first: Bool = false) -> MacShell {
         shells[shell.id] = shell
         if first { order.insert(shell.id, at: 0) } else { order.append(shell.id) }
+        windowList.bump()
         return shell
     }
 
@@ -84,6 +96,7 @@ final class WindowHub {
         if shell.isPrimary { return }
         shells[shell.id] = nil
         order.removeAll { $0 == shell.id }
+        windowList.bump()
         registry.remove(shell.vm)
         shell.teardown()
     }
@@ -158,6 +171,7 @@ final class WindowHub {
 
     /// The windows `shell` can send a tab to, numbered as the Window menu lists them.
     func targets(besides shell: MacShell) -> [TabMoveTarget] {
+        _ = windowList.value
         let showing = ordered.filter { $0.window?.isVisible == true || $0.window?.isMiniaturized == true }
         return showing.enumerated().compactMap { number, target in
             guard target !== shell else { return nil }

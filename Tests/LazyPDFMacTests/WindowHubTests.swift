@@ -274,5 +274,24 @@ final class WindowHubTests: XCTestCase {
         hub.dragEnded(first.vm.documents[0], from: first, far)
         XCTAssertEqual(opened, 1)
     }
+
+    func test_theListOfWindowsIsRedrawnWhenOneComesOrGoes() async throws {
+        let hub = WindowHub()
+        let primary = try XCTUnwrap(hub.claim(nil))
+        await primary.vm.open(try file("a.pdf"))
+        var changes = 0
+        func watch() {
+            withObservationTracking({ _ = hub.targets(besides: primary) }, onChange: { changes += 1 })
+        }
+
+        watch()
+        let id = hub.roster.park(try XCTUnwrap(primary.vm.activeDocument), from: primary.vm, at: 1)
+        let second = try XCTUnwrap(hub.claim(id))
+        XCTAssertEqual(changes, 1)
+
+        watch()
+        hub.windowGone(second)
+        XCTAssertEqual(changes, 2)
+    }
 }
 #endif
