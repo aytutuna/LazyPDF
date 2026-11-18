@@ -200,5 +200,61 @@ final class WindowHubTests: XCTestCase {
         XCTAssertEqual(primary.vm.message?.title, "Tab not moved")
         XCTAssertTrue(primary.vm.documents.first === tab)
     }
+
+    private func twoWindows(_ hub: WindowHub) async throws -> (first: MacShell, second: MacShell) {
+        let primary = try XCTUnwrap(hub.claim(nil))
+        await primary.vm.open([try file("a.pdf"), try file("b.pdf"), try file("c.pdf")])
+        let id = hub.roster.park(primary.vm.documents[2], from: primary.vm, at: 1)
+        return (primary, try XCTUnwrap(hub.claim(id)))
+    }
+
+    private let taken = TabDragEnd(screen: .zero, strip: .zero, taken: true, escaped: false)
+
+    func test_aTabDroppedOnAnotherStripMovesOnlyWhenItsDragHasEnded() async throws {
+        let hub = WindowHub()
+        let (first, second) = try await twoWindows(hub)
+        let tab = first.vm.documents[0]
+
+        XCTAssertTrue(hub.drop(tab.id, on: second, at: 1))
+        XCTAssertTrue(first.vm.documents.contains { $0 === tab })
+
+        hub.dragEnded(tab, from: first, taken)
+
+        XCTAssertFalse(first.vm.documents.contains { $0 === tab })
+        XCTAssertTrue(second.vm.documents.first === tab)
+        XCTAssertEqual(second.vm.statusFull, "Moved \(tab.title) to another window.")
+    }
+
+    func test_aTabDroppedOnItsOwnStripIsReorderedAtOnce() async throws {
+        let hub = WindowHub()
+        let (first, _) = try await twoWindows(hub)
+        let tab = first.vm.documents[1]
+
+        XCTAssertTrue(hub.drop(tab.id, on: first, at: 1))
+
+        XCTAssertTrue(first.vm.documents.first === tab)
+    }
+
+    func test_anIdNoWindowOwnsIsRefused() async throws {
+        let hub = WindowHub()
+        let (_, second) = try await twoWindows(hub)
+
+        XCTAssertFalse(hub.drop(UUID(), on: second, at: 1))
+    }
+
+    func test_theNoteOfADropIsUsedOnceAndAnEscapedDragMovesNothing() async throws {
+        let hub = WindowHub()
+        let (first, second) = try await twoWindows(hub)
+        let tab = first.vm.documents[0]
+        XCTAssertTrue(hub.drop(tab.id, on: second, at: 1))
+        hub.dragEnded(tab, from: first, taken)
+        let other = first.vm.documents[0]
+        let far = TabDragEnd(screen: CGPoint(x: 0, y: 900), strip: CGRect(x: 0, y: 0, width: 800, height: 30), taken: false, escaped: true)
+
+        hub.dragEnded(other, from: first, taken)
+        hub.dragEnded(other, from: first, far)
+
+        XCTAssertTrue(first.vm.documents.contains { $0 === other })
+    }
 }
 #endif

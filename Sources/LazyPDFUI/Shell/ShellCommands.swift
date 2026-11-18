@@ -54,6 +54,8 @@ public struct ShellCommands {
     /// Moves the tab into a window of its own, and the other windows it can go to; nil where there is only one window.
     public var moveToNewWindow: (@MainActor (DocumentTab) -> Void)?
     public var windowTargets: (@MainActor () -> [TabMoveTarget])?
+    /// The Mac's drag of a tab onto another strip or out of the window; nil keeps the String drag.
+    public var tabDragging: TabDragging?
 
     public init(open: @escaping @MainActor () -> Void = {}, create: @escaping @MainActor () -> Void = {},
                 batch: @escaping @MainActor () -> Void = {}, saveAs: @escaping @MainActor (DocumentTab) async -> Bool = { _ in false },
@@ -65,7 +67,8 @@ public struct ShellCommands {
                 certificateList: CertificateListModel? = nil,
                 openFiles: (@MainActor ([URL]) -> Void)? = nil,
                 moveToNewWindow: (@MainActor (DocumentTab) -> Void)? = nil,
-                windowTargets: (@MainActor () -> [TabMoveTarget])? = nil) {
+                windowTargets: (@MainActor () -> [TabMoveTarget])? = nil,
+                tabDragging: TabDragging? = nil) {
         self.open = open
         self.create = create
         self.batch = batch
@@ -79,6 +82,7 @@ public struct ShellCommands {
         self.openFiles = openFiles
         self.moveToNewWindow = moveToNewWindow
         self.windowTargets = windowTargets
+        self.tabDragging = tabDragging
     }
 }
 #endif

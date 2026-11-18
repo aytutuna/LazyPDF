@@ -25,6 +25,8 @@ final class MacShell {
     /// The red button asked this window to close and a question about its tabs is up.
     var closing = false
     var filesFromOutside = false
+    /// Where the window goes when it is shown, for one made by dragging a tab out: the tab's end of the drag.
+    var placeAt: CGPoint?
     private var restored = false
     private var hadWindow = false
     var noteRecent: (URL) -> Void = { NSDocumentController.shared.noteNewRecentDocumentURL($0) }
@@ -72,7 +74,9 @@ final class MacShell {
                                  importCertificate: { [unowned self] in self.importCertificate() },
                                  openFiles: { [unowned self] in self.open($0) },
                                  moveToNewWindow: { [unowned self] in self.hub.moveToNewWindow($0, from: self) },
-                                 windowTargets: { [unowned self] in self.hub.targets(besides: self) })
+                                 windowTargets: { [unowned self] in self.hub.targets(besides: self) },
+                                 tabDragging: TabDragging(drop: { [unowned self] in self.hub.drop($0, on: self, at: $1) },
+                                                          ended: { [unowned self] in self.hub.dragEnded($0, from: self, $1) }))
         #if LAZYPDF_UITESTS
         if primary { openTestFile() }
         #endif
@@ -81,6 +85,10 @@ final class MacShell {
     func attach(_ window: NSWindow) {
         self.window = window
         hadWindow = true
+        if let point = placeAt {
+            placeAt = nil
+            window.setFrameTopLeftPoint(NSPoint(x: point.x - 80, y: point.y + 20))
+        }
         update(WindowState(vm.activeDocument))
         restoreSession()
         closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { [weak self] in self?.vm.documents.isEmpty == false },

@@ -22,6 +22,9 @@ final class WindowHub {
     private var shells: [UUID: MacShell] = [:]
     private var order: [UUID] = []
     private var openWindow: ((UUID) -> Void)?
+    // Where a window made for a tab goes, by its id; and the strip a drag was let go on, until its source has seen the end.
+    private var placements: [UUID: CGPoint] = [:]
+    private var dropped: (shell: MacShell, index: Int)?
 
     // The quit in progress: the windows still to be asked, what the next start reopens, and whether an answer is awaited.
     private var quitQueue: [MacShell]?
@@ -57,6 +60,7 @@ final class WindowHub {
         case .secondary:
             if let known = shells[id] { return known }
             let shell = add(MacShell(hub: self, id: id, primary: false))
+            shell.placeAt = placements.removeValue(forKey: id)
             switch roster.arrived(id, shell.vm, registry: registry) {
             case false?:
                 // The checks that held when the window was asked for failed now: the tab stays where it was.
@@ -95,20 +99,48 @@ final class WindowHub {
 
     /// Opens a window for `tab` and moves it there once the window has its shell, if it still can then. The tab stays where
     /// it is when the window never appears.
-    func tearOut(_ tab: DocumentTab, from shell: MacShell, at index: Int = 1) {
+    func tearOut(_ tab: DocumentTab, from shell: MacShell, at index: Int = 1, near point: CGPoint? = nil) {
         guard let openWindow else { return }
         let id = roster.park(tab, from: shell.vm, at: index)
+        placements[id] = point
         openWindow(id)
         Task {
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             self.roster.forget(id)
+            self.placements[id] = nil
         }
     }
 
     /// The menu route: checks first, so a refused move opens no window, then a window for the tab.
-    func moveToNewWindow(_ tab: DocumentTab, from shell: MacShell) {
+    func moveToNewWindow(_ tab: DocumentTab, from shell: MacShell, near point: CGPoint? = nil) {
         guard shell.vm.mayRelease(tab) else { return }
-        tearOut(tab, from: shell)
+        tearOut(tab, from: shell, near: point)
+    }
+
+    /// A tab was dropped on the strip of `shell`. A tab of the same window is reordered at once; one from another window is
+    /// only noted, since this runs inside the source's drag session: the source moves it when the session has ended, with
+    /// its checks and any notice outside the drag.
+    func drop(_ id: UUID, on shell: MacShell, at index: Int) -> Bool {
+        guard let owner = registry.find(id), let tab = owner.documents.first(where: { $0.id == id }) else { return false }
+        if owner === shell.vm {
+            shell.vm.moveTab(tab, to: index)
+        } else {
+            dropped = (shell, index)
+        }
+        return true
+    }
+
+    /// A drag that began on the strip of `shell` is over: the tab goes to the strip it was dropped on, or to a window of its
+    /// own when nobody took it and it was let go far from the strip.
+    func dragEnded(_ tab: DocumentTab, from shell: MacShell, _ end: TabDragEnd) {
+        let target = dropped
+        dropped = nil
+        if !shell.vm.documents.contains(where: { $0 === tab }) { return }
+        if let target, target.shell !== shell, shells[target.shell.id] != nil {
+            move(tab, from: shell, to: target.shell, at: target.index)
+        } else if TabDrag.tearsOut(taken: end.taken, escaped: end.escaped, at: end.screen, strip: end.strip) {
+            moveToNewWindow(tab, from: shell, near: end.screen)
+        }
     }
 
     /// Moves `tab` to another window, at the end of its strip unless told otherwise.

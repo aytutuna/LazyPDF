@@ -145,4 +145,26 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(tab(app).waitForExistence(timeout: 20))
         XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 20))
     }
+
+    // The drag of a tab is watched from behind the strip, so a plain press must still reach the tab and its close button.
+    func testClickDoubleClickAndCloseOnATabStillWork() throws {
+        let app = try launch(opening: true)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
+        let strip = app.scrollViews["Open files"]
+
+        strip.buttons["Home"].click()
+        XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
+        tab(app).click()
+        XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 10))
+
+        tab(app).doubleClick()
+        XCTAssertTrue(tab(app).exists)
+        XCTAssertTrue(element(app, "Page 1 of 3").exists)
+        XCTAssertEqual(app.windows.count, 1)
+
+        strip.buttons["Close"].click()
+        XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
+        let gone = NSPredicate(format: "exists == false")
+        wait(for: [expectation(for: gone, evaluatedWith: tab(app))], timeout: 10)
+    }
 }

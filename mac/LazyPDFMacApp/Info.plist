@@ -97,5 +97,18 @@
 	<string>Copyright © 2026 Aytu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Lazy PDF tab</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.alazy.lazypdf.tab</string>
+		</dict>
+	</array>
 </dict>
 </plist>

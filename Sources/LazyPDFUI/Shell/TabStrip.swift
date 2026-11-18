@@ -14,8 +14,22 @@ private struct TabEntry: Identifiable {
 struct TabStrip: View {
     let vm: AppViewModel
     let close: (DocumentTab) -> Void
-    var moveToNewWindow: (@MainActor (DocumentTab) -> Void)?
-    var windowTargets: (@MainActor () -> [TabMoveTarget])?
+    let moveToNewWindow: (@MainActor (DocumentTab) -> Void)?
+    let windowTargets: (@MainActor () -> [TabMoveTarget])?
+    /// Where the Mac's drag of a tab out of the window is wired; nil keeps the String drag of the iPhone and iPad.
+    let dragging: TabDragging?
+    @State private var frames: [UUID: CGRect] = [:]
+
+    private static let space = "tabstrip"
+
+    init(vm: AppViewModel, close: @escaping (DocumentTab) -> Void, moveToNewWindow: (@MainActor (DocumentTab) -> Void)? = nil,
+         windowTargets: (@MainActor () -> [TabMoveTarget])? = nil, dragging: TabDragging? = nil) {
+        self.vm = vm
+        self.close = close
+        self.moveToNewWindow = moveToNewWindow
+        self.windowTargets = windowTargets
+        self.dragging = dragging
+    }
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -26,12 +40,13 @@ struct TabStrip: View {
                 // Dropping past the last tab puts the tab last.
                 Color.clear
                     .frame(width: 24, height: 28)
-                    .dropDestination(for: String.self) { ids, _ in
-                        move(ids, to: vm.strip.count - 1)
-                    }
+                    .tabDropTarget(dragging, index: { vm.strip.count }, fallback: move)
             }
             .padding(.horizontal, 2)
         }
+        .coordinateSpace(name: Self.space)
+        .onPreferenceChange(TabFrames.self) { frames = $0 }
+        .tabDragSource(dragging, frames: frames, tab: { id in vm.documents.first { $0.id == id } })
         .accessibilityLabel(L10n.t("Open files"))
     }
 
