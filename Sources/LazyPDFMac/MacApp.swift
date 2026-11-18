@@ -95,6 +95,7 @@ struct MacWindow: View {
         }
         .onChange(of: WindowState(vm.activeDocument), initial: true) { _, state in shell.update(state) }
         .onChange(of: vm.closeQuestion == nil) { shell.closeQuestionChanged() }
+        .onChange(of: vm.isBlocked || vm.sheetOpen) { shell.becameIdle() }
         .focusedSceneValue(\.macShell, shell)
         .background(WindowHook { shell.attach($0) })
     }

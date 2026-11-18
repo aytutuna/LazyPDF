@@ -25,6 +25,8 @@ final class MacShell {
     /// The red button asked this window to close and a question about its tabs is up.
     var closing = false
     var filesFromOutside = false
+    /// The last tab left while the window was busy, so it closes once it is not.
+    var closeWhenIdle = false
     /// Where the window goes when it is shown, for one made by dragging a tab out: the tab's end of the drag.
     var placeAt: CGPoint?
     private var restored = false
@@ -178,7 +180,13 @@ final class MacShell {
                 await vm.openOrHold(url, access: SecurityScopedAccess.start(url))
                 if vm.tab(of: url) != nil { noteRecent(url) }
             }
+            becameIdle()
         }
+    }
+
+    /// A question was answered, a sheet closed or a file finished opening.
+    func becameIdle() {
+        if closeWhenIdle { hub.closeEmpty(self) }
     }
 
     private func openWithPanel() {

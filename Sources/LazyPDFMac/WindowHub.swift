@@ -22,8 +22,9 @@ final class WindowHub {
     private var shells: [UUID: MacShell] = [:]
     private var order: [UUID] = []
     private var openWindow: ((UUID) -> Void)?
-    // Where a window made for a tab goes, by its id; and the strip a drag was let go on, until its source has seen the end.
+    // Where a window made for a tab goes and the window the tab comes from, by its id; and the strip a drag was let go on, until its source has seen the end.
     private var placements: [UUID: CGPoint] = [:]
+    private var sources: [UUID: MacShell] = [:]
     private var dropped: (shell: MacShell, index: Int)?
 
     // The quit in progress: the windows still to be asked, what the next start reopens, and whether an answer is awaited.
@@ -61,6 +62,7 @@ final class WindowHub {
             if let known = shells[id] { return known }
             let shell = add(MacShell(hub: self, id: id, primary: false))
             shell.placeAt = placements.removeValue(forKey: id)
+            let source = sources.removeValue(forKey: id)
             switch roster.arrived(id, shell.vm, registry: registry) {
             case false?:
                 // The checks that held when the window was asked for failed now: the tab stays where it was.
@@ -68,7 +70,7 @@ final class WindowHub {
                 return nil
             case true?:
                 shell.vm.setStatus(L10n.t("Moved {0} to a new window.", shell.vm.activeDocument?.title ?? ""))
-                closeEmptied()
+                if let source { closeEmpty(source) }
             case nil:
                 break
             }
@@ -103,11 +105,13 @@ final class WindowHub {
         guard let openWindow else { return }
         let id = roster.park(tab, from: shell.vm, at: index)
         placements[id] = point
+        sources[id] = shell
         openWindow(id)
         Task {
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             self.roster.forget(id)
             self.placements[id] = nil
+            self.sources[id] = nil
         }
     }
 
@@ -149,7 +153,7 @@ final class WindowHub {
               registry.transfer(tab, from: shell.vm, to: target.vm, at: index, targetFree: target.isFree) else { return }
         target.vm.setStatus(L10n.t("Moved {0} to another window.", tab.title))
         target.showWindow()
-        closeEmptied()
+        closeEmpty(shell)
     }
 
     /// The windows `shell` can send a tab to, numbered as the Window menu lists them.
@@ -166,12 +170,16 @@ final class WindowHub {
         }
     }
 
-    // A window made for a tab goes when the tab leaves it, unless something is still being opened or asked there.
-    private func closeEmptied() {
-        for shell in ordered where !shell.isPrimary && shell.window != nil && shell.vm.documents.isEmpty
-            && !shell.vm.isOpening && !shell.vm.isBlocked {
-            shell.closeWindow()
+    /// A window made for a tab goes when the tab leaves it. While a file is being opened, a question is up or a sheet is
+    /// open there it waits, and the shell asks again when that is over.
+    func closeEmpty(_ shell: MacShell) {
+        shell.closeWhenIdle = false
+        guard !shell.isPrimary, !shell.closing, shell.window != nil, shell.vm.documents.isEmpty else { return }
+        if shell.vm.isOpening || shell.vm.isBlocked || shell.vm.sheetOpen || !shell.isFree {
+            shell.closeWhenIdle = true
+            return
         }
+        shell.closeWindow()
     }
 
     private var ordered: [MacShell] { order.compactMap { shells[$0] } }
