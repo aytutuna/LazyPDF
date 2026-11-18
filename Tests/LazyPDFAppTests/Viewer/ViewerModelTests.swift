@@ -176,24 +176,24 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(back.point.y, try XCTUnwrap(place).point.y, accuracy: 1e-6)
     }
 
+    func test_aTurnedTabIsTurnedInAnotherViewerToo() async throws {
+        let (viewer, tab) = try open()
+        viewer.rotation = 90
+        let other = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        other.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+
+        other.show(tab)
+
+        XCTAssertEqual(tab.rotation, 90)
+        XCTAssertEqual(other.rotation, 90)
+    }
+
     func test_aTabNeverShownBeforeIsNotTurnedLikeTheLastOne() async throws {
         let (viewer, _) = try open()
         viewer.rotation = 90
         let second = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
 
         viewer.show(second)
-
-        XCTAssertEqual(viewer.rotation, 0)
-    }
-
-    func test_aClosedTabIsNotRemembered() async throws {
-        let (viewer, first) = try open()
-        viewer.rotation = 90
-        let second = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
-        first.dispose()
-
-        viewer.show(second)
-        viewer.show(first)
 
         XCTAssertEqual(viewer.rotation, 0)
     }

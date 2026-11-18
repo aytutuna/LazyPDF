@@ -142,12 +142,10 @@ public final class ViewerModel: DocumentViewer {
     // NSMapTable is not in Foundation on Linux, so the key is the tab's identity and the box checks the tab is still the same one.
     private final class ViewBox {
         weak var tab: DocumentTab?
-        let rotation: Int
         let place: PagePoint?
 
-        init(_ tab: DocumentTab, rotation: Int, place: PagePoint?) {
+        init(_ tab: DocumentTab, place: PagePoint?) {
             self.tab = tab
-            self.rotation = rotation
             self.place = place
         }
     }
@@ -156,8 +154,9 @@ public final class ViewerModel: DocumentViewer {
 
     public func show(_ tab: DocumentTab?) {
         if let left = self.tab, !left.isDisposed {
+            left.rotation = state.rotation
             views = views.filter { $0.value.tab != nil }
-            views[ObjectIdentifier(left)] = ViewBox(left, rotation: state.rotation, place: state.topPlace())
+            views[ObjectIdentifier(left)] = ViewBox(left, place: state.topPlace())
         }
         endPointerTool()
         clearOverlays(keepText: self.tab.map { !$0.isDisposed } ?? false)
@@ -180,7 +179,7 @@ public final class ViewerModel: DocumentViewer {
             staleLoad = tab.drawnRevision != tab.revision
             labels = PdfPageLabels.labels(tab.document)
             let saved = views[ObjectIdentifier(tab)].flatMap { $0.tab === tab ? $0 : nil }
-            apply(state.show(sizes: pageSizes(tab), pageObjects: PageSurfaceState.pageObjects(tab.document), page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit, rotation: saved?.rotation ?? 0))
+            apply(state.show(sizes: pageSizes(tab), pageObjects: PageSurfaceState.pageObjects(tab.document), page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit, rotation: tab.rotation))
             if let place = saved?.place { apply(state.goToPage(place.page, at: place.point)) }
             storeZoom(tab)
             tab.pageIndex = state.currentPage
@@ -372,7 +371,10 @@ public final class ViewerModel: DocumentViewer {
             _ = shownRevision
             return state.rotation
         }
-        set { apply(state.setRotation(newValue)) }
+        set {
+            apply(state.setRotation(newValue))
+            tab?.rotation = state.rotation
+        }
     }
 
     public var tint: PageTint {

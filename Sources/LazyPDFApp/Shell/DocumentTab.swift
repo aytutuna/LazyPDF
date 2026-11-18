@@ -61,6 +61,9 @@ public final class DocumentTab: StripTab {
     /// How the viewer's zoom follows the window; none while a zoom of its own is set.
     public var fit = FitMode.none
 
+    /// The viewer's turn of the pages in degrees, kept here so it moves with the tab to another window.
+    public var rotation = 0
+
     /// Redaction marks drawn but not yet applied; they live in the Redact panel and are lost with the tab.
     public var pendingMarks = 0
 
