@@ -61,8 +61,11 @@ public partial class MainWindow : Window
         _vm.DialogOwner = this;
         _vm.BringForward = _ => OpenFiles([]);
         WindowHub.Register(this);
+        // After Window_Closing, so a close that it called off does not count; a batch window closing with its owner must not close it again.
+        Closing += (_, e) => _closing |= !e.Cancel;
         Closed += (_, _) =>
         {
+            _closing = true;
             WindowHub.Unregister(this);
             _vm.LeaveRegistry();
         };
@@ -216,6 +219,7 @@ public partial class MainWindow : Window
     {
         // An exit that was called off leaves nothing to keep.
         if (!_vm.IsExiting) ForgetExitSession();
+        if (_closeWhenIdle) Dispatcher.BeginInvoke(CloseWhenEmpty);
         if (_refreshing)
         {
             _refreshAgain = true;

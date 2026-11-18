@@ -23,6 +23,9 @@ public partial class MainWindow
 
     private Point _dragStart;
     private DocumentTab? _dragTab;
+    private bool _closing;
+    private bool _closeWhenIdle;
+    private bool _waitingForBatch;
     private TabStripPanel? _tabPanel;
     private TabDropMarker? _dropMarker;
 
@@ -136,12 +139,24 @@ public partial class MainWindow
         return true;
     }
 
-    // A window made for a tab goes when the tab leaves it, unless it still owns a batch window, which it waits for.
+    // A window made for a tab goes when the tab leaves it, unless it still owns a batch window or a file is still
+    // being opened in it; it waits for those and looks again.
     private void CloseWhenEmpty()
     {
-        if (IsPrimary || _vm.Documents.Any()) return;
-        if (Tools.Batch.BatchWindow.WhenClosed(_vm, CloseWhenEmpty)) return;
-        Close();
+        _closeWhenIdle = false;
+        if (IsPrimary || _closing || _vm.Documents.Any()) return;
+        if (_vm.IsOpening || _held.Count > 0)
+        {
+            _closeWhenIdle = true;
+            return;
+        }
+        if (_waitingForBatch) return;
+        _waitingForBatch = Tools.Batch.BatchWindow.WhenClosed(_vm, () =>
+        {
+            _waitingForBatch = false;
+            CloseWhenEmpty();
+        });
+        if (!_waitingForBatch) Close();
     }
 
     private void FocusActiveTab() =>

@@ -4,7 +4,7 @@
         xmlns:loc="clr-namespace:LazyPDF.App"
         xmlns:batch="clr-namespace:LazyPDF.App.Tools.Batch"
         Title="{loc:T Batch}" Width="440" Height="640" MinWidth="320" MinHeight="400" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
-        FontFamily="{StaticResource TextFontFamily}" Closing="Window_Closing">
+        FontFamily="{StaticResource TextFontFamily}" Closing="Window_Closing" Closed="Window_Closed">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />

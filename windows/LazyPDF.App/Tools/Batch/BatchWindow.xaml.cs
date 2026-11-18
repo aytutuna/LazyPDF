@@ -57,7 +57,12 @@ public partial class BatchWindow : Window, IToolHost
     // The window is not a dialog, so IsCancel alone neither closes it nor answers Esc.
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
-    private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e) => Release();
+
+    // A window closed along with its owner skips Closing.
+    private void Window_Closed(object? sender, EventArgs e) => Release();
+
+    private void Release()
     {
         _busy?.Cancel();
         Panel.StopWatching();

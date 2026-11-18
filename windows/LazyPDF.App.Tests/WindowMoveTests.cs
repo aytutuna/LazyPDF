@@ -1,12 +1,14 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
 
-// Moving a tab to a new window or another window from the tab's menu. Windows are built but never shown.
+// Moving a tab to a new window or another window from the tab's menu. Most windows are only built; a tear-out and the
+// cases that need an owner for a batch window show real ones.
 [Collection("Application")]
 public sealed class WindowMoveTests
 {
@@ -136,6 +138,63 @@ public sealed class WindowMoveTests
 
         Assert.DoesNotContain(rig.B, WindowHub.Windows);
         Assert.NotNull(rig.Both.Registry.Find(tab.Id));
+    });
+
+    private static System.Collections.IDictionary OpenBatches() => (System.Collections.IDictionary)typeof(LazyPDF.App.Tools.Batch.BatchWindow)
+        .GetField("Opened", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!.GetValue(null)!;
+
+    [Fact]
+    public Task AnEmptiedSecondaryWaitsForItsBatchWindowAndClosesOnceItIsGone() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        rig.B.Show();
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("b.pdf"));
+        LazyPDF.App.Tools.Batch.BatchWindow.Open(rig.B, rig.Both.B.Vm);
+        var batch = Application.Current.Windows.OfType<LazyPDF.App.Tools.Batch.BatchWindow>().Single();
+
+        Assert.True(rig.B.MoveTab(rig.Both.B.Vm.ActiveDocument!, rig.A, 1));
+
+        Assert.Contains(rig.B, WindowHub.Windows);
+        batch.Close();
+        Assert.DoesNotContain(rig.B, WindowHub.Windows);
+        Assert.False(OpenBatches().Contains(rig.Both.B.Vm));
+    });
+
+    [Fact]
+    public Task ClosingAnEmptiedSecondaryWithItsBatchWindowOpenDoesNotCloseItTwice() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        rig.B.Show();
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("b.pdf"));
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("c.pdf"));
+        LazyPDF.App.Tools.Batch.BatchWindow.Open(rig.B, rig.Both.B.Vm);
+        var first = rig.Both.B.Vm.Documents.First();
+        var second = rig.Both.B.Vm.Documents.Last();
+        Assert.True(rig.B.MoveTab(first, rig.A, 1));
+        Assert.True(rig.B.MoveTab(second, rig.A, 1));
+
+        rig.B.Close();
+
+        Assert.DoesNotContain(rig.B, WindowHub.Windows);
+        Assert.False(OpenBatches().Contains(rig.Both.B.Vm));
+    });
+
+    [Fact]
+    public Task AnEmptiedSecondaryWithAFileAtItsPasswordQuestionStaysUntilItIsAnswered() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("b.pdf"));
+        string locked = rig.Both.B.Dir.File("locked.pdf", File.ReadAllBytes(Pdfs.Fixture("locked.pdf")));
+        await rig.Both.B.Vm.OpenAsync(locked);
+        Assert.NotNull(rig.Both.B.Vm.PasswordRequest);
+
+        Assert.True(rig.B.MoveTab(rig.Both.B.Vm.ActiveDocument!, rig.A, 1));
+
+        Assert.Contains(rig.B, WindowHub.Windows);
+        Assert.NotNull(rig.Both.B.Vm.PasswordRequest);
+        rig.Both.B.Vm.CancelPending();
+        await Dispatcher.Yield(DispatcherPriority.Background);
+        Assert.DoesNotContain(rig.B, WindowHub.Windows);
     });
 
     private static readonly Rect Strip = new(100, 50, 800, 36);

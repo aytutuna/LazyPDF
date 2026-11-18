@@ -200,13 +200,14 @@ public sealed partial class AppViewModel
             pathClaim?.Dispose();
             _reads.Remove(reading);
             if (pending is not null) _parsing.Remove(pending);
-            if (shown is not null && ReferenceEquals(Opening, shown))
-            {
-                Opening = null;
-                NotifyAll();
-            }
+            if (shown is not null && ReferenceEquals(Opening, shown)) Opening = null;
+            // A window waiting on this open looks again, whether or not a progress bar was shown.
+            NotifyAll();
         }
     }
+
+    /// <summary>True while a file is being read or parsed, or waits for its password or certificate.</summary>
+    internal bool IsOpening => _reads.Count > 0 || _parsing.Count > 0 || _pending.Count > 0;
 
     // A file read again under another name where the tab's own file is gone: the tab follows it.
     private void FollowMove(DocumentTab tab, string old, string path, OpenSource source)
