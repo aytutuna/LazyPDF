@@ -65,6 +65,7 @@ final class MacShell {
         vm.fileExporter = services
         vm.clipboard = services
         vm.bringForward = { [unowned self] _ in self.showWindow() }
+        vm.becameIdle = { [unowned self] in self.becameIdle() }
         vm.exitRequested = { [unowned self] in self.hub.exitFinished(self) }
         commands = ShellCommands(open: { [unowned self] in self.openWithPanel() },
                                  create: { [unowned self] in self.present { CreateSheet(host: self.vm, close: $0) } },

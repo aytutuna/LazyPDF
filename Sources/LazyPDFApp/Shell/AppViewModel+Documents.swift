@@ -106,6 +106,7 @@ extension AppViewModel {
         for file in files {
             if file.asCopy { await openCopy(file.url, access: file.access) } else { await open(file.url, access: file.access) }
         }
+        becameIdle?()
     }
 
     public func open(_ url: URL, access: FileAccess? = nil) async {
@@ -124,7 +125,10 @@ extension AppViewModel {
         if registry?.isOpening(url, besides: self) == true { return }
         let key = RecentFiles.folded(url)
         if pending.contains(where: { Self.same($0.source.url, url) }) || !opening.insert(key).inserted { return }
-        defer { opening.remove(key) }
+        defer {
+            opening.remove(key)
+            becameIdle?()
+        }
         let source: OpenSource
         do {
             let opener = opener

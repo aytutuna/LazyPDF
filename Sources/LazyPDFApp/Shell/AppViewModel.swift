@@ -114,6 +114,8 @@ public final class AppViewModel {
 
     var pending: [PendingOpen] = []
     @ObservationIgnored var opening = Set<String>()
+    /// Called when a file has finished opening or the files that were held have been dealt with, whichever way it went.
+    @ObservationIgnored public var becameIdle: (() -> Void)?
     @ObservationIgnored var warnedAboutDisk: [ObjectIdentifier: DiskStamp?] = [:]
     @ObservationIgnored var exiting = false
     @ObservationIgnored var disposesOnExit = true

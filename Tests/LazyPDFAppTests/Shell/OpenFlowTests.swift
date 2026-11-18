@@ -343,4 +343,17 @@ final class OpenFlowTests: XCTestCase {
         f.vm.dismissMessage()
         XCTAssertFalse(f.vm.keepsWindow)
     }
+
+    func test_theWindowIsToldWhenAnOpenEndsWhetherItWorkedOrNot() async {
+        let f = ViewModelFixture(self)
+        var told = 0
+        f.vm.becameIdle = { told += 1 }
+
+        await f.vm.open(f.pdf("a.pdf"))
+        XCTAssertEqual(told, 1)
+        await f.vm.open(URL(fileURLWithPath: "/no/such/file.pdf"))
+        XCTAssertEqual(told, 2)
+        await f.vm.openRecent(RecentItem(url: URL(fileURLWithPath: "/no/other.pdf"), name: "other.pdf", folder: "", opened: "", exists: false))
+        XCTAssertEqual(told, 3)
+    }
 }
