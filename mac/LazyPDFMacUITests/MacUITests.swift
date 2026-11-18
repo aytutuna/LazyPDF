@@ -22,6 +22,10 @@ final class MacUITests: XCTestCase {
         app.descendants(matching: .any)[label].firstMatch
     }
 
+    private func window(_ app: XCUIApplication, showing label: String) -> XCUIElement {
+        app.windows.containing(NSPredicate(format: "label == %@", label)).firstMatch
+    }
+
     private func choose(_ app: XCUIApplication, menu: String, item: String) {
         app.menuBars.menuBarItems[menu].click()
         app.menuBars.menuItems[item].click()
@@ -172,10 +176,10 @@ final class MacUITests: XCTestCase {
         waitForWindows(app, 2)
         XCTAssertTrue(element(app, "Moved plain-3.pdf to a new window.").waitForExistence(timeout: 20))
 
-        let home = app.windows.containing(.staticText, identifier: "What would you like to do?").firstMatch
+        let home = window(app, showing: "What would you like to do?")
         let homeTab = home.scrollViews["Open files"].buttons["Home"]
         // The new window opens near where the drag ended, which may cover the other one's strip: move it below that.
-        let mover = app.windows.containing(.staticText, identifier: "Moved plain-3.pdf to a new window.").firstMatch
+        let mover = window(app, showing: "Moved plain-3.pdf to a new window.")
         if mover.frame.intersects(homeTab.frame.insetBy(dx: -20, dy: -20)) {
             let grip = mover.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 200, dy: 12))
             grip.press(forDuration: 0.2, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: homeTab.frame.maxY + 40 - mover.frame.minY)))
