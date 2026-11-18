@@ -225,8 +225,20 @@ enum TagEdits {
         element.alt = text(p.alt.trimmingCharacters(in: .whitespacesAndNewlines))
         element.actualText = text(p.actualText)
         element.lang = text(lang)
-        if let table = p.table, ["TH", "TD"].contains(tree.standardType(element.type)) { tree.setTableAttributes(element, table) }
+        if let table = p.table, ["TH", "TD"].contains(tree.standardType(element.type)), !showsAlready(tree.tableAttributes(element), table) {
+            tree.setTableAttributes(element, table)
+        }
         return nil
+    }
+
+    // The editor shows the header IDs as one text, so IDs with a comma in them come back split; a cell whose fields still show what it has is left as it is.
+    private static func showsAlready(_ current: TableAttributes, _ fields: TableAttributes) -> Bool {
+        current.scope == fields.scope && current.rowSpan == fields.rowSpan && current.colSpan == fields.colSpan
+            && ids(current.headers.joined(separator: ", ")) == fields.headers
+    }
+
+    private static func ids(_ headers: String) -> [String] {
+        headers.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
     }
 
     private static func text(_ value: String) -> String? { value.isEmpty ? nil : value }
@@ -244,8 +256,7 @@ enum TagEdits {
         let rows = span(rowSpan)
         let columns = span(colSpan)
         if bad != nil { return (nil, bad) }
-        let ids = headers.split(whereSeparator: { ", ;".contains($0) }).map { String($0) }
-        return (TableAttributes(scope: TableScope(rawValue: scope), headers: ids, rowSpan: rows, colSpan: columns), nil)
+        return (TableAttributes(scope: TableScope(rawValue: scope), headers: ids(headers), rowSpan: rows, colSpan: columns), nil)
     }
 
     /// The element the new tag goes under: the node itself, or the element holding it.

@@ -208,6 +208,27 @@ public sealed class TagEditsTests
     }
 
     [Fact]
+    public void ChangingOnlyTheTitleOfACellKeepsHeaderIdsThatHoldASpace()
+    {
+        using var tab = Open(Built((tree, root) =>
+        {
+            var cell = El(tree, El(tree, El(tree, root, "Table"), "TR"), "TD", "cell");
+            tree.SetTableAttributes(cell, new TableAttributes(null, ["Col 1", "b2"]));
+        }));
+        var tree = StructureTree.Read(tab.Document)!;
+        var cell = Titled(tree, "cell");
+        var shown = tree.GetTableAttributes(cell);
+        var fields = TagEdits.TableOf("", "", "", string.Join(", ", shown.Headers!), out _);
+
+        var outcome = TagEdits.Apply(tab, TagPath.Of(tree, cell), "Change tag", (t, k) =>
+            TagEdits.SetProperties(t, (StructElement)k!, new TagProperties("TD", "renamed", "", "", "", fields)));
+
+        Assert.Equal(TagResult.Done, outcome.Result);
+        var again = StructureTree.Read(tab.Document)!;
+        Assert.Equal(["Col 1", "b2"], again.GetTableAttributes(Titled(again, "renamed")).Headers);
+    }
+
+    [Fact]
     public void ATypeThatDoesNotFitItsParentIsRefusedAndWritesNothing()
     {
         using var tab = Open(Three());

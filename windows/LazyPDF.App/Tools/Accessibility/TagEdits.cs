@@ -243,9 +243,20 @@ internal static class TagEdits
         element.Alt = Text(p.Alt.Trim());
         element.ActualText = Text(p.ActualText);
         element.Lang = Text(lang);
-        if (p.Table is { } table && tree.StandardType(element.Type) is "TH" or "TD") tree.SetTableAttributes(element, table);
+        if (p.Table is { } table && tree.StandardType(element.Type) is "TH" or "TD" && !ShowsAlready(tree.GetTableAttributes(element), table))
+            tree.SetTableAttributes(element, table);
         return null;
     }
+
+    // The editor shows the header IDs as one text, so IDs with a comma in them come back split; a cell whose fields still show what it has is left as it is.
+    private static bool ShowsAlready(TableAttributes current, TableAttributes fields)
+    {
+        var shown = Ids(string.Join(", ", current.Headers ?? []));
+        return current.Scope == fields.Scope && current.RowSpan == fields.RowSpan && current.ColSpan == fields.ColSpan
+            && shown.SequenceEqual(fields.Headers ?? []);
+    }
+
+    private static string[] Ids(string headers) => headers.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     private static string? Text(string text) => text.Length > 0 ? text : null;
 
@@ -266,8 +277,7 @@ internal static class TagEdits
         problem = bad;
         if (bad is not null) return null;
         TableScope? chosen = scope switch { "Row" => TableScope.Row, "Column" => TableScope.Column, "Both" => TableScope.Both, _ => null };
-        var ids = headers.Split([',', ' ', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        return new TableAttributes(chosen, ids, rows, columns);
+        return new TableAttributes(chosen, Ids(headers), rows, columns);
     }
 
     /// <summary>The element the new tag goes under: the node itself, or the element holding it.</summary>

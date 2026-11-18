@@ -198,6 +198,24 @@ final class TagEditorTests: XCTestCase {
         XCTAssertEqual(again.roleMap["Intro"], "P")
     }
 
+    func test_changingOnlyTheTitleOfACellKeepsHeaderIdsThatHoldASpace() async throws {
+        let tab = try tab(try built { tree, root in
+            let cell = try el(tree, try el(tree, try el(tree, root, "Table"), "TR"), "TD", "cell")
+            tree.setTableAttributes(cell, TableAttributes(scope: nil, headers: ["Col 1", "b2"], rowSpan: nil, colSpan: nil))
+        })
+        let tree = try read(tab)
+        let cell = try titled(tree, "cell")
+        let fields = TagEdits.tableOf(scope: "", rowSpan: "", colSpan: "", headers: tree.tableAttributes(cell).headers.joined(separator: ", "))
+
+        let outcome = TagEdits.apply(tab, TagPath.of(tree, cell), "Change tag") { t, k in
+            TagEdits.setProperties(t, k as! StructElement, TagProperties(type: "TD", title: "renamed", alt: "", actualText: "", lang: "", table: fields.attributes))
+        }
+
+        XCTAssertEqual(outcome.result, .done)
+        let again = try read(tab)
+        XCTAssertEqual(again.tableAttributes(try titled(again, "renamed")).headers, ["Col 1", "b2"])
+    }
+
     func test_aTypeThatDoesNotFitItsParentIsRefusedAndWritesNothing() async throws {
         let tab = try tab(try three())
         let tree = try read(tab)
