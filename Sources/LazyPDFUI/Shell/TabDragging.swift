@@ -82,7 +82,8 @@ extension View {
 
     func tabDragSource(_ dragging: TabDragging?, frames: [UUID: CGRect], tab: @escaping @MainActor (UUID) -> DocumentTab?) -> some View {
         background {
-            if let dragging { TabDragSource(dragging: dragging, frames: frames, tab: tab) }
+            // Hidden, or the accessibility hit test finds this view instead of the tab in front of it.
+            if let dragging { TabDragSource(dragging: dragging, frames: frames, tab: tab).accessibilityHidden(true) }
         }
     }
 }
