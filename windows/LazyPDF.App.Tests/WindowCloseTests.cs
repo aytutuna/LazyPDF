@@ -188,4 +188,20 @@ public sealed class WindowCloseTests
 
         Assert.Equal(100, rig.Saved.Window!.Left);
     });
+
+    [Fact]
+    public Task MovingATabWhileAnActionRunsSaysWhyItStays() => Sta.Run(async () =>
+    {
+        using var rig = new Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf());
+        var tab = rig.Both.A.Vm.ActiveDocument!;
+        typeof(MainWindow).GetField("_actionRunning", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(rig.A, true);
+
+        Assert.False(rig.A.MoveTab(tab, rig.B, 1));
+
+        typeof(MainWindow).GetField("_actionRunning", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(rig.A, false);
+        Assert.Equal("Tab not moved", rig.Both.A.Vm.Message?.Title);
+        Assert.Equal("Wait for the job to end, or cancel it, then move the tab.", rig.Both.A.Vm.Message?.Text);
+        Assert.Contains(tab, rig.Both.A.Vm.Documents);
+    });
 }

@@ -88,8 +88,15 @@ public partial class MainWindow
     }
 
     /// <summary>Moves a tab to another window. False, with the reason shown here, when it stays.</summary>
-    internal bool MoveTab(DocumentTab tab, MainWindow target, int index) =>
-        HandInTyping(tab) && _vm.Registry.Transfer(tab, _vm, target._vm, index, target.CanTakeTab());
+    internal bool MoveTab(DocumentTab tab, MainWindow target, int index)
+    {
+        if (_actionRunning)
+        {
+            _vm.ShowNotice(Loc.T("Tab not moved"), Loc.T("Wait for the job to end, or cancel it, then move the tab."));
+            return false;
+        }
+        return HandInTyping(tab) && _vm.Registry.Transfer(tab, _vm, target._vm, index, target.CanTakeTab());
+    }
 
     private void TabList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
