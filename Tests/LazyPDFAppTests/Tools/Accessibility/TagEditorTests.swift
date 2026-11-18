@@ -401,6 +401,23 @@ final class TagEditorTests: XCTestCase {
         }
     }
 
+    func test_aTreeTooDeepToReadWholeIsNeverWritten() async throws {
+        let document = try PdfDocument.open(Pdfs.text())
+        let tree = StructureTree.create(document)
+        var parent: StructElement?
+        for i in 0..<140 { parent = try el(tree, parent, "Div", "d\(i)") }
+        try tree.write(document)
+        let tab = try tab(try document.saveRewrite(PdfSaveOptions()))
+        let shown = try read(tab)
+
+        XCTAssertTrue(shown.isTruncated)
+        XCTAssertNotNil(TagEdits.readOnlyReason(tab.document, shown))
+        let outcome = TagEdits.apply(tab, TagPath.of(shown, shown.roots[0]), "Delete tag") { t, k in try TagEdits.run(t, k!, .delete) }
+        XCTAssertEqual(outcome.result, .refused)
+        XCTAssertNil(tab.session.undoLabel)
+        XCTAssertFalse(tab.isDirty)
+    }
+
     func test_theFilterKeepsMatchesAndTheTagsAboveThem() async throws {
         let tab = try tab(try built { tree, root in
             let sect = try el(tree, root, "Sect", "intro")
