@@ -51,17 +51,17 @@ struct TabStrip: View {
     }
 
     @ViewBuilder private func item(_ tab: any StripTab) -> some View {
-        let selected = vm.activeTab === tab
-        let view = TabItem(tab: tab, selected: selected, select: { vm.select(tab) }, close: {
-            if let document = tab as? DocumentTab { close(document) }
+        let document = tab as? DocumentTab
+        let base = TabItem(tab: tab, selected: vm.activeTab === tab, select: { vm.select(tab) }, close: {
+            if let document { close(document) }
         }, moves: moves(for: tab))
-        .dropDestination(for: String.self) { ids, _ in
-            move(ids, to: vm.strip.firstIndex { $0 === tab } ?? vm.strip.count - 1)
-        }
-        if let document = tab as? DocumentTab {
-            view.draggable(document.id.uuidString)
+        .reportsTabFrame(of: document, in: Self.space)
+        .tabDropTarget(dragging, index: { vm.strip.firstIndex { $0 === tab } ?? vm.strip.count - 1 }, fallback: move)
+        // The Mac's own drag starts from behind the strip; a String drag would also leave the app as text.
+        if let document, dragging == nil {
+            base.draggable(document.id.uuidString)
         } else {
-            view
+            base
         }
     }
 

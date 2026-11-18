@@ -146,6 +146,39 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 20))
     }
 
+    private func drag(_ tab: XCUIElement, to end: XCUICoordinate) {
+        tab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.5, thenDragTo: end)
+    }
+
+    func testDraggingATabOutOfTheWindowOpensAWindowForIt() throws {
+        let app = try launch(opening: true)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
+        let start = tab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+
+        drag(tab(app), to: start.withOffset(CGVector(dx: 0, dy: 300)))
+
+        waitForWindows(app, 2)
+        XCTAssertTrue(element(app, "Moved plain-3.pdf to a new window.").waitForExistence(timeout: 20))
+        XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
+    }
+
+    func testDraggingATabOntoTheStripOfAnotherWindowMovesIt() throws {
+        let app = try launch(opening: true)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
+        let start = tab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        drag(tab(app), to: start.withOffset(CGVector(dx: 0, dy: 300)))
+        waitForWindows(app, 2)
+        XCTAssertTrue(element(app, "Moved plain-3.pdf to a new window.").waitForExistence(timeout: 20))
+
+        let home = app.windows.containing(.staticText, identifier: "What would you like to do?").firstMatch
+        let target = home.scrollViews["Open files"].buttons["Home"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        drag(tab(app), to: target)
+
+        waitForWindows(app, 1)
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 20))
+        XCTAssertTrue(element(app, "Moved plain-3.pdf to another window.").waitForExistence(timeout: 20))
+    }
+
     // The drag of a tab is watched from behind the strip, so a plain press must still reach the tab and its close button.
     func testClickDoubleClickAndCloseOnATabStillWork() throws {
         let app = try launch(opening: true)
