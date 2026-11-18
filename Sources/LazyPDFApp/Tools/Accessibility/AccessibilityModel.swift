@@ -109,10 +109,11 @@ public final class AccessibilityModel: ToolPanelModel {
     @ObservationIgnored var checkedFigures: [FigureRow] = []
 
     /// What a tab keeps while another tab or tool is shown: its drafts and the figures they were typed against.
-    @ObservationIgnored var kept: [ObjectIdentifier: (tab: WeakTab, drafts: [Int: String], checked: [FigureRow])] = [:]
+    @ObservationIgnored let kept: TabTable<Kept>
 
-    struct WeakTab {
-        weak var tab: DocumentTab?
+    struct Kept {
+        var drafts: [Int: String]
+        var checked: [FigureRow]
     }
 
     /// How a typed description goes into the tags; a test replaces it to make the write fail.
@@ -129,7 +130,8 @@ public final class AccessibilityModel: ToolPanelModel {
     @ObservationIgnored private var quiet: CancelToken?
     @ObservationIgnored private var checkTicket = 0
 
-    public init(speaker: (@MainActor () -> Speaker)? = nil) {
+    public init(speaker: (@MainActor () -> Speaker)? = nil, state: TabToolState = TabToolState()) {
+        kept = state.figures
         #if canImport(AVFoundation)
         makeSpeaker = speaker ?? { SystemSpeaker() }
         #else
@@ -153,8 +155,8 @@ public final class AccessibilityModel: ToolPanelModel {
         treeStale = true
         readStale = true
         view = host.takeTaggingRequest() ? .tags : .check
-        kept = kept.filter { $0.value.tab.tab != nil }
-        if let back = kept.removeValue(forKey: ObjectIdentifier(tab)) { (drafts, checkedFigures) = (back.drafts, back.checked) }
+        kept.prune()
+        if let back = kept.take(tab) { (drafts, checkedFigures) = (back.drafts, back.checked) }
         syncPending()
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.fileChanged() })
         refresh()
@@ -174,7 +176,7 @@ public final class AccessibilityModel: ToolPanelModel {
         stopDraw()
         dropTree()
         resetTags()
-        if let tab, !drafts.isEmpty { kept[ObjectIdentifier(tab)] = (WeakTab(tab: tab), drafts, checkedFigures) }
+        if let tab, !drafts.isEmpty { kept[tab] = Kept(drafts: drafts, checked: checkedFigures) }
         drafts = [:]
         checkedFigures = []
         figureNumber = 0

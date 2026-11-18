@@ -17,12 +17,14 @@ public final class ToolPanels {
 
     @ObservationIgnored private let host: ToolHost
     @ObservationIgnored private let folders: AppFolders
+    @ObservationIgnored private let state: TabToolState
     @ObservationIgnored private var made: [String: ToolPanel] = [:]
     private var current: Shown?
 
-    public init(host: ToolHost, folders: AppFolders) {
+    public init(host: ToolHost, folders: AppFolders, state: TabToolState = TabToolState()) {
         self.host = host
         self.folders = folders
+        self.state = state
     }
 
     // One panel for each tool for as long as the window lives, as _panels of the Windows window: what is set in a panel is
@@ -30,7 +32,7 @@ public final class ToolPanels {
     func panel(_ id: String) -> ToolPanel? {
         if let known = made[id] { return known }
         guard let info = ToolCatalog.find(id),
-              let panel = ToolRegistry.panel(for: id, ToolContext(info: info, folders: folders)) else { return nil }
+              let panel = ToolRegistry.panel(for: id, ToolContext(info: info, folders: folders, state: state)) else { return nil }
         made[id] = panel
         return panel
     }
@@ -48,6 +50,11 @@ public final class ToolPanels {
     // A panel that was replaced has been detached already.
     func leave(_ panel: ToolPanel) {
         if current?.panel.model === panel.model { release() }
+    }
+
+    /// The panel shown on `tab` lets go of it: the tab is about to move to another window.
+    public func release(_ tab: DocumentTab) {
+        if current?.viewer.tab === tab { release() }
     }
 
     // The tool's marks go and its open fields end, then its pointer goes back to the viewer, whether or not the tool did it

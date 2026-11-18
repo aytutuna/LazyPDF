@@ -54,19 +54,17 @@ public final class MeasureModel: ToolPanelModel {
     @ObservationIgnored private let fonts: FontSource
 
     // Kept per tab, so that measuring in one file and looking at another loses nothing.
-    @ObservationIgnored private var lists: [ObjectIdentifier: (tab: WeakTab, list: PendingList)] = [:]
-    @ObservationIgnored private var scales: [ObjectIdentifier: (tab: WeakTab, scale: MeasureScale)] = [:]
-
-    private struct WeakTab {
-        weak var tab: DocumentTab?
-    }
+    @ObservationIgnored private let lists: TabTable<PendingList>
+    @ObservationIgnored private let scales: TabTable<MeasureScale>
 
     /// Set for a phone or tablet, where the hints speak of taps and the buttons, not of double clicks and Shift.
     @ObservationIgnored private let touch: Bool
 
-    public init(fonts: FontSource, touch: Bool = false) {
+    public init(fonts: FontSource, touch: Bool = false, state: TabToolState = TabToolState()) {
         self.fonts = fonts
         self.touch = touch
+        lists = state.measureLists
+        scales = state.measureScales
     }
 
     public var summary: String { ToolCatalog.find("measure")?.summary ?? "" }
@@ -79,16 +77,16 @@ public final class MeasureModel: ToolPanelModel {
         self.tab = tab
         self.viewer = viewer
         self.host = host
-        lists = lists.filter { $0.value.tab.tab != nil }
-        if let known = lists[ObjectIdentifier(tab)] {
-            waiting = known.list
+        lists.prune()
+        if let known = lists[tab] {
+            waiting = known
         } else {
             waiting = PendingList()
-            lists[ObjectIdentifier(tab)] = (WeakTab(tab: tab), waiting)
+            lists[tab] = waiting
         }
-        scales = scales.filter { $0.value.tab.tab != nil }
-        let shown = scales[ObjectIdentifier(tab)]?.scale ?? MeasureScale.find(tab.document) ?? .actual
-        scales[ObjectIdentifier(tab)] = (WeakTab(tab: tab), shown)
+        scales.prune()
+        let shown = scales[tab] ?? MeasureScale.find(tab.document) ?? .actual
+        scales[tab] = shown
         show(shown)
         if kind == nil { kind = .distance }
         let tool = MeasureTool(viewer: viewer)
@@ -192,7 +190,7 @@ public final class MeasureModel: ToolPanelModel {
         scaleProblem = !good
         if !good { return }
         scale = made
-        if let tab { scales[ObjectIdentifier(tab)] = (WeakTab(tab: tab), made) }
+        if let tab { scales[tab] = made }
         rebuild()
     }
 

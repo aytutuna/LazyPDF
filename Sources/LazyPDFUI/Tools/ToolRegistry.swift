@@ -7,9 +7,17 @@ import LazyPDFApp
 // porting different groups never edit the same file.
 
 /// What a registry file knows when it makes a panel.
+@MainActor
 struct ToolContext {
     let info: ToolInfo
     let folders: AppFolders
+    let state: TabToolState
+
+    init(info: ToolInfo, folders: AppFolders, state: TabToolState = TabToolState()) {
+        self.info = info
+        self.folders = folders
+        self.state = state
+    }
 }
 
 /// A tool's model and its view, made together. The shell attaches the model to the document; the view only reads it.

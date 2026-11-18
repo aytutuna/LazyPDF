@@ -25,8 +25,8 @@ extension OcrModel {
         viewWatch = ObservationWatch(track: { _ = viewer.viewRevision; _ = viewer.visiblePages; _ = viewer.pageIndex },
                                      changed: { [weak self] in self?.showMarks() })
         showMarks()
-        keptWords = keptWords.filter { $0.value.tab.tab != nil }
-        guard let tab, let back = keptWords.removeValue(forKey: ObjectIdentifier(tab)) else { return }
+        keptWords.prune()
+        guard let tab, let back = keptWords.take(tab) else { return }
         var word = back.word
         if back.revision != tab.revision {
             guard let origin = back.origin, let index = Self.find(tab, word.page, origin) else {
@@ -66,7 +66,7 @@ extension OcrModel {
 
     func detachWords() {
         if let tab, tab.pendingWords > 0, let word = picked {
-            keptWords[ObjectIdentifier(tab)] = (WeakTab(tab: tab), word, pickedOrigin, draft, tab.revision)
+            keptWords[tab] = KeptWord(word: word, origin: pickedOrigin, text: draft, revision: tab.revision)
         } else {
             tab?.pendingWords = 0
         }

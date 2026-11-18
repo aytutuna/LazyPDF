@@ -10,7 +10,7 @@ import LazyPDFKit
 @Observable
 public final class RedactModel: ToolPanelModel {
     // What the panel remembers of a document while another tool or tab is in front.
-    private final class State {
+    final class State {
         let marks = MarkList()
         var result: RedactSummary?
 
@@ -46,7 +46,7 @@ public final class RedactModel: ToolPanelModel {
     var tab: DocumentTab?
     var viewer: DocumentViewer?
     var host: ToolHost?
-    @ObservationIgnored private var states: [UUID: State] = [:]
+    @ObservationIgnored private let states: TabTable<State>
     @ObservationIgnored private var state: State?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var drawTool: RedactDrawTool?
@@ -59,9 +59,10 @@ public final class RedactModel: ToolPanelModel {
     @ObservationIgnored private let fonts: FontSource?
     @ObservationIgnored private let images: ImageCodec?
 
-    public init(fonts: FontSource? = nil, images: ImageCodec? = nil) {
+    public init(fonts: FontSource? = nil, images: ImageCodec? = nil, state: TabToolState = TabToolState()) {
         self.fonts = fonts
         self.images = images
+        states = state.redact
     }
 
     public var action: ToolAction? {
@@ -79,12 +80,12 @@ public final class RedactModel: ToolPanelModel {
     }
 
     public func attach(_ tab: DocumentTab, _ viewer: DocumentViewer, _ host: ToolHost) {
-        states = states.filter { $0.value.tab.map { !$0.isDisposed } ?? false }
+        states.prune()
         self.tab = tab
         self.viewer = viewer
         self.host = host
-        let state = states[tab.id] ?? State(tab)
-        states[tab.id] = state
+        let state = states[tab] ?? State(tab)
+        states[tab] = state
         self.state = state
         if let incoming, tab.url == nil, tab.title == incomingTitle {
             state.result = incoming

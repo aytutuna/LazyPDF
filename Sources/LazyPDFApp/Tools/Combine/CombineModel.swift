@@ -28,12 +28,7 @@ public final class CombineModel: ToolPanelModel {
 
     // Each document keeps its own list, so a look at another tab does not lose the files that were picked. A list goes with its tab
     // (the ConditionalWeakTable of Windows): the files in it may be decrypted.
-    private struct Held {
-        weak var tab: DocumentTab?
-        var entries: [CombineEntry]
-    }
-
-    @ObservationIgnored private var lists: [UUID: Held] = [:]
+    @ObservationIgnored private let lists: TabTable<[CombineEntry]>
 
     // Only one job at a time reads the documents of the entries, whose object caches are not safe to share between threads.
     private let reading = NSLock()
@@ -41,7 +36,9 @@ public final class CombineModel: ToolPanelModel {
     @ObservationIgnored private var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
 
-    public init() {}
+    public init(state: TabToolState = TabToolState()) {
+        lists = state.combine
+    }
 
     public var action: ToolAction? {
         if splitting {
@@ -58,9 +55,9 @@ public final class CombineModel: ToolPanelModel {
         self.tab = tab
         self.host = host
         asker.choices = { [weak host] in host?.certificateChoices() ?? [] }
-        dropClosedTabs()
-        if lists[tab.id] == nil { lists[tab.id] = Held(tab: tab, entries: [CombineEntry(tab.title, tab.pageCount, nil)]) }
-        entries = lists[tab.id]?.entries ?? []
+        lists.prune()
+        if lists[tab] == nil { lists[tab] = [CombineEntry(tab.title, tab.pageCount, nil)] }
+        entries = lists[tab] ?? []
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.refresh() })
         refresh()
     }
@@ -72,11 +69,7 @@ public final class CombineModel: ToolPanelModel {
         tab = nil
         host = nil
         entries = []
-        dropClosedTabs()
-    }
-
-    private func dropClosedTabs() {
-        lists = lists.filter { held in held.value.tab.map { !$0.isDisposed } ?? false }
+        lists.prune()
     }
 
     var heldLists: Int { lists.count }
@@ -108,7 +101,7 @@ public final class CombineModel: ToolPanelModel {
 
     private func store(_ list: [CombineEntry]) {
         entries = list
-        if let tab { lists[tab.id] = Held(tab: tab, entries: list) }
+        if let tab { lists[tab] = list }
     }
 
     public func moveUp(_ entry: CombineEntry) {
@@ -168,7 +161,7 @@ public final class CombineModel: ToolPanelModel {
             let name = file.url.lastPathComponent
             let path = file.url.standardizedFileURL.path
             // A file listed again shares the first copy, so merge sees one document and carries its attachments once.
-            let shared = (lists[tab.id]?.entries ?? []).first { $0.path == path }?.document
+            let shared = (lists[tab] ?? []).first { $0.path == path }?.document
             let opened = if let shared { shared } else { await SourceFile.open(host, file, asker) }
             guard let document = opened else {
                 all = false
@@ -176,8 +169,8 @@ public final class CombineModel: ToolPanelModel {
             }
             if tab.isDisposed { return false }
             let entry = CombineEntry(name, document.pages.count, document, path: path)
-            let list = (lists[tab.id]?.entries ?? []) + [entry]
-            lists[tab.id] = Held(tab: tab, entries: list)
+            let list = (lists[tab] ?? []) + [entry]
+            lists[tab] = list
             if self.tab === tab { entries = list }
         }
         return all

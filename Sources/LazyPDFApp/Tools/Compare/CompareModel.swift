@@ -13,11 +13,6 @@ public enum CompareSource {
 @MainActor
 @Observable
 public final class CompareModel: ToolPanelModel {
-    private struct Entry {
-        weak var tab: DocumentTab?
-        let held: HeldComparison
-    }
-
     public var source = CompareSource.file
     public private(set) var versions: [PdfVersion] = []
     public var versionIndex = 0
@@ -49,13 +44,14 @@ public final class CompareModel: ToolPanelModel {
     var viewer: DocumentViewer?
     @ObservationIgnored private var flow: CompareFlow?
     @ObservationIgnored private var watch: ObservationWatch?
-    @ObservationIgnored private var helds: [UUID: Entry] = [:]
+    @ObservationIgnored private let helds: TabTable<HeldComparison>
     @ObservationIgnored private let renderers: () -> DocumentRenderer
     @ObservationIgnored private let fonts: FontSource
 
-    public init(renderers: @escaping () -> DocumentRenderer, fonts: FontSource) {
+    public init(renderers: @escaping () -> DocumentRenderer, fonts: FontSource, state: TabToolState = TabToolState()) {
         self.renderers = renderers
         self.fonts = fonts
+        helds = state.compare
     }
 
     public var action: ToolAction? {
@@ -87,7 +83,7 @@ public final class CompareModel: ToolPanelModel {
         })
         showVersions(keep: nil, tab)
         hideUnlock()
-        let held = helds[tab.id]?.held
+        let held = helds[tab]
         other = held?.file
         show(held)
     }
@@ -147,12 +143,12 @@ public final class CompareModel: ToolPanelModel {
                 if here, let locked = flow.locked { askToUnlock(locked, tried: typed != nil || choice != nil) }
                 return
             }
-            if let old = helds[tab.id] {
+            if let old = helds[tab] {
                 if here { closeSheet() }
-                old.held.dispose()
+                old.dispose()
             }
             let held = HeldComparison(made, file: file, openIsNew: !request.fileIsOlder, revision: revision)
-            helds[tab.id] = Entry(tab: tab, held: held)
+            helds[tab] = held
             if !here { return }
             hideUnlock()
             show(held)
@@ -161,10 +157,7 @@ public final class CompareModel: ToolPanelModel {
 
     // A held comparison of a tab that has closed has nothing to show for.
     private func prune() {
-        for (id, entry) in helds where entry.tab == nil || entry.tab?.isDisposed == true {
-            entry.held.dispose()
-            helds[id] = nil
-        }
+        helds.prune { $0.dispose() }
     }
 
     private func show(_ held: HeldComparison?) {
@@ -256,8 +249,8 @@ public final class CompareModel: ToolPanelModel {
 
 #if canImport(PDFKit) && canImport(CoreText)
 extension CompareModel {
-    public convenience init() {
-        self.init(renderers: { PdfKitRenderer() }, fonts: CoreTextFontSource())
+    public convenience init(state: TabToolState = TabToolState()) {
+        self.init(renderers: { PdfKitRenderer() }, fonts: CoreTextFontSource(), state: state)
     }
 }
 #endif

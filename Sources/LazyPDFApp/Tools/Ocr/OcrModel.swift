@@ -50,14 +50,18 @@ public final class OcrModel: ToolPanelModel {
     @ObservationIgnored var keepsSigned = false
 
     /// The word a signed file kept waiting for each tab while another tab or tool is shown, and the revision it was typed against.
-    @ObservationIgnored var keptWords: [ObjectIdentifier: (tab: WeakTab, word: WordRef, origin: WordOrigin?, text: String, revision: Int)] = [:]
+    @ObservationIgnored let keptWords: TabTable<KeptWord>
+
+    struct KeptWord {
+        let word: WordRef
+        let origin: WordOrigin?
+        let text: String
+        let revision: Int
+    }
 
     /// The picked word as the layer has it, to find it again after the file changed.
     @ObservationIgnored var pickedOrigin: WordOrigin?
 
-    struct WeakTab {
-        weak var tab: DocumentTab?
-    }
     @ObservationIgnored var fieldSerial = 0
     @ObservationIgnored var touchStart: (word: WordRef, at: ViewPoint)?
     @ObservationIgnored var correctedRevision: Int?
@@ -65,7 +69,9 @@ public final class OcrModel: ToolPanelModel {
     @ObservationIgnored private let recognizer: TextRecognizer
     @ObservationIgnored private let readLanguages: () -> OcrLanguageState
 
-    public init(recognizer: TextRecognizer? = nil, languages: @escaping () -> OcrLanguageState = OcrLanguageState.read) {
+    public init(recognizer: TextRecognizer? = nil, languages: @escaping () -> OcrLanguageState = OcrLanguageState.read,
+                state: TabToolState = TabToolState()) {
+        keptWords = state.words
         #if canImport(Vision)
         self.recognizer = recognizer ?? VisionTextRecognizer()
         #else

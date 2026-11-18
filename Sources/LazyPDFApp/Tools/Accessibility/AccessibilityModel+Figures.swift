@@ -113,9 +113,9 @@ extension AccessibilityModel {
         if self.tab === tab {
             drafts[key] = nil
             syncPending()
-        } else if var back = kept[ObjectIdentifier(tab)] {
+        } else if var back = kept[tab] {
             back.drafts[key] = nil
-            kept[ObjectIdentifier(tab)] = back
+            kept[tab] = back
             tab.pendingDescriptions = Self.waiting(back.drafts, back.checked)
         }
     }

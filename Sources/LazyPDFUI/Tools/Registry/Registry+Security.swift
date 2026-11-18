@@ -28,7 +28,7 @@ extension ToolRegistry {
     static func security(_ id: String, _ context: ToolContext) -> ToolPanel? {
         switch id {
         case "protect": return ToolPanel(ProtectModel()) { ProtectPanelView(model: $0) }
-        case "redact": return ToolPanel(RedactModel(fonts: SystemKit.fonts, images: SystemKit.images)) { RedactPanelView(model: $0) }
+        case "redact": return ToolPanel(RedactModel(fonts: SystemKit.fonts, images: SystemKit.images, state: context.state)) { RedactPanelView(model: $0) }
         case "standards": return ToolPanel(StandardsModel(fonts: SystemKit.fonts)) { StandardsPanelView(model: $0) }
         case "pdfua": return ToolPanel(PdfUaModel()) { PdfUaPanelView(model: $0) }
         case "certificates":
