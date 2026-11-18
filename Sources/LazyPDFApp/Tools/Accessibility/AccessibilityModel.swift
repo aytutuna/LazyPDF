@@ -25,8 +25,39 @@ public final class AccessibilityModel: ToolPanelModel {
     public private(set) var rows: [CheckRow] = []
     public private(set) var checkSummary = ""
 
-    public internal(set) var tagNodes: [TagNode] = []
+    public internal(set) var tagRows: [TagRow] = []
     public internal(set) var tagsNote = ""
+
+    /// The file has a tag tree to show, so the tools beside it are too.
+    public internal(set) var hasTags = false
+
+    /// Why the tags of this file cannot be changed; nil when they can.
+    public internal(set) var tagReadOnly: String?
+
+    /// What the last command said, as a reason or a note.
+    public internal(set) var tagMessage = ""
+
+    /// The id of the picked line.
+    public internal(set) var selectedTag: String?
+    public internal(set) var tagTypes: [String] = []
+
+    /// The words in the filter box; the tree shows only what has them.
+    public var tagFilter = "" {
+        didSet { if tagFilter != oldValue { filterChanged() } }
+    }
+
+    /// The type a selection or a drawn area is tagged as.
+    public var tagAs = "P"
+
+    /// The fields of the element editor, and what is wrong with them.
+    public var form = TagForm() {
+        didSet { if !loadingForm { validateForm() } }
+    }
+
+    public internal(set) var showsEditor = false
+    public internal(set) var editsCell = false
+    public internal(set) var formMessage = ""
+    public internal(set) var canApplyForm = false
 
     public internal(set) var figures: [FigureRow] = []
     public internal(set) var figuresNote = ""
@@ -56,6 +87,14 @@ public final class AccessibilityModel: ToolPanelModel {
     @ObservationIgnored var tree: StructureTree?
     @ObservationIgnored var treeCopy: PdfDocument?
     @ObservationIgnored var treeLock = NSLock()
+    @ObservationIgnored var openTags = Set<String>()
+    @ObservationIgnored var selectedKey: String?
+    @ObservationIgnored var tagFiltered: TagFilter?
+    @ObservationIgnored var loaded: TagProperties?
+    @ObservationIgnored var loadingForm = false
+    @ObservationIgnored var boxTicket = 0
+    @ObservationIgnored var markedPages = Set<Int>()
+    @ObservationIgnored var drawTool: SignatureBoxTool?
     @ObservationIgnored var allFigures: [FigureRow] = []
     @ObservationIgnored var treeCount = 0
     @ObservationIgnored var treeFailed = false
@@ -132,13 +171,14 @@ public final class AccessibilityModel: ToolPanelModel {
         stopReading()
         readIndex = nil
         report = nil
+        stopDraw()
         dropTree()
+        resetTags()
         if let tab, !drafts.isEmpty { kept[ObjectIdentifier(tab)] = (WeakTab(tab: tab), drafts, checkedFigures) }
         drafts = [:]
         checkedFigures = []
         figureNumber = 0
         rows = []
-        tagNodes = []
         figures = []
         lines = []
         checkSummary = ""
@@ -153,6 +193,12 @@ public final class AccessibilityModel: ToolPanelModel {
         if tab == nil { return }
         view = next
         if next != .read { stopReading() }
+        if next == .tags {
+            showMarks(selectedKid)
+        } else {
+            stopDraw()
+            clearMarks()
+        }
         refresh()
     }
 
@@ -293,4 +339,19 @@ public final class AccessibilityModel: ToolPanelModel {
             }
         }
     }
+}
+
+/// The fields of the element editor as typed. A table cell has the last four too.
+public struct TagForm: Equatable {
+    public var type = ""
+    public var title = ""
+    public var alt = ""
+    public var actualText = ""
+    public var lang = ""
+    public var scope = ""
+    public var rowSpan = ""
+    public var colSpan = ""
+    public var headers = ""
+
+    public init() {}
 }

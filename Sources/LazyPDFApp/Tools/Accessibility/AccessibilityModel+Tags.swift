@@ -18,7 +18,7 @@ extension AccessibilityModel {
         let ticket = treeTicket
         treeStale = false
         dropTree()
-        tagNodes = []
+        tagRows = []
         figures = []
         tagsNote = L10n.t("Reading the tags")
         figuresNote = tagsNote
@@ -61,27 +61,38 @@ extension AccessibilityModel {
     // The copy is let go, not closed: a picture being found may still be reading it.
     func dropTree() {
         (tree, treeCopy, allFigures, treeCount, treeFailed) = (nil, nil, [], 0, false)
+        boxTicket += 1
+        clearMarks()
     }
 
     func renderTags() {
         guard let tree, !tree.roots.isEmpty else {
-            tagNodes = []
+            tagRows = []
+            hasTags = false
+            tagReadOnly = nil
+            showForm(nil)
             tagsNote = treeFailed ? L10n.t("The tags could not be read.")
                 : untagged ? L10n.t("The file has no tags. Add them so a screen reader can read it in order.")
                 : L10n.t("The file says it is tagged but holds no tags. Lazy PDF cannot add them to it.")
             return
         }
-        tagsNote = tree.isTruncated
-            ? L10n.t("The tree is too large to show whole. Pick a tag to go to its page.")
-            : L10n.t("{0} tags. Pick one to go to its page.", treeCount)
-        tagNodes = TagNode.roots(tree)
+        hasTags = true
+        tagReadOnly = tab.flatMap { TagEdits.readOnlyReason($0.document, tree) }
+        tagTypes = TagEdits.types(tree)
+        if tagAs.isEmpty { tagAs = "P" }
+        tagFiltered = TagFilter.of(tree, tagFilter)
+        showNote()
+        rebuildRows()
     }
 
-    /// A tag of the tree was picked: the viewer goes to its page.
-    public func selectNode(_ node: TagNode) {
-        guard let element = node.element else { return }
-        let page = FigureFinder.pageOf(element)
-        if page >= 0 { viewer?.goToPage(page) }
+    func showNote() {
+        if let found = tagFiltered {
+            tagsNote = found.isCapped ? L10n.t("The first {0} matches are shown.", TagFilter.limit) : L10n.t("{0} tags match.", found.matches)
+        } else {
+            tagsNote = tree?.isTruncated == true
+                ? L10n.t("The tree is too large to show whole. Pick a tag to go to its page.")
+                : L10n.t("{0} tags. Pick one to go to its page.", treeCount)
+        }
     }
 
     func addTags() async {

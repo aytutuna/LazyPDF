@@ -93,33 +93,6 @@ private struct CheckRowView: View {
     }
 }
 
-private struct TagsView: View {
-    let model: AccessibilityModel
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(model.tagsNote)
-                .fixedSize(horizontal: false, vertical: true)
-                .accessibilityAddTraits(.updatesFrequently)
-            if !model.tagNodes.isEmpty {
-                List(model.tagNodes, children: \.children) { node in
-                    Button {
-                        model.selectNode(node)
-                    } label: {
-                        Text(node.label).frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(node.isMore)
-                    .accessibilityLabel(node.label)
-                }
-                .listStyle(.plain)
-                .frame(height: 320)
-                .accessibilityLabel(L10n.t("Tag tree"))
-            }
-        }
-    }
-}
-
 private struct FiguresView: View {
     @Bindable var model: AccessibilityModel
 
