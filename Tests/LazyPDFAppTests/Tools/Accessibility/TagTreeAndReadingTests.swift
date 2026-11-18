@@ -3,8 +3,7 @@ import LazyPDFKit
 @testable import LazyPDFApp
 
 // Mirrors windows/LazyPDF.App.Tests/Tools/standards/TagTreeAndReadingTests.cs: the labels of the tag tree, the reading order
-// lines and what a voice is given, and taking back a half-done edit. The rows of the tree that open on demand (TagNode) are new
-// on Apple and have their cases at the end.
+// lines and what a voice is given, and taking back a half-done edit. The lines of the tree have their tests in TagEditorTests.
 
 final class TagTreeAndReadingTests: XCTestCase {
     private func page(_ number: Int) -> String {
@@ -77,39 +76,5 @@ final class TagTreeAndReadingTests: XCTestCase {
         XCTAssertFalse(tab.document.isTagged)
         XCTAssertEqual(DocumentMetadata.read(tab.document).title, "First")
         XCTAssertEqual(tab.session.undoLabel, "Properties")
-    }
-
-    // TagNode
-
-    func test_theChildrenOfATagAreMadeWhenAskedFor() throws {
-        let tree = try XCTUnwrap(StructureTree.read(tagged()))
-        let roots = TagNode.roots(tree)
-
-        let root = try XCTUnwrap(roots.first { $0.element?.children.isEmpty == false })
-
-        XCTAssertEqual(root.children?.count, root.element?.children.count)
-        XCTAssertEqual(root.label, TagLabels.of(root.element!, tree))
-    }
-
-    func test_aTagWithNoChildrenIsALeaf() throws {
-        let tree = StructureTree.create(try PdfDocument.open(Pdfs.text()))
-        try tree.add(nil, StructElement("P"))
-
-        XCTAssertNil(TagNode.roots(tree)[0].children)
-    }
-
-    func test_moreThanTwoHundredChildrenEndInOneRowThatSaysHowManyAreLeft() throws {
-        let tree = StructureTree.create(try PdfDocument.open(Pdfs.text()))
-        let list = StructElement("L")
-        try tree.add(nil, list)
-        for _ in 0..<230 { try tree.add(list, StructElement("LI")) }
-
-        let nodes = try XCTUnwrap(TagNode.roots(tree)[0].children)
-
-        XCTAssertEqual(nodes.count, 201)
-        XCTAssertTrue(nodes[200].isMore)
-        XCTAssertEqual(nodes[200].label, "30 more")
-        XCTAssertNil(nodes[200].children)
-        XCTAssertFalse(nodes[199].isMore)
     }
 }

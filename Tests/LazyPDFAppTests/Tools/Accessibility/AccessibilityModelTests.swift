@@ -227,17 +227,19 @@ final class AccessibilityModelTests: XCTestCase {
         model.setView(.tags)
         await waitUntil { model.tagsNote == "The file has no tags. Add them so a screen reader can read it in order." }
 
-        XCTAssertTrue(model.tagNodes.isEmpty)
+        XCTAssertTrue(model.tagRows.isEmpty)
     }
 
     func test_theTagTreeListsTheTagsAndAPickedOneTakesTheViewerToItsPage() async throws {
         let (model, rig) = try await attached(try prose())
         await tag(model, rig)
-        await waitUntil { !model.tagNodes.isEmpty }
+        await waitUntil { !model.tagRows.isEmpty }
 
         XCTAssertTrue(model.tagsNote.hasSuffix("tags. Pick one to go to its page."))
-        let paragraph = try XCTUnwrap(model.tagNodes.compactMap { $0.children }.flatMap { $0 }.first { $0.element?.type == "P" } ?? model.tagNodes.first)
-        model.selectNode(paragraph)
+        let root = try XCTUnwrap(model.tagRows.first)
+        model.toggle(root)
+        let paragraph = try XCTUnwrap(model.tagRows.first { ($0.kid as? StructElement)?.type == "P" } ?? model.tagRows.first)
+        model.select(paragraph)
 
         XCTAssertEqual(rig.viewer.sent, [0])
     }
@@ -701,12 +703,12 @@ final class AccessibilityModelTests: XCTestCase {
     func test_detachLetsGoOfEverything() async throws {
         let (model, rig) = try await attached(try prose())
         await tag(model, rig)
-        await waitUntil { !model.tagNodes.isEmpty }
+        await waitUntil { !model.tagRows.isEmpty }
 
         model.detach()
 
         XCTAssertTrue(model.rows.isEmpty)
-        XCTAssertTrue(model.tagNodes.isEmpty)
+        XCTAssertTrue(model.tagRows.isEmpty)
         XCTAssertNil(model.tab)
         XCTAssertFalse(model.action!.canRun())
     }

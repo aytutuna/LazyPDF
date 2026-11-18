@@ -47,7 +47,7 @@ final class PanelViewer: DocumentViewer {
     var canGoBack: Bool { false }
     var canGoForward: Bool { false }
     var visiblePages: [Int] { [pageIndex] }
-    var hasSelection: Bool { false }
+    var hasSelection = false
 
     func show(_ tab: DocumentTab?) {
         self.tab = tab
