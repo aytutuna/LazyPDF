@@ -17,6 +17,17 @@ final class ReopenLastTests: XCTestCase {
         XCTAssertTrue(AppPreferencesStore.load(f.folders.settings).lastFiles.isEmpty)
     }
 
+    func test_aSettingChangedInAnotherWindowIsKept() async {
+        let f = ViewModelFixture(self)
+        let other = f.makeViewModel()
+        await f.vm.open(f.pdf("a.pdf"))
+        other.setReopenLast(true)
+
+        quit(f)
+
+        XCTAssertEqual(AppPreferencesStore.load(f.folders.settings).lastFiles.count, 1)
+    }
+
     func test_theTabsAndTheirPagesComeBack() async {
         let f = ViewModelFixture(self)
         f.vm.setReopenLast(true)

@@ -29,7 +29,8 @@ extension AppViewModel {
 
     /// Nothing is kept unless the person asked for it.
     public func keep(_ session: LastSession) {
-        let on = reopenLast
+        // The setting is read from the store: another window may have changed it since this one started.
+        let on = AppPreferencesStore.load(settings).reopenLast
         AppPreferencesStore.update(settings) {
             $0.lastFiles = on ? session.files : []
             $0.lastActive = on ? session.active : 0
