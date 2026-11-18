@@ -12,9 +12,9 @@ public sealed class TabTransferTests
         return f.Vm.ActiveDocument!;
     }
 
-    private static void Edit(DocumentTab tab)
+    private static void Edit(DocumentTab tab, string title = "Changed")
     {
-        Pdfs.Retitle(tab.Session, "Changed");
+        Pdfs.Retitle(tab.Session, title);
         tab.Commit("Properties");
     }
 
@@ -384,5 +384,94 @@ public sealed class TabTransferTests
 
         Assert.Single(w.Registry.Models.Where(m => m.Strip.Contains(tab)));
         Assert.Contains(tab, w.A.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task AFailedMoveLeavesTheTargetWithItsActiveTabAndItsPrompt()
+    {
+        using var w = new TwoWindows();
+        var tab = await OpenAsync(w.A, "a.pdf");
+        await OpenAsync(w.B, "b.pdf");
+        var shown = await OpenAsync(w.B, "c.pdf");
+        var other = w.B.Vm.Documents.First();
+        w.B.Vm.ActiveTab = other;
+        w.B.Vm.ShowNotice("Changed on disk", "Reload?", new NoticeAction("Reload", () => { }));
+        w.B.Vm.PropertyChanged += (_, _) =>
+        {
+            if (w.B.Vm.Strip.Contains(tab)) throw new InvalidOperationException("cannot draw");
+        };
+
+        Assert.False(w.Registry.Transfer(tab, w.A.Vm, w.B.Vm, 1));
+
+        Assert.Same(other, w.B.Vm.ActiveDocument);
+        Assert.Equal([other, shown], w.B.Vm.Documents);
+        Assert.Equal("Reload", w.B.Vm.Message?.Action?.Text);
+    }
+
+    [Fact]
+    public async Task ATargetStripThatThrowsOnTheInsertEndsWithTheTabInTheSourceSubscribedOnce()
+    {
+        using var w = new TwoWindows();
+        var tab = await OpenAsync(w.A, "a.pdf");
+        int changes = Notifications(w.A.Vm, tab);
+        w.B.Vm.Strip.CollectionChanged += (_, e) =>
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add) throw new InvalidOperationException("strip");
+        };
+
+        Assert.False(w.Registry.Transfer(tab, w.A.Vm, w.B.Vm, 1));
+
+        Assert.Single(w.Registry.Models.Where(m => m.Strip.Contains(tab)));
+        Assert.Same(w.A.Vm, w.Registry.Find(tab.Id));
+        Assert.Equal(changes, Notifications(w.A.Vm, tab));
+    }
+
+    [Fact]
+    public async Task ASourceStripThatThrowsOnTheRemovalEndsWithTheTabInTheSourceSubscribedOnce()
+    {
+        using var w = new TwoWindows();
+        var tab = await OpenAsync(w.A, "a.pdf");
+        int changes = Notifications(w.A.Vm, tab);
+        w.A.Vm.Strip.CollectionChanged += (_, e) =>
+        {
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove) throw new InvalidOperationException("strip");
+        };
+
+        Assert.False(w.Registry.Transfer(tab, w.A.Vm, w.B.Vm, 1));
+
+        Assert.Single(w.Registry.Models.Where(m => m.Strip.Contains(tab)));
+        Assert.Contains(tab, w.A.Vm.Documents);
+        Assert.Equal(changes, Notifications(w.A.Vm, tab));
+    }
+
+    [Fact]
+    public async Task ReleasingTheActiveTabLeavesItsNeighbourActiveAndNothingSubscribed()
+    {
+        using var w = new TwoWindows();
+        var first = await OpenAsync(w.A, "a.pdf");
+        var tab = await OpenAsync(w.A, "b.pdf");
+        var last = await OpenAsync(w.A, "c.pdf");
+        w.A.Vm.ActiveTab = tab;
+        int seen = 0;
+        w.A.Vm.PropertyChanged += (_, _) => seen++;
+
+        w.A.Vm.Release(tab);
+        seen = 0;
+        Edit(tab);
+
+        Assert.Same(last, w.A.Vm.ActiveDocument);
+        Assert.Equal(0, seen);
+        Assert.Equal([first, last], w.A.Vm.Documents);
+    }
+
+    // How many times the view model hears of one change to the tab.
+    private static int Notifications(AppViewModel vm, DocumentTab tab)
+    {
+        int seen = 0;
+        void Count(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => seen++;
+        vm.PropertyChanged += Count;
+        Edit(tab, Guid.NewGuid().ToString());
+        vm.PropertyChanged -= Count;
+        return seen;
     }
 }

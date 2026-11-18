@@ -49,6 +49,7 @@ public sealed class DocumentRegistry
             return false;
         }
         var before = from.ActiveTab;
+        var restoreTarget = to.KeepView();
         int at = from.Strip.IndexOf(tab);
         try
         {
@@ -63,6 +64,7 @@ public sealed class DocumentRegistry
         // The tab goes back the way it came: out of the target first, so it is never in two strips.
         Quietly(() => to.Release(tab), to.Strip.Contains(tab));
         Quietly(() => from.Adopt(tab, at), !from.Strip.Contains(tab));
+        Quietly(restoreTarget, true);
         Quietly(() => from.ActiveTab = before, from.Strip.Contains(before));
         Quietly(() => from.ShowProblem(new Problem(Loc.T("Tab not moved"), Loc.T("Something went wrong, so {0} stays in this window.", tab.Title))), true);
         return false;

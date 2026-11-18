@@ -677,10 +677,10 @@ public sealed partial class AppViewModel
     internal int Release(DocumentTab tab)
     {
         int index = Strip.IndexOf(tab);
-        bool wasActive = ReferenceEquals(_activeTab, tab);
-        Strip.RemoveAt(index);
-        if (wasActive) _activeTab = Strip[Math.Min(index, Strip.Count - 1)];
-        if (ReferenceEquals(_lastDocument, tab)) _lastDocument = Documents.LastOrDefault();
+        // Everything but the strip is settled first, so a handler that throws on the removal leaves no half-moved state.
+        tab.Changed -= Tab_Changed;
+        if (ReferenceEquals(_activeTab, tab)) _activeTab = Strip[index + 1 < Strip.Count ? index + 1 : index - 1];
+        if (ReferenceEquals(_lastDocument, tab)) _lastDocument = Documents.LastOrDefault(d => !ReferenceEquals(d, tab));
         DropAction();
         if (ReferenceEquals(_messageTab, tab))
         {
@@ -688,17 +688,35 @@ public sealed partial class AppViewModel
             _messageTab = null;
         }
         _warnedAboutDisk.Remove(tab);
-        tab.Changed -= Tab_Changed;
+        Strip.RemoveAt(index);
         RememberView(tab);
         NotifyAll();
         return index;
     }
 
+    /// <summary>Notes which tab is active and what the info bar says, for <see cref="DocumentRegistry.Transfer"/> to put back when a move fails.</summary>
+    internal Action KeepView()
+    {
+        var active = _activeTab;
+        var last = _lastDocument;
+        var message = _message;
+        var messageTab = _messageTab;
+        return () =>
+        {
+            if (Strip.Contains(active)) _activeTab = active;
+            if (last is null || Strip.Contains(last)) _lastDocument = last;
+            _message = message;
+            _messageTab = messageTab;
+            NotifyAll();
+        };
+    }
+
     /// <summary>Puts a tab released by another window into the strip at <paramref name="index"/> and makes it the active one.</summary>
     internal void Adopt(DocumentTab tab, int index)
     {
-        Strip.Insert(Math.Clamp(index, 1, Strip.Count), tab);
+        tab.Changed -= Tab_Changed;
         tab.Changed += Tab_Changed;
+        Strip.Insert(Math.Clamp(index, 1, Strip.Count), tab);
         _lastDocument = tab;
         ActiveTab = tab;
         NotifyAll();
