@@ -146,8 +146,10 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 20))
     }
 
+    // Held a moment at the end, or the drop may be over before the destination has taken notice of the pointer.
     private func drag(_ tab: XCUIElement, to end: XCUICoordinate) {
-        tab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.5, thenDragTo: end)
+        let start = tab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        start.press(forDuration: 0.5, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.4)
     }
 
     func testDraggingATabOutOfTheWindowOpensAWindowForIt() throws {
@@ -171,8 +173,14 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(element(app, "Moved plain-3.pdf to a new window.").waitForExistence(timeout: 20))
 
         let home = app.windows.containing(.staticText, identifier: "What would you like to do?").firstMatch
-        let target = home.scrollViews["Open files"].buttons["Home"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        drag(tab(app), to: target)
+        let homeTab = home.scrollViews["Open files"].buttons["Home"]
+        // The new window opens near where the drag ended, which may cover the other one's strip: move it below that.
+        let mover = app.windows.containing(.staticText, identifier: "Moved plain-3.pdf to a new window.").firstMatch
+        if mover.frame.intersects(homeTab.frame.insetBy(dx: -20, dy: -20)) {
+            let grip = mover.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 200, dy: 12))
+            grip.press(forDuration: 0.2, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: homeTab.frame.maxY + 40 - mover.frame.minY)))
+        }
+        drag(tab(app), to: homeTab.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)))
 
         waitForWindows(app, 1)
         XCTAssertTrue(tab(app).waitForExistence(timeout: 20))
