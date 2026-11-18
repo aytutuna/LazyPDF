@@ -21,6 +21,20 @@ public sealed class OneTabPerFileTests
     }
 
     [Fact]
+    public async Task CancelingWhileASecondOpenOfTheFileWaitsOpensNothing()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+
+        var first = f.Vm.OpenAsync(path);
+        var second = f.Vm.OpenAsync(path);
+        f.Vm.CancelOpening();
+        await Task.WhenAll(first, second);
+
+        Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
     public async Task TheSameFileSpelledAnotherWayOpensNoSecondTab()
     {
         using var f = new ViewModelFixture();

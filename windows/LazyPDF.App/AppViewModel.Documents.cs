@@ -101,20 +101,10 @@ public sealed partial class AppViewModel
     public async Task OpenAsync(string path)
     {
         string name = System.IO.Path.GetFileName(path);
-        IDisposable? pathClaim;
-        while (true)
-        {
-            if (_registry.FindOpen(path, null) is { } open)
-            {
-                open.Owner.Reveal(open.Tab);
-                return;
-            }
-            if (_registry.ClaimPath(path, out pathClaim) is not { } winner) break;
-            // The open that has the file ends with a tab, a password question or nothing; look again then.
-            await winner;
-        }
+        // Registered before the wait for the path, so Cancel also reaches an open that is only waiting behind another.
         using var reading = new CancellationTokenSource();
         _reads.Add(reading);
+        IDisposable? pathClaim = null;
         OpeningState? shown = null;
         double? fraction = 0;
         bool finished = false;
@@ -125,7 +115,6 @@ public sealed partial class AppViewModel
             shown = Opening = new OpeningState(name, f);
             NotifyAll();
         });
-        _ = ShowLater();
         async Task ShowLater()
         {
             await Task.Delay(300);
@@ -137,6 +126,23 @@ public sealed partial class AppViewModel
         IDisposable? fileClaim = null;
         try
         {
+            while (true)
+            {
+                if (_registry.FindOpen(path, null) is { } open)
+                {
+                    open.Owner.Reveal(open.Tab);
+                    return;
+                }
+                if (_registry.ClaimPath(path, out pathClaim) is not { } winner) break;
+                // The open that has the file ends with a tab, a password question or nothing; look again then.
+                await winner;
+                if (reading.IsCancellationRequested)
+                {
+                    SetStatus(Loc.T("Canceled."));
+                    return;
+                }
+            }
+            _ = ShowLater();
             OpenSource source;
             try
             {
@@ -168,8 +174,9 @@ public sealed partial class AppViewModel
                     else open.Owner.Reveal(open.Tab);
                     return;
                 }
-                if (_registry.ClaimFile(id, out fileClaim) is not { } winner) break;
-                await winner;
+                if (_registry.ClaimFile(id, out fileClaim) is not { } waited) break;
+                await waited;
+                if (reading.IsCancellationRequested) break;
             }
             if (reading.IsCancellationRequested)
             {
