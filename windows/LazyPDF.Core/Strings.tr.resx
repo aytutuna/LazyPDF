@@ -1393,6 +1393,9 @@
   <data name="Close tabs to the right" xml:space="preserve">
     <value>Sağdaki sekmeleri kapat</value>
   </data>
+  <data name="Close tag {0}" xml:space="preserve">
+    <value>{0} etiketini kapat</value>
+  </data>
   <data name="Close the search bar" xml:space="preserve">
     <value>Arama çubuğunu kapat</value>
   </data>
@@ -3232,6 +3235,15 @@
   <data name="Level" xml:space="preserve">
     <value>Düzey</value>
   </data>
+  <data name="Level {0}" xml:space="preserve">
+    <value>Düzey {0}</value>
+  </data>
+  <data name="Level {0}, collapsed" xml:space="preserve">
+    <value>Düzey {0}, kapalı</value>
+  </data>
+  <data name="Level {0}, expanded" xml:space="preserve">
+    <value>Düzey {0}, açık</value>
+  </data>
   <data name="Light" xml:space="preserve">
     <value>Açık</value>
   </data>
@@ -4224,6 +4236,9 @@
   </data>
   <data name="Open it" xml:space="preserve">
     <value>Aç</value>
+  </data>
+  <data name="Open tag {0}" xml:space="preserve">
+    <value>{0} etiketini aç</value>
   </data>
   <data name="Open that version" xml:space="preserve">
     <value>O sürümü aç</value>

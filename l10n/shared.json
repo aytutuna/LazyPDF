@@ -9294,5 +9294,20 @@
   },
   "Annotation, page {0}": {
     "tr": "Ek açıklama, sayfa {0}"
+  },
+  "Level {0}": {
+    "tr": "Düzey {0}"
+  },
+  "Level {0}, expanded": {
+    "tr": "Düzey {0}, açık"
+  },
+  "Level {0}, collapsed": {
+    "tr": "Düzey {0}, kapalı"
+  },
+  "Open tag {0}": {
+    "tr": "{0} etiketini aç"
+  },
+  "Close tag {0}": {
+    "tr": "{0} etiketini kapat"
   }
 }

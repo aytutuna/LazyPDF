@@ -162,6 +162,7 @@ private struct TagRowView: View {
             .buttonStyle(.plain)
             .disabled(row.isMore)
             .accessibilityLabel(row.label)
+            .accessibilityValue(levelText)
             .accessibilityAddTraits(selected ? .isSelected : [])
         }
         .padding(.leading, CGFloat(row.depth) * 14)
@@ -170,6 +171,12 @@ private struct TagRowView: View {
         .contextMenu { menu }
         .modifier(TagActions(model: model, row: row))
         .modifier(TagDragging(model: model, row: row))
+    }
+
+    // What the Windows tree reports itself: how deep the line is and whether it is open.
+    private var levelText: String {
+        if row.isMore || !row.hasKids { return L10n.t("Level {0}", row.depth + 1) }
+        return row.isOpen ? L10n.t("Level {0}, expanded", row.depth + 1) : L10n.t("Level {0}, collapsed", row.depth + 1)
     }
 
     @ViewBuilder private var disclosure: some View {
@@ -182,7 +189,7 @@ private struct TagRowView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(row.isOpen ? L10n.t("Close") : L10n.t("Open"))
+            .accessibilityLabel(row.isOpen ? L10n.t("Close tag {0}", row.label) : L10n.t("Open tag {0}", row.label))
         } else {
             Color.clear.frame(width: 24, height: 1)
         }

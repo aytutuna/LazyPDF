@@ -61,6 +61,7 @@
 "A setting between them would change it." = "Aralarındaki bir ayar bunu değiştirirdi.";
 "A signed file is not replaced. The result opens in a new tab." = "İmzalı dosyanın üzerine yazılmaz. Sonuç yeni sekmede açılır.";
 "A soft mask needs transparency." = "Yumuşak maske saydamlık gerektirir.";
+"A span is a whole number from 1." = "Aralık 1 veya daha büyük bir tam sayıdır.";
 "A stream has the key /{0}, which is not allowed." = "Bir akışta izin verilmeyen /{0} anahtarı var.";
 "A stream uses the Crypt filter." = "Bir akış Crypt süzgecini kullanıyor.";
 "A stream uses the LZW filter." = "Bir akış LZW süzgecini kullanıyor.";
@@ -148,6 +149,7 @@
 "Already on this file" = "Dosyada olanlar";
 "Already small" = "Zaten küçük";
 "Already tagged" = "Zaten etiketli";
+"Alternate text" = "Alternatif metin";
 "Always removed." = "Her zaman kaldırılır.";
 "Amount per part" = "Parça başına miktar";
 "An ICC profile could not be read." = "Bir ICC profili okunamadı.";
@@ -178,6 +180,7 @@
 "Angle" = "Açı";
 "Angle in degrees" = "Derece olarak açı";
 "Annotation" = "Ek açıklama";
+"Annotation, page {0}" = "Ek açıklama, sayfa {0}";
 "Annotations" = "Ek açıklamalar";
 "Another button of this field already uses {0}. Choose another value." = "Bu alanın başka bir düğmesi zaten şu değeri kullanıyor: {0}. Başka bir değer seçin.";
 "Another file" = "Başka dosya";
@@ -237,6 +240,7 @@
 "Bookmark" = "Yer imi";
 "Bookmark goes to another page" = "Yer imi başka bir sayfaya gidiyor";
 "Bookmarks" = "Yer imleri";
+"Both" = "İkisi de";
 "Both sides, long edge" = "Çift yüz, uzun kenar";
 "Both sides, short edge" = "Çift yüz, kısa kenar";
 "Bottom" = "Alt";
@@ -307,6 +311,7 @@
 "Change several lines" = "Çok satırlı ayarını değiştir";
 "Change starting value" = "Başlangıç değerini değiştir";
 "Change tab order" = "Sekme sırasını değiştir";
+"Change tag" = "Etiketi değiştir";
 "Change text color" = "Metin rengini değiştir";
 "Change text size" = "Metin boyutunu değiştir";
 "Change the file" = "Dosyayı değiştir";
@@ -383,6 +388,7 @@
 "Clipboard is empty" = "Pano boş";
 "Clipboard.pdf" = "Pano.pdf";
 "Close" = "Kapat";
+"Close tag {0}" = "{0} etiketini kapat";
 "Close the search bar" = "Arama çubuğunu kapat";
 "Close the side panel" = "Yan paneli kapat";
 "Close the tool" = "Aracı kapat";
@@ -393,6 +399,8 @@
 "Color contrast" = "Renk karşıtlığı";
 "Color contrast is not checked here. Look at the pages and make sure text stands out from its background." = "Renk karşıtlığı burada denetlenmez. Sayfalara bakın ve metnin arka plandan ayrıldığından emin olun.";
 "Color {0} to {1}" = "Renk {0} iken {1} oldu";
+"Column" = "Sütun";
+"Column span" = "Sütun aralığı";
 "Combine" = "Birleştir";
 "Combine files" = "Dosyaları birleştir";
 "Combined.pdf" = "Birleştirilmiş.pdf";
@@ -472,10 +480,13 @@
 "Date format" = "Tarih biçimi";
 "Dates" = "Tarihler";
 "Delete" = "Sil";
+"Delete as artifact" = "Yapay öğe olarak sil";
 "Delete field" = "Alanı sil";
 "Delete form field" = "Form alanını sil";
 "Delete pages" = "Sayfaları sil";
 "Delete set" = "Kümeyi sil";
+"Delete tag" = "Etiketi sil";
+"Delete tag as artifact" = "Etiketi yapay öğe olarak sil";
 "Delete the selected mark." = "Seçili işareti silin.";
 "Delete the selection" = "Seçimi sil";
 "Delete these initials?" = "Bu baş harfler silinsin mi?";
@@ -519,6 +530,7 @@
 "Drag a box, then type." = "Bir kutu sürükleyin, sonra yazın.";
 "Drag an area to make a link, or click a link to change it." = "Bağlantı için bir alan çizin veya değiştirmek için bir bağlantıya tıklayın.";
 "Drag from the spot to where the text goes." = "Noktadan metnin yerleşeceği yere sürükleyin.";
+"Drag on the page over what to tag." = "Etiketlenecek yerin üzerinde sayfada sürükleyin.";
 "Drag on the page to draw a field. Click a field to change it." = "Alan çizmek için sayfada sürükleyin. Değiştirmek için bir alana tıklayın.";
 "Drag on the page to draw it. With a radio group selected the button joins it." = "Çizmek için sayfada sürükleyin. Bir seçenek grubu seçiliyse düğme gruba katılır.";
 "Drag on the page where it goes." = "Yerleşeceği alanı sayfada sürükleyin.";
@@ -755,6 +767,7 @@
 "Has text" = "Metin var";
 "Header" = "Üst bilgi";
 "Header and footer" = "Üst ve alt bilgi";
+"Header cells" = "Başlık hücreleri";
 "Header center" = "Üst bilgi orta";
 "Header left" = "Üst bilgi sol";
 "Header right" = "Üst bilgi sağ";
@@ -798,6 +811,8 @@
 "Imported {0} comment.|other" = "{0} yorum eklendi.";
 "Importing comments" = "Yorumlar içe aktarılıyor";
 "Include pictures" = "Resimleri ekle";
+"Indent" = "İçeri al";
+"Indent tag" = "Etiketi içeri al";
 "Initials" = "Baş harfler";
 "Insert and replace" = "Ekle ve değiştir";
 "Insert blank page" = "Boş sayfa ekle";
@@ -878,6 +893,9 @@
 "Length on the page" = "Sayfadaki uzunluk";
 "Letter" = "Letter";
 "Level" = "Düzey";
+"Level {0}" = "Düzey {0}";
+"Level {0}, collapsed" = "Düzey {0}, kapalı";
+"Level {0}, expanded" = "Düzey {0}, açık";
 "Light" = "Açık";
 "Light blue" = "Açık mavi";
 "Light gray" = "Açık gri";
@@ -931,6 +949,7 @@
 "Make a PDF from blank pages, pictures, text or the clipboard." = "Boş sayfalardan, resimlerden, metinden veya panodan PDF yapın.";
 "Make a new one" = "Yenisini oluştur";
 "Make black and white pictures 1-bit" = "Siyah beyaz resimleri 1 bit yap";
+"Make header row" = "Başlık satırı yap";
 "Make searchable" = "Aranabilir yap";
 "Make smaller" = "Küçült";
 "Make the file smaller." = "Dosyayı küçültün.";
@@ -946,12 +965,15 @@
 "Mark all of this kind" = "Bu türdekilerin hepsini işaretle";
 "Mark as PDF/UA" = "PDF/UA olarak işaretle";
 "Mark as PDF/UA when the check passes" = "Denetimden geçerse PDF/UA olarak işaretle";
+"Mark as artifact" = "Yapay öğe olarak işaretle";
 "Mark every match" = "Tüm eşleşmeleri işaretle";
 "Mark removed" = "İşaret kaldırıldı";
 "Mark selected text" = "Seçili metni işaretle";
 "Mark up text" = "Metni işaretle";
 "Marked" = "İşaretli";
 "Marked as PDF/UA-1" = "PDF/UA-1 olarak işaretlendi";
+"Marked content" = "İşaretli içerik";
+"Marked content, page {0}" = "İşaretli içerik, sayfa {0}";
 "Marks on this page" = "Bu sayfadaki işaretler";
 "Marks removed" = "İşaretler kaldırıldı";
 "Match case" = "Büyük/küçük harfe duyarlı";
@@ -978,6 +1000,9 @@
 "Move pages" = "Sayfaları taşı";
 "Move step down" = "Adımı aşağı taşı";
 "Move step up" = "Adımı yukarı taşı";
+"Move tag" = "Etiketi taşı";
+"Move tag down" = "Etiketi aşağı taşı";
+"Move tag up" = "Etiketi yukarı taşı";
 "Move up" = "Yukarı taşı";
 "Moved" = "Taşındı";
 "Moved from page {0}" = "{0}. sayfadan taşındı";
@@ -1072,6 +1097,7 @@
 "Not protected" = "Korumalı değil";
 "Not redacted" = "Karartılamadı";
 "Not saved" = "Kaydedilmedi";
+"Not set" = "Ayarlanmadı";
 "Not signed" = "İmzalanmadı";
 "Not supported yet" = "Henüz desteklenmiyor";
 "Not visible" = "Görünmez";
@@ -1153,6 +1179,7 @@
 "Open in another app" = "Başka uygulamada aç";
 "Open in new tabs" = "Yeni sekmelerde aç";
 "Open it" = "Aç";
+"Open tag {0}" = "{0} etiketini aç";
 "Open that version" = "O sürümü aç";
 "Open the first" = "İlkini aç";
 "Open the signed version from the file's history." = "İmzalı sürümü dosyanın geçmişinden açın.";
@@ -1173,6 +1200,8 @@
 "Organize pages" = "Sayfaları yönet";
 "Orientation" = "Yön";
 "Other tagged content lies inside or around this content." = "Bu içeriğin içinde veya çevresinde başka etiketli içerik var.";
+"Outdent" = "Dışarı al";
+"Outdent tag" = "Etiketi dışarı al";
 "Outlines" = "Anahat";
 "Output intent" = "Çıktı amacı";
 "Oval" = "Oval";
@@ -1448,6 +1477,7 @@
 "Replace with a file" = "Dosyayla değiştir";
 "Replaced {0} time.|one" = "{0} yer değiştirildi.";
 "Replaced {0} time.|other" = "{0} yer değiştirildi.";
+"Replacement text" = "Yerine geçen metin";
 "Replaces the file on disk and clears Undo." = "Diskteki dosyanın yerine geçer ve Geri al geçmişini siler.";
 "Replacing pages" = "Sayfalar değiştiriliyor";
 "Replacing text" = "Metin değiştiriliyor";
@@ -1481,6 +1511,8 @@
 "Rotate right" = "Sağa döndür";
 "Rotate, move, delete, crop and extract pages." = "Sayfaları döndürün, taşıyın, silin, kırpın ve ayıklayın.";
 "Rotation {0} to {1} degrees" = "Döndürme {0} dereceden {1} dereceye";
+"Row" = "Satır";
+"Row span" = "Satır aralığı";
 "Run on every file" = "Her dosyada çalıştır";
 "Run on new files" = "Yeni dosyalarda çalıştır";
 "Running the steps" = "Adımlar çalışıyor";
@@ -1523,6 +1555,7 @@
 "Scan paper into a PDF with Lazy Scan." = "Kâğıdı Lazy Scan ile PDF olarak tarayın.";
 "Scan the paper" = "Kağıdı tara";
 "Scan|noun" = "Tarama";
+"Scope" = "Kapsam";
 "Script not run" = "Komut dosyası çalışmadı";
 "Scripts do not run and nothing is loaded from the internet." = "Betikler çalışmaz ve internetten hiçbir şey yüklenmez.";
 "Scroll continuously" = "Sürekli kaydır";
@@ -1553,7 +1586,9 @@
 "Select text" = "Metin seç";
 "Select text on the page first." = "Önce sayfada metin seçin.";
 "Select text, then pick a markup above." = "Metni seçin, sonra yukarıdan bir işaret seçin.";
+"Select the text on the page first." = "Önce sayfada metni seçin.";
 "Selected: {0}" = "Seçili: {0}";
+"Selection as artifact" = "Seçimi yapay öğe yap";
 "Send backward" = "Bir arkaya gönder";
 "Send reply" = "Yanıtı gönder";
 "Send the form to an address" = "Formu bir adrese gönder";
@@ -1710,13 +1745,18 @@
 "Tables have headers" = "Tablolarda başlık var";
 "Tables with a broken layout: {0}{1}. Give each table rows of header and data cells, with the same cells in every row." = "Düzeni bozuk tablolar: {0}{1}. Her tabloya başlık ve veri hücrelerinden oluşan satırlar verin; her satırda aynı hücreler olsun.";
 "Tables without header cells: {0}{1}. Mark the header row or column." = "Başlık hücresi olmayan tablolar: {0}{1}. Başlık satırını ya da sütununu işaretleyin.";
+"Tag area" = "Alanı etiketle";
+"Tag drawn area" = "Çizilen alanı etiketle";
+"Tag selection" = "Seçimi etiketle";
 "Tag the file" = "Dosyayı etiketle";
+"Tag the selection as" = "Seçimi şu türle etiketle";
 "Tag tree" = "Etiket ağacı";
 "Tagged content sits inside an artifact." = "Bir yapıntının içinde etiketli içerik var.";
 "Tags" = "Etiketler";
 "Tags added" = "Etiketler eklendi";
 "Tags added." = "Etiketler eklendi.";
 "Tags not added" = "Etiketler eklenemedi";
+"Tags not changed" = "Etiketler değiştirilmedi";
 "Tags removed" = "Etiketler kaldırıldı";
 "Take a photo" = "Fotoğraf çek";
 "Take back corner" = "Köşeyi geri al";
@@ -1758,6 +1798,7 @@
 "Text where it is on the page" = "Metin sayfadaki yerinde";
 "Text.pdf" = "Metin.pdf";
 "Text: {0}" = "Metin: {0}";
+"That cannot be done to this tag." = "Bu etikete bu yapılamaz.";
 "That certificate does not open this file." = "Bu sertifika bu dosyayı açmıyor.";
 "That file could not be read. Check that no other program has it open." = "Bu dosya okunamadı. Başka bir programda açık olmadığına bakın.";
 "That file is not a certificate. Choose a .cer or .crt file." = "Bu dosya bir sertifika değil. .cer veya .crt dosyası seçin.";
@@ -1892,6 +1933,7 @@
 "The file is damaged or is not a PowerPoint presentation. Pick a .pptx file." = "Dosya bozuk ya da bir PowerPoint sunusu değil. Bir .pptx dosyası seçin.";
 "The file is damaged or is not a Word document. Pick a .docx file." = "Dosya bozuk ya da bir Word belgesi değil. Bir .docx dosyası seçin.";
 "The file is damaged or is not an Excel workbook. Pick an .xlsx file." = "Dosya bozuk ya da bir Excel çalışma kitabı değil. Bir .xlsx dosyası seçin.";
+"The file is encrypted, so its tags cannot be changed here." = "Dosya şifreli olduğundan etiketleri burada değiştirilemez.";
 "The file is encrypted." = "Dosya şifreli.";
 "The file is signed. The new file loses the signatures." = "Dosya imzalı. Yeni dosya imzaları kaybeder.";
 "The file is too large to export." = "Dosya dışa aktarılamayacak kadar büyük.";
@@ -1909,6 +1951,7 @@
 "The first number must be 0 or more." = "İlk numara 0 veya daha büyük olmalı.";
 "The first numbered heading is H{0}; it must be H1." = "İlk numaralı başlık H{0}; H1 olmalı.";
 "The first page number must be a whole number." = "İlk sayfa numarası tam sayı olmalı.";
+"The first {0} matches are shown." = "İlk {0} eşleşme gösteriliyor.";
 "The folder cannot be watched any more. Check that it is there, then switch watching on again." = "Klasör artık izlenemiyor. Klasörün yerinde olduğunu kontrol edin, sonra izlemeyi yeniden açın.";
 "The font cannot draw all of the text. Pick another font and update the stamp." = "Yazı tipi metnin tamamını çizemiyor. Başka bir yazı tipi seçip damgayı güncelleyin.";
 "The font file has no valid /Subtype." = "Yazı tipi dosyasında geçerli /Subtype yok.";
@@ -2028,6 +2071,7 @@
 "The system does not let Lazy PDF write to {0}. Pick another folder." = "Sistem, Lazy PDF'nin {0} konumuna yazmasına izin vermiyor. Başka bir klasör seçin.";
 "The system does not let Lazy PDF write {0}. Save it under another name or in another folder." = "Sistem, Lazy PDF'nin {0} dosyasına yazmasına izin vermiyor. Başka bir adla ya da başka bir klasöre kaydedin.";
 "The system would not let Lazy PDF use this key. Check the PIN or choose another certificate." = "Sistem Lazy PDF'in bu anahtarı kullanmasına izin vermedi. PIN'i denetleyin veya başka bir sertifika seçin.";
+"The tag is no longer in the file." = "Etiket artık dosyada yok.";
 "The tags are marked as unreliable. Check them and clear the mark." = "Etiketler güvenilmez olarak işaretli. Etiketleri denetleyin ve işareti kaldırın.";
 "The tags are too large to list every figure." = "Etiketler tüm şekilleri listelemek için çok büyük.";
 "The tags could not be read." = "Etiketler okunamadı.";
@@ -2038,7 +2082,9 @@
 "The time stamp server gave no answer. Try again later." = "Zaman damgası sunucusu yanıt vermedi. Daha sonra yeniden deneyin.";
 "The title is set and the window shows it." = "Başlık ayarlı ve pencere onu gösteriyor.";
 "The trailer has no /ID of two strings." = "Dosya sonu bilgisinde iki dizeden oluşan /ID yok.";
+"The tree is too large to edit, so it is read-only." = "Ağaç düzenlenemeyecek kadar büyük, bu yüzden salt okunur.";
 "The tree is too large to show whole. Pick a tag to go to its page." = "Ağaç tamamını göstermek için çok büyük. Sayfasına gitmek için bir etiket seçin.";
+"The type is empty." = "Tür boş.";
 "The value does not fit the format." = "Değer biçime uymuyor.";
 "The value saved when this button is chosen." = "Bu düğme seçildiğinde kaydedilen değer.";
 "The viewer preferences do not set /DisplayDocTitle to true." = "Görüntüleyici tercihleri /DisplayDocTitle değerini true yapmıyor.";
@@ -2562,6 +2608,7 @@
 "{0} skipped as copies or for other pages. {1} without a drawing." = "{0} yorum kopya olduğu veya başka sayfalara ait olduğu için atlandı. {1} yorumun çizimi yok.";
 "{0} smaller." = "{0} küçüldü.";
 "{0} streams were recompressed without LZW." = "{0} akış LZW olmadan yeniden sıkıştırıldı.";
+"{0} tags match." = "{0} etiket eşleşiyor.";
 "{0} tags. Pick one to go to its page." = "{0} etiket. Sayfasına gitmek için birini seçin.";
 "{0} to {1}, {2}% smaller." = "{0} → {1}, %{2} küçüldü.";
 "{0} to {1}." = "{0} → {1}.";
