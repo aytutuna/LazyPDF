@@ -42,7 +42,7 @@ public sealed partial class StructureTree
         if (contents.Any(c => c.Stream is not null)) return TagContent.FormContent;
 
         var plans = new List<(PageStreams Page, List<ContentInsertion>[] Edits)>();
-        foreach (var group in contents.Where(c => c.PageIndex >= 0 && c.PageIndex < _document.Pages.Count).GroupBy(c => c.PageIndex))
+        foreach (var group in contents.Where(c => c.PageIndex >= 0 && c.PageIndex < _document.Pages.Count).GroupBy(c => c.PageIndex).OrderBy(g => g.Key))
         {
             var page = PageStreams.Load(_document, _document.Pages[group.Key]);
             if (page is null) return TagContent.Unreadable;
