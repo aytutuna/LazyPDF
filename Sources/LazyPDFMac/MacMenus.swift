@@ -11,8 +11,8 @@ struct MacMenus: Commands {
     let hub: WindowHub
     @FocusedValue(\.macShell) private var focused: MacShell?
 
-    // The window with the keyboard; the primary when none has it, as with the menus of a hidden window.
-    private var shell: MacShell { focused ?? hub.primaryShell() }
+    // The window with the keyboard; a sheet or panel on top of a window counts as that window.
+    private var shell: MacShell { focused ?? hub.keyShell }
     private var vm: AppViewModel { shell.vm }
     private var viewer: ViewerModel { shell.viewer }
     private var actions: FileActions { FileActions(vm: vm, commands: shell.commands) }

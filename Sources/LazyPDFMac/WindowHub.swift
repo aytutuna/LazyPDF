@@ -99,9 +99,14 @@ final class WindowHub {
 
     private var ordered: [MacShell] { order.compactMap { shells[$0] } }
 
-    /// The window that has the keyboard, or the primary.
+    /// The window the person is working in, or the primary. A sheet or panel on top of a window counts as that window.
     var keyShell: MacShell {
-        ordered.first { $0.window?.isKeyWindow == true } ?? primaryShell()
+        for candidate in [NSApp.keyWindow, NSApp.mainWindow] {
+            guard let window = candidate else { continue }
+            let root = window.sheetParent ?? window
+            if let found = ordered.first(where: { $0.window === root }) { return found }
+        }
+        return primaryShell()
     }
 
     /// True when another window of the app is showing, which makes the red button of this one close it.
