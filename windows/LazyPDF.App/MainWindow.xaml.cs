@@ -83,6 +83,9 @@ public partial class MainWindow : Window
         if (saved?.Maximized == true) WindowState = WindowState.Maximized;
     }
 
+    // Windows are told apart by the document in view in the taskbar, Alt+Tab and a screen reader.
+    internal static string TitleOf(DocumentTab? tab) => tab is null ? "Lazy PDF" : $"{tab.Title} - Lazy PDF";
+
     // Sizes below match MinWidth and MinHeight in MainWindow.xaml.
     internal static string PageReadout(string label, int index, int count) =>
         label == (index + 1).ToString()
@@ -186,6 +189,7 @@ public partial class MainWindow : Window
         {
             bool home = _vm.IsHome;
             HookTabPanel();
+            Title = TitleOf(_vm.ActiveDocument);
             TabList.SelectedItem = _vm.ActiveTab;
             Home.Visibility = home ? Visibility.Visible : Visibility.Collapsed;
             Workspace.Visibility = home ? Visibility.Collapsed : Visibility.Visible;
