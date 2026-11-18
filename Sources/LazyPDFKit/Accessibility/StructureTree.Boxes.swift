@@ -46,17 +46,17 @@ extension StructureTree {
         var drawn: [PageBoxKey: PdfRect] = [:]
         let pageCount = document.pages.count
         var pages: [Int] = []
-        for case let c as StructContent in wanted where c.pageIndex >= 0 && c.pageIndex < pageCount && !pages.contains(c.pageIndex) {
-            pages.append(c.pageIndex)
+        var keysByPage: [Int: Set<BoxKey>] = [:]
+        for case let c as StructContent in wanted where c.pageIndex >= 0 && c.pageIndex < pageCount {
+            if keysByPage[c.pageIndex] == nil { pages.append(c.pageIndex) }
+            keysByPage[c.pageIndex, default: []].insert(BoxKey(stream: c.stream?.number ?? 0, mcid: c.mcid))
         }
         if pages.count > Self.maxBoxPages {
             capped = true
             pages = Array(pages[0..<Self.maxBoxPages])
         }
         for page in pages {
-            var keys = Set<BoxKey>()
-            for case let c as StructContent in wanted where c.pageIndex == page { keys.insert(BoxKey(stream: c.stream?.number ?? 0, mcid: c.mcid)) }
-            let boxer = Boxer(keys)
+            let boxer = Boxer(keysByPage[page] ?? [])
             let interpreter = ContentInterpreter(document)
             interpreter.walkPatterns = false
             interpreter.run(document.pages[page], boxer)
