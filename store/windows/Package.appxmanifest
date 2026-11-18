@@ -31,7 +31,7 @@
     <Application Id="LazyPDF" Executable="LazyPDF.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements DisplayName="Lazy PDF"
                           Description="Read, fill, sign, edit and tidy PDF files on your PC."
-                          BackgroundColor="#B3261E"
+                          BackgroundColor="#E5484D"
                           Square150x150Logo="Assets\Square150x150Logo.png"
                           Square44x44Logo="Assets\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"
