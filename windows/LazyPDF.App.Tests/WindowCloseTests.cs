@@ -175,6 +175,16 @@ public sealed class WindowCloseTests
     });
 
     [Fact]
+    public Task TheWindowsSurvivorIsTheFirstWindowElseTheOneUsedLast() => Sta.Run(() =>
+    {
+        using var rig = new Rig();
+
+        Assert.Same(rig.A, WindowHub.Survivor(rig.B));
+        Assert.Same(rig.B, WindowHub.Survivor(rig.A));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task WhenTheAppEndsTheFirstWindowsPlaceIsKept() => Sta.Run(async () =>
     {
         using var rig = new Rig();
@@ -187,6 +197,79 @@ public sealed class WindowCloseTests
         rig.B.Close();
 
         Assert.Equal(100, rig.Saved.Window!.Left);
+    });
+
+    [Fact]
+    public Task AnEndedSessionWritesTheFilesOfAWindowWithAJobRunning() => Sta.Run(async () =>
+    {
+        using var rig = new Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("x.pdf"));
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("y.pdf"));
+        typeof(MainWindow).GetField("_actionRunning", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(rig.A, true);
+        WindowHub.BeginExit(rig.Both.Registry, session: true);
+
+        rig.A.Close();
+        Assert.Contains(rig.A, WindowHub.Windows);
+        Assert.True(WindowHub.Exiting);
+        typeof(MainWindow).GetField("_actionRunning", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(rig.A, false);
+        rig.A.Close();
+        rig.B.Close();
+
+        Assert.Equal([rig.Both.A.Dir.Sub("x.pdf"), rig.Both.B.Dir.Sub("y.pdf")], rig.Saved.LastFiles);
+    });
+
+    [Fact]
+    public Task AComparisonOpenedDuringTheUnsavedQuestionDoesNotAskAgainOnTheWayOut() => Sta.Run(async () =>
+    {
+        using var rig = new Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("clean.pdf"));
+        var clean = rig.Both.A.Vm.ActiveDocument!;
+        var edited = await OpenEdited(rig.Both.A, "edited.pdf");
+        var table = (ConditionalWeakTable<DocumentTab, HeldComparison>)typeof(ComparePanel)
+            .GetField("Held", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var held = new HeldComparison(CompareKit.Session(CompareKit.Before(), CompareKit.After()), null, true, clean.Revision);
+        held.Window = new CompareWindow(held.Session, held.Session.Rows(Parts.Text));
+        try
+        {
+            rig.A.Close();
+            Assert.Same(edited, rig.Both.A.Vm.CloseQuestion);
+
+            table.Add(clean, held);
+            rig.Both.A.Vm.Close(edited);
+
+            // A question here would block the test on a message box; the window is gone instead.
+            Assert.DoesNotContain(rig.A, WindowHub.Windows);
+        }
+        finally
+        {
+            held.Window.Close();
+            table.Remove(clean);
+            held.Dispose();
+        }
+    });
+
+    [Fact]
+    public Task EachWindowGetsItsOwnBatchWindow() => Sta.Run(() =>
+    {
+        using var rig = new Rig();
+        var opened = (System.Collections.IDictionary)typeof(LazyPDF.App.Tools.Batch.BatchWindow)
+            .GetField("Opened", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        // An owner has to have been shown.
+        rig.A.Show();
+        rig.B.Show();
+        LazyPDF.App.Tools.Batch.BatchWindow.Open(rig.A, rig.Both.A.Vm);
+        LazyPDF.App.Tools.Batch.BatchWindow.Open(rig.B, rig.Both.B.Vm);
+        try
+        {
+            Assert.Equal(2, opened.Count);
+            Assert.Same(rig.A, ((Window)opened[rig.Both.A.Vm]!).Owner);
+            Assert.Same(rig.B, ((Window)opened[rig.Both.B.Vm]!).Owner);
+        }
+        finally
+        {
+            foreach (Window window in opened.Values.Cast<Window>().ToList()) window.Close();
+        }
+        return Task.CompletedTask;
     });
 
     [Fact]
