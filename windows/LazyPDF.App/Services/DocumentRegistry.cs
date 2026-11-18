@@ -25,6 +25,14 @@ public sealed class DocumentRegistry
     /// <summary>The view model whose strip has the tab with this id; null when none has it.</summary>
     internal AppViewModel? Find(Guid id) => _models.FirstOrDefault(m => m.Documents.Any(d => d.Id == id));
 
+    /// <summary>
+    /// What the next start reopens when the whole app ends: the files of every window, the first window's first, and
+    /// the one that was in view in the first window that had one.
+    /// </summary>
+    internal (List<string> Files, string? Active) Session() =>
+        ([.. _models.SelectMany(m => m.Documents).Where(d => d.Path is not null).Select(d => d.Path!).Distinct(StringComparer.OrdinalIgnoreCase)],
+         _models.Select(m => m.ActiveDocument?.Path).FirstOrDefault(p => p is not null));
+
     /// <summary>The tab, or the password question, that holds the file named by <paramref name="path"/> or by <paramref name="fileId"/>, in any window.</summary>
     internal OpenHit? FindOpen(string? path, string? fileId)
     {

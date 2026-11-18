@@ -73,6 +73,9 @@
   <data name="A Word, Excel or PowerPoint file" xml:space="preserve">
     <value>Bir Word, Excel veya PowerPoint dosyası</value>
   </data>
+  <data name="A batch is running. Close anyway?" xml:space="preserve">
+    <value>Bir toplu işlem çalışıyor. Yine de kapatılsın mı?</value>
+  </data>
   <data name="A box I draw on the page" xml:space="preserve">
     <value>Sayfaya çizeceğim bir kutu</value>
   </data>
@@ -87,6 +90,9 @@
   </data>
   <data name="A color is one, three or four numbers from 0 to 1." xml:space="preserve">
     <value>Bir renk, 0 ile 1 arasında bir, üç veya dört sayıdır.</value>
+  </data>
+  <data name="A comparison window is open. Close anyway?" xml:space="preserve">
+    <value>Bir karşılaştırma penceresi açık. Yine de kapatılsın mı?</value>
   </data>
   <data name="A constant opacity below 1 needs transparency." xml:space="preserve">
     <value>1'in altındaki sabit opaklık saydamlık gerektirir.</value>
@@ -1398,6 +1404,9 @@
   </data>
   <data name="Close tag {0}" xml:space="preserve">
     <value>{0} etiketini kapat</value>
+  </data>
+  <data name="Close the comparison first." xml:space="preserve">
+    <value>Önce karşılaştırmayı kapatın.</value>
   </data>
   <data name="Close the search bar" xml:space="preserve">
     <value>Arama çubuğunu kapat</value>

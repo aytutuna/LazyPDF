@@ -72,6 +72,8 @@ public partial class App : Application
         // Apply the saved appearance before the first window is created.
         ThemeService.Initialize();
         base.OnStartup(e);
+        JumpLists.Install();
+        SessionEnding += (_, _) => WindowHub.BeginExit(_registry);
         // Built here rather than through StartupUri so the first window shares the registry and recovery store.
         new MainWindow(_registry, _recovery).Show();
     }
@@ -88,7 +90,7 @@ public partial class App : Application
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
         System.Diagnostics.Trace.TraceError(e.Exception.ToString());
-        if (e.Exception is OutOfMemoryException || MainWindow is not MainWindow { IsLoaded: true } window) return;
+        if (e.Exception is OutOfMemoryException || WindowHub.Target is not { } window) return;
         // A failure in layout or rendering comes back on every pass; let a repeat end the process so recovery takes over.
         if (DateTime.UtcNow - _lastHandled < TimeSpan.FromSeconds(5)) return;
         _lastHandled = DateTime.UtcNow;
@@ -121,7 +123,7 @@ public partial class App : Application
     /// <summary>Files handed over by a second start: opened at once, or kept for the window if it is not open yet.</summary>
     private void Opened(IReadOnlyList<string> paths) => Dispatcher.BeginInvoke(() =>
     {
-        if (MainWindow is MainWindow { IsLoaded: true } window) window.OpenFiles(paths);
+        if (WindowHub.Target is { } window) window.OpenFiles(paths);
         else StartupFiles = [.. StartupFiles, .. paths];
     });
 

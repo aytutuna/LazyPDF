@@ -33,12 +33,12 @@ internal static class SourceFile
             catch (PdfReadException error) when (error.Problem == PdfReadProblem.PasswordRequired)
             {
                 certificate = null;
-                password = (askPassword ?? SourcePasswordWindow.Ask)(name, password is not null);
+                password = (askPassword ?? ((n, wrong) => SourcePasswordWindow.Ask(n, wrong, host.DialogOwner)))(name, password is not null);
                 if (password is null) return null;
             }
             catch (PdfReadException error) when (error.Problem == PdfReadProblem.CertificateRequired)
             {
-                certificate = (askCertificate ?? SourceCertificateWindow.Ask)(name, certificate is not null);
+                certificate = (askCertificate ?? ((n, wrong) => SourceCertificateWindow.Ask(n, wrong, host.DialogOwner)))(name, certificate is not null);
                 if (certificate is null) return null;
             }
             catch (Exception error) when (error is PdfReadException or IOException or UnauthorizedAccessException)

@@ -9330,5 +9330,14 @@
   },
   "Something went wrong, so {0} stays in this window.": {
     "tr": "Bir sorun çıktı, bu yüzden {0} bu pencerede kalıyor."
+  },
+  "Close the comparison first.": {
+    "tr": "Önce karşılaştırmayı kapatın."
+  },
+  "A batch is running. Close anyway?": {
+    "tr": "Bir toplu işlem çalışıyor. Yine de kapatılsın mı?"
+  },
+  "A comparison window is open. Close anyway?": {
+    "tr": "Bir karşılaştırma penceresi açık. Yine de kapatılsın mı?"
   }
 }

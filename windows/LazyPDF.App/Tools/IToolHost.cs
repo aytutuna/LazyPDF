@@ -16,6 +16,9 @@ public interface IToolHost
     /// <summary>Shows <paramref name="view"/> on the stage in place of the viewer, until it is called again with null. Only a tool that is attached may hold it, and it lets go when it is detached.</summary>
     void HoldStage(UIElement? view) { }
 
+    /// <summary>The window a dialog the tool opens belongs over; null when the host has none.</summary>
+    Window? DialogOwner => null;
+
     void ShowProblem(Problem problem);
 
     void ShowNotice(string title, string text, NoticeAction? action = null);

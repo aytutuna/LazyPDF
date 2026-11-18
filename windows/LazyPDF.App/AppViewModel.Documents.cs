@@ -390,7 +390,7 @@ public sealed partial class AppViewModel
 
     private void OpenElsewhere(string path)
     {
-        if (!OpenWithPicker.Show(path))
+        if (!OpenWithPicker.Show(path, DialogOwner))
             ShowProblem(Problems.Open(new FileNotFoundException(), System.IO.Path.GetFileName(path)));
     }
 
@@ -574,16 +574,19 @@ public sealed partial class AppViewModel
         _warnedAboutDisk.Remove(tab);
         tab.Changed -= Tab_Changed;
         RememberView(tab);
-        if (tab.Path is { } path)
-        {
-            _closedFiles.Remove(path);
-            _closedFiles.Add(path);
-            if (_closedFiles.Count > 10) _closedFiles.RemoveAt(0);
-        }
+        if (tab.Path is { } path) RememberClosed(path);
         tab.Dispose();
         NotifyAll();
         if (_exiting) ContinueExit(raise: true);
         else if (CloseQuestion is null) ContinueClosing();
+    }
+
+    /// <summary>Adds a file to the ones Ctrl+Shift+T brings back, for tabs that were closed along with their window.</summary>
+    internal void RememberClosed(string path)
+    {
+        _closedFiles.Remove(path);
+        _closedFiles.Add(path);
+        if (_closedFiles.Count > 10) _closedFiles.RemoveAt(0);
     }
 
     /// <summary>Closes the tabs that have nothing unsaved at once and asks about the first one that has; each answer carries on with the rest.</summary>
@@ -656,6 +659,7 @@ public sealed partial class AppViewModel
         else if (_reloading.Contains(document) || _pending.Any(p => ReferenceEquals(p.Replacing, document)) || _parsing.Any(p => ReferenceEquals(p.Replacing, document)))
             reason = Loc.T("{0} is being reloaded. Try again in a moment.", document.Title);
         else if (ReferenceEquals(CloseQuestion, document) || _closeQueue.Contains(document)) reason = Loc.T("Answer the question about {0} first.", document.Title);
+        else if (Tools.Compare.ComparePanel.WindowOpenFor(document)) reason = Loc.T("Close the comparison first.");
         return reason is null;
     }
 
@@ -676,6 +680,8 @@ public sealed partial class AppViewModel
     /// </summary>
     internal int Release(DocumentTab tab)
     {
+        // First, so a window that cannot let go leaves this view model as it was.
+        Released?.Invoke(this, tab);
         int index = Strip.IndexOf(tab);
         // Everything but the strip is settled first, so a handler that throws on the removal leaves no half-moved state.
         tab.Changed -= Tab_Changed;
@@ -693,6 +699,9 @@ public sealed partial class AppViewModel
         NotifyAll();
         return index;
     }
+
+    /// <summary>A running batch or an open comparison window belongs to the window; closing it would end them.</summary>
+    internal bool HasOwnedWork => Tools.Batch.BatchWindow.IsRunning(this) || Documents.Any(Tools.Compare.ComparePanel.WindowOpenFor);
 
     /// <summary>Notes which tab is active and what the info bar says, for <see cref="DocumentRegistry.Transfer"/> to put back when a move fails.</summary>
     internal Action KeepView()

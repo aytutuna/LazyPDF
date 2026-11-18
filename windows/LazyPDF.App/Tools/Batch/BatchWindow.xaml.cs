@@ -7,7 +7,8 @@ namespace LazyPDF.App.Tools.Batch;
 /// <summary>Runs a batch from the Home tab, where no document is open for the panel to sit beside. It says what happened in the window itself.</summary>
 public partial class BatchWindow : Window, IToolHost
 {
-    private static BatchWindow? _open;
+    // One for each window, over that window's tabs.
+    private static readonly Dictionary<AppViewModel, BatchWindow> Opened = [];
 
     private readonly AppViewModel _vm;
     private CancellationTokenSource? _busy;
@@ -26,14 +27,18 @@ public partial class BatchWindow : Window, IToolHost
     /// <summary>Opens the window, or brings forward the one that is open.</summary>
     public static void Open(Window owner, AppViewModel vm)
     {
-        if (_open is { } open)
+        if (Opened.TryGetValue(vm, out var open))
         {
             open.Activate();
             return;
         }
-        _open = new BatchWindow(vm) { Owner = owner };
-        _open.Show();
+        var window = new BatchWindow(vm) { Owner = owner };
+        Opened[vm] = window;
+        window.Show();
     }
+
+    /// <summary>True while a batch started from this view model's window is running.</summary>
+    internal static bool IsRunning(AppViewModel vm) => Opened.TryGetValue(vm, out var open) && open._busy is not null;
 
     private void RefreshRun() => RunButton.IsEnabled = _busy is null && Panel.Action!.CanRun();
 
@@ -49,7 +54,7 @@ public partial class BatchWindow : Window, IToolHost
         _busy?.Cancel();
         Panel.StopWatching();
         Panel.ClearPassword();
-        _open = null;
+        Opened.Remove(_vm);
     }
 
     public async Task RunBusyAsync(string text, Func<CancellationToken, Task> work)
@@ -74,6 +79,8 @@ public partial class BatchWindow : Window, IToolHost
             RefreshRun();
         }
     }
+
+    public Window? DialogOwner => this;
 
     public void ShowProblem(Problem problem) => ShowMessage(problem.Title, problem.Text);
 

@@ -22,10 +22,10 @@ internal static class OpenWithPicker
     private static extern int SHOpenWithDialog(IntPtr owner, in OpenAsInfo info);
 
     /// <summary>False when the dialog could not be shown; a person closing it is not a failure.</summary>
-    public static bool Show(string path)
+    public static bool Show(string path, Window? ownerWindow)
     {
         var info = new OpenAsInfo { File = path, Class = null, Flags = Exec };
-        var owner = Application.Current?.MainWindow is { } window ? new WindowInteropHelper(window).Handle : IntPtr.Zero;
+        var owner = ownerWindow is null ? IntPtr.Zero : new WindowInteropHelper(ownerWindow).Handle;
         int result = SHOpenWithDialog(owner, in info);
         return result >= 0 || result == Cancelled;
     }

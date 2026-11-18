@@ -43,6 +43,9 @@ public partial class ComparePanel : ToolPanel
         ShowHow();
     }
 
+    /// <summary>True while the comparison kept for the tab is open in a window of its own.</summary>
+    internal static bool WindowOpenFor(DocumentTab tab) => Held.TryGetValue(tab, out var held) && held.Window is not null;
+
     public override ToolAction? Action => _action;
 
     protected override void OnAttach()

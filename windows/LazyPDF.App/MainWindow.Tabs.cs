@@ -73,6 +73,24 @@ public partial class MainWindow
         menu.IsOpen = true;
     }
 
+    [DllImport("user32.dll")]
+    private static extern bool IsWindowEnabled(IntPtr hwnd);
+
+    /// <summary>
+    /// False while a tab cannot arrive here: a dialog of this window is up (a file dialog disables only its owner and
+    /// sets nothing else; Combine would then add its files to whichever tab arrived), an action runs, an overlay shows
+    /// or words typed in a tool are not settled. Words are handed in as they are on any tab switch.
+    /// </summary>
+    internal bool CanTakeTab()
+    {
+        var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+        return (handle == IntPtr.Zero || IsWindowEnabled(handle)) && !Modal && !_actionRunning && HandedInOnSwitch();
+    }
+
+    /// <summary>Moves a tab to another window. False, with the reason shown here, when it stays.</summary>
+    internal bool MoveTab(DocumentTab tab, MainWindow target, int index) =>
+        HandInTyping(tab) && _vm.Registry.Transfer(tab, _vm, target._vm, index, target.CanTakeTab());
+
     private void TabList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
         if (TabAt(e.OriginalSource) is not DocumentTab tab)

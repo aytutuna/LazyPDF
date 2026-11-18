@@ -77,6 +77,14 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    internal DocumentRegistry Registry => _registry;
+
+    /// <summary>Raised as a tab is about to go to another window, so the window drops what it holds for it.</summary>
+    internal event EventHandler<DocumentTab>? Released;
+
+    /// <summary>Set by the window: the owner of the dialogs this view model starts.</summary>
+    public Window? DialogOwner { get; set; }
+
     /// <summary>Set by the window: brings it and the tab to the front when a file is opened that this view model already holds.</summary>
     internal Action<DocumentTab?>? BringForward { get; set; }
 

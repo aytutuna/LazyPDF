@@ -26,14 +26,21 @@ public partial class MainWindow : Window
     private bool _homeShown;
     private string _statusShown = "";
 
-    public MainWindow(DocumentRegistry registry, RecoveryStore recovery) : this(NewViewModel(out var thumbnails, registry, recovery), thumbnails)
+    private readonly Point? _opensAt;
+    private bool _ownedWorkAsked;
+
+    /// <summary>The first window does the start-up work: the crash offer, the files of the command line and of the last session. A secondary one starts empty, at <paramref name="at"/> or beside the window in use.</summary>
+    public MainWindow(DocumentRegistry registry, RecoveryStore recovery, bool primary = true, Point? at = null)
+        : this(NewViewModel(out var thumbnails, registry, recovery), thumbnails, primary, at)
     {
     }
 
-    public MainWindow(AppViewModel viewModel, Thumbnails? thumbnails)
+    public MainWindow(AppViewModel viewModel, Thumbnails? thumbnails, bool primary = true, Point? at = null)
     {
         InitializeComponent();
-        JumpLists.Install();
+        IsPrimary = primary;
+        _opensAt = at;
+        if (!primary) WindowStartupLocation = WindowStartupLocation.Manual;
         _vm = viewModel;
         Home.Thumbnails = thumbnails;
         Home.TileChosen += Home_TileChosen;
@@ -51,6 +58,8 @@ public partial class MainWindow : Window
         _vm.ToolOpened += (_, _) => FocusInspector();
         _vm.CloseRequested += (_, tab) => RequestClose(tab);
         _vm.SystemPrintRequested += ViewModel_SystemPrintRequested;
+        _vm.Released += ViewModel_Released;
+        _vm.DialogOwner = this;
         _vm.BringForward = _ => OpenFiles([]);
         WindowHub.Register(this);
         Closed += (_, _) =>
@@ -61,11 +70,25 @@ public partial class MainWindow : Window
         Loaded += Window_Loaded;
     }
 
+    public bool IsPrimary { get; }
+
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
         var work = SystemParameters.WorkArea;
         var saved = AppPreferencesStore.Load().Window;
+        var screen = new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop, SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight);
+        if (!IsPrimary)
+        {
+            // The saved place is the first window's; another one takes its size and goes where it was asked to or beside the window in use.
+            var size = saved is null ? new Size(Math.Min(1200, work.Width), Math.Min(800, work.Height)) : new Size(saved.Width, saved.Height);
+            var beside = WindowHub.Active is { } active
+                ? active.WindowState == WindowState.Maximized ? active.RestoreBounds : new Rect(active.Left, active.Top, active.Width, active.Height)
+                : (Rect?)null;
+            var placed = SecondaryBounds(size, _opensAt, beside, screen, work);
+            (Left, Top, Width, Height) = (placed.X, placed.Y, placed.Width, placed.Height);
+            return;
+        }
         Rect bounds = saved is null
             ? new Rect(0, 0, Math.Min(1200, work.Width), Math.Min(800, work.Height))
             : new Rect(saved.Left, saved.Top, saved.Width, saved.Height);
@@ -74,8 +97,7 @@ public partial class MainWindow : Window
             bounds.X = work.X + (work.Width - bounds.Width) / 2;
             bounds.Y = work.Y + (work.Height - bounds.Height) / 2;
         }
-        bounds = Fit(bounds, new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
-            SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight), work);
+        bounds = Fit(bounds, screen, work);
         Left = bounds.X;
         Top = bounds.Y;
         Width = bounds.Width;
@@ -99,6 +121,13 @@ public partial class MainWindow : Window
         ? Loc.T("{0} × {1} mm", Math.Round(widthPt * 25.4 / 72), Math.Round(heightPt * 25.4 / 72))
         : Loc.T("{0} × {1} in", Math.Round(widthPt / 72, 1), Math.Round(heightPt / 72, 1));
 
+    internal static Rect SecondaryBounds(Size size, Point? at, Rect? beside, Rect screen, Rect work)
+    {
+        const double Cascade = 32;
+        var origin = at ?? (beside is { } b ? new Point(b.X + Cascade, b.Y + Cascade) : new Point(work.X + (work.Width - size.Width) / 2, work.Y + (work.Height - size.Height) / 2));
+        return Fit(new Rect(origin, size), screen, work);
+    }
+
     internal static Rect Fit(Rect saved, Rect virtualScreen, Rect workArea)
     {
         double shown = Math.Min(saved.Right, virtualScreen.Right) - Math.Max(saved.Left, virtualScreen.Left);
@@ -116,6 +145,24 @@ public partial class MainWindow : Window
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => RefreshFromViewModel();
 
+    // Narrow, a panel can stay attached to a tab that is no longer shown; it must not hand text to a tab another window now owns.
+    private void ViewModel_Released(object? sender, DocumentTab tab)
+    {
+        if (ReferenceEquals(_inspectorTab, tab))
+        {
+            _inspectorPanel?.Detach();
+            _inspectorPanel = null;
+            _inspectorTab = null;
+        }
+        if (ReferenceEquals(_sideTab, tab))
+        {
+            _sidePanel?.Detach();
+            _sidePanel = null;
+            _sideTab = null;
+        }
+        if (ReferenceEquals(_shownTab, tab) && _viewer.FullScreen) _viewer.FullScreen = false;
+    }
+
     private void ViewModel_ExitRequested(object? sender, EventArgs e) => Close();
 
     private void ToolStrip_SizeChanged(object sender, SizeChangedEventArgs e) => UpdateToolStripMode(e.NewSize.Width);
@@ -130,6 +177,11 @@ public partial class MainWindow : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         WindowHub.Active = this;
+        if (!IsPrimary)
+        {
+            RefreshFromViewModel();
+            return;
+        }
         _vm.CheckRecovery();
         RefreshFromViewModel();
         OpenFiles(App.StartupFiles);
@@ -155,6 +207,9 @@ public partial class MainWindow : Window
 
     private void ForgetExitSession()
     {
+        // This window was closing for good and no longer is.
+        if (_exitTabs is not null) WindowHub.EndExit();
+        _ownedWorkAsked = false;
         _exitTabs = null;
         _exitActive = null;
     }
@@ -362,7 +417,12 @@ public partial class MainWindow : Window
         else _vm.CancelOpening();
     }
 
-    private void Window_Activated(object? sender, EventArgs e) => _ = _vm.CheckDiskAsync();
+    private void Window_Activated(object? sender, EventArgs e)
+    {
+        // Activated fires before Loaded, which sets it for a window that has just opened.
+        if (IsLoaded) WindowHub.Active = this;
+        _ = _vm.CheckDiskAsync();
+    }
 
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
@@ -374,6 +434,16 @@ public partial class MainWindow : Window
             ReleaseHeld(true);
             if (_held.Count > 0) _vm.ShowNotice(Loc.T("Still working"), Loc.T("Wait for the job to end, or cancel it, then close."));
             return;
+        }
+        if (!_ownedWorkAsked && _vm.HasOwnedWork && !WindowHub.Exiting)
+        {
+            string question = Loc.T(Tools.Batch.BatchWindow.IsRunning(_vm) ? "A batch is running. Close anyway?" : "A comparison window is open. Close anyway?");
+            if (MessageBox.Show(this, question, "Lazy PDF", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+            {
+                e.Cancel = true;
+                return;
+            }
+            _ownedWorkAsked = true;
         }
         // Handing in can show a notice, which forgets the session, so it comes first.
         if (!HandInTyping(_vm.ActiveDocument))
@@ -391,13 +461,23 @@ public partial class MainWindow : Window
             if (!_vm.IsExiting) ForgetExitSession();
             return;
         }
+        var session = tabs.Where(d => d.Path is not null).Select(d => d.Path!).ToList();
+        if (WindowHub.Windows.Count > 1 && !WindowHub.Exiting)
+        {
+            // One window of several closing on purpose: its files are not part of the next start, but Ctrl+Shift+T in the window that stays brings them back.
+            if (WindowHub.Survivor(this) is { } stays)
+                foreach (string path in session) stays._vm.RememberClosed(path);
+            return;
+        }
         // RestoreBounds is empty once the window has closed, so the place is taken here.
         var placement = PlacementOf(WindowState == WindowState.Maximized, new Rect(Left, Top, Width, Height), RestoreBounds);
-        var session = tabs.Where(d => d.Path is not null).Select(d => d.Path!).ToList();
         string? active = _exitActive?.Path;
+        // When the whole app ends, the session was written once for every window already.
+        bool keepSession = !WindowHub.Exiting;
         AppPreferencesStore.Update(p =>
         {
             p.Window = placement;
+            if (!keepSession) return;
             // Nothing is kept without consent.
             p.LastFiles = p.ReopenLast ? session : [];
             p.LastActive = p.ReopenLast ? active : null;

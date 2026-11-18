@@ -97,4 +97,28 @@ public sealed class WindowPlacementTests
     {
         Assert.Equal((180d, 180d), MainWindow.PaneLimits(100, 400, 400, true, true));
     }
+
+    [Fact]
+    public void ASecondWindowGoesWhereItWasDropped()
+    {
+        var placed = MainWindow.SecondaryBounds(new Size(1000, 700), new Point(300, 200), new Rect(0, 0, 1000, 700), new Rect(0, 0, 1366, 768), Primary);
+
+        Assert.Equal(new Rect(300, 200, 1000, 700), placed);
+    }
+
+    [Fact]
+    public void ASecondWindowOpenedFromAMenuStepsDownFromTheOneInUse()
+    {
+        var placed = MainWindow.SecondaryBounds(new Size(900, 600), null, new Rect(100, 50, 900, 600), new Rect(0, 0, 1366, 768), Primary);
+
+        Assert.Equal(new Rect(132, 82, 900, 600), placed);
+    }
+
+    [Fact]
+    public void ASecondWindowWithNothingToGoByIsCentred()
+    {
+        var placed = MainWindow.SecondaryBounds(new Size(900, 600), null, null, new Rect(0, 0, 1366, 768), Primary);
+
+        Assert.Equal(new Rect(233, 64, 900, 600), placed);
+    }
 }

@@ -41,9 +41,9 @@ internal sealed partial class SourceCertificateWindow : Window
         }
     }
 
-    public static X509Certificate2? Ask(string name, bool wrong)
+    public static X509Certificate2? Ask(string name, bool wrong, Window? owner)
     {
-        var window = new SourceCertificateWindow(name, wrong) { Owner = Application.Current?.MainWindow };
+        var window = new SourceCertificateWindow(name, wrong) { Owner = owner };
         return window.ShowDialog() == true && window.Choices.SelectedItem is Item item ? item.Choice.Certificate : null;
     }
 
