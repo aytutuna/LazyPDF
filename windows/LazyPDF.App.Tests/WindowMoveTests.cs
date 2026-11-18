@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
@@ -135,5 +136,77 @@ public sealed class WindowMoveTests
 
         Assert.DoesNotContain(rig.B, WindowHub.Windows);
         Assert.NotNull(rig.Both.Registry.Find(tab.Id));
+    });
+
+    private static readonly Rect Strip = new(100, 50, 800, 36);
+
+    [Theory]
+    [InlineData(DragDropEffects.None, false, 500, 400, MainWindow.DragOutcome.TearOut)]
+    [InlineData(DragDropEffects.None, false, 500, 120, MainWindow.DragOutcome.Nothing)]
+    [InlineData(DragDropEffects.None, false, 500, -20, MainWindow.DragOutcome.TearOut)]
+    [InlineData(DragDropEffects.None, false, 1400, 60, MainWindow.DragOutcome.TearOut)]
+    [InlineData(DragDropEffects.None, true, 500, 400, MainWindow.DragOutcome.Nothing)]
+    [InlineData(DragDropEffects.Move, false, 500, 400, MainWindow.DragOutcome.Nothing)]
+    public void ADragNobodyTookOpensAWindowOnlyWhenItEndsFarFromTheStrip(DragDropEffects result, bool escaped, double x, double y, MainWindow.DragOutcome expected) =>
+        Assert.Equal(expected, MainWindow.OutcomeOf(result, escaped, false, new(x, y), Strip, 60));
+
+    [Fact]
+    public void ADropOnAnotherWindowsStripIsCarriedOutEvenFarFromThisOne() =>
+        Assert.Equal(MainWindow.DragOutcome.MoveToWindow, MainWindow.OutcomeOf(DragDropEffects.Move, false, true, new(500, 400), Strip, 60));
+
+    [Fact]
+    public Task TheDraggedIdFindsTheTabInAnyWindowAndAForeignIdFindsNothing() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("a.pdf"));
+        var tab = rig.Both.A.Vm.ActiveDocument!;
+
+        Assert.Same(tab, rig.B.DraggedTab(new DataObject(MainWindow.TabIdFormat, tab.Id.ToString())));
+        Assert.Null(rig.B.DraggedTab(new DataObject(MainWindow.TabIdFormat, Guid.NewGuid().ToString())));
+        Assert.Null(rig.B.DraggedTab(new DataObject(MainWindow.TabIdFormat, "not an id")));
+    });
+
+    [Fact]
+    public Task ADropOnAnotherStripIsOnlyNotedAndTheTabStaysUntilTheSourceMovesIt() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("a.pdf"));
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("b.pdf"));
+        await rig.Both.B.Vm.OpenAsync(rig.Both.B.Pdf("c.pdf"));
+        var tab = rig.Both.A.Vm.ActiveDocument!;
+
+        // Over the first document tab, then over empty space.
+        Assert.Equal(DragDropEffects.Move, rig.B.DropTab(tab, rig.Both.B.Vm.Strip[1]));
+        Assert.Equal((rig.B, 1), WindowHub.Dropped);
+        Assert.Equal(DragDropEffects.Move, rig.B.DropTab(tab, null));
+        Assert.Equal((rig.B, 3), WindowHub.Dropped);
+        Assert.Contains(tab, rig.Both.A.Vm.Documents);
+
+        Assert.True(rig.A.MoveTab(tab, WindowHub.Dropped!.Value.Window, WindowHub.Dropped.Value.Index));
+        Assert.Equal(tab, rig.Both.B.Vm.Documents.Last());
+    });
+
+    [Fact]
+    public Task ADropOfAnIdNobodyOwnsIsRefusedAndNoted() => Sta.Run(() =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+
+        Assert.Equal(DragDropEffects.None, rig.B.DropTab(null, null));
+        Assert.Null(WindowHub.Dropped);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ADropOnTheSameStripReordersAtOnce() => Sta.Run(async () =>
+    {
+        using var rig = new WindowCloseTests.Rig();
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("a.pdf"));
+        await rig.Both.A.Vm.OpenAsync(rig.Both.A.Pdf("b.pdf"));
+        var first = rig.Both.A.Vm.Documents.First();
+
+        rig.A.DropTab(first, null);
+
+        Assert.Equal(first, rig.Both.A.Vm.Documents.Last());
+        Assert.Null(WindowHub.Dropped);
     });
 }

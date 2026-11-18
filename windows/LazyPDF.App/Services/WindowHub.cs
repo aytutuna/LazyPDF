@@ -24,6 +24,12 @@ internal static class WindowHub
     // WPF closes every window after SessionEnding whatever a window answers, so that exit is never called off.
     private static bool _sessionEnding;
 
+    /// <summary>
+    /// Where a tab dragged from another window was dropped: set by the target inside the source's drag loop, taken by the
+    /// source when the loop ends, which is the first place it may ask questions.
+    /// </summary>
+    internal static (MainWindow Window, int Index)? Dropped { get; set; }
+
     public static void Register(MainWindow window) => _windows.Add(window);
 
     public static void Unregister(MainWindow window)
@@ -104,5 +110,6 @@ internal static class WindowHub
         _closedActive = null;
         _pass++;
         Active = null;
+        Dropped = null;
     }
 }

@@ -15,7 +15,11 @@ namespace LazyPDF.App;
 
 public partial class MainWindow
 {
-    private const string TabFormat = "LazyPDF.Tab";
+    // The data of a dragged tab is its id: a stale or foreign drop resolves to nothing instead of an object from elsewhere.
+    internal const string TabIdFormat = "LazyPDF.TabId";
+
+    // Farther than this from the strip, in device-independent pixels, a drag that nobody took opens a window.
+    private const double TearOutDistance = 60;
 
     private Point _dragStart;
     private DocumentTab? _dragTab;
@@ -248,22 +252,116 @@ public partial class MainWindow
         if (Math.Abs(now.X - _dragStart.X) < SystemParameters.MinimumHorizontalDragDistance
             && Math.Abs(now.Y - _dragStart.Y) < SystemParameters.MinimumVerticalDragDistance) return;
         _dragTab = null;
-        DragDrop.DoDragDrop(TabList, new DataObject(TabFormat, tab), DragDropEffects.Move);
+        StartTabDrag(tab);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out POINT point);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT
+    {
+        public int X, Y;
+    }
+
+    /// <summary>What a finished drag leaves to do.</summary>
+    public enum DragOutcome { Nothing, MoveToWindow, TearOut }
+
+    /// <summary>
+    /// A drop on a strip of this window reordered it already, and a drop on another window's strip was only noted, to
+    /// be carried out here once the drag loop is over. A drag nobody took opens a window when it ends far from the
+    /// strip, wherever that is: a maximized window covers its whole screen, so 'outside every window' would never hold.
+    /// </summary>
+    internal static DragOutcome OutcomeOf(DragDropEffects result, bool escaped, bool droppedElsewhere, Point cursor, Rect strip, double distance)
+    {
+        if (droppedElsewhere) return DragOutcome.MoveToWindow;
+        if (result != DragDropEffects.None || escaped) return DragOutcome.Nothing;
+        bool away = cursor.X < strip.Left - distance || cursor.X > strip.Right + distance
+            || cursor.Y < strip.Top - distance || cursor.Y > strip.Bottom + distance;
+        return away ? DragOutcome.TearOut : DragOutcome.Nothing;
+    }
+
+    // The drag starts as a plain reorder. What leaves the window is decided, and checked, after the drag loop ends.
+    private void StartTabDrag(DocumentTab tab)
+    {
+        bool escaped = false;
+        POINT last = default;
+        void Watch(object sender, QueryContinueDragEventArgs e)
+        {
+            escaped |= e.EscapePressed;
+            GetCursorPos(out last);
+        }
+        WindowHub.Dropped = null;
+        TabList.QueryContinueDrag += Watch;
+        DragDropEffects result;
+        try
+        {
+            result = DragDrop.DoDragDrop(TabList, new DataObject(TabIdFormat, tab.Id.ToString()), DragDropEffects.Move);
+        }
+        finally
+        {
+            TabList.QueryContinueDrag -= Watch;
+        }
+        var dropped = WindowHub.Dropped;
+        WindowHub.Dropped = null;
+        if (!_vm.Strip.Contains(tab)) return;
+        var cursor = new Point(last.X, last.Y);
+        var origin = TabList.PointToScreen(new Point(0, 0));
+        var scale = VisualTreeHelper.GetDpi(this);
+        var strip = new Rect(origin.X, origin.Y, TabList.ActualWidth * scale.DpiScaleX, TabList.ActualHeight * scale.DpiScaleY);
+        switch (OutcomeOf(result, escaped, dropped is { } && !ReferenceEquals(dropped.Value.Window, this), cursor, strip, TearOutDistance * scale.DpiScaleX))
+        {
+            case DragOutcome.MoveToWindow:
+                MoveTab(tab, dropped!.Value.Window, dropped.Value.Index);
+                break;
+            case DragOutcome.TearOut:
+                // The new window's corner goes where the tab was let go, so the tab is under the cursor.
+                TearOut(tab, new Point(cursor.X / scale.DpiScaleX - 80, cursor.Y / scale.DpiScaleY - 20));
+                break;
+        }
     }
 
     private void TabList_DragOver(object sender, DragEventArgs e)
     {
-        if (!e.Data.GetDataPresent(TabFormat)) return;
-        e.Effects = DragDropEffects.Move;
+        if (!e.Data.GetDataPresent(TabIdFormat)) return;
+        e.Effects = DraggedTab(e.Data) is null ? DragDropEffects.None : DragDropEffects.Move;
         e.Handled = true;
     }
 
     private void TabList_Drop(object sender, DragEventArgs e)
     {
-        if (e.Data.GetData(TabFormat) is not DocumentTab tab) return;
-        var target = TabAt(e.OriginalSource);
-        _vm.MoveTab(tab, target is null ? _vm.Strip.Count - 1 : _vm.Strip.IndexOf(target));
+        if (!e.Data.GetDataPresent(TabIdFormat)) return;
+        e.Effects = DropTab(DraggedTab(e.Data), TabAt(e.OriginalSource));
         e.Handled = true;
+    }
+
+    private void TabOverflow_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(TabIdFormat)) return;
+        e.Effects = DropTab(DraggedTab(e.Data), null);
+        e.Handled = true;
+    }
+
+    // The tab with the dragged id, in whichever window holds it now; null for an id nobody owns.
+    internal DocumentTab? DraggedTab(IDataObject data) =>
+        data.GetData(TabIdFormat) is string text && Guid.TryParse(text, out var id) ? _vm.Registry.Find(id)?.Documents.FirstOrDefault(d => d.Id == id) : null;
+
+    /// <summary>
+    /// A drop on this window's strip, on <paramref name="onTab"/> or on empty space. Inside the source's drag loop
+    /// nothing is checked or asked: a tab of this window is reordered, one from another is only noted for its own
+    /// window to move once the loop is over.
+    /// </summary>
+    internal DragDropEffects DropTab(DocumentTab? tab, ITab? onTab)
+    {
+        if (tab is null) return DragDropEffects.None;
+        if (_vm.Strip.Contains(tab))
+        {
+            _vm.MoveTab(tab, onTab is null ? _vm.Strip.Count - 1 : _vm.Strip.IndexOf(onTab));
+            return DragDropEffects.Move;
+        }
+        // Over empty space, or the overflow button, the tab goes last.
+        WindowHub.Dropped = (this, onTab is null ? _vm.Strip.Count : _vm.Strip.IndexOf(onTab));
+        return DragDropEffects.Move;
     }
 
     private ITab? TabAt(object source) =>
