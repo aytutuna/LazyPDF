@@ -6,12 +6,19 @@ import LazyPDFApp
 // never fires.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    // Once for the app, before any window: a window made later must not remove the copies another one has open in other
+    // programs, or the work folder of an export that is running.
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        AttachmentsModel.deleteOpenedCopies(in: DefaultAppFolders().openedAttachments)
+        Exporter.deleteLeftovers()
+    }
+
     func application(_ application: NSApplication, open urls: [URL]) {
         MacShell.shared.handle(urls)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        AttachmentsModel.deleteOpenedCopies(in: MacShell.shared.folders.openedAttachments)
+        AttachmentsModel.deleteOpenedCopies(in: DefaultAppFolders().openedAttachments)
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
