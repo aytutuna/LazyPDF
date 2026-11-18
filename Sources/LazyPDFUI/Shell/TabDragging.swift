@@ -188,7 +188,9 @@ private struct TabDragSource: NSViewRepresentable {
             let dragItem = NSDraggingItem(pasteboardWriter: item)
             dragItem.setDraggingFrame(frame, contents: picture(of: frame))
             dragged = tab
-            beginDraggingSession(with: [dragItem], event: event, source: self)
+            let session = beginDraggingSession(with: [dragItem], event: event, source: self)
+            // The session ends when the drag does, not after the tab has slid back, so the end sees the mouse as it was.
+            session.animatesToStartingPositionsOnCancelOrFail = false
             return true
         }
 
@@ -212,9 +214,9 @@ private struct TabDragSource: NSViewRepresentable {
             guard let tab = dragged, let window else { return }
             dragged = nil
             let strip = window.convertToScreen(convert(bounds, to: nil))
-            // AppKit handles Escape inside the drag, so the current event may not be the key press; ask for the key as well.
-            let escape = CGKeyCode(0x35)
-            let escaped = NSApp.currentEvent?.type == .keyDown || CGEventSource.keyState(.combinedSessionState, key: escape)
+            // A drop ends with the button up; Escape ends the drag while it is still down. The key itself is not asked for,
+            // which would need Input Monitoring in the sandbox.
+            let escaped = NSEvent.pressedMouseButtons & 1 != 0 || NSApp.currentEvent?.type == .keyDown
             dragging?.ended(tab, TabDragEnd(screen: screenPoint, strip: strip, taken: !operation.isEmpty, escaped: escaped))
         }
     }
