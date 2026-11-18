@@ -24,6 +24,7 @@ public partial class MainWindow
     private Point _dragStart;
     private DocumentTab? _dragTab;
     private TabStripPanel? _tabPanel;
+    private TabDropMarker? _dropMarker;
 
     private void TabList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -110,9 +111,11 @@ public partial class MainWindow
     internal bool MoveTab(DocumentTab tab, MainWindow target, int index)
     {
         if (!CanLeave(tab) || !_vm.Registry.Transfer(tab, _vm, target._vm, index, target.CanTakeTab())) return false;
-        _vm.Registry.Find(tab.Id)?.SetStatus(Loc.T("Moved {0} to another window.", tab.Title));
+        target._vm.SetStatus(Loc.T("Moved {0} to another window.", tab.Title));
         target.Activate();
+        target.Dispatcher.BeginInvoke(target.FocusActiveTab, System.Windows.Threading.DispatcherPriority.Loaded);
         CloseWhenEmpty();
+        if (IsLoaded) Dispatcher.BeginInvoke(FocusActiveTab, System.Windows.Threading.DispatcherPriority.Loaded);
         return true;
     }
 
@@ -324,12 +327,47 @@ public partial class MainWindow
     private void TabList_DragOver(object sender, DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(TabIdFormat)) return;
-        e.Effects = DraggedTab(e.Data) is null ? DragDropEffects.None : DragDropEffects.Move;
+        var tab = DraggedTab(e.Data);
+        e.Effects = tab is null ? DragDropEffects.None : DragDropEffects.Move;
         e.Handled = true;
+        // A tab of this window only changes places, which the strip shows as it happens; one from another window needs to be shown where it lands.
+        if (tab is null || _vm.Strip.Contains(tab)) HideDropMarker();
+        else ShowDropMarker(ReferenceEquals(sender, TabOverflow) ? null : TabAt(e.OriginalSource));
+    }
+
+    private void TabList_DragLeave(object sender, DragEventArgs e) => HideDropMarker();
+
+    private void ShowDropMarker(ITab? before)
+    {
+        int index = before is null ? _vm.Strip.Count : _vm.Strip.IndexOf(before);
+        double x = 0;
+        if (index >= _vm.Strip.Count)
+        {
+            if (TabList.ItemContainerGenerator.ContainerFromIndex(_vm.Strip.Count - 1) is FrameworkElement last)
+                x = last.TransformToAncestor(TabList).Transform(new Point(last.ActualWidth, 0)).X;
+        }
+        else if (TabList.ItemContainerGenerator.ContainerFromIndex(index) is FrameworkElement at)
+        {
+            x = at.TransformToAncestor(TabList).Transform(new Point(0, 0)).X;
+        }
+        if (_dropMarker is null)
+        {
+            if (System.Windows.Documents.AdornerLayer.GetAdornerLayer(TabList) is not { } layer) return;
+            layer.Add(_dropMarker = new TabDropMarker(TabList));
+        }
+        _dropMarker.MoveTo(x);
+    }
+
+    private void HideDropMarker()
+    {
+        if (_dropMarker is null) return;
+        System.Windows.Documents.AdornerLayer.GetAdornerLayer(TabList)?.Remove(_dropMarker);
+        _dropMarker = null;
     }
 
     private void TabList_Drop(object sender, DragEventArgs e)
     {
+        HideDropMarker();
         if (!e.Data.GetDataPresent(TabIdFormat)) return;
         e.Effects = DropTab(DraggedTab(e.Data), TabAt(e.OriginalSource));
         e.Handled = true;
@@ -337,6 +375,7 @@ public partial class MainWindow
 
     private void TabOverflow_Drop(object sender, DragEventArgs e)
     {
+        HideDropMarker();
         if (!e.Data.GetDataPresent(TabIdFormat)) return;
         e.Effects = DropTab(DraggedTab(e.Data), null);
         e.Handled = true;
