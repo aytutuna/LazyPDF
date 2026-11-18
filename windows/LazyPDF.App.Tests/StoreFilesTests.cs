@@ -4,7 +4,9 @@ using Xunit;
 
 namespace LazyPDF.App.Tests;
 
-// The settings files: lenient decoding, a file that does not decode moved aside.
+// The settings files: lenient decoding, a file that does not decode moved aside. In the Application collection because
+// WindowCloseTests points DefaultDirectory at a temporary folder while it runs.
+[Collection("Application")]
 public sealed class StoreFilesTests
 {
     private static byte[] Bytes(string text) => Encoding.UTF8.GetBytes(text);
