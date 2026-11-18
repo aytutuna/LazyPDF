@@ -74,8 +74,8 @@ final class TagEditorTests: XCTestCase {
         return TagEdits.apply(tab, TagPath.of(tree, try titled(tree, title)), TagEdits.label(command)) { t, k in try TagEdits.run(t, k!, command) }
     }
 
-    private func wholePage(_ tab: DocumentTab) -> TextRange {
-        TextRange(0, TextPage.create(tab.document, tab.document.pages[0]).chars.count)
+    private func wholePage(_ tab: DocumentTab) -> LazyPDFKit.TextRange {
+        LazyPDFKit.TextRange(0, TextPage.create(tab.document, tab.document.pages[0]).chars.count)
     }
 
     // MARK: Edits on a document
