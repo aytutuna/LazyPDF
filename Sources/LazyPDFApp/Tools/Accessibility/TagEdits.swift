@@ -209,6 +209,10 @@ enum TagEdits {
         if kid === target { return L10n.t("That cannot be done to this tag.") }
         let place = dropAt(tree, kid, target, zone)
         if let reason = placeRefusal(tree, kid, place.parent) { return reason }
+        if kid is StructObject, let from = kid.parent, from !== place.parent, tree.standardType(from.type) == "Link",
+           from.kids.filter({ $0 is StructObject }).count == 1 {
+            return reason(TagRules.linkObject)
+        }
         if apply { try tree.move(kid, place.parent, place.index) }
         return nil
     }

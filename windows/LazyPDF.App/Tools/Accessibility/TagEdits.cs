@@ -225,6 +225,9 @@ internal static class TagEdits
         if (ReferenceEquals(kid, target)) return Loc.T("That cannot be done to this tag.");
         var (parent, index) = DropAt(tree, kid, target, zone);
         if (PlaceRefusal(tree, kid, parent) is { } reason) return reason;
+        if (kid is StructObject && kid.Parent is { } from && !ReferenceEquals(from, parent) && tree.StandardType(from.Type) == "Link"
+            && from.Kids.Count(k => k is StructObject) == 1)
+            return Reason(TagRules.LinkObject);
         if (apply) tree.Move(kid, parent, index);
         return null;
     }

@@ -274,6 +274,23 @@ final class TagEditorTests: XCTestCase {
         XCTAssertNotNil(try TagEdits.drop(tree, sect, try titled(tree, "one"), .into, apply: false))
     }
 
+    func test_aDropThatTakesTheOnlyObjectOutOfALinkIsRefused() async throws {
+        let tab = try tab(try built { tree, root in
+            let link = try el(tree, root, "Link", "link")
+            try tree.add(link, StructObject(0, PdfReference(8, 0)))
+            let spare = try el(tree, root, "Link", "spare")
+            try tree.add(spare, StructObject(0, PdfReference(9, 0)))
+            try tree.add(spare, StructObject(0, PdfReference(10, 0)))
+            try el(tree, root, "P", "para")
+        })
+        let tree = try read(tab)
+        let para = try titled(tree, "para")
+
+        XCTAssertEqual(try TagEdits.drop(tree, try titled(tree, "link").kids[0], para, .into, apply: false), AccessibilityText.placementReason(TagRules.linkObject))
+        XCTAssertNil(try TagEdits.drop(tree, try titled(tree, "spare").kids[0], para, .into, apply: true))
+        XCTAssertEqual(try titled(tree, "spare").kids.count, 1)
+    }
+
     func test_aDropFromTheTreeOnScreenIsTriedAgainstTheOpenDocumentsTree() async throws {
         let tab = try tab(try three())
         let shown = try read(tab)

@@ -296,6 +296,26 @@ public sealed class TagEditsTests
     }
 
     [Fact]
+    public void ADropThatTakesTheOnlyObjectOutOfALinkIsRefused()
+    {
+        using var tab = Open(Built((tree, root) =>
+        {
+            var link = El(tree, root, "Link", "link");
+            tree.Add(link, new StructObject(0, new PdfReference(8, 0)));
+            var spare = El(tree, root, "Link", "spare");
+            tree.Add(spare, new StructObject(0, new PdfReference(9, 0)));
+            tree.Add(spare, new StructObject(0, new PdfReference(10, 0)));
+            El(tree, root, "P", "para");
+        }));
+        var tree = StructureTree.Read(tab.Document)!;
+        var para = Titled(tree, "para");
+
+        Assert.Equal(AccessibilityText.PlacementReason(TagRules.LinkObject), TagEdits.Drop(tree, Titled(tree, "link").Kids[0], para, DropZone.Into, apply: false));
+        Assert.Null(TagEdits.Drop(tree, Titled(tree, "spare").Kids[0], para, DropZone.Into, apply: true));
+        Assert.Single(Titled(tree, "spare").Kids);
+    }
+
+    [Fact]
     public void ADropFromTheTreeOnScreenIsTriedAgainstTheOpenDocumentsTree()
     {
         using var tab = Open(Three());
