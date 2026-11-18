@@ -22,6 +22,7 @@ final class MacShell {
     private(set) var commands = ShellCommands()
     private(set) weak var window: NSWindow?
     private var closeGuard: CloseGuard?
+    private var sheetEnd: NSObjectProtocol?
     /// The red button asked this window to close and a question about its tabs is up.
     var closing = false
     var filesFromOutside = false
@@ -88,6 +89,11 @@ final class MacShell {
         self.window = window
         hadWindow = true
         hub.windowList.bump()
+        if let old = sheetEnd { NotificationCenter.default.removeObserver(old) }
+        // A SwiftUI sheet ends its state before the window lets go of it, so the check waits for the window to say so.
+        sheetEnd = NotificationCenter.default.addObserver(forName: NSWindow.didEndSheetNotification, object: window, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.becameIdle() }
+        }
         if let point = placeAt {
             placeAt = nil
             window.setFrameTopLeftPoint(NSPoint(x: point.x - 80, y: point.y + 20))
@@ -110,6 +116,8 @@ final class MacShell {
     func teardown() {
         viewer.show(nil)
         closeGuard = nil
+        if let sheetEnd { NotificationCenter.default.removeObserver(sheetEnd) }
+        sheetEnd = nil
     }
 
     // Another window is showing, so the red button closes this one once its own tabs have been answered for.
@@ -165,10 +173,11 @@ final class MacShell {
     private func present<Content: View>(_ content: (@escaping () -> Void) -> Content) {
         guard let window, window.attachedSheet == nil else { return }
         let sheet = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: true)
-        let close = { [weak window, weak sheet] in
+        let close = { [weak self, weak window, weak sheet] in
             guard let window, let sheet else { return }
             window.endSheet(sheet)
             sheet.orderOut(nil)
+            self?.becameIdle()
         }
         sheet.contentViewController = NSHostingController(rootView: content(close))
         window.beginSheet(sheet)

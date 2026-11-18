@@ -162,7 +162,11 @@ private struct TabDragSource: NSViewRepresentable {
 
         // Every event goes on to the tab below, except the drag that starts the session.
         private func watch(_ event: NSEvent) -> NSEvent? {
-            guard event.window === window else { return event }
+            // The monitor sees the event before the window does, which would drag under a sheet or a modal window.
+            guard let window, event.window === window, window.attachedSheet == nil, NSApp.modalWindow == nil else {
+                pressed = nil
+                return event
+            }
             let point = convert(event.locationInWindow, from: nil)
             switch event.type {
             case .leftMouseDown:

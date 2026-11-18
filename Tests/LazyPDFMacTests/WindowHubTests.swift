@@ -293,5 +293,25 @@ final class WindowHubTests: XCTestCase {
         hub.windowGone(second)
         XCTAssertEqual(changes, 2)
     }
+
+    func test_anEmptiedWindowThatWaitedForASheetClosesWhenTheWindowEndsIt() async throws {
+        let hub = WindowHub()
+        let primary = try XCTUnwrap(hub.claim(nil))
+        await primary.vm.open([try file("a.pdf"), try file("b.pdf")])
+        let id = hub.roster.park(primary.vm.documents[1], from: primary.vm, at: 1)
+        let second = try XCTUnwrap(hub.claim(id))
+        let window = NSWindow()
+        second.attach(window)
+        second.vm.sheetOpen = true
+        second.vm.close(try XCTUnwrap(second.vm.activeDocument))
+        hub.closeEmpty(second)
+        XCTAssertTrue(second.closeWhenIdle)
+
+        second.vm.sheetOpen = false
+        NotificationCenter.default.post(name: NSWindow.didEndSheetNotification, object: window)
+        for _ in 0..<50 where second.closeWhenIdle { try await Task.sleep(nanoseconds: 20_000_000) }
+
+        XCTAssertFalse(second.closeWhenIdle)
+    }
 }
 #endif
