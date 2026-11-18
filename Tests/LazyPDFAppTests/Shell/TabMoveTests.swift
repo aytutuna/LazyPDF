@@ -108,6 +108,19 @@ final class TabMoveTests: XCTestCase {
         XCTAssertEqual(w.a.releaseRefusal(HomeTab.shared), "The Home tab stays where it is.")
     }
 
+    func test_mayReleaseSaysWhyBeforeAWindowIsMade() async throws {
+        let w = Windows(self)
+        let tab = try await w.dirty()
+
+        XCTAssertTrue(w.a.mayRelease(tab))
+        XCTAssertNil(w.a.message)
+        w.a.actionRunning = true
+
+        XCTAssertFalse(w.a.mayRelease(tab))
+        XCTAssertEqual(w.a.message?.title, "Tab not moved")
+        XCTAssertTrue(w.a.documents.first === tab)
+    }
+
     func test_aBusySourceRefusesAndSaysWhy() async throws {
         let w = Windows(self)
         let tab = try await w.dirty()

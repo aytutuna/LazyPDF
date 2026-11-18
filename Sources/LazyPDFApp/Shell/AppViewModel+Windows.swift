@@ -25,6 +25,19 @@ extension AppViewModel {
         releaseRefusal(tab) == nil
     }
 
+    /// True while a file is being opened here, so an emptied window is not closed under it.
+    public var isOpening: Bool { !opening.isEmpty }
+
+    /// The checks that belong to the window a tab leaves, run before a window is made for it. False, with the reason shown
+    /// here, when it stays.
+    public func mayRelease(_ tab: DocumentTab) -> Bool {
+        if let reason = releaseRefusal(tab) {
+            showNotice(L10n.t("Tab not moved"), reason)
+            return false
+        }
+        return handInForRelease(tab)
+    }
+
     /// Why a tab cannot arrive in this window now, or nil. `windowFree` is the shell's own answer: false while one of its
     /// sheets is up. Typed text in the open tool is asked in `DocumentRegistry.transfer`, since asking hands it in.
     func adoptRefusal(windowFree: Bool = true) -> String? {
