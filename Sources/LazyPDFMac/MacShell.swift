@@ -47,8 +47,8 @@ final class MacShell {
         let panels = ToolPanels(host: vm, folders: folders, state: hub.toolState)
         self.panels = panels
         vm.released = { [weak panels] in panels?.release($0) }
-        vm.handInTyping = { panels.handIn() }
-        vm.handInOnSwitch = { panels.handInOnSwitch() }
+        vm.handInTyping = { [weak panels] in panels?.handIn() ?? true }
+        vm.handInOnSwitch = { [weak panels] in panels?.handInOnSwitch() ?? true }
         let made = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { NSWorkspace.shared.open($0) },
                                settings: folders.settings)
         made.markRequested = { [weak vm] in vm?.markSelection($0) }
@@ -81,9 +81,19 @@ final class MacShell {
         hadWindow = true
         update(WindowState(vm.activeDocument))
         restoreSession()
-        closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { !self.vm.documents.isEmpty },
-                                       quit: { NSApp.terminate(nil) }, others: { self.hub.hasOtherVisibleWindow(self) || (!self.isPrimary && self.vm.documents.isEmpty) },
-                                       closeHere: { self.closeFromButton() })
+        closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { [weak self] in self?.vm.documents.isEmpty == false },
+                                       quit: { NSApp.terminate(nil) }, others: { [weak self] in self?.otherWindowShows() ?? false },
+                                       closeHere: { [weak self] in self?.closeFromButton() ?? true })
+    }
+
+    private func otherWindowShows() -> Bool {
+        hub.hasOtherVisibleWindow(self) || (!isPrimary && vm.documents.isEmpty)
+    }
+
+    /// Lets go of what the window held once it is gone, so the shell is freed with it.
+    func teardown() {
+        viewer.show(nil)
+        closeGuard = nil
     }
 
     // Another window is showing, so the red button closes this one once its own tabs have been answered for.

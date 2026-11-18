@@ -71,6 +71,7 @@ final class WindowHub {
         shells[shell.id] = nil
         order.removeAll { $0 == shell.id }
         registry.remove(shell.vm)
+        shell.teardown()
     }
 
     /// Asks the scene for a window for a shell whose own has gone.
