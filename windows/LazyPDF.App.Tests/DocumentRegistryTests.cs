@@ -141,4 +141,36 @@ public sealed class DocumentRegistryTests
         Assert.Same(p.B.Vm, p.Registry.Find(p.B.Vm.ActiveDocument!.Id));
         Assert.Null(p.Registry.Find(Guid.NewGuid()));
     }
+
+    [Fact]
+    public async Task SavingAsOntoAFileOpenInAnotherWindowIsRefused()
+    {
+        using var p = new TwoWindows();
+        string path = p.A.Pdf();
+        await p.A.Vm.OpenAsync(path);
+        await p.B.Vm.OpenAsync(p.B.Pdf("b.pdf"));
+        var mine = p.B.Vm.ActiveDocument!;
+
+        Assert.False(p.B.Vm.SaveAs(mine, path));
+        Assert.False(p.B.Vm.SaveCopy(mine, path));
+
+        Assert.Equal("File is open", p.B.Vm.Message!.Title);
+        Assert.Single(p.A.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task RestoringAFileOpenInAnotherWindowBringsItBackAsACopyThatNeedsAName()
+    {
+        using var p = new TwoWindows();
+        string path = p.A.Pdf("report.pdf");
+        await p.A.Vm.OpenAsync(path);
+        p.Recovery.Write(Guid.NewGuid(), Pdfs.Text(2), new RecoveryMeta { Title = "report.pdf", OriginalPath = path, Saved = DateTimeOffset.Now });
+        p.Recovery.Flush();
+        p.B.Vm.CheckRecovery();
+
+        await p.B.Vm.RestoreAsync();
+
+        Assert.Equal(path, Assert.Single(p.A.Vm.Documents).Path);
+        Assert.True(AppViewModel.NeedsName(p.B.Vm.ActiveDocument!));
+    }
 }

@@ -235,8 +235,6 @@ public sealed partial class AppViewModel
         BringForward?.Invoke(tab);
     }
 
-    private DocumentTab? TabOf(string path) => Documents.FirstOrDefault(d => SamePath(d.Path, path));
-
     private static bool SamePath(string? a, string? b) => a is not null && b is not null && string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 
     public async Task SubmitPasswordAsync(string password)
@@ -465,8 +463,8 @@ public sealed partial class AppViewModel
     // Two tabs on one file would each save over the other.
     private bool OpenElsewhere(DocumentTab tab, string path)
     {
-        if (TabOf(path) is not { } other || ReferenceEquals(other, tab)) return false;
-        ShowProblem(new Problem(Loc.T("File is open"), Loc.T("{0} is open in another tab. Close that tab first, or pick another name.", other.Title)));
+        if (_registry.FindOpen(path, null) is not { } hit || ReferenceEquals(hit.Tab, tab)) return false;
+        ShowProblem(new Problem(Loc.T("File is open"), Loc.T("{0} is open in another tab. Close that tab first, or pick another name.", hit.Tab?.Title ?? System.IO.Path.GetFileName(path))));
         return true;
     }
 

@@ -168,7 +168,7 @@ public sealed partial class AppViewModel
                 continue;
             }
             // A file that is open already comes back as a copy that needs a name, not as a second tab on the file.
-            string? path = entry.Meta.OriginalPath is { } original && TabOf(original) is null ? original : null;
+            string? path = entry.Meta.OriginalPath is { } original && _registry.FindOpen(original, null) is null ? original : null;
             DiskStamp? stamp = entry.Meta.OriginalWrite == default ? null : new DiskStamp(entry.Meta.OriginalWrite, entry.Meta.OriginalLength);
             bool readOnly = false;
             try
