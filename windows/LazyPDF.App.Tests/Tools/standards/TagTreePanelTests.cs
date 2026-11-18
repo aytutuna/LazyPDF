@@ -228,6 +228,20 @@ public sealed class TagTreePanelTests
     });
 
     [Fact]
+    public Task TypingInTheFilterKeepsWhatIsTypedInTheEditor() => Sta.Run(async () =>
+    {
+        var s = await Show(Three());
+        Find(s.Panel.TagTree, "one")!.IsSelected = true;
+        s.Panel.TagAlt.Text = "typed, not applied";
+
+        s.Panel.TagFilterBox.Text = "one";
+
+        Assert.Equal("one", ((StructElement)((TreeViewItem)s.Panel.TagTree.SelectedItem).Tag).Title);
+        Assert.Equal("typed, not applied", s.Panel.TagAlt.Text);
+        Assert.True(s.Panel.TagApply.IsEnabled);
+    });
+
+    [Fact]
     public Task ARestrictedFileShowsWhyItIsReadOnlyAndTheCommandsDoNothing() => Sta.Run(async () =>
     {
         var s = await Show(TagEditsTests.Restricted());

@@ -30,6 +30,7 @@ public partial class AccessibilityPanel
     private TagFilter? _filter;
     private TagView? _view;
     private bool _restoring;
+    private string? _keepFields;
     private int _boxTicket;
     private readonly List<(Canvas Overlay, Rectangle Mark)> _marks = [];
 
@@ -69,7 +70,7 @@ public partial class AccessibilityPanel
             : _tree!.IsTruncated ? Loc.T("The tree is too large to show whole. Pick a tag to go to its page.")
             : Loc.T("{0} tags. Pick one to go to its page.", _treeCount);
         foreach (var root in _tree.Roots.Where(r => _filter is null || _filter.Shown.Contains(r)).Take(ChildrenShown)) TagTree.Items.Add(Node(root));
-        ShowTagEditor(null);
+        if (_keepFields is null) ShowTagEditor(null);
         if (_view is not { } view) return;
         _view = null;
         _restoring = true;
@@ -169,13 +170,19 @@ public partial class AccessibilityPanel
     {
         if (_tree is null || Tab is null) return;
         _view = CaptureTags();
+        // Typing in the filter builds the tree again, but what is typed in the editor and not applied yet stays.
+        _keepFields = SelectedKid is StructElement picked ? TagPath.KeyOf(picked) : null;
         RenderTags();
+        if (_keepFields is not null && SelectedKid is null) ShowTagEditor(null);
+        _keepFields = null;
     }
 
     private void TagTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
     {
         var kid = (e.NewValue as TreeViewItem)?.Tag as StructKid;
-        ShowTagEditor(kid);
+        if (kid is null && _keepFields is not null) return;
+        if (kid is not null && TagPath.KeyOf(kid) == _keepFields) UpdateTagButtons(kid);
+        else ShowTagEditor(kid);
         if (kid is not null && !_restoring && PageOfKid(kid) is >= 0 and var page) Viewer?.GoToPage(page);
         _ = ShowMarksAsync(kid);
     }
