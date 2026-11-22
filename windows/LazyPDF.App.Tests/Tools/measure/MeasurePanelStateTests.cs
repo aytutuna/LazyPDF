@@ -100,6 +100,24 @@ public sealed class MeasurePanelStateTests
     });
 
     [Fact]
+    public Task ALineOnAPageDeletedWhileAnotherToolWasOpenIsDroppedAfterACompact() => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(6));
+        var (panel, viewer, host) = Attach(tab);
+        WaitingOf(panel).Add(On(tab, 0));
+        panel.Detach();
+
+        PageOperations.Delete(tab.Document, [0]);
+        Assert.True(tab.Commit("Delete"));
+        Compact(tab);
+        panel.Attach(tab, (LazyPDF.App.Viewer.IDocumentViewer)(object)viewer, host);
+
+        Assert.Empty(WaitingOf(panel));
+        Assert.Single(host.Notices);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task LinesKeptForASignedFileSurviveACompact() => Sta.Run(() =>
     {
         using var tab = Open(StampsPanelTests.Signed(certified: false));
