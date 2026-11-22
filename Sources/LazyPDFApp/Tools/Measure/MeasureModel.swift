@@ -30,6 +30,8 @@ public final class MeasureModel: ToolPanelModel {
     public private(set) var pageUnit = LengthUnit.millimetre
     public private(set) var realUnit = LengthUnit.millimetre
     public private(set) var scaleProblem = false
+    /// The page the scale fields show; set in `show` and nowhere else.
+    public private(set) var shownPage = 0
     public private(set) var snapOn = true
     public private(set) var straight = false
     public private(set) var rows: [MeasureRow] = []
@@ -46,16 +48,15 @@ public final class MeasureModel: ToolPanelModel {
     @ObservationIgnored var host: ToolHost?
     @ObservationIgnored var tool: MeasureTool?
     @ObservationIgnored private var overlay: MeasureOverlay?
-    @ObservationIgnored private var scale = MeasureScale.actual
-    @ObservationIgnored private var waiting = PendingList()
+    @ObservationIgnored private var state = MeasureState(PageScales(.actual), 0)
     @ObservationIgnored private var watch: ObservationWatch?
+    @ObservationIgnored private var pageWatch: ObservationWatch?
     @ObservationIgnored private var toolWatch: ObservationWatch?
     @ObservationIgnored private var viewWatch: ObservationWatch?
     @ObservationIgnored private let fonts: FontSource
 
     // Kept per tab, so that measuring in one file and looking at another loses nothing.
-    @ObservationIgnored private let lists: TabTable<PendingList>
-    @ObservationIgnored private let scales: TabTable<MeasureScale>
+    @ObservationIgnored private let states: TabTable<MeasureState>
 
     /// Set for a phone or tablet, where the hints speak of taps and the buttons, not of double clicks and Shift.
     @ObservationIgnored private let touch: Bool
@@ -63,8 +64,7 @@ public final class MeasureModel: ToolPanelModel {
     public init(fonts: FontSource, touch: Bool = false, state: TabToolState = TabToolState()) {
         self.fonts = fonts
         self.touch = touch
-        lists = state.measureLists
-        scales = state.measureScales
+        states = state.measure
     }
 
     public var summary: String { ToolCatalog.find("measure")?.summary ?? "" }
@@ -77,17 +77,16 @@ public final class MeasureModel: ToolPanelModel {
         self.tab = tab
         self.viewer = viewer
         self.host = host
-        lists.prune()
-        if let known = lists[tab] {
-            waiting = known
+        states.prune()
+        if let known = states[tab] {
+            state = known
         } else {
-            waiting = PendingList()
-            lists[tab] = waiting
+            state = MeasureState(PageScales(MeasureScale.find(tab.document) ?? .actual), tab.rewrites)
+            states[tab] = state
         }
-        scales.prune()
-        let shown = scales[tab] ?? MeasureScale.find(tab.document) ?? .actual
-        scales[tab] = shown
-        show(shown)
+        sync()
+        scales.forgetFound()
+        show(viewer.pageIndex)
         if kind == nil { kind = .distance }
         let tool = MeasureTool(viewer: viewer)
         tool.kind = kind ?? .distance
@@ -98,10 +97,10 @@ public final class MeasureModel: ToolPanelModel {
         self.tool = tool
         overlay = MeasureOverlay(viewer: viewer, tool: tool)
         viewer.pointerTool = tool
-        watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in
-            self?.tool?.forget()
-            self?.dropStale()
-            self?.rebuild()
+        watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.documentChanged() })
+        pageWatch = ObservationWatch(track: { _ = viewer.pageIndex }, changed: { [weak self] in
+            guard let self, let tab = self.tab, let viewer = self.viewer, viewer.tab === tab, viewer.pageIndex != self.shownPage else { return }
+            self.show(viewer.pageIndex)
         })
         // The viewer's own Hand and Select buttons took the pointer: none of the kinds is armed until one is picked again.
         toolWatch = ObservationWatch(track: { _ = viewer.pointerTool }, changed: { [weak self] in
@@ -129,6 +128,8 @@ public final class MeasureModel: ToolPanelModel {
         toolWatch = nil
         viewWatch?.stop()
         viewWatch = nil
+        pageWatch?.stop()
+        pageWatch = nil
         if let viewer, let tool, viewer.pointerTool.map({ ObjectIdentifier($0) }) == ObjectIdentifier(tool) { viewer.pointerTool = nil }
         tool?.changed = nil
         tool?.finished = nil
@@ -141,7 +142,48 @@ public final class MeasureModel: ToolPanelModel {
         host = nil
     }
 
+    var scales: PageScales { state.scales }
+    var waiting: PendingList { state.waiting }
+
     private var items: [MeasureItem] { waiting.items.map(\.item) }
+
+    private func scaleOf(_ page: Int) -> MeasureScale {
+        guard let tab else { return .actual }
+        return scales.scale(tab.document, page)
+    }
+
+    // A save that numbered the objects again, made with another tool open, moved the pages under new numbers.
+    private func sync() {
+        guard let tab else { return }
+        while state.seenRewrites < tab.rewrites {
+            let map = tab.rewriteMaps[state.seenRewrites]
+            state.seenRewrites += 1
+            scales.remap(map)
+            waiting.items = Pending.remap(waiting.items, map)
+        }
+    }
+
+    private func documentChanged() {
+        guard let tab else { return }
+        sync()
+        scales.forgetFound()
+        scales.prune(tab.document)
+        tool?.forget()
+        dropStale()
+        rebuild()
+        show(shownPage)
+    }
+
+    // The viewer can be a step ahead of the model, on another tab or a page that is gone.
+    private var shownPageIsLive: Bool {
+        guard let tab, let viewer else { return false }
+        return viewer.tab === tab && shownPage >= 0 && shownPage < tab.document.pages.count
+    }
+
+    /// The heading over the scale fields.
+    public var scaleHeading: String {
+        L10n.t("Scale for page {0}", viewer?.pageLabel(shownPage) ?? String(shownPage + 1))
+    }
 
     /// Picks Distance, Perimeter or Area, and arms the pointer for it.
     public func pick(_ next: MeasureKind) {
@@ -184,23 +226,52 @@ public final class MeasureModel: ToolPanelModel {
     }
 
     private func scaleChanged() {
-        let page = Self.parse(pageValue), real = Self.parse(realValue)
-        let made = MeasureScale(page ?? 0, pageUnit, real ?? 0, realUnit)
-        let good = page != nil && real != nil && made.isValid
-        scaleProblem = !good
-        if !good { return }
-        scale = made
-        if let tab { scales[tab] = made }
+        let made = fieldScale()
+        scaleProblem = made == nil
+        guard let tab, let made, shownPageIsLive else { return }
+        scales.set(PageScales.key(tab.document, shownPage), made)
         rebuild()
     }
 
-    private func show(_ shown: MeasureScale) {
+    private func fieldScale() -> MeasureScale? {
+        guard let page = Self.parse(pageValue), let real = Self.parse(realValue) else { return nil }
+        let made = MeasureScale(page, pageUnit, real, realUnit)
+        return made.isValid ? made : nil
+    }
+
+    /// Whether the scale in the fields can be applied to every page.
+    public var canUseForAll: Bool { !scaleProblem && shownPageIsLive }
+
+    /// Makes the scale in the fields the scale of every page, after asking when that replaces a scale another page has.
+    public func useForAll() {
+        guard let tab, shownPageIsLive, fieldScale() != nil else { return }
+        let others = scales.otherScaleCount(except: PageScales.key(tab.document, shownPage), tab.document)
+        if others == 0 {
+            applyToAll()
+            return
+        }
+        host?.showNotice(L10n.t("Replace the scales on the other pages?"),
+                         L10n.plural(others, one: "The scale on {0} other page will be replaced.", other: "The scales on {0} other pages will be replaced."),
+                         NoticeAction(L10n.t("Use for all pages")) { [weak self] in
+                             if let self, self.tab === tab { self.applyToAll() }
+                         })
+    }
+
+    private func applyToAll() {
+        guard shownPageIsLive, let made = fieldScale() else { return }
+        scales.setAll(made)
+        show(shownPage)
+        rebuild()
+    }
+
+    private func show(_ page: Int) {
+        let shown = scaleOf(page)
+        shownPage = page
         pageValue = Self.format(shown.page)
         realValue = Self.format(shown.real)
         pageUnit = shown.pageUnit
         realUnit = shown.realUnit
         scaleProblem = false
-        scale = shown
     }
 
     private static func format(_ value: Double) -> String {
@@ -208,8 +279,10 @@ public final class MeasureModel: ToolPanelModel {
         format.numberStyle = .decimal
         format.locale = MeasureScale.locale
         format.usesGroupingSeparator = false
-        format.maximumFractionDigits = 4
-        return format.string(from: NSNumber(value: value)) ?? String(value)
+        format.maximumFractionDigits = 20
+        // A calibrated scale is a long fraction; the field shows six digits, since a screen reader says them all.
+        let shown = Double(String(format: "%.6g", value)) ?? value
+        return format.string(from: NSNumber(value: shown)) ?? String(value)
     }
 
     private static func parse(_ text: String) -> Double? {
@@ -260,14 +333,14 @@ public final class MeasureModel: ToolPanelModel {
     }
 
     private func redraw() {
-        overlay?.draw(items) { [scale] _ in scale }
+        overlay?.draw(items) { [weak self] in self?.scaleOf($0) ?? .actual }
     }
 
     // Reads the list again after it or the scale changed.
     private func rebuild() {
         rows = waiting.items.map { pending in
             let item = pending.item
-            return MeasureRow(id: pending.id, item: item, value: item.value(scale),
+            return MeasureRow(id: pending.id, item: item, value: item.value(scaleOf(item.page)),
                               place: L10n.t("Page {0}", viewer?.pageLabel(item.page) ?? String(item.page + 1)),
                               removeName: L10n.t("Remove {0}", item.title))
         }
@@ -301,7 +374,7 @@ public final class MeasureModel: ToolPanelModel {
     private func write(_ tab: DocumentTab, _ host: ToolHost) -> Bool {
         let count: Int
         do {
-            count = try MeasureWriter.write(tab.document, items, { [scale] _ in scale }, author: author, date: PanelDates.now(), fonts: fonts)
+            count = try MeasureWriter.write(tab.document, items, { [scales, document = tab.document] in scales.scale(document, $0.page) }, author: author, date: PanelDates.now(), fonts: fonts)
         } catch let error as PdfPermissionException {
             try? tab.session.discard()
             ChangeGate.guarded(host, L10n.t("Measure")) { throw error }
@@ -343,11 +416,23 @@ public final class MeasureModel: ToolPanelModel {
         }
         var points = tool.points
         if let hover = tool.hover, tool.hoverPage == tool.page { points.append(hover) }
-        readout = points.count < 2 ? "—" : MeasureItem(tool.kind, tool.page, points).value(scale)
+        readout = points.count < 2 ? "—" : MeasureItem(tool.kind, tool.page, points).value(scaleOf(tool.page))
     }
 }
 
 /// The measurements of one tab that wait to be written.
 final class PendingList {
     var items: [Pending] = []
+}
+
+/// What the model keeps for one tab: its scales, its waiting measurements and how many rewrites of the file it has seen.
+final class MeasureState {
+    let scales: PageScales
+    let waiting = PendingList()
+    var seenRewrites: Int
+
+    init(_ scales: PageScales, _ seenRewrites: Int) {
+        self.scales = scales
+        self.seenRewrites = seenRewrites
+    }
 }

@@ -1478,6 +1478,7 @@
 "Replace pages" = "Sayfaları değiştir";
 "Replace text" = "Metni değiştir";
 "Replace the picture" = "Resmi değiştir";
+"Replace the scales on the other pages?" = "Diğer sayfalardaki ölçekler değiştirilsin mi?";
 "Replace their text" = "Metinlerini değiştir";
 "Replace with" = "Yeni metin";
 "Replace with a file" = "Dosyayla değiştir";
@@ -1557,6 +1558,7 @@
 "Saved {0} file in {1}.|other" = "{0} dosya {1} klasörüne kaydedildi.";
 "Saved {0}." = "{0} kaydedildi.";
 "Saved." = "Kaydedildi.";
+"Scale for page {0}" = "Sayfa {0} için ölçek";
 "Scale the content" = "İçeriği ölçekle";
 "Scan paper into a PDF with Lazy Scan." = "Kâğıdı Lazy Scan ile PDF olarak tarayın.";
 "Scan the paper" = "Kağıdı tara";
@@ -2043,6 +2045,8 @@
 "The result opens as a new file. This file is not changed." = "Sonuç yeni bir dosya olarak açılır. Bu dosya değişmez.";
 "The role map leads {0} in a circle or through too many steps." = "Rol eşlemesi {0} türünü bir döngüye ya da çok fazla adıma götürüyor.";
 "The same form is painted twice." = "Aynı form iki kez çizilmiş.";
+"The scale on {0} other page will be replaced.|one" = "Diğer {0} sayfadaki ölçek değiştirilecek.";
+"The scale on {0} other page will be replaced.|other" = "Diğer {0} sayfadaki ölçek değiştirilecek.";
 "The second line must be a comment of four bytes above 127." = "İkinci satır, 127'nin üzerinde dört bayttan oluşan bir yorum olmalı.";
 "The security settings allow screen readers." = "Güvenlik ayarları ekran okuyuculara izin veriyor.";
 "The security settings do not allow assistive technology to extract text." = "Güvenlik ayarları yardımcı teknolojilerin metni almasına izin vermiyor.";
@@ -2274,6 +2278,7 @@
 "Use" = "Kullan";
 "Use a different password here." = "Burada farklı bir parola kullanın.";
 "Use a web address that starts with http:// or https://." = "http:// veya https:// ile başlayan bir web adresi yazın.";
+"Use for all pages" = "Tüm sayfalarda kullan";
 "Use other text, or install a font that has these letters." = "Başka bir metin kullanın ya da bu harfleri içeren bir yazı tipi yükleyin.";
 "Use {0}, {1} and {2}. A name that is taken gets a number." = "{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.";
 "Valid from {0} to {1}" = "Geçerlilik: {0} - {1}";
