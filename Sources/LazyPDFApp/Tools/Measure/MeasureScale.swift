@@ -70,7 +70,12 @@ public struct MeasureScale: Equatable {
     }
 
     public var ratio: String {
-        "\(Self.invariant(page, 4)) \(pageUnit.symbol) = \(Self.invariant(real, 4)) \(realUnit.symbol)"
+        "\(Self.written(page)) \(pageUnit.symbol) = \(Self.written(real)) \(realUnit.symbol)"
+    }
+
+    /// Eight significant digits: a file reads the scale back within a hundred millionth, however small one unit is.
+    static func written(_ value: Double) -> String {
+        invariant(Double(String(format: "%.8g", value)) ?? value, 20)
     }
 
     /// The scale a `ratio` text writes; nil for any other text.

@@ -30,6 +30,13 @@ final class MeasureMathTests: XCTestCase {
         }
     }
 
+    func test_aRatioKeepsEightDigitsSoASmallUnitReadsBackAsItWas() async {
+        let scale = MeasureScale(1, .millimetre, 0.02834646, .kilometre)
+        XCTAssertEqual(scale.ratio, "1 mm = 0.02834646 km")
+        XCTAssertEqual(MeasureScale.tryParse(scale.ratio), scale)
+        XCTAssertEqual(MeasureScale(1, .millimetre, 0.00015, .metre).ratio, "1 mm = 0.00015 m")
+    }
+
     func test_textThatIsNoRatioReadsAsNothing() async {
         for text in ["x", "1 mm", "0 mm = 1 m", "1 mm = 2 parsec", "1mm = 2 m", "1 mm = 2 m = 3 m"] {
             XCTAssertNil(MeasureScale.tryParse(text), text)
