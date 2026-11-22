@@ -252,4 +252,43 @@ public sealed class MeasurePanelStateTests
         Assert.Equal(MeasureScale.Actual, ScalesOf(panel).For(other.Document, 1));
         return Task.CompletedTask;
     });
+
+    private static void Call(MeasurePanel panel, string name, params object[] args) =>
+        typeof(MeasurePanel).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, args);
+
+    [Fact]
+    public Task SetScaleStoresTheCalibratedScaleForThatPageOnly() => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(2));
+        var (panel, _, _) = Attach(tab);
+        Call(panel, "Tool_Calibrated", 1, 72d);
+        panel.CalibrateValue.Text = "1";
+
+        Call(panel, "SetScale_Click", panel, new RoutedEventArgs());
+
+        var scales = ScalesOf(panel);
+        Assert.Equal(MeasureScale.From(72, 1, LengthUnit.Millimetre, LengthUnit.Millimetre), scales.For(tab.Document, 1));
+        Assert.Equal(MeasureScale.Actual, scales.For(tab.Document, 0));
+        Assert.Equal(Visibility.Collapsed, panel.CalibrateRow.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task SetScaleRefusesALengthThatIsNotAboveZeroOrWouldWriteAsZero() => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(1));
+        var (panel, _, _) = Attach(tab);
+        Call(panel, "Tool_Calibrated", 0, 72d);
+
+        foreach (string text in new[] { "0", "abc", "0.00001" })
+        {
+            panel.CalibrateValue.Text = text;
+            Call(panel, "SetScale_Click", panel, new RoutedEventArgs());
+
+            Assert.Equal(Visibility.Visible, panel.CalibrateProblem.Visibility);
+            Assert.Equal(Visibility.Visible, panel.CalibrateRow.Visibility);
+            Assert.Equal(MeasureScale.Actual, ScalesOf(panel).For(tab.Document, 0));
+        }
+        return Task.CompletedTask;
+    });
 }
