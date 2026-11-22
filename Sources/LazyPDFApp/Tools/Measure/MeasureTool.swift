@@ -32,7 +32,13 @@ final class MeasureTool: PagePointerTool {
     private(set) var hoverPage = -1
     private(set) var snapped = false
 
+    /// A distance of two points reports its length through `calibrated` instead of becoming an item.
+    var calibrate = false
+
     var finished: ((MeasureItem) -> Void)?
+
+    /// The page and the length in points of the two ends clicked in calibrate mode.
+    var calibrated: ((Int, Double) -> Void)?
     var changed: (() -> Void)?
 
     init(viewer: DocumentViewer) {
@@ -137,7 +143,11 @@ final class MeasureTool: PagePointerTool {
         page = -1
         added = false
         changed?()
-        finished?(item)
+        if calibrate {
+            calibrated?(item.page, MeasureShape.distance(item.points[0], item.points[1]))
+        } else {
+            finished?(item)
+        }
     }
 
     /// Starts reading the words of the pages in view, so that the first click on one can snap too.

@@ -313,4 +313,20 @@ final class MeasureToolTests: XCTestCase {
 
         XCTAssertEqual(told, 4)
     }
+
+    func test_inCalibrateModeTwoClicksReportTheLengthAndAddNoItem() async throws {
+        let (tool, done, _) = try await start(.distance)
+        var told: [(Int, Double)] = []
+        tool.calibrate = true
+        tool.calibrated = { told.append(($0, $1)) }
+
+        tool.press(at(0, 0))
+        tool.press(at(30, 40))
+
+        XCTAssertTrue(done.items.isEmpty)
+        XCTAssertEqual(told.count, 1)
+        XCTAssertEqual(told[0].0, 0)
+        XCTAssertEqual(told[0].1, 50, accuracy: 0.0001)
+        XCTAssertTrue(tool.points.isEmpty)
+    }
 }
