@@ -128,6 +128,56 @@ final class CertificateSigningTests: XCTestCase {
         XCTAssertEqual(request(blank).level, .b)
     }
 
+    private func resources(_ session: PdfEditSession) throws -> PdfDictionary {
+        let widget = try XCTUnwrap(PdfAnnotations.readAll(session.document).first { $0.type == .widget })
+        let form = try XCTUnwrap(session.document.stream(session.document.dict(widget.dictionary, "AP"), "N"))
+        return try XCTUnwrap(session.document.dict(form.dictionary, "Resources"))
+    }
+
+    func test_theLookIsPassedToTheRequest() throws {
+        let ada = try CertificateKit.ada()
+        var look = SignatureLook()
+        look.text = ""
+        var choices = CertificateKit.plain(ada)
+
+        XCTAssertNil(request(choices).look)
+        choices.look = look
+        XCTAssertEqual(request(choices).look?.text, "")
+    }
+
+    func test_aPictureLookPutsAnImageInTheAppearanceBesideTheText() throws {
+        let ada = try CertificateKit.ada()
+        let session = try PdfEditSession.open(Pdfs.text())
+        var look = SignatureLook()
+        look.image = PdfRgbaImage(2, 1, [0, 0, 0, 255, 0, 0, 0, 255])
+        var choices = CertificateKit.plain(ada)
+        choices.rect = PdfRect(72, 600, 272, 660)
+        choices.look = look
+
+        try PdfSigner.sign(session, request(choices))
+
+        let found = try resources(session)
+        XCTAssertTrue(found.containsKey("XObject"))
+        XCTAssertTrue(found.containsKey("Font"))
+    }
+
+    func test_aPictureOnlyLookWritesNoSignerText() throws {
+        let ada = try CertificateKit.ada()
+        let session = try PdfEditSession.open(Pdfs.text())
+        var look = SignatureLook()
+        look.image = PdfRgbaImage(2, 1, [0, 0, 0, 255, 0, 0, 0, 255])
+        look.text = ""
+        var choices = CertificateKit.plain(ada)
+        choices.rect = PdfRect(72, 600, 272, 660)
+        choices.look = look
+
+        try PdfSigner.sign(session, request(choices))
+
+        let found = try resources(session)
+        XCTAssertTrue(found.containsKey("XObject"))
+        XCTAssertFalse(found.containsKey("Font"))
+    }
+
     func test_aTimeStampServerThatAnswersNothingIsSaidSo() throws {
         let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
