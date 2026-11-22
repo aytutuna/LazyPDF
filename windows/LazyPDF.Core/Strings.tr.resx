@@ -6346,6 +6346,9 @@
   <data name="Tap each corner, then tap Finish. Turn on Straight lines to keep them straight." xml:space="preserve">
     <value>Her köşeye dokunun, sonra Bitir'e dokunun. Düz tutmak için Düz çizgiler'i açın.</value>
   </data>
+  <data name="Tap the two ends of something whose real length you know." xml:space="preserve">
+    <value>Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna dokunun.</value>
+  </data>
   <data name="Tap the two ends. Turn on Straight lines to keep them straight." xml:space="preserve">
     <value>İki ucuna dokunun. Düz tutmak için Düz çizgiler'i açın.</value>
   </data>

@@ -30,6 +30,13 @@ public final class MeasureModel: ToolPanelModel {
     public private(set) var pageUnit = LengthUnit.millimetre
     public private(set) var realUnit = LengthUnit.millimetre
     public private(set) var scaleProblem = false
+    /// Set from Calibrate until a scale is set or the flow is cancelled.
+    public private(set) var calibrating = false
+    /// What the drawn line reads at the page's scale; nil until a line is drawn.
+    public private(set) var calibrateDrawn: String?
+    public private(set) var calibrateValue = ""
+    public private(set) var calibrateUnit = LengthUnit.millimetre
+    public private(set) var calibrateProblem = false
     /// The page the scale fields show; set in `show` and nowhere else.
     public private(set) var shownPage = 0
     public private(set) var snapOn = true
@@ -48,6 +55,8 @@ public final class MeasureModel: ToolPanelModel {
     @ObservationIgnored var host: ToolHost?
     @ObservationIgnored var tool: MeasureTool?
     @ObservationIgnored private var overlay: MeasureOverlay?
+    @ObservationIgnored private var calibratedPage = 0
+    @ObservationIgnored private var calibratedLength = 0.0
     @ObservationIgnored private var state = MeasureState(PageScales(.actual), 0)
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var pageWatch: ObservationWatch?
@@ -94,6 +103,7 @@ public final class MeasureModel: ToolPanelModel {
         tool.straight = straight
         tool.changed = { [weak self] in self?.toolChanged() }
         tool.finished = { [weak self] item in self?.finished(item) }
+        tool.calibrated = { [weak self] page, length in self?.calibrated(page, length) }
         self.tool = tool
         overlay = MeasureOverlay(viewer: viewer, tool: tool)
         viewer.pointerTool = tool
@@ -106,6 +116,7 @@ public final class MeasureModel: ToolPanelModel {
         toolWatch = ObservationWatch(track: { _ = viewer.pointerTool }, changed: { [weak self] in
             guard let self, let tool = self.tool, let viewer = self.viewer, self.kind != nil else { return }
             if viewer.pointerTool.map({ ObjectIdentifier($0) }) != ObjectIdentifier(tool) {
+                self.cancelCalibrate()
                 tool.reset()
                 self.kind = nil
                 self.showReadout()
@@ -122,6 +133,7 @@ public final class MeasureModel: ToolPanelModel {
     }
 
     public func detach() {
+        cancelCalibrate()
         watch?.stop()
         watch = nil
         toolWatch?.stop()
@@ -133,6 +145,7 @@ public final class MeasureModel: ToolPanelModel {
         if let viewer, let tool, viewer.pointerTool.map({ ObjectIdentifier($0) }) == ObjectIdentifier(tool) { viewer.pointerTool = nil }
         tool?.changed = nil
         tool?.finished = nil
+        tool?.calibrated = nil
         overlay?.clear()
         tool = nil
         overlay = nil
@@ -165,6 +178,7 @@ public final class MeasureModel: ToolPanelModel {
 
     private func documentChanged() {
         guard let tab else { return }
+        cancelCalibrate()
         sync()
         scales.forgetFound()
         scales.prune(tab.document)
@@ -175,9 +189,11 @@ public final class MeasureModel: ToolPanelModel {
     }
 
     // The viewer can be a step ahead of the model, on another tab or a page that is gone.
-    private var shownPageIsLive: Bool {
+    private var shownPageIsLive: Bool { isLive(shownPage) }
+
+    private func isLive(_ page: Int) -> Bool {
         guard let tab, let viewer else { return false }
-        return viewer.tab === tab && shownPage >= 0 && shownPage < tab.document.pages.count
+        return viewer.tab === tab && page >= 0 && page < tab.document.pages.count
     }
 
     /// The heading over the scale fields.
@@ -188,11 +204,72 @@ public final class MeasureModel: ToolPanelModel {
     /// Picks Distance, Perimeter or Area, and arms the pointer for it.
     public func pick(_ next: MeasureKind) {
         guard let tool, let viewer else { return }
+        cancelCalibrate()
         kind = next
         tool.reset()
         tool.kind = next
         if viewer.pointerTool.map({ ObjectIdentifier($0) }) != ObjectIdentifier(tool) { viewer.pointerTool = tool }
         showReadout()
+    }
+
+    /// Arms the pointer for one line of a known length; its ends set the scale of the page they are on.
+    public func startCalibrate() {
+        guard let tool, let viewer else { return }
+        cancelCalibrate()
+        kind = .distance
+        tool.reset()
+        tool.kind = .distance
+        tool.calibrate = true
+        calibrating = true
+        if viewer.pointerTool.map({ ObjectIdentifier($0) }) != ObjectIdentifier(tool) { viewer.pointerTool = tool }
+        showReadout()
+    }
+
+    public func setCalibrateValue(_ text: String) {
+        calibrateValue = text
+        calibrateProblem = false
+    }
+
+    public func setCalibrateUnit(_ unit: LengthUnit) {
+        calibrateUnit = unit
+        calibrateProblem = false
+    }
+
+    /// Makes the line's length the typed one, and so sets the scale of the page the line is on.
+    public func applyCalibration() {
+        guard calibrating, calibrateDrawn != nil, let tab, isLive(calibratedPage) else { return }
+        guard let length = Self.parse(calibrateValue), length > 0 else {
+            calibrateProblem = true
+            return
+        }
+        let made = MeasureScale.from(points: calibratedLength, length: length, pageUnit: pageUnit, realUnit: calibrateUnit)
+        // A scale the file's ratio text cannot hold would read back as no scale.
+        guard MeasureScale.tryParse(made.ratio) != nil else {
+            calibrateProblem = true
+            return
+        }
+        scales.set(PageScales.key(tab.document, calibratedPage), made)
+        cancelCalibrate()
+        show(shownPage)
+        rebuild()
+    }
+
+    public func cancelCalibrate() {
+        guard calibrating else { return }
+        calibrating = false
+        calibrateDrawn = nil
+        calibrateProblem = false
+        tool?.calibrate = false
+        tool?.reset()
+        showReadout()
+    }
+
+    private func calibrated(_ page: Int, _ length: Double) {
+        calibratedPage = page
+        calibratedLength = length
+        calibrateDrawn = L10n.t("Line drawn: {0}", scaleOf(page).length(length))
+        calibrateUnit = realUnit
+        calibrateProblem = false
     }
 
     public func setSnap(_ on: Bool) {
@@ -403,6 +480,8 @@ public final class MeasureModel: ToolPanelModel {
         canFinish = tool?.canFinish == true
         canStartOver = tool?.points.isEmpty == false
         switch kind {
+        case _ where calibrating: hint = touch ? L10n.t("Tap the two ends of something whose real length you know.")
+            : L10n.t("Click the two ends of something whose real length you know.")
         case nil: hint = L10n.t("Pick Distance, Perimeter or Area to measure again.")
         case .distance?: hint = touch ? L10n.t("Tap the two ends. Turn on Straight lines to keep them straight.")
             : L10n.t("Click the two ends. Hold Shift for straight lines.")

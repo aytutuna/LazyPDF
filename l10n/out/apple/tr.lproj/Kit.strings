@@ -379,6 +379,7 @@
 "Click text or a picture to change it. Drag to select several." = "Değiştirmek için bir metne veya resme tıklayın. Birkaçını seçmek için sürükleyin.";
 "Click the page where the text starts." = "Metnin başlayacağı yere sayfada tıklayın.";
 "Click the page, or drag a box, to place it." = "Yerleştirmek için sayfaya tıklayın ya da bir kutu sürükleyin.";
+"Click the two ends of something whose real length you know." = "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın.";
 "Click the two ends. Hold Shift for straight lines." = "İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun.";
 "Click to sign" = "İmzalamak için tıklayın";
 "Click where it should go." = "Yerleşeceği yere tıklayın.";
@@ -910,6 +911,7 @@
 "Like 3u, and the file must be tagged for screen readers. Untagged files need a language set first." = "3u gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı.";
 "Limit what people can do" = "Kişilerin yapabileceklerini sınırla";
 "Line" = "Çizgi";
+"Line drawn: {0}" = "Çizilen çizgi: {0}";
 "Line spacing" = "Satır aralığı";
 "Line spacing in points" = "Punto olarak satır aralığı";
 "Line width" = "Çizgi kalınlığı";
@@ -1779,6 +1781,7 @@
 "Tap a picture, or pick text from the list. The list can select several." = "Bir resme dokunun ya da metni listeden seçin. Listeden birkaçı seçilebilir.";
 "Tap each corner, then tap Finish shape." = "Her köşeye dokunun, sonra Şekli bitir'e dokunun.";
 "Tap each corner, then tap Finish. Turn on Straight lines to keep them straight." = "Her köşeye dokunun, sonra Bitir'e dokunun. Düz tutmak için Düz çizgiler'i açın.";
+"Tap the two ends of something whose real length you know." = "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna dokunun.";
 "Tap the two ends. Turn on Straight lines to keep them straight." = "İki ucuna dokunun. Düz tutmak için Düz çizgiler'i açın.";
 "Text" = "Metin";
 "Text after the number" = "Numaradan sonraki metin";

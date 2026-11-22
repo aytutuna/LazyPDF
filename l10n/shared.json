@@ -5147,6 +5147,9 @@
   "Click the two ends of something whose real length you know.": {
     "tr": "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın."
   },
+  "Tap the two ends of something whose real length you know.": {
+    "tr": "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna dokunun."
+  },
   "Snap to text and lines": {
     "tr": "Metne ve çizgilere yapış"
   },
