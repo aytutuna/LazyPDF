@@ -163,6 +163,31 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(seen, [1])
     }
 
+    func test_aCompactSaveWhoseReplaceFailsStillRecordsTheRenumbering() async throws {
+        struct Refused: Error {}
+        final class FailingAfterWrite: FileWriter {
+            func write(to url: URL, _ write: (URL) throws -> Void) throws {
+                try write(url)
+                throw Refused()
+            }
+        }
+        let dir = TempDir(self)
+        let url = dir.url.appendingPathComponent("gap.pdf")
+        try FileManager.default.createDirectory(at: dir.url, withIntermediateDirectories: true)
+        let session = try PdfEditSession.open(Pdfs.text(4))
+        try PageOperations.delete(session.document, [0])
+        XCTAssertTrue(try session.commit("Delete"))
+        let tab = DocumentTab(session: session, renderer: FakeRenderer(), url: nil, title: "gap.pdf", password: nil, writer: FailingAfterWrite())
+        let before = (0..<3).map { session.document.pages[$0].reference.number }
+
+        XCTAssertThrowsError(try tab.saveCompact(url))
+
+        let after = (0..<3).map { tab.document.pages[$0].reference.number }
+        XCTAssertNotEqual(before, after)
+        XCTAssertEqual(tab.rewrites, 1)
+        XCTAssertEqual(tab.rewriteMaps, [Dictionary(uniqueKeysWithValues: zip(before, after))])
+    }
+
     func test_saveGoesThroughTheSafeWriterAndLeavesNoTemporaryFile() async throws {
         let dir = TempDir(self)
         let url = written(dir)

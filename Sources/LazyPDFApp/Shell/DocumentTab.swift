@@ -190,12 +190,27 @@ public final class DocumentTab: StripTab {
 
     /// Writes the file without its history to `url` and goes on from that file.
     public func saveCompact(_ url: URL) throws {
-        let before = session.document.pages.map { $0.reference.number }
-        try writer.write(to: url) { try session.saveCompact($0.path) }
-        let after = session.document.pages.map { $0.reference.number }
-        rewriteMaps.append(Dictionary(zip(before, after), uniquingKeysWith: { first, _ in first }))
+        let old = session.document
+        let before = old.pages.map { $0.reference.number }
+        do {
+            try writer.write(to: url) { try session.saveCompact($0.path) }
+        } catch {
+            // A coordinated writer runs the closure first, so the document may be swapped in before the replace fails.
+            if session.document !== old {
+                noteRewrite(before)
+                refresh()
+            }
+            throw error
+        }
+        noteRewrite(before)
         move(to: url)
         saved(rewritten: true)
+    }
+
+    private func noteRewrite(_ before: [Int]) {
+        let after = session.document.pages.map { $0.reference.number }
+        rewriteMaps.append(Dictionary(zip(before, after), uniquingKeysWith: { first, _ in first }))
+        rewrites += 1
     }
 
     /// The file on disk is not the one that was read or saved: another program changed or removed it.
@@ -264,7 +279,6 @@ public final class DocumentTab: StripTab {
         acceptDiskState()
         recovery?.delete(id)
         if rewritten {
-            rewrites += 1
             refresh()
         } else {
             version += 1
