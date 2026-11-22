@@ -39,7 +39,16 @@ internal sealed class SavedSignatures(string directory)
         Directory.CreateDirectory(directory);
         string name = $"{kind.ToString().ToLowerInvariant()}-{DateTime.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid().ToString("N")[..6]}.png";
         string path = System.IO.Path.Combine(directory, name);
-        File.WriteAllBytes(path, SignatureArt.ToPng(image));
+        try
+        {
+            File.WriteAllBytes(path, SignatureArt.ToPng(image));
+        }
+        catch
+        {
+            // A full disk leaves a partial file that Load can never read and nothing lists.
+            try { File.Delete(path); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            throw;
+        }
         return new SavedItem(kind, path);
     }
 
