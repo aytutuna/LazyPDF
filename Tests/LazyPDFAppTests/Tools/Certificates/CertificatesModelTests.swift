@@ -95,9 +95,10 @@ final class CertificatesModelTests: XCTestCase {
     func test_aPictureLookNeedsAPictureToBePicked() async throws {
         let s = try attached()
         s.model.lookIndex = 1
+        XCTAssertFalse(s.model.showsLook)
+        try drawBox(s)
         XCTAssertTrue(s.model.showsLook)
         XCTAssertTrue(s.model.needsPicture)
-        try drawBox(s)
         XCTAssertFalse(s.model.action!.canRun())
 
         keepOne(s)
@@ -193,7 +194,8 @@ final class CertificatesModelTests: XCTestCase {
     func test_anInvisibleSignatureIgnoresTheLook() async throws {
         let s = try attached()
         s.model.lookIndex = 2
-        XCTAssertTrue(s.model.showsLook)
+        s.model.setPlace(1)
+        XCTAssertTrue(s.model.needsPicture)
 
         s.model.setPlace(0)
 

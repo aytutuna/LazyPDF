@@ -52,23 +52,7 @@ struct FillSignPanelView: View {
             } else {
                 ForEach(model.saved) { row in
                     HStack(spacing: 8) {
-                        Button {
-                            model.select(row)
-                        } label: {
-                            HStack {
-                                SignaturePicture(image: row.image)
-                                    .frame(height: 40)
-                                    .padding(4)
-                                    .background(Color.white, in: RoundedRectangle(cornerRadius: 4))
-                                Spacer(minLength: 0)
-                                if model.selected == row.id { Image(systemName: "checkmark").foregroundStyle(Color.accentColor) }
-                            }
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(row.name)
-                        .accessibilityAddTraits(model.selected == row.id ? .isSelected : [])
+                        SignatureRow(image: row.image, name: row.name, isSelected: model.selected == row.id) { model.select(row) }
                         Button {
                             model.remove(row)
                         } label: {
@@ -113,6 +97,34 @@ struct FillSignPanelView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+    }
+}
+
+/// A signature in a list of pictures to pick from: the picture, and a check mark on the one picked.
+struct SignatureRow: View {
+    let image: PdfRgbaImage
+    let name: String
+    let isSelected: Bool
+    let choose: @MainActor () -> Void
+
+    var body: some View {
+        Button {
+            choose()
+        } label: {
+            HStack {
+                SignaturePicture(image: image)
+                    .frame(height: 40)
+                    .padding(4)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 4))
+                Spacer(minLength: 0)
+                if isSelected { Image(systemName: "checkmark").foregroundStyle(Color.accentColor) }
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(name)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

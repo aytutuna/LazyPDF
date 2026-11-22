@@ -942,6 +942,7 @@
 "Look Up" = "Sözlükte ara";
 "Look at" = "Karşılaştırma yöntemi";
 "Look for missing certificates" = "Eksik sertifikaları ara";
+"Look of the signature" = "İmzanın görünümü";
 "Looking for fields" = "Alanlar aranıyor";
 "Looking through the file." = "Dosya taranıyor.";
 "Looks different" = "Farklı görünüyor";
@@ -1068,6 +1069,7 @@
 "No results" = "Sonuç yok";
 "No results folder" = "Sonuç klasörü yok";
 "No results for {0}" = "{0} için sonuç yok";
+"No saved signatures yet. Make a new one below." = "Henüz kayıtlı imza yok. Aşağıdan yeni bir tane yapın.";
 "No steps" = "Adım yok";
 "No text found" = "Metin bulunamadı";
 "No text found on {0} page. Check the language.|one" = "{0} sayfada metin bulunamadı. Dili denetleyin.";
