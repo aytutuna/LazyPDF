@@ -67,15 +67,15 @@ final class CertificatesPanelViewTests: XCTestCase {
     }
 
     func test_theLookIsNotOfferedForAnInvisibleSignature() throws {
-        let model = try model(try ToolViewRig())
-        model.setPlace(1)
-        model.lookIndex = 2
-        let shown = try ink(model)
-
+        let model = try model(try ToolViewRig(), saved: 1)
         model.setPlace(0)
+        model.lookIndex = 0
+        let textOnly = try ink(model)
+
+        model.lookIndex = 2
 
         XCTAssertFalse(model.showsLook)
-        XCTAssertLessThan(try ink(model), shown)
+        XCTAssertEqual(try ink(model), textOnly)
     }
 
     func test_theSheetThatMakesAPictureIsDrawnFromTheCertificatesModel() throws {
