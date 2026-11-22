@@ -19,7 +19,7 @@ final class MeasureWriterTests: XCTestCase {
 
     private func writeAndReopen(_ items: [MeasureItem]) throws -> (document: PdfDocument, marks: [PdfAnnotation]) {
         let session = try PdfEditSession.open(Pdfs.text())
-        let count = try MeasureWriter.write(session.document, items, scale, author: "Sam", date: date)
+        let count = try MeasureWriter.write(session.document, items, { _ in scale }, author: "Sam", date: date)
         XCTAssertEqual(count, items.count)
         XCTAssertTrue(try session.commit("Measure"))
         return try reopen(session)
@@ -45,8 +45,8 @@ final class MeasureWriterTests: XCTestCase {
     func test_scalesThePanelCannotShowAreSkipped() throws {
         let session = try PdfEditSession.open(Pdfs.text())
         let usable = MeasureScale(1, .millimetre, 10, .metre)
-        _ = try MeasureWriter.write(session.document, [line], MeasureScale(1, .metre, 1, .metre), author: "Sam", date: date)
-        _ = try MeasureWriter.write(session.document, [line], usable, author: "Sam", date: date)
+        _ = try MeasureWriter.write(session.document, [line], { _ in MeasureScale(1, .metre, 1, .metre) }, author: "Sam", date: date)
+        _ = try MeasureWriter.write(session.document, [line], { _ in usable }, author: "Sam", date: date)
         XCTAssertTrue(try session.commit("Measure"))
 
         let (document, _) = try reopen(session)
@@ -56,7 +56,7 @@ final class MeasureWriterTests: XCTestCase {
 
     func test_findOnPageLooksAtThatPageOnly() throws {
         let session = try PdfEditSession.open(Pdfs.text(2))
-        _ = try MeasureWriter.write(session.document, [MeasureItem(.distance, 1, line.points)], scale, author: "Sam", date: date)
+        _ = try MeasureWriter.write(session.document, [MeasureItem(.distance, 1, line.points)], { _ in scale }, author: "Sam", date: date)
         XCTAssertTrue(try session.commit("Measure"))
 
         let document = try PdfDocument.open(session.current)
@@ -83,10 +83,27 @@ final class MeasureWriterTests: XCTestCase {
         XCTAssertEqual(try factor(document, measure, "A"), 1)
     }
 
+    func test_eachMeasurementCarriesTheScaleOfItsOwnPage() throws {
+        let session = try PdfEditSession.open(Pdfs.text(2))
+        let other = MeasureScale(1, .millimetre, 50, .metre)
+        let items = [MeasureItem(.distance, 0, line.points), MeasureItem(.distance, 1, line.points)]
+        _ = try MeasureWriter.write(session.document, items, { $0.page == 0 ? scale : other }, author: "Sam", date: date)
+        XCTAssertTrue(try session.commit("Measure"))
+
+        let document = try PdfDocument.open(session.current)
+        for (page, expected) in [(0, scale), (1, other)] {
+            let made = try XCTUnwrap(PdfAnnotations.read(document, document.pages[page]).first { $0.type == .line })
+            let measure = try XCTUnwrap(document.resolve(made.dictionary["Measure"]) as? PdfDictionary)
+            XCTAssertEqual(PdfText.read(document, measure, "R"), expected.ratio)
+            XCTAssertEqual(try factor(document, measure, "X"), expected.perPoint, accuracy: 1e-9)
+            XCTAssertEqual(made.contents, "Distance: " + line.value(expected))
+        }
+    }
+
     func test_xFollowsTheUserUnitOfThePageAndNothingElseDoes() throws {
         let session = try PdfEditSession.open(Pdfs.text())
         session.document.pages[0].dictionary["UserUnit"] = PdfNumber(2)
-        _ = try MeasureWriter.write(session.document, [line], scale, author: "Sam", date: date)
+        _ = try MeasureWriter.write(session.document, [line], { _ in scale }, author: "Sam", date: date)
         try session.commit("Measure")
 
         let (document, all) = try reopen(session)
@@ -125,7 +142,7 @@ final class MeasureWriterTests: XCTestCase {
     func test_onATurnedPageTheValueBoxIsShownUprightWhereTheMiddleIs() throws {
         let session = try PdfEditSession.open(Pdfs.text())
         session.document.pages[0].dictionary["Rotate"] = PdfNumber(90)
-        _ = try MeasureWriter.write(session.document, [line], scale, author: "Sam", date: date)
+        _ = try MeasureWriter.write(session.document, [line], { _ in scale }, author: "Sam", date: date)
         try session.commit("Measure")
 
         let (document, all) = try reopen(session)
@@ -144,7 +161,7 @@ final class MeasureWriterTests: XCTestCase {
         let session = try PdfEditSession.open(Pdfs.text())
         let gone = MeasureItem(.distance, 4, [ViewPoint(0, 0), ViewPoint(10, 0)])
 
-        XCTAssertThrowsError(try MeasureWriter.write(session.document, [line, gone], scale, author: "Sam", date: date)) {
+        XCTAssertThrowsError(try MeasureWriter.write(session.document, [line, gone], { _ in scale }, author: "Sam", date: date)) {
             XCTAssertTrue($0 is ArgumentException)
         }
 
@@ -159,7 +176,7 @@ final class MeasureWriterTests: XCTestCase {
         let session = try PdfEditSession.open(Pdfs.text())
         let item = MeasureItem(.distance, 0, [ViewPoint(0, 0), ViewPoint(72, 0)])
 
-        _ = try MeasureWriter.write(session.document, [item], odd, author: "Sam", date: date, fonts: FakeFonts())
+        _ = try MeasureWriter.write(session.document, [item], { _ in odd }, author: "Sam", date: date, fonts: FakeFonts())
         try session.commit("Measure")
 
         let (_, all) = try reopen(session)

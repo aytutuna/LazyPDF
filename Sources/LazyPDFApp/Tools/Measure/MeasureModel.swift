@@ -260,7 +260,7 @@ public final class MeasureModel: ToolPanelModel {
     }
 
     private func redraw() {
-        overlay?.draw(items, scale)
+        overlay?.draw(items) { [scale] _ in scale }
     }
 
     // Reads the list again after it or the scale changed.
@@ -301,7 +301,7 @@ public final class MeasureModel: ToolPanelModel {
     private func write(_ tab: DocumentTab, _ host: ToolHost) -> Bool {
         let count: Int
         do {
-            count = try MeasureWriter.write(tab.document, items, scale, author: author, date: PanelDates.now(), fonts: fonts)
+            count = try MeasureWriter.write(tab.document, items, { [scale] _ in scale }, author: author, date: PanelDates.now(), fonts: fonts)
         } catch let error as PdfPermissionException {
             try? tab.session.discard()
             ChangeGate.guarded(host, L10n.t("Measure")) { throw error }

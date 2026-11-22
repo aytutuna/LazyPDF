@@ -11,7 +11,7 @@ final class PageScalesTests: XCTestCase {
     private func writtenOn(pages: Int, page: Int, _ scale: MeasureScale) throws -> PdfDocument {
         let session = try PdfEditSession.open(Pdfs.text(pages))
         let line = MeasureItem(.distance, page, [ViewPoint(100, 100), ViewPoint(172, 100)])
-        _ = try MeasureWriter.write(session.document, [line], scale, author: "Sam", date: DateTimeOffset(2026, 1, 5, 9, 0, 0))
+        _ = try MeasureWriter.write(session.document, [line], { _ in scale }, author: "Sam", date: DateTimeOffset(2026, 1, 5, 9, 0, 0))
         XCTAssertTrue(try session.commit("Measure"))
         return try PdfDocument.open(session.current)
     }
