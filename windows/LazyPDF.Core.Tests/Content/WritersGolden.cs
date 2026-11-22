@@ -78,7 +78,7 @@ internal static class WritersGolden
             case "sign":
                 var embedder = new PdfFontEmbedder(document, fonts);
                 var draw = embedder.Add("Script Sans", FontStyles.Regular, [text])!;
-                SignatureAppearance.Draw(document, new PdfRect(0, 0, 200, 60), 0, new SignatureLook(), text, draw);
+                SignatureAppearance.Draw(document, SignatureAppearance.Plan(new PdfRect(0, 0, 200, 60), 0, new SignatureLook(), text), 0, new SignatureLook(), text, draw);
                 break;
             case "field" or "multiline" or "comb" or "combo":
                 Field(document, fonts, op, text);
