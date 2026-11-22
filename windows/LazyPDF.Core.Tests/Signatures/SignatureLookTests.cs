@@ -27,9 +27,14 @@ public class SignatureLookTests
         public StringBuilder Text { get; } = new();
         public int Paths { get; private set; }
         public int Images { get; private set; }
+        public List<ImageInfo> Painted { get; } = [];
         public override void ShowGlyph(ContentContext context, in GlyphInfo glyph) => Text.Append(glyph.Unicode);
         public override void PaintPath(ContentContext context, PathInfo path) => Paths++;
-        public override void PaintImage(ContentContext context, ImageInfo image) => Images++;
+        public override void PaintImage(ContentContext context, ImageInfo image)
+        {
+            Images++;
+            Painted.Add(image);
+        }
     }
 
     private static PdfStream Appearance(PdfDocument document, string field = "Signature1")
@@ -236,5 +241,34 @@ public class SignatureLookTests
         var report = Assert.Single(SignatureKit.Verify(filled));
         Assert.Equal(SignatureVerdict.Valid, report.Verdict);
         Assert.DoesNotContain(report.Changes.Changes, c => !c.Allowed);
+    }
+
+    [Fact]
+    public void A_picture_wider_than_the_box_is_scaled_not_clipped()
+    {
+        byte[] signed = Sign(new PdfRect(20, 20, 270, 110), new SignatureLook { Image = new PdfRgbaImage(400, 20, new byte[400 * 20 * 4]) });
+
+        var image = Assert.Single(Play(signed).Painted);
+        Assert.InRange(image.Bounds.Width, 1, 0.4 * 250 - 6 + 0.001);
+        Assert.InRange(image.Bounds.Height, 1, 90 - 6 + 0.001);
+    }
+
+    [Theory]
+    [InlineData(CertificationLevel.FormFill, SignatureVerdict.ChangedAfterSigning)]
+    [InlineData(CertificationLevel.Annotate, SignatureVerdict.Valid)]
+    public void Placing_a_stamp_after_a_certification_with_a_picture_gets_the_same_verdict_as_without_one(CertificationLevel level, SignatureVerdict expected)
+    {
+        byte[] signed = PdfSigner.Sign(SignatureChangeTests.FormFile(), SignatureKit.Request(Pki) with
+        {
+            Certify = level,
+            Rect = new PdfRect(10, 10, 250, 90),
+            Look = new SignatureLook { Jpeg = Jpeg },
+        });
+
+        byte[] stamped = SignatureChangeTests.Edit(signed, d =>
+            new PdfAnnotationWriter(d).AddImageStamp(d.Pages[0], new PdfRect(100, 300, 160, 330), 1, 1, [0, 0, 0, 255]));
+
+        var report = Assert.Single(SignatureKit.Verify(stamped));
+        Assert.Equal(expected, report.Verdict);
     }
 }

@@ -230,5 +230,35 @@ final class CertificateSigningTests: XCTestCase {
 
         XCTAssertThrowsError(try PdfLongTermValidation.add(session, SilentServer(), CertificateKit.now)) { XCTAssertTrue($0 is InvalidOperationException) }
     }
+
+    func test_aBoxDrawnOnATurnedPageIsSignedWhereItWasDrawn() throws {
+        let expected = [0: [1, 0, 0, 1, 0, 0], 90: [0, 1, -1, 0, 0, 0], 270: [0, -1, 1, 0, 0, 0]]
+        for (rotate, matrix) in expected {
+            let ada = try CertificateKit.ada()
+            let document = try PdfDocument.open(Pdfs.text())
+            document.pages[0].dictionary["Rotate"] = PdfNumber(rotate)
+            let session = try PdfEditSession.open(try document.saveIncremental())
+            let geometry = PageGeometry(session.document.pages[0])
+            let drawn = DisplayRect(20, 30, 200, 60)
+            var choices = CertificateKit.plain(ada)
+            choices.page = 0
+            choices.rect = geometry.toUser(drawn)
+            var look = SignatureLook()
+            look.image = PdfRgbaImage(2, 1, [0, 0, 0, 255, 0, 0, 0, 255])
+            choices.look = look
+
+            try PdfSigner.sign(session, request(choices))
+
+            let widget = try XCTUnwrap(PdfAnnotations.readAll(session.document).first { $0.type == .widget })
+            let back = geometry.toDisplay(widget.rect)
+            XCTAssertEqual(back.x, drawn.x, accuracy: 1e-6, "\(rotate)")
+            XCTAssertEqual(back.y, drawn.y, accuracy: 1e-6, "\(rotate)")
+            XCTAssertEqual(back.width, drawn.width, accuracy: 1e-6, "\(rotate)")
+            XCTAssertEqual(back.height, drawn.height, accuracy: 1e-6, "\(rotate)")
+            let form = try XCTUnwrap(session.document.stream(session.document.dict(widget.dictionary, "AP"), "N"))
+            let found = session.document.array(form.dictionary, "Matrix")?.items.map { Int(($0 as? PdfNumber)?.value ?? 99) } ?? [1, 0, 0, 1, 0, 0]
+            XCTAssertEqual(found, matrix, "\(rotate)")
+        }
+    }
 }
 #endif

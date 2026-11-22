@@ -208,5 +208,33 @@ final class SignatureLookTests: XCTestCase {
         XCTAssertEqual(report.verdict, .valid)
         XCTAssertFalse(report.changes.changes.contains { !$0.allowed })
     }
+
+    func test_aPictureWiderThanTheBoxIsScaledNotClipped() throws {
+        var look = SignatureLook()
+        look.image = PdfRgbaImage(400, 20, [UInt8](repeating: 0, count: 400 * 20 * 4))
+
+        let signed = try sign(PdfRect(20, 20, 270, 110), look)
+
+        let image = try XCTUnwrap(try play(signed).images.first)
+        XCTAssertGreaterThan(image.bounds.width, 1)
+        XCTAssertLessThanOrEqual(image.bounds.width, 0.4 * 250 - 6 + 0.001)
+        XCTAssertLessThanOrEqual(image.bounds.height, 90 - 6 + 0.001)
+    }
+
+    func test_placingAStampAfterACertificationWithAPictureGetsTheSameVerdictAsWithoutOne() throws {
+        for (level, expected) in [(CertificationLevel.formFill, SignatureVerdict.changedAfterSigning), (.annotate, .valid)] {
+            var request = SignatureKit.request(pki)
+            request.certify = level
+            request.rect = PdfRect(10, 10, 250, 90)
+            request.look = graphic("jpeg")
+            let signed = try PdfSigner.sign(SignatureTestHelpers.formFile(), request)
+
+            let stamped = try SignatureTestHelpers.edit(signed) { d in
+                _ = try PdfAnnotationWriter(d).addImageStamp(d.pages[0], PdfRect(100, 300, 160, 330), 1, 1, [0, 0, 0, 255])
+            }
+
+            XCTAssertEqual(try SignatureTestHelpers.first(stamped).verdict, expected, "\(level)")
+        }
+    }
 }
 #endif
