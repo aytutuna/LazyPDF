@@ -299,14 +299,18 @@ public partial class MeasurePanel : ToolPanel
     private void ShowScale(MeasureScale scale)
     {
         _ready = false;
-        PageValue.Text = scale.Page.ToString(CultureInfo.CurrentCulture);
-        RealValue.Text = scale.Real.ToString(CultureInfo.CurrentCulture);
+        PageValue.Text = Shown(scale.Page);
+        RealValue.Text = Shown(scale.Real);
         SelectUnit(PageUnit, scale.PageUnit);
         SelectUnit(RealUnit, scale.RealUnit);
         _ready = true;
         ScaleHeading.Text = Loc.T("Scale for page {0}", Viewer!.PageLabel(Viewer.PageIndex));
         ScaleProblem.Visibility = Visibility.Collapsed;
     }
+
+    // A calibrated scale is a long fraction; the field shows six digits, since a screen reader says them all. The stored scale keeps its own.
+    private static string Shown(double value) =>
+        double.Parse(value.ToString("G6", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture).ToString("0.####################", CultureInfo.CurrentCulture);
 
     private static void SelectUnit(ComboBox box, LengthUnit unit) =>
         box.SelectedItem = box.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (LengthUnit)i.Tag == unit) ?? box.SelectedItem;

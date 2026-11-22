@@ -309,6 +309,22 @@ public sealed class MeasurePanelStateTests
     });
 
     [Fact]
+    public Task TheFieldsShowACalibratedScaleWithSixDigitsAndTheStoredOneKeepsAll() => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(1));
+        var (panel, _, _) = Attach(tab);
+        Call(panel, "Tool_Calibrated", 0, 72d);
+        panel.CalibrateUnit.SelectedIndex = Array.IndexOf(Enum.GetValues<LengthUnit>(), LengthUnit.Metre);
+        panel.CalibrateValue.Text = "1";
+
+        Call(panel, "SetScale_Click", panel, new RoutedEventArgs());
+
+        Assert.Equal(0.0393701.ToString(CultureInfo.CurrentCulture), panel.RealValue.Text);
+        Assert.Equal(0.039370079, ScalesOf(panel).For(tab.Document, 0).Real, 9);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task SetScaleRefusesALengthThatIsNotAboveZeroOrWouldWriteAsZero() => Sta.Run(() =>
     {
         using var tab = Open(Pdfs.Text(1));
