@@ -258,12 +258,35 @@ public partial class MeasurePanel : ToolPanel
 
     private void UseForAll_Click(object sender, RoutedEventArgs e)
     {
+        if (!Shown(Viewer!.PageIndex) || FieldScale() is null) return;
+        var tab = Tab!;
+        int others = _scales.OtherScaleCount(PageScales.Key(tab.Document, Viewer.PageIndex), tab.Document);
+        if (others == 0)
+        {
+            UseForAll();
+            return;
+        }
+        Host!.ShowNotice(Loc.T("Replace the scales on the other pages?"),
+            Loc.Plural(others, "The scale on {0} other page will be replaced.", "The scales on {0} other pages will be replaced."),
+            new NoticeAction(Loc.T("Use for all pages"), () =>
+            {
+                if (ReferenceEquals(Tab, tab)) UseForAll();
+            }));
+    }
+
+    private MeasureScale? FieldScale()
+    {
         if (!double.TryParse(PageValue.Text, CultureInfo.CurrentCulture, out double page)
-            || !double.TryParse(RealValue.Text, CultureInfo.CurrentCulture, out double real)) return;
+            || !double.TryParse(RealValue.Text, CultureInfo.CurrentCulture, out double real)) return null;
         var scale = new MeasureScale(page, UnitOf(PageUnit), real, UnitOf(RealUnit));
-        if (!scale.IsValid || !Shown(Viewer!.PageIndex)) return;
+        return scale.IsValid ? scale : null;
+    }
+
+    private void UseForAll()
+    {
+        if (!Shown(Viewer!.PageIndex) || FieldScale() is not { } scale) return;
         _scales.SetAll(scale);
-        ShowScale(ScaleOf(Viewer!.PageIndex));
+        ShowScale(ScaleOf(Viewer.PageIndex));
         Rebuild();
     }
 

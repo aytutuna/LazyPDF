@@ -5314,6 +5314,9 @@
   <data name="Replace the picture" xml:space="preserve">
     <value>Resmi değiştir</value>
   </data>
+  <data name="Replace the scales on the other pages?" xml:space="preserve">
+    <value>Diğer sayfalardaki ölçekler değiştirilsin mi?</value>
+  </data>
   <data name="Replace their text" xml:space="preserve">
     <value>Metinlerini değiştir</value>
   </data>
@@ -7215,6 +7218,9 @@
   </data>
   <data name="The same form is painted twice." xml:space="preserve">
     <value>Aynı form iki kez çizilmiş.</value>
+  </data>
+  <data name="The scale on {0} other page will be replaced.|plural" xml:space="preserve">
+    <value>Diğer {0} sayfadaki ölçek değiştirilecek.</value>
   </data>
   <data name="The second line must be a comment of four bytes above 127." xml:space="preserve">
     <value>İkinci satır, 127'nin üzerinde dört bayttan oluşan bir yorum olmalı.</value>

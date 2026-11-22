@@ -196,4 +196,60 @@ public sealed class MeasurePanelStateTests
         Assert.Equal(expected, AutomationProperties.GetHelpText(panel.CalibrateValue));
         return Task.CompletedTask;
     });
+
+    private static void UseForAll(MeasurePanel panel) =>
+        typeof(MeasurePanel).GetMethod("UseForAll_Click", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, [panel, new RoutedEventArgs()]);
+
+    [Fact]
+    public Task UseForAllAsksBeforeReplacingAScaleOnAnotherPage() => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(3));
+        var (panel, _, host) = Attach(tab);
+        var scales = ScalesOf(panel);
+        scales.Set(PageScales.Key(tab.Document, 1), Half);
+        panel.RealValue.Text = "100";
+
+        UseForAll(panel);
+
+        Assert.Single(host.Notices);
+        Assert.Equal(Half, scales.For(tab.Document, 1));
+        host.Actions[0]!.Run();
+        Assert.All(new[] { 0, 1, 2 }, p => Assert.Equal(One, scales.For(tab.Document, p)));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task UseForAllWithNoScaleElsewhereJustApplies() => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(3));
+        var (panel, _, host) = Attach(tab);
+        panel.RealValue.Text = "100";
+
+        UseForAll(panel);
+
+        Assert.Empty(host.Notices);
+        Assert.Equal(One, ScalesOf(panel).For(tab.Document, 2));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheConfirmationDoesNothingOnceAnotherTabIsShown() => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(3));
+        using var other = Open(Pdfs.Text(3));
+        var (panel, viewer, host) = Attach(tab);
+        var scales = ScalesOf(panel);
+        scales.Set(PageScales.Key(tab.Document, 1), Half);
+        panel.RealValue.Text = "100";
+        UseForAll(panel);
+        panel.Detach();
+        viewer.Tab = other;
+        panel.Attach(other, (LazyPDF.App.Viewer.IDocumentViewer)(object)viewer, host);
+
+        host.Actions[0]!.Run();
+
+        Assert.Equal(Half, scales.For(tab.Document, 1));
+        Assert.Equal(MeasureScale.Actual, ScalesOf(panel).For(other.Document, 1));
+        return Task.CompletedTask;
+    });
 }
