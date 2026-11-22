@@ -35,6 +35,35 @@ final class MeasureWriterTests: XCTestCase {
         try XCTUnwrap((document.resolve(try entry(document, measure, key)["C"]) as? PdfNumber)?.value)
     }
 
+    func test_theScaleIsFoundAgainInTheFile() throws {
+        let (document, _) = try writeAndReopen([line])
+
+        XCTAssertEqual(MeasureScale.find(document), scale)
+        XCTAssertNil(MeasureScale.find(try PdfDocument.open(Pdfs.text())))
+    }
+
+    func test_scalesThePanelCannotShowAreSkipped() throws {
+        let session = try PdfEditSession.open(Pdfs.text())
+        let usable = MeasureScale(1, .millimetre, 10, .metre)
+        _ = try MeasureWriter.write(session.document, [line], MeasureScale(1, .metre, 1, .metre), author: "Sam", date: date)
+        _ = try MeasureWriter.write(session.document, [line], usable, author: "Sam", date: date)
+        XCTAssertTrue(try session.commit("Measure"))
+
+        let (document, _) = try reopen(session)
+        XCTAssertEqual(MeasureScale.find(document), usable)
+        XCTAssertEqual(MeasureScale.findOnPage(document, document.pages[0]), usable)
+    }
+
+    func test_findOnPageLooksAtThatPageOnly() throws {
+        let session = try PdfEditSession.open(Pdfs.text(2))
+        _ = try MeasureWriter.write(session.document, [MeasureItem(.distance, 1, line.points)], scale, author: "Sam", date: date)
+        XCTAssertTrue(try session.commit("Measure"))
+
+        let document = try PdfDocument.open(session.current)
+        XCTAssertNil(MeasureScale.findOnPage(document, document.pages[0]))
+        XCTAssertEqual(MeasureScale.findOnPage(document, document.pages[1]), scale)
+    }
+
     func test_aDistanceIsALineWithItsScale() throws {
         let (document, all) = try writeAndReopen([line])
 
