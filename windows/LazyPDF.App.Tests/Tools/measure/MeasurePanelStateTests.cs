@@ -150,6 +150,23 @@ public sealed class MeasurePanelStateTests
         return Task.CompletedTask;
     });
 
+    [Theory]
+    [InlineData(100, 1, LengthUnit.Kilometre)]
+    [InlineData(100, 0.0015, LengthUnit.Metre)]
+    [InlineData(72, 2500, LengthUnit.Mile)]
+    public Task ACalibratedScaleReadsBackFromTheFileAsItWas(double points, double length, LengthUnit realUnit) => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(1));
+        var scale = MeasureScale.From(points, length, LengthUnit.Millimetre, realUnit);
+        Mark(tab, 0, scale);
+
+        var read = MeasureScale.FindOnPage(tab.Document, tab.Document.Pages[0]);
+
+        Assert.NotNull(read);
+        Assert.Equal(scale.PerPoint, read.PerPoint, scale.PerPoint * 1e-7);
+        return Task.CompletedTask;
+    });
+
     [Fact]
     public Task TheFieldsFollowTheScaleWhenAnUndoTakesItsMarksAway() => Sta.Run(() =>
     {
@@ -298,7 +315,7 @@ public sealed class MeasurePanelStateTests
         var (panel, _, _) = Attach(tab);
         Call(panel, "Tool_Calibrated", 0, 72d);
 
-        foreach (string text in new[] { "0", "abc", "0.00001" })
+        foreach (string text in new[] { "0", "abc", "1E-25" })
         {
             panel.CalibrateValue.Text = text;
             Call(panel, "SetScale_Click", panel, new RoutedEventArgs());

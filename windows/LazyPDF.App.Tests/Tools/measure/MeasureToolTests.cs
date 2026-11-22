@@ -95,14 +95,14 @@ public sealed class MeasureToolTests
         var scale = MeasureScale.From(72, 1, LengthUnit.Millimetre, LengthUnit.Metre);
 
         Assert.Equal(1, scale.Page);
-        Assert.Equal("1 mm = 0.0394 m", scale.Ratio);
+        Assert.Equal("1 mm = 0.039370079 m", scale.Ratio);
         Assert.Equal("1 m", scale.Length(72));
     }
 
     [Fact]
     public void ACalibrationTooSmallToWriteDoesNotReadBack()
     {
-        Assert.Null(MeasureScale.TryParse(MeasureScale.From(72, 0.00001, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
+        Assert.Null(MeasureScale.TryParse(MeasureScale.From(72, 1e-25, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
         Assert.Null(MeasureScale.TryParse(MeasureScale.From(0, 1, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
     }
 
