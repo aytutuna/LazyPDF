@@ -52,7 +52,7 @@ struct FillSignPanelView: View {
             } else {
                 ForEach(model.saved) { row in
                     HStack(spacing: 8) {
-                        SignatureRow(image: row.image, name: row.name, isSelected: model.selected == row.id) { model.select(row) }
+                        SavedPictureRow(image: row.image, name: row.name, isSelected: model.selected == row.id) { model.select(row) }
                         Button {
                             model.remove(row)
                         } label: {
@@ -101,7 +101,7 @@ struct FillSignPanelView: View {
 }
 
 /// A signature in a list of pictures to pick from: the picture, and a check mark on the one picked.
-struct SignatureRow: View {
+struct SavedPictureRow: View {
     let image: PdfRgbaImage
     let name: String
     let isSelected: Bool

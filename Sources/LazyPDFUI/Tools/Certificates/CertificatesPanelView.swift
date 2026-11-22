@@ -118,7 +118,7 @@ struct CertificatesPanelView: View {
                 ReasonText(L10n.t("No saved signatures yet. Make a new one below."))
             } else {
                 ForEach(model.rows) { row in
-                    SignatureRow(image: row.image, name: row.name, isSelected: model.selected == row.id) { model.select(row) }
+                    SavedPictureRow(image: row.image, name: row.name, isSelected: model.selected == row.id) { model.select(row) }
                 }
             }
             Button {
