@@ -19,4 +19,8 @@ internal sealed record Pending(MeasureItem Item, PageKey Key)
         return [.. pending.Where(p => where.TryGetValue(p.Key.Number, out var now) && now.Key == p.Key)
                           .Select(p => p with { Item = p.Item with { Page = where[p.Key.Number].Index } })];
     }
+
+    /// <summary>The same measurements with their pages under the numbers a rewrite gave them; one whose page is not in the map stays as it was.</summary>
+    public static List<Pending> Remap(IEnumerable<Pending> pending, IReadOnlyDictionary<int, int> map) =>
+        [.. pending.Select(p => map.TryGetValue(p.Key.Number, out int now) ? p with { Key = p.Key with { Number = now } } : p)];
 }
