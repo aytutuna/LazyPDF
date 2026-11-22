@@ -31,7 +31,10 @@ struct FillSignPanelView: View {
             }
         }
         .sheet(isPresented: $model.showMaker) {
-            ScrollView { SignatureMakerView(model: model) }
+            ScrollView {
+                SignatureMakerView(maker: model.maker, use: { model.useMade() }, cancel: { model.cancelMaker() },
+                                   choosePicture: { await model.chooseMakerPicture() })
+            }
                 #if os(macOS)
                 .frame(minWidth: 380, minHeight: 520)
                 #endif
