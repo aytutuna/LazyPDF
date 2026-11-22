@@ -275,9 +275,20 @@ public partial class FillSignPanel : ToolPanel
         var image = Maker.Image!;
         Maker.Visibility = Visibility.Collapsed;
         ChoosePage.Visibility = Visibility.Visible;
+        SavedItem? kept = null;
         if (Maker.Keep)
         {
-            var item = _saved.Add(Kind, image);
+            try
+            {
+                kept = _saved.Add(Kind, image);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                Host!.ShowProblem(new Problem(Loc.T("Signature not kept"), Loc.T("It could not be saved. It can still be placed this time.")));
+            }
+        }
+        if (kept is { } item)
+        {
             FillSaved();
             SavedList.SelectedIndex = ((List<SavedRow>)SavedList.ItemsSource).FindIndex(r => r.Item == item);
         }
