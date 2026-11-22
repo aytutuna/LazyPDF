@@ -264,6 +264,7 @@
 "By row" = "Satıra göre";
 "By type" = "Türe göre";
 "Bytes come before the %PDF header." = "%PDF üst bilgisinden önce baytlar var.";
+"Calibrate" = "Ölçeği ayarla";
 "Callout" = "Balon";
 "Cancel" = "İptal";
 "Cancel shape" = "Şekli iptal et";
@@ -1609,6 +1610,7 @@
 "Sepia pages" = "Sepya sayfalar";
 "Set a password and decide what others may do." = "Bir parola belirleyin ve başkalarının neler yapabileceğine karar verin.";
 "Set has no name" = "Kümenin adı yok";
+"Set scale" = "Ölçeği uygula";
 "Set status" = "Durumu ayarla";
 "Set the document language first and Lazy PDF can tag the file itself." = "Önce belge dilini ayarlayın; Lazy PDF dosyayı kendisi etiketleyebilir.";
 "Set the tab order" = "Sekme sırasını ayarla";
@@ -2248,6 +2250,7 @@
 "Two pages on each side of a landscape sheet, in the order that folds into a booklet." = "Yatay yaprağın her yüzünde iki sayfa, kitapçık olarak katlanacak sırada.";
 "Type" = "Yaz";
 "Type a Permissions password to apply the limits." = "Sınırları uygulamak için bir İzin parolası yazın.";
+"Type a length above zero." = "Sıfırdan büyük bir uzunluk yazın.";
 "Type a name for the set, then save it." = "Küme için bir ad yazın, sonra kaydedin.";
 "Type a number from 0 to 200, or leave it empty to fit the text to the field." = "0 ile 200 arasında bir sayı yazın veya metni alana sığdırmak için boş bırakın.";
 "Type a number from 1 to {0}." = "1 ile {0} arasında bir sayı yazın.";
