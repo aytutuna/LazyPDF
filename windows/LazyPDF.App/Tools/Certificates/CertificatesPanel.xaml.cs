@@ -107,6 +107,7 @@ public partial class CertificatesPanel : ToolPanel
         Stop();
         ClearBox();
         _oneOff = null;
+        CloseMaker();
         WhereBox.ItemsSource = null;
         FilePassword.Clear();
     }
