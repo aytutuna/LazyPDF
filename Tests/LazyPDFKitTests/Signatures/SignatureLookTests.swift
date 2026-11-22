@@ -71,13 +71,17 @@ final class SignatureLookTests: XCTestCase {
 
     private func graphic(_ kind: String, _ text: String? = nil) -> SignatureLook {
         var look = SignatureLook()
-        if kind == "jpeg" { look.jpeg = jpeg } else { look.ink = scribble }
+        switch kind {
+        case "jpeg": look.jpeg = jpeg
+        case "image": look.image = PdfRgbaImage(16, 8, [UInt8](repeating: 200, count: 16 * 8 * 4))
+        default: look.ink = scribble
+        }
         look.text = text
         return look
     }
 
     func test_aBoxTooShortForTheMarginsShowsNeitherPictureNorText() throws {
-        for kind in ["jpeg", "ink"] {
+        for kind in ["jpeg", "ink", "image"] {
             let signed = try sign(PdfRect(20, 20, 240, 25), graphic(kind))
 
             XCTAssertFalse(hasImageObject(signed), kind)
@@ -90,7 +94,7 @@ final class SignatureLookTests: XCTestCase {
     }
 
     func test_aFieldTooNarrowForThePictureGivesTheTextTheWholeWidth() throws {
-        for kind in ["jpeg", "ink"] {
+        for kind in ["jpeg", "ink", "image"] {
             let signed = try sign(PdfRect(20, 20, 32, 120), graphic(kind))
 
             XCTAssertFalse(hasImageObject(signed), kind)
@@ -102,7 +106,7 @@ final class SignatureLookTests: XCTestCase {
     }
 
     func test_pictureOnlyIntoAFieldWithNoRoomIsABlankForm() throws {
-        for kind in ["jpeg", "ink"] {
+        for kind in ["jpeg", "ink", "image"] {
             let signed = try sign(PdfRect(20, 20, 40, 25), graphic(kind, ""))
 
             XCTAssertFalse(hasImageObject(signed), kind)
@@ -134,7 +138,10 @@ final class SignatureLookTests: XCTestCase {
             let signed = try sign(PdfRect(20, 20, 250, 90), graphic("jpeg"), rotate: rotate)
 
             XCTAssertEqual(try play(signed).images.count, 1, "\(rotate)")
-            if rotate != 0 { XCTAssertTrue(try appearance(PdfDocument.open(signed)).dictionary.containsKey("Matrix"), "\(rotate)") }
+            let document = try PdfDocument.open(signed)
+            let matrix = document.array(try appearance(document).dictionary, "Matrix")?.items.map { Int(($0 as? PdfNumber)?.value ?? 99) } ?? [1, 0, 0, 1, 0, 0]
+            let expected = [0: [1, 0, 0, 1, 0, 0], 90: [0, 1, -1, 0, 0, 0], 180: [-1, 0, 0, -1, 0, 0], 270: [0, -1, 1, 0, 0, 0]][rotate]
+            XCTAssertEqual(matrix, expected, "\(rotate)")
         }
     }
 

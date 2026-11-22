@@ -77,10 +77,16 @@ public class SignatureLookTests
         Look = new SignatureLook { Jpeg = Jpeg },
     };
 
-    public static TheoryData<string> Pictures => new() { "jpeg", "ink" };
+    private static readonly PdfRgbaImage Rgba = new(16, 8, Enumerable.Repeat((byte)200, 16 * 8 * 4).ToArray());
 
-    private static SignatureLook Graphic(string kind, string? text = null) =>
-        kind == "jpeg" ? new SignatureLook { Jpeg = Jpeg, Text = text } : new SignatureLook { Ink = Scribble, Text = text };
+    public static TheoryData<string> Pictures => new() { "jpeg", "ink", "image" };
+
+    private static SignatureLook Graphic(string kind, string? text = null) => kind switch
+    {
+        "jpeg" => new SignatureLook { Jpeg = Jpeg, Text = text },
+        "image" => new SignatureLook { Image = Rgba, Text = text },
+        _ => new SignatureLook { Ink = Scribble, Text = text },
+    };
 
     [Theory]
     [MemberData(nameof(Pictures))]
@@ -152,7 +158,16 @@ public class SignatureLookTests
         byte[] signed = Sign(new PdfRect(20, 20, 250, 90), new SignatureLook { Jpeg = Jpeg }, rotate: rotate);
 
         Assert.Equal(1, Play(signed).Images);
-        if (rotate != 0) Assert.True(Appearance(PdfDocument.Open(signed)).Dictionary.ContainsKey("Matrix"));
+        var document = PdfDocument.Open(signed);
+        double[] matrix = document.Array(Appearance(document).Dictionary, "Matrix")?.Items.Select(i => ((PdfNumber)i).Value).ToArray() ?? [1, 0, 0, 1, 0, 0];
+        double[] expected = rotate switch
+        {
+            90 => [0, 1, -1, 0, 0, 0],
+            180 => [-1, 0, 0, -1, 0, 0],
+            270 => [0, -1, 1, 0, 0, 0],
+            _ => [1, 0, 0, 1, 0, 0],
+        };
+        Assert.Equal(expected, matrix);
     }
 
     [Fact]
