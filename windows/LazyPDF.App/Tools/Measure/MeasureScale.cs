@@ -60,6 +60,10 @@ public sealed record MeasureScale(double Page, LengthUnit PageUnit, double Real,
 
     public string Ratio => string.Create(CultureInfo.InvariantCulture, $"{Page:0.####} {PageUnit.Symbol()} = {Real:0.####} {RealUnit.Symbol()}");
 
+    /// <summary>The scale that makes a line of <paramref name="points"/> read <paramref name="length"/>, written as one <paramref name="pageUnit"/> on the page standing for some real length.</summary>
+    public static MeasureScale From(double points, double length, LengthUnit pageUnit, LengthUnit realUnit) =>
+        new(1, pageUnit, length / (points * LengthUnits.PointInMetres / pageUnit.Metres()), realUnit);
+
     /// <summary>The scale a <see cref="Ratio"/> text writes; null for any other text.</summary>
     public static MeasureScale? TryParse(string ratio)
     {

@@ -340,10 +340,6 @@ public partial class MeasurePanel : ToolPanel
         CalibrateValue.SelectAll();
     }
 
-    // Two points of a page and the length a person says they stand for make the scale.
-    internal static MeasureScale ScaleFrom(double points, double length, LengthUnit pageUnit, LengthUnit realUnit) =>
-        new(points * LengthUnits.PointInMetres / pageUnit.Metres(), pageUnit, length, realUnit);
-
     private void Calibrate_Click(object sender, RoutedEventArgs e)
     {
         if (_tool is null) return;
@@ -372,8 +368,8 @@ public partial class MeasurePanel : ToolPanel
             CalibrateProblem.Visibility = Visibility.Visible;
             return;
         }
-        var scale = ScaleFrom(_calibrated, length, UnitOf(PageUnit), UnitOf(CalibrateUnit));
-        if (!scale.IsValid)
+        var scale = MeasureScale.From(_calibrated, length, UnitOf(PageUnit), UnitOf(CalibrateUnit));
+        if (MeasureScale.TryParse(scale.Ratio) is null)
         {
             CalibrateProblem.Visibility = Visibility.Visible;
             return;

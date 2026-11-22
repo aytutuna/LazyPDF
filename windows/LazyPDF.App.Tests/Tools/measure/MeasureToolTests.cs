@@ -82,10 +82,28 @@ public sealed class MeasureToolTests
     [Fact]
     public void ACalibratedLineSetsWhatLaterDistancesRead()
     {
-        var scale = MeasurePanel.ScaleFrom(72, 1, LengthUnit.Inch, LengthUnit.Inch);
+        var scale = MeasureScale.From(72, 1, LengthUnit.Inch, LengthUnit.Inch);
         var longer = new MeasureItem(MeasureKind.Distance, 0, [new Point(0, 0), new Point(144, 0)]);
 
         Assert.Equal("2 in", longer.Value(scale));
+        Assert.Equal("1 in = 1 in", scale.Ratio);
+    }
+
+    [Fact]
+    public void ACalibratedScaleReadsAsOneUnitOnThePage()
+    {
+        var scale = MeasureScale.From(72, 1, LengthUnit.Millimetre, LengthUnit.Metre);
+
+        Assert.Equal(1, scale.Page);
+        Assert.Equal("1 mm = 0.0394 m", scale.Ratio);
+        Assert.Equal("1 m", scale.Length(72));
+    }
+
+    [Fact]
+    public void ACalibrationTooSmallToWriteDoesNotReadBack()
+    {
+        Assert.Null(MeasureScale.TryParse(MeasureScale.From(72, 0.00001, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
+        Assert.Null(MeasureScale.TryParse(MeasureScale.From(0, 1, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
     }
 
     [Fact]
