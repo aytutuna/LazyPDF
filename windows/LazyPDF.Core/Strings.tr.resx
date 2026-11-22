@@ -3292,6 +3292,9 @@
   <data name="Line" xml:space="preserve">
     <value>Çizgi</value>
   </data>
+  <data name="Line drawn: {0}" xml:space="preserve">
+    <value>Çizilen çizgi: {0}</value>
+  </data>
   <data name="Line spacing" xml:space="preserve">
     <value>Satır aralığı</value>
   </data>

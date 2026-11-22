@@ -5134,6 +5134,9 @@
   "Use for all pages": {
     "tr": "Tüm sayfalarda kullan"
   },
+  "Line drawn: {0}": {
+    "tr": "Çizilen çizgi: {0}"
+  },
   "Click the two ends of something whose real length you know.": {
     "tr": "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın."
   },

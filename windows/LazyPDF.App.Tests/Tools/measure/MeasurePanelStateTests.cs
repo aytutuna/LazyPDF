@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Automation;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Measure;
 using LazyPDF.Core;
@@ -179,6 +180,20 @@ public sealed class MeasurePanelStateTests
         Assert.True(tab.Commit("Title"));
 
         Assert.Equal(Visibility.Collapsed, panel.CalibrateRow.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheLengthOfTheDrawnLineIsShownAndSetAsHelpText() => Sta.Run(() =>
+    {
+        using var tab = Open(Pdfs.Text(1));
+        var (panel, _, _) = Attach(tab);
+
+        typeof(MeasurePanel).GetMethod("Tool_Calibrated", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, [0, 144d]);
+
+        string expected = Loc.T("Line drawn: {0}", new MeasureScale(1, LengthUnit.Millimetre, 1, LengthUnit.Millimetre).Length(144));
+        Assert.Equal(expected, panel.CalibrateDrawn.Text);
+        Assert.Equal(expected, AutomationProperties.GetHelpText(panel.CalibrateValue));
         return Task.CompletedTask;
     });
 }

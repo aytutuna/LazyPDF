@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
@@ -305,6 +306,10 @@ public partial class MeasurePanel : ToolPanel
     {
         _calibrated = points;
         _calibratedPage = page;
+        // The line is gone from the readout by now; the help text is what a screen reader says when focus lands on the field.
+        string drawn = Loc.T("Line drawn: {0}", ScaleOf(page).Length(points));
+        CalibrateDrawn.Text = drawn;
+        AutomationProperties.SetHelpText(CalibrateValue, drawn);
         CalibrateProblem.Visibility = Visibility.Collapsed;
         SelectUnit(CalibrateUnit, UnitOf(RealUnit));
         CalibrateRow.Visibility = Visibility.Visible;
