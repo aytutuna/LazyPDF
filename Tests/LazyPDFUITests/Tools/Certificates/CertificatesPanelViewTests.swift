@@ -12,7 +12,9 @@ import LazyPDFApp
 final class CertificatesPanelViewTests: XCTestCase {
     private func model(_ rig: ToolViewRig) -> CertificatesModel {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        let made = CertificatesModel(trust: SignatureTrust(directory: folder), transport: { Quiet() },
+        let codec = ImageIOCodec()
+        let made = CertificatesModel(trust: SignatureTrust(directory: folder), store: SavedSignatures(directory: folder.appendingPathComponent("Signatures"), codec: codec),
+                                     system: SystemSignature(), codec: codec, transport: { Quiet() },
                                      importIdentity: { _, _ in throw InvalidDataException("No identity.") })
         made.attach(rig.tab, rig.viewer, rig.host)
         return made
