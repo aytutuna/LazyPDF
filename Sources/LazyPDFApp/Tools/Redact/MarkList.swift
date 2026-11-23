@@ -9,12 +9,14 @@ public struct MarkItem: Identifiable, Equatable {
     public let id = UUID()
     public let mark: RedactionMark
     public let label: String
+    public let isBox: Bool
     public let value: RedactionValueMatch?
     public let place: String?
 
-    public init(_ mark: RedactionMark, _ label: String, value: RedactionValueMatch? = nil, place: String? = nil) {
+    public init(_ mark: RedactionMark, _ label: String, isBox: Bool = false, value: RedactionValueMatch? = nil, place: String? = nil) {
         self.mark = mark
         self.label = label
+        self.isBox = isBox
         self.value = value
         self.place = place
     }

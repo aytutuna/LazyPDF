@@ -112,6 +112,7 @@ final class RedactModelTests: XCTestCase {
         try drag(rig.viewer, from: ViewPoint(50, 60), to: ViewPoint(150, 90))
 
         XCTAssertEqual(model.marks.map(\.label), ["Box"])
+        XCTAssertEqual(model.marks.map(\.isBox), [true])
         XCTAssertEqual(rig.tab.pendingMarks, 1)
         XCTAssertNil(rig.viewer.overlay(0).item("redact.preview"))
         XCTAssertNotNil(rig.viewer.overlay(0).item("redact.mark.0"))

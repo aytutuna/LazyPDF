@@ -165,7 +165,7 @@ public final class RedactModel: ToolPanelModel {
     private func boxDrawn(_ page: Int, _ from: ViewPoint, _ to: ViewPoint) {
         guard let viewer, let state else { return }
         let mark = MarkShapes.box(page, viewer.geometry(page), from: from, to: to)
-        state.marks.add([MarkItem(mark, L10n.t("Box"))])
+        state.marks.add([MarkItem(mark, L10n.t("Box"), isBox: true)])
     }
 
     public func markSelection() async {
