@@ -96,7 +96,7 @@ public sealed record PrintLayout(int PerSheet = 1, bool Booklet = false, PrintPa
     {
         preferences.PrintPerSheet = PerSheet;
         preferences.PrintBooklet = Booklet;
-        preferences.PrintGap = Gap;
+        if (Imposes) preferences.PrintGap = Gap; // a plain job has no gap to offer, so it must not wipe the kept one
         preferences.PrintBorder = Border;
     }
 

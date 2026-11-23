@@ -208,6 +208,18 @@ public sealed class PrintLayoutTests
     }
 
     [Fact]
+    public void APlainPrintKeepsTheRememberedGap()
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(new PrintLayout(PerSheet: 2, Gap: 14.2).Remember, dir.Path);
+        AppPreferencesStore.Update(new PrintLayout().Remember, dir.Path);
+
+        var back = PrintLayout.Remembered(AppPreferencesStore.Load(dir.Path));
+
+        Assert.Equal(14.2, back.Gap);
+    }
+
+    [Fact]
     public void ARememberedValueOutOfRangeFallsBack()
     {
         var back = PrintLayout.Remembered(new AppPreferences { PrintPerSheet = 5, PrintGap = 500 });
