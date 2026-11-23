@@ -424,6 +424,26 @@ final class RedactBoxEditTests: XCTestCase {
         XCTAssertEqual(model.selected, hit.id)
     }
 
+    func test_aDragThatIsRefusedWhileTheCopyIsBeingMadePutsTheFrameBackOnTheBox() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        var shown: ViewRect?
+        var count = 0
+        rig.host.whileBusy = {
+            self.drag(tool, from: ViewPoint(100, 75), to: ViewPoint(130, 95))
+            shown = self.frame(rig)
+            model.setDrawing(true)
+            self.drag(tool, from: ViewPoint(300, 300), to: ViewPoint(400, 350))
+            count = model.marks.count
+        }
+
+        await model.action!.run()
+
+        XCTAssertEqual(shown, ViewRect(50, 60, 100, 30))
+        XCTAssertEqual(count, 1)
+    }
+
     func test_theViewerTakingThePointerBackLetsTheBoxGo() async throws {
         let (model, rig) = try attached()
         _ = try selectedBox(model, rig)

@@ -24,7 +24,7 @@ final class RedactDrawTool: PagePointerTool {
 
     private let viewer: DocumentViewer
     private let boxDrawn: (Int, ViewPoint, ViewPoint) -> Void
-    private let boxEdited: (MarkItem, ViewRect, PageGeometry, Bool) -> Void
+    private let boxEdited: (MarkItem, ViewRect, PageGeometry, Bool) -> Bool
     private var page = -1
     private var from = ViewPoint(0, 0)
 
@@ -42,7 +42,7 @@ final class RedactDrawTool: PagePointerTool {
     var drawing = false
 
     init(_ viewer: DocumentViewer, boxDrawn: @escaping (Int, ViewPoint, ViewPoint) -> Void,
-         boxEdited: @escaping (MarkItem, ViewRect, PageGeometry, Bool) -> Void) {
+         boxEdited: @escaping (MarkItem, ViewRect, PageGeometry, Bool) -> Bool) {
         self.viewer = viewer
         self.boxDrawn = boxDrawn
         self.boxEdited = boxEdited
@@ -140,7 +140,8 @@ final class RedactDrawTool: PagePointerTool {
             draw(frame)
             return
         }
-        boxEdited(old, dragged, geometry, grabbed != .body)
+        // A refused edit, while the copy is being made, leaves the list as it was, so the frame goes back to it.
+        if !boxEdited(old, dragged, geometry, grabbed != .body) { draw(frame) }
     }
 
     func cancel() {

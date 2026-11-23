@@ -198,7 +198,7 @@ public final class RedactModel: ToolPanelModel {
     private func makeTool(_ viewer: DocumentViewer) -> RedactDrawTool {
         let tool = RedactDrawTool(viewer, boxDrawn: { [weak self] page, from, to in self?.boxDrawn(page, from, to) },
                                   boxEdited: { [weak self] old, rect, geometry, resized in
-                                      self?.boxEdited(old, to: rect, geometry, resized: resized)
+                                      self?.boxEdited(old, to: rect, geometry, resized: resized) ?? false
                                   })
         drawTool = tool
         return tool
@@ -215,7 +215,7 @@ public final class RedactModel: ToolPanelModel {
     }
 
     private func boxDrawn(_ page: Int, _ from: ViewPoint, _ to: ViewPoint) {
-        guard let viewer, let state else { return }
+        guard !working, let viewer, let state else { return }
         let mark = MarkShapes.box(page, viewer.geometry(page), from: from, to: to)
         state.marks.add([MarkItem(mark, L10n.t("Box"), isBox: true)])
     }
@@ -354,10 +354,12 @@ public final class RedactModel: ToolPanelModel {
     }
 
     // The geometry is the one the rectangle was worked out in, which the viewer may no longer have by the time a drag ends.
-    func boxEdited(_ old: MarkItem, to rect: ViewRect, _ geometry: PageGeometry, resized: Bool, coalesce: Bool = false) {
+    @discardableResult
+    func boxEdited(_ old: MarkItem, to rect: ViewRect, _ geometry: PageGeometry, resized: Bool, coalesce: Bool = false) -> Bool {
         let mark = MarkShapes.box(old.page, geometry, from: rect.topLeft, to: ViewPoint(rect.right, rect.bottom))
-        guard replace(old, MarkItem(mark, old.label, isBox: true, row: old.row), coalesce: coalesce) else { return }
+        guard replace(old, MarkItem(mark, old.label, isBox: true, row: old.row), coalesce: coalesce) else { return false }
         host?.setStatus(resized ? L10n.t("Box resized.") : L10n.t("Box moved."))
+        return true
     }
 
     // The new item has an id of its own; it is selected before the list tells of the change, which would let the selection go.
