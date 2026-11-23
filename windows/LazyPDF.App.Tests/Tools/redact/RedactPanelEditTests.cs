@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Redact;
 using LazyPDF.App.Viewer;
@@ -22,12 +23,15 @@ public sealed class RedactPanelEditTests
         public DocumentTab Tab = new(PdfEditSession.Open(Pdfs.Text(2), (string?)null), new FakeRenderer(), null, "a.pdf", null);
         public RedactPanel Panel = new();
         public PageOverlay Overlay;
+        public Window Window = new() { Width = 400, Height = 600, ShowActivated = false, ShowInTaskbar = false };
         public HwndSource Source = new(new HwndSourceParameters("redact-edit"));
 
         public Stand()
         {
             var (viewer, overlay) = FakeViewer.Create();
             Overlay = overlay;
+            Window.Content = Panel;
+            Window.Show();
             Panel.Attach(Tab, viewer, new RecordingHost());
         }
 
@@ -67,10 +71,21 @@ public sealed class RedactPanelEditTests
         public void LoseFocus() =>
             Frame!.RaiseEvent(new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, Frame, Panel) { RoutedEvent = Keyboard.LostKeyboardFocusEvent });
 
+        // WPF focuses a clicked row before it picks it.
+        public void LoseFocusTo(MarkItem row)
+        {
+            List.UpdateLayout();
+            var container = (IInputElement)List.ItemContainerGenerator.ContainerFromItem(row);
+            Frame!.RaiseEvent(new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, Frame, container) { RoutedEvent = Keyboard.LostKeyboardFocusEvent });
+        }
+
+        public static void Pump() => Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Background, () => { });
+
         public Rect Shown(MarkItem item) => MarkShapes.Where(Geometry, item.Mark);
 
         public void Dispose()
         {
+            Window.Close();
             Source.Dispose();
             Tab.Dispose();
         }
@@ -113,6 +128,47 @@ public sealed class RedactPanelEditTests
         Assert.Same(b, stand.List.SelectedItem);
         Assert.Equal(new Rect(20, 31, 60, 20), stand.Shown(stand.Marks.Items.Single(m => m.Label == "a")));
         Assert.Equal(stand.Shown(b), new Rect(Canvas.GetLeft(stand.Frame!), Canvas.GetTop(stand.Frame!), stand.Frame!.Width, stand.Frame.Height));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AClickOnAnotherRowKeepsThatRowAliveThroughTheCommit() => Sta.Run(() =>
+    {
+        using var stand = new Stand();
+        stand.Show("a", 20, 30);
+        var b = stand.Show("b", 20, 100);
+        stand.Select("a");
+        stand.Press(Key.Down);
+        var before = stand.Marks.Items.Single(m => m.Label == "a");
+
+        stand.LoseFocusTo(b);
+
+        // Nothing is rebuilt while the row is being clicked.
+        Assert.Same(before, stand.Marks.Items.Single(m => m.Label == "a"));
+        stand.List.SelectedItem = b;
+        Stand.Pump();
+
+        Assert.Same(b, stand.List.SelectedItem);
+        Assert.Equal(new Rect(20, 31, 60, 20), stand.Shown(stand.Marks.Items.Single(m => m.Label == "a")));
+        Assert.Equal(2, stand.Marks.Items.Count);
+        Assert.Equal(stand.Shown(b), new Rect(Canvas.GetLeft(stand.Frame!), Canvas.GetTop(stand.Frame!), stand.Frame!.Width, stand.Frame.Height));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AClickOnTheEditedRowItselfStillCommitsTheNudge() => Sta.Run(() =>
+    {
+        using var stand = new Stand();
+        var a = stand.Show("a", 20, 30);
+        stand.Select("a");
+        stand.Press(Key.Right);
+
+        stand.LoseFocusTo(a);
+        Stand.Pump();
+
+        var edited = stand.Marks.Items.Single();
+        Assert.Equal(new Rect(21, 30, 60, 20), stand.Shown(edited));
+        Assert.Same(edited, stand.List.SelectedItem);
         return Task.CompletedTask;
     });
 

@@ -74,7 +74,7 @@ public partial class RedactPanel : ToolPanel
         tab.Changed += Tab_Changed;
         Viewer!.SelectionChanged += Viewer_SelectionChanged;
         Viewer.ModeChanged += Viewer_ModeChanged;
-        _editor = new RedactBoxEditor(Viewer, BoxEdited, text => Host?.SetStatus(text), FocusSelectedRow);
+        _editor = new RedactBoxEditor(Viewer, BoxEdited, text => Host?.SetStatus(text), FocusSelectedRow, focus => focus is System.Windows.Media.Visual row && MarkedList.IsAncestorOf(row));
         ShowMarks();
         ShowResult();
         ShowSelectionNote();
