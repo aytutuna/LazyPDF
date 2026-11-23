@@ -516,10 +516,11 @@ public sealed class PointerToolTests
         {
             using var f = new CommentFixture();
             var viewer = ViewerStandIn.Create(out _);
-            var made = f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], Red);
+            f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], Red);
             f.Tab.Commit("Polygon");
             var tool = new EditTool(viewer, () => f.Marker);
-            tool.Select(f.Marks().Single());
+            var made = f.Marks().Single();
+            tool.Select(made);
             int moved = 0;
             tool.VertexMoved += (_, _, _) => moved++;
             tool.Press(Press(new Point(100, 300)));
