@@ -54,17 +54,19 @@ internal sealed class PageTextProvider(PageSurfacePeer peer, ITextHost host) : I
         return [.. ranges];
     }
 
-    // The place under the point, which is empty; a page that is not loaded gives the start of the page.
+    // The start of the character under the point, or the nearest one when the point is between pages; the range is empty.
+    // A page that is not loaded gives the start of the page.
     public ITextRangeProvider? RangeFromPoint(Point screenLocation)
     {
         if (!host.LayoutReady) return null;
         var surface = peer.Surface;
-        if (surface.Hit(surface.PointFromScreen(screenLocation)) is not var (page, at)) return null;
+        var point = surface.PointFromScreen(screenLocation);
+        if (!new Rect(surface.RenderSize).Contains(point) || surface.Hit(point, nearest: true) is not var (page, at)) return null;
         var pos = new DocPos(page, 0);
         if (host.Peek(page) is { } text)
         {
             var (x, y) = surface.Geometry(page).ToUser(at.X, at.Y);
-            pos = PageTextRange.Units(host).FromCaret(new Caret(page, text.CaretAt(x, y))).Pos;
+            if (text.HitTest(x, y) is { } hit) pos = new DocPos(page, PageUiaText.Of(text).OffsetOf(hit.Char));
         }
         return PageTextRange.Create(host, pos, pos, this);
     }

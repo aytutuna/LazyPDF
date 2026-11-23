@@ -466,6 +466,22 @@ public sealed class PageTextProviderTests
     });
 
     [Fact]
+    public Task TheRightHalfOfACharacterIsStillThatCharacter() => Sta.Run(async () =>
+    {
+        var o = await OpenTrueSize(Pdf([Line(100, 700, "alpha beta gamma")]));
+        using var _ = o;
+        Arrange(o);
+        int end = PageUiaText.Of(o.Host.Peek(0)!).Text.IndexOf("gamma", StringComparison.Ordinal) + 4;
+        var r = PageTextRange.Create(o.Host, new DocPos(0, end), new DocPos(0, end + 1), o.Provider)!.GetBoundingRectangles();
+
+        var found = o.Provider.RangeFromPoint(new Point(r[0] + r[2] * 0.9, r[1] + r[3] / 2));
+
+        Assert.NotNull(found);
+        found!.ExpandToEnclosingUnit(TextUnit.Character);
+        Assert.Equal("a", found.GetText(-1));
+    });
+
+    [Fact]
     public Task NothingIsAnsweredBetweenTheChangeAndTheDrawingOfATab() => Sta.Run(async () =>
     {
         var renderer = new SlowRenderer();
