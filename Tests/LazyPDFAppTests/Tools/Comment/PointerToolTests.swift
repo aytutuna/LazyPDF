@@ -59,6 +59,19 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points[1].y, 10, accuracy: 0.001)
     }
 
+    func test_aKeyedPressWithShiftHeldDoesNotSnapALineOrSquareABox() async throws {
+        for kind in [MarkTool.line, .rectangle] {
+            let (tool, _, drawn) = try drawing(kind)
+
+            tool.press(press(markPt(10, 10)))
+            tool.release(PagePointer(page: 0, point: markPt(100, 40), view: markPt(100, 40), pressed: false, clicks: 0, modifiers: [.shift], fromKeys: true))
+
+            XCTAssertEqual(drawn.marks.count, 1)
+            XCTAssertEqual(drawn.marks[0].points[1].x, 100, accuracy: 0.001)
+            XCTAssertEqual(drawn.marks[0].points[1].y, 40, accuracy: 0.001)
+        }
+    }
+
     func test_shiftSquaresABoxInsideThePage() async throws {
         let (tool, _, drawn) = try drawing(.rectangle)
 
