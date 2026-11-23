@@ -20,9 +20,9 @@ private struct TabPageDrop: DropDelegate {
 
     private var accepts: Bool {
         switch place {
-        case .tab(let tab): PageTransfer.canDrop(onto: tab)
+        case .tab(let tab): PageTransfer.canDrop(onto: tab, host: vm)
         case .home: false
-        case .emptyStrip: PageTransfer.canDropOnStrip
+        case .emptyStrip: PageTransfer.canDropOnStrip(host: vm)
         }
     }
 

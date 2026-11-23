@@ -90,8 +90,8 @@ final class PagesViewTests: XCTestCase {
         let image = try XCTUnwrap(picture(TabStrip(vm: f.vm, close: { _ in }), 600, 40))
 
         XCTAssertGreaterThan(variety(image), 4)
-        XCTAssertTrue(PageTransfer.canDrop(onto: f.vm.documents[1]))
-        XCTAssertFalse(PageTransfer.canDrop(onto: f.vm.documents[0]))
+        XCTAssertTrue(PageTransfer.canDrop(onto: f.vm.documents[1], host: f.vm))
+        XCTAssertFalse(PageTransfer.canDrop(onto: f.vm.documents[0], host: f.vm))
     }
 }
 #endif

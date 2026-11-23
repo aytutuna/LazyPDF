@@ -25,7 +25,7 @@ final class PageStripDropTests: XCTestCase {
         let fromOrder = a.tab.order
         drag(a, [1, 2])
 
-        XCTAssertTrue(PageTransfer.canDrop(onto: b.tab))
+        XCTAssertTrue(PageTransfer.canDrop(onto: b.tab, host: a.host))
         await PageTransfer.drop(onto: b.tab, host: a.host)
 
         XCTAssertEqual(b.tab.pageCount, 5)
@@ -38,7 +38,7 @@ final class PageStripDropTests: XCTestCase {
         let (a, _) = try pair()
         drag(a, [1])
 
-        XCTAssertFalse(PageTransfer.canDrop(onto: a.tab))
+        XCTAssertFalse(PageTransfer.canDrop(onto: a.tab, host: a.host))
         await PageTransfer.drop(onto: a.tab, host: a.host)
 
         XCTAssertEqual(a.tab.pageCount, 6)
@@ -50,7 +50,7 @@ final class PageStripDropTests: XCTestCase {
         let (a, _) = try pair()
         drag(a, [2, 3])
 
-        XCTAssertTrue(PageTransfer.canDropOnStrip)
+        XCTAssertTrue(PageTransfer.canDropOnStrip(host: a.host))
         await PageTransfer.dropOnStrip(host: a.host)
 
         let opened = try XCTUnwrap(a.host.openedNew.first)
@@ -62,8 +62,8 @@ final class PageStripDropTests: XCTestCase {
     func test_withNoDragNothingIsAccepted() async throws {
         let (a, b) = try pair()
 
-        XCTAssertFalse(PageTransfer.canDrop(onto: b.tab))
-        XCTAssertFalse(PageTransfer.canDropOnStrip)
+        XCTAssertFalse(PageTransfer.canDrop(onto: b.tab, host: a.host))
+        XCTAssertFalse(PageTransfer.canDropOnStrip(host: a.host))
         await PageTransfer.drop(onto: b.tab, host: a.host)
         await PageTransfer.dropOnStrip(host: a.host)
 
@@ -76,9 +76,26 @@ final class PageStripDropTests: XCTestCase {
         drag(a, [0])
         a.tab.dispose()
 
-        XCTAssertFalse(PageTransfer.canDrop(onto: b.tab))
+        XCTAssertFalse(PageTransfer.canDrop(onto: b.tab, host: a.host))
         await PageTransfer.drop(onto: b.tab, host: a.host)
 
+        XCTAssertEqual(b.tab.pageCount, 3)
+    }
+
+    func test_anotherWindowRefusesADragFromThisOne() async throws {
+        let (a, b) = try pair()
+        let other = PagesHost()
+        let c = try PagesRig(Pdfs.text(3, "Else"), title: "c.pdf")
+        other.openDocuments = [c.tab]
+        drag(a, [1])
+
+        XCTAssertFalse(PageTransfer.canDrop(onto: c.tab, host: other))
+        XCTAssertFalse(PageTransfer.canDropOnStrip(host: other))
+        await PageTransfer.drop(onto: c.tab, host: other)
+
+        XCTAssertEqual(c.tab.pageCount, 3)
+        XCTAssertTrue(other.problems.isEmpty)
+        XCTAssertNil(PageDragSession.current)
         XCTAssertEqual(b.tab.pageCount, 3)
     }
 }
