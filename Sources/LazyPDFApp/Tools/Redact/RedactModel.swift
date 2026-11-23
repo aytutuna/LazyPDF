@@ -302,8 +302,9 @@ public final class RedactModel: ToolPanelModel {
         let pages = Self.pageNumbers(state)
         let revision = state.tab?.revision
         state.marks.remove(item)
+        let after = state.marks.items.map(\.id)
         host.showNotice(L10n.t("Mark removed"), L10n.t("It is off the list."),
-                        NoticeAction(L10n.t("Put it back")) { [weak self] in self?.putBack([item], in: state, pages: pages, revision: revision) })
+                        NoticeAction(L10n.t("Put it back")) { [weak self] in self?.putBack([item], in: state, pages: pages, revision: revision, after: after) })
     }
 
     public func removeSelected() {
@@ -316,8 +317,9 @@ public final class RedactModel: ToolPanelModel {
         let pages = Self.pageNumbers(state)
         let revision = state.tab?.revision
         state.marks.clear()
+        let after = state.marks.items.map(\.id)
         host.showNotice(L10n.plural(removed.count, one: "{0} mark removed", other: "{0} marks removed"), L10n.t("The list is empty now."),
-                        NoticeAction(L10n.t("Put them back")) { [weak self] in self?.putBack(removed, in: state, pages: pages, revision: revision) })
+                        NoticeAction(L10n.t("Put them back")) { [weak self] in self?.putBack(removed, in: state, pages: pages, revision: revision, after: after) })
     }
 
     public func undo() {
@@ -369,8 +371,14 @@ public final class RedactModel: ToolPanelModel {
         state.tab?.document.pages.map { $0.reference.number }
     }
 
+    // The notice outlives later edits, and a moved box keeps its row, so putting an old item back into a changed list would
+    // show one row twice. It only acts while the list is as the removal left it, as on Windows.
     // Marks are placed on pages, so they only fit while the page list is what it was when they were removed. Hits in comments and fields also hang on text, which any edit may have changed.
-    private func putBack(_ items: [MarkItem], in state: State, pages: [Int]?, revision: Int?) {
+    private func putBack(_ items: [MarkItem], in state: State, pages: [Int]?, revision: Int?, after: [UUID]) {
+        if state.marks.items.map(\.id) != after {
+            host?.setStatus(L10n.t("The marks changed since. Use Undo in the list."))
+            return
+        }
         let fits = state.tab?.revision == revision ? items : items.filter { $0.value == nil }
         if Self.pageNumbers(state) == pages, !fits.isEmpty {
             state.marks.add(fits)

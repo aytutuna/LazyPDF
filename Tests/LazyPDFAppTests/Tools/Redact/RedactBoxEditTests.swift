@@ -204,6 +204,22 @@ final class RedactBoxEditTests: XCTestCase {
         XCTAssertFalse(rig.host.statuses.contains("Box moved."))
     }
 
+    func test_putItBackLeavesAChangedListAloneSoNoRowIsTwice() async throws {
+        let (model, rig) = try attached()
+        let box = try selectedBox(model, rig)
+
+        model.remove(box)
+        let back = try XCTUnwrap(rig.host.lastNoticeAction)
+        model.undo()
+        model.jump(model.marks[0])
+        model.nudge(.right)
+        back.run()
+
+        XCTAssertEqual(model.marks.count, 1)
+        XCTAssertEqual(Set(model.marks.map(\.row)).count, 1)
+        XCTAssertEqual(rig.host.statuses.last, "The marks changed since. Use Undo in the list.")
+    }
+
     // MARK: The tool
 
     private func frame(_ rig: SecurityRig) -> ViewRect? {

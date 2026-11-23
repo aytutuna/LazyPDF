@@ -1998,6 +1998,7 @@
 "The list is empty now." = "Liste şimdi boş.";
 "The list stops at 1000 findings." = "Liste 1000 bulguda sona eriyor.";
 "The margin leaves no room on the page. Pick a smaller margin." = "Kenar boşluğu sayfada yer bırakmıyor. Daha küçük bir boşluk seçin.";
+"The marks changed since. Use Undo in the list." = "İşaretler o zamandan beri değişti. Listedeki Geri al düğmesini kullanın.";
 "The match runs over two lines." = "Eşleşme iki satıra taşıyor.";
 "The metadata stream has a /Filter." = "Üst veri akışında /Filter var.";
 "The named action {0} is not allowed." = "{0} adlı eyleme izin verilmiyor.";
