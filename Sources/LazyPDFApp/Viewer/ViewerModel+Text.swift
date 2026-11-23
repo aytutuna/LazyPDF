@@ -35,6 +35,7 @@ extension ViewerModel {
         edgeSource = nil
         selectionShapes.removeAll()
         hitShapes.removeAll()
+        textMaps.removeAll()
         selected.clear()
     }
 
@@ -117,6 +118,7 @@ extension ViewerModel {
     func selectionChanged() {
         selectionShapes.removeAll()
         onRedraw?()
+        onSelectionChanged?()
     }
 
     func beginSelection(_ at: ViewPoint, clicks: Int, extend wanted: Bool) {

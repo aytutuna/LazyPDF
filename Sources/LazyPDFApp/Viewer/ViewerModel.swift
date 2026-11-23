@@ -56,6 +56,7 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var geometries: [Int: PageGeometry] = [:]
     @ObservationIgnored var hitShapes: [Int: (others: [[ViewPoint]], current: [[ViewPoint]])] = [:]
     @ObservationIgnored var selectionShapes: [Int: [[ViewPoint]]] = [:]
+    @ObservationIgnored var textMaps: [Int: PageTextMap] = [:]
     @ObservationIgnored var preloadTask: Task<Void, Never>?
     @ObservationIgnored var anchorWaiting: PagePoint?
     @ObservationIgnored var pressTicket = 0
@@ -81,6 +82,9 @@ public final class ViewerModel: DocumentViewer {
 
     /// The text of a page was read and can be asked for with `pageText`; the page's number comes with it.
     @ObservationIgnored public var onPageLoaded: ((Int) -> Void)?
+
+    /// The selected text changed, by the pointer, the keys or `select`.
+    @ObservationIgnored public var onSelectionChanged: (() -> Void)?
 
     /// False where the view moves its own pixels on a scroll and draws only the strip that comes into view.
     @ObservationIgnored public var redrawsOnScroll = true

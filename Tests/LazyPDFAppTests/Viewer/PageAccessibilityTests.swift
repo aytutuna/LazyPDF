@@ -72,3 +72,65 @@ final class PageAccessibilityTests: XCTestCase {
         XCTAssertNotNil(viewer.pageText(1))
     }
 }
+
+@MainActor
+final class ViewerAccessibilityTests: XCTestCase {
+    private func open(pages: Int = 2) async throws -> ViewerModel {
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(pages)), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        await viewer.loadPage(0)
+        return viewer
+    }
+
+    func test_theMapIsKeptWhileThePageIsAndMadeAgainAfterAReset() async throws {
+        let viewer = try await open()
+
+        let first = try XCTUnwrap(viewer.textMap(0))
+
+        XCTAssertTrue(viewer.textMap(0) === first)
+        XCTAssertNil(viewer.textMap(1))
+        viewer.resetText()
+        XCTAssertNil(viewer.textMap(0))
+    }
+
+    func test_selectingARunSelectsThoseCharactersAndTellsTheListener() async throws {
+        let viewer = try await open()
+        var told = 0
+        viewer.onSelectionChanged = { told += 1 }
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(2, 7))
+
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(2, 7))
+        XCTAssertNil(viewer.selectedChars(on: 1))
+        XCTAssertEqual(told, 1)
+    }
+
+    func test_aCaretSelectsNothingButIsStillAPlace() async throws {
+        let viewer = try await open()
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(3, 3))
+
+        XCTAssertFalse(viewer.hasSelection)
+        XCTAssertNil(viewer.selectedChars(on: 0))
+    }
+
+    func test_aCharacterIsFoundWhereItIsShown() async throws {
+        let viewer = try await open()
+        let box = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(4, 5)))
+
+        XCTAssertGreaterThan(box.width, 0)
+        XCTAssertEqual(viewer.charIndex(page: 0, at: box.center), 4)
+        XCTAssertNil(viewer.textBounds(page: 1, LazyPDFKit.TextRange(0, 1)))
+        XCTAssertNil(viewer.charIndex(page: 1, at: box.center))
+    }
+
+    func test_theLinesInViewAreThoseThatShow() async throws {
+        let viewer = try await open()
+
+        XCTAssertEqual(viewer.visibleLines(on: 0), 0...0)
+        viewer.scroll(by: 0, 100_000)
+        XCTAssertNil(viewer.visibleLines(on: 0))
+    }
+}
