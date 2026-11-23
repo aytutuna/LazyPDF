@@ -250,7 +250,7 @@ extension ViewerModel {
         case .enter:
             let (page, at) = (current.page, current.point)
             let view = matrix.transform(at)
-            endPlacement()
+            endPlacement(notify: false)
             tool.press(PagePointer(page: page, point: at, view: view, pressed: true, clicks: 1, modifiers: modifiers, fromKeys: true))
             tool.release(PagePointer(page: page, point: at, view: view, pressed: false, clicks: 0, modifiers: modifiers, fromKeys: true))
         case .escape:
@@ -266,7 +266,20 @@ extension ViewerModel {
         return true
     }
 
-    func endPlacement() {
+    // An Enter on the cross is a click and ends it quietly; any other end tells the tool that was waiting on it.
+    func endPlacement(notify: Bool = true) {
+        let open = placement != nil
         placement = nil
+        if open && notify { placementEnded?() }
+    }
+
+    public func beginPlacement(page: Int, point: ViewPoint) {
+        guard tool != nil, tab != nil else { return }
+        endPlacement(notify: false)
+        placement = KeyPlacement(page: page, point: point)
+    }
+
+    public func cancelPlacement() {
+        endPlacement()
     }
 }

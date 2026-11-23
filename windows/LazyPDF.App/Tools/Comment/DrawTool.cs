@@ -129,7 +129,7 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
 
     private Point Constrain(PagePointer pointer)
     {
-        if (!pointer.Modifiers.HasFlag(ModifierKeys.Shift) || _points.Count == 0) return pointer.Point;
+        if (pointer.FromKeys || !pointer.Modifiers.HasFlag(ModifierKeys.Shift) || _points.Count == 0) return pointer.Point;
         var first = _points[0];
         if (tool is MarkTool.Line or MarkTool.Arrow) return MeasureShape.Straighten(first, pointer.Point);
         var d = pointer.Point - first;

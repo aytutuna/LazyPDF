@@ -383,10 +383,12 @@ extension AppViewModel {
     }
 
     public func undo() {
+        _ = handIn()
         if let tab = activeDocument, (try? tab.undo()) == true { notifyAll() }
     }
 
     public func redo() {
+        _ = handIn()
         if let tab = activeDocument, (try? tab.redo()) == true { notifyAll() }
     }
 

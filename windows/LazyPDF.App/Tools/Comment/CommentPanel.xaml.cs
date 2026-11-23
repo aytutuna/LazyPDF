@@ -29,13 +29,15 @@ public partial class CommentPanel : ToolPanel
 
     private static readonly (string Name, LineEnding Value)[] Heads =
     [
-        (Loc.T("Open arrow"), LineEnding.OpenArrow), (Loc.T("Closed arrow"), LineEnding.ClosedArrow), (Loc.T("Circle"), LineEnding.Circle),
-        (Loc.T("Square"), LineEnding.Square), (Loc.T("Diamond"), LineEnding.Diamond), (Loc.T("Slash"), LineEnding.Slash), (Loc.T("None"), LineEnding.None),
+        (Loc.T("None"), LineEnding.None), (Loc.T("Open arrow"), LineEnding.OpenArrow), (Loc.T("Closed arrow"), LineEnding.ClosedArrow),
+        (Loc.T("Reversed open arrow"), LineEnding.ROpenArrow), (Loc.T("Reversed closed arrow"), LineEnding.RClosedArrow), (Loc.T("Circle"), LineEnding.Circle),
+        (Loc.T("Square"), LineEnding.Square), (Loc.T("Diamond"), LineEnding.Diamond), (Loc.T("Slash"), LineEnding.Slash), (Loc.T("Bar"), LineEnding.Butt),
     ];
 
     private static readonly (string Name, string Value)[] Icons =
     [
-        (Loc.T("Note"), "Note"), (Loc.T("Comment"), "Comment"),
+        (Loc.T("Note"), "Note"), (Loc.T("Comment"), "Comment"), (Loc.T("Help"), "Help"), (Loc.T("Insert"), "Insert"),
+        (Loc.T("Key"), "Key"), (Loc.T("New paragraph"), "NewParagraph"), (Loc.T("Paragraph"), "Paragraph"),
     ];
 
     private static readonly (MarkTool Tool, string Text, string Glyph, string Hint)[] Tools =
@@ -74,6 +76,11 @@ public partial class CommentPanel : ToolPanel
     private PdfRgbaImage? _picture;
     private readonly DispatcherTimer _settle = new() { Interval = TimeSpan.FromMilliseconds(350) };
     private readonly HashSet<object> _unsettled = [];
+    private readonly Dictionary<MarkTool, (LineEnding Start, LineEnding End)> _toolHeads = new()
+    {
+        [MarkTool.Line] = (LineEnding.None, LineEnding.None),
+        [MarkTool.Arrow] = (LineEnding.None, LineEnding.OpenArrow),
+    };
     private readonly Dictionary<MarkTool, RadioButton> _buttons = [];
     private EditTool? _edit;
     private SelectionBar? _bar;
@@ -83,6 +90,9 @@ public partial class CommentPanel : ToolPanel
     private MarkTool _tool = MarkTool.SelectText;
     private double[]? _color;
     private MarkStyle? _drawing;
+    private PdfAnnotation? _pendingMark;
+    private MarkStyle? _pendingLook;
+    private MarkTool? _headTool;
     private bool _loading = true;
     private bool _choosing;
     private bool _fresh;
@@ -130,6 +140,8 @@ public partial class CommentPanel : ToolPanel
         FillBox.SelectedIndex = 0;
         LineStyleBox.ItemsSource = new[] { Loc.T("Solid"), Loc.T("Dashed"), Loc.T("Dotted") };
         LineStyleBox.SelectedIndex = 0;
+        StartHeadBox.ItemsSource = Heads.Select(h => h.Name).ToList();
+        StartHeadBox.SelectedIndex = 0;
         HeadBox.ItemsSource = Heads.Select(h => h.Name).ToList();
         HeadBox.SelectedIndex = 0;
         IconBox.ItemsSource = Icons.Select(i => i.Name).ToList();
@@ -157,6 +169,8 @@ public partial class CommentPanel : ToolPanel
         _edit.Moved += Edit_Moved;
         _edit.Resized += Edit_Resized;
         _edit.VertexMoved += Edit_VertexMoved;
+        _edit.VertexAdded += Edit_VertexAdded;
+        _edit.VertexPicked += Edit_VertexPicked;
         _edit.EditRequested += Edit_EditRequested;
         _bar = new SelectionBar(Viewer!, () => _tool == MarkTool.SelectText && _allowed, MarkSelection);
         Tab!.Changed += Tab_Changed;
@@ -173,14 +187,14 @@ public partial class CommentPanel : ToolPanel
 
     public override bool HandIn()
     {
+        FlushLook();
         _editor?.Finish();
         return true;
     }
 
     protected override void OnDetach()
     {
-        _settle.Stop();
-        _unsettled.Clear();
+        FlushLook();
         _editor?.Drop();
         Tab!.Changed -= Tab_Changed;
         Viewer!.ModeChanged -= Viewer_ModeChanged;
@@ -217,7 +231,8 @@ public partial class CommentPanel : ToolPanel
         var font = (BoldToggle.IsChecked == true ? FontStyles.Bold : FontStyles.Regular) | (ItalicToggle.IsChecked == true ? FontStyles.Italic : FontStyles.Regular);
         var line = (LineStyle)Math.Max(LineStyleBox.SelectedIndex, 0);
         return new MarkStyle(_color, WidthSlider.Value, OpacitySlider.Value / 100, FontFamilyBox.SelectedItem as string ?? Families.Value[0], size, font,
-            Fills[Math.Max(FillBox.SelectedIndex, 0)].Rgb, line, Heads[Math.Max(HeadBox.SelectedIndex, 0)].Value, Icons[Math.Max(IconBox.SelectedIndex, 0)].Value);
+            Fills[Math.Max(FillBox.SelectedIndex, 0)].Rgb, line, Heads[Math.Max(HeadBox.SelectedIndex, 0)].Value, Icons[Math.Max(IconBox.SelectedIndex, 0)].Value,
+            Heads[Math.Max(StartHeadBox.SelectedIndex, 0)].Value);
     }
 
     private void ShowReadouts()
@@ -231,6 +246,12 @@ public partial class CommentPanel : ToolPanel
         if (Viewer is not { } viewer || _edit is null) return;
         _choosing = true;
         _editor?.Finish();
+        if (_headTool is { } leaving)
+        {
+            var heads = _drawing ?? CurrentStyle();
+            _toolHeads[leaving] = (heads.StartHead, heads.Head);
+            _headTool = null;
+        }
         if (_tool != MarkTool.Edit) _edit.Clear();
         switch (_tool)
         {
@@ -256,6 +277,14 @@ public partial class CommentPanel : ToolPanel
             : Tools.First(t => t.Tool == _tool).Hint;
         Hint.Visibility = Visibility.Visible;
         ShowSelected();
+        if (_toolHeads.TryGetValue(_tool, out var kept))
+        {
+            _loading = true;
+            StartHeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == kept.Start);
+            HeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == kept.End);
+            _loading = false;
+            _headTool = _tool;
+        }
         _bar?.Refresh();
     }
 
@@ -342,25 +371,35 @@ public partial class CommentPanel : ToolPanel
                 _ when sender == OpacitySlider => kept with { Opacity = look.Opacity },
                 _ when sender == FillBox => kept with { Fill = look.Fill },
                 _ when sender == LineStyleBox => kept with { Dash = look.Dash },
+                _ when sender == StartHeadBox => kept with { StartHead = look.StartHead },
                 _ when sender == HeadBox => kept with { Head = look.Head },
                 _ when sender == IconBox => kept with { Icon = look.Icon },
                 _ => kept with { Family = look.Family, Size = look.Size, Font = look.Font },
             };
             return;
         }
-        _unsettled.Add(sender is RadioButton ? "colour" : sender is Slider || sender == FillBox || sender == LineStyleBox || sender == HeadBox || sender == IconBox ? sender : "font");
+        // The mark and the look are kept as chosen, so a change that waits is still for this mark when it is written.
+        var selected = _edit.Current;
+        _pendingMark ??= selected;
+        _pendingLook = FontFamilyBox.SelectedItem is null ? CurrentStyle() with { Family = Marker.TextOf(selected).Family } : CurrentStyle();
+        _unsettled.Add(sender is RadioButton ? "colour" : sender is Slider || sender == FillBox || sender == LineStyleBox || sender == StartHeadBox || sender == HeadBox || sender == IconBox ? sender : "font");
         _settle.Stop();
         _settle.Start();
     }
 
-    private void Settle_Tick(object? sender, EventArgs e)
+    private void Settle_Tick(object? sender, EventArgs e) => FlushLook();
+
+    // Writes the waiting look changes at once, to the mark they were made on.
+    private void FlushLook()
     {
         _settle.Stop();
         var pending = _unsettled.ToList();
         _unsettled.Clear();
-        if (_edit?.Current is not { } mark || Tab is null) return;
-        var look = CurrentStyle();
-        if (FontFamilyBox.SelectedItem is null) look = look with { Family = Marker.TextOf(mark).Family };
+        var (target, look) = (_pendingMark, _pendingLook);
+        _pendingMark = null;
+        _pendingLook = null;
+        if (target?.Reference is not { } reference || look is null || pending.Count == 0 || Tab is not { } tab) return;
+        if (NewMarker(tab).Find(target.PageIndex, reference.Number) is not { } mark) return;
         Change(Loc.T("Change look"), m =>
         {
             var current = mark;
@@ -369,14 +408,16 @@ public partial class CommentPanel : ToolPanel
             if (pending.Contains(FillBox) && Marker.TakesFill(current)) current = m.SetFill(current, look.Fill);
             if (pending.Contains(WidthSlider)) current = m.SetWidth(current, look.Width);
             if (pending.Contains(LineStyleBox) && Marker.TakesLine(current)) current = m.SetDash(current, look.Dash);
-            if (pending.Contains(HeadBox) && HasHead(current)) current = m.SetEnding(current, look.Head);
+            if ((pending.Contains(StartHeadBox) || pending.Contains(HeadBox)) && HasHead(current))
+            {
+                current = m.SetEnding(current, pending.Contains(StartHeadBox) ? look.StartHead : current.StartEnding, pending.Contains(HeadBox) ? look.Head : current.EndEnding);
+            }
             if (pending.Contains(IconBox) && current.Type == AnnotationType.Text) current = m.SetIcon(current, look.Icon);
             if (pending.Contains(OpacitySlider)) m.SetOpacity(current, look.Opacity);
         });
     }
 
-    // A head chosen on the start of a line is another app's; only the end is offered.
-    private static bool HasHead(PdfAnnotation a) => a.Type == AnnotationType.Line && a.StartEnding == LineEnding.None;
+    private static bool HasHead(PdfAnnotation a) => a.Type == AnnotationType.Line && !Marker.Fixed(a);
 
     private static bool Differs(FreeTextStyle text, MarkStyle look) => text.Family != look.Family || text.Size != look.Size || text.Font != look.Font;
 }

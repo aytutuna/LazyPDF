@@ -151,9 +151,9 @@ final class DrawTool: PagePointerTool {
         if page >= viewer.pageCount { reset() }
     }
 
-    /// Shift keeps a line on a multiple of 45 degrees and a box square.
+    /// Shift keeps a line on a multiple of 45 degrees and a box square. Keyed presses never snap, since Shift also means small steps.
     private func constrained(_ pointer: PagePointer) -> ViewPoint {
-        guard pointer.modifiers.contains(.shift), let first = points.first else { return pointer.point }
+        guard !pointer.fromKeys, pointer.modifiers.contains(.shift), let first = points.first else { return pointer.point }
         switch tool {
         case .line, .arrow, .callout:
             return MeasureShape.straighten(first, pointer.point)

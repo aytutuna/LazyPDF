@@ -106,7 +106,7 @@ extension Marker {
         return false
     }
 
-    private static func distance(_ ax: Double, _ ay: Double, _ bx: Double, _ by: Double, _ x: Double, _ y: Double) -> Double {
+    static func distance(_ ax: Double, _ ay: Double, _ bx: Double, _ by: Double, _ x: Double, _ y: Double) -> Double {
         let dx = bx - ax, dy = by - ay
         let length = dx * dx + dy * dy
         let t = length == 0 ? 0 : min(max(((x - ax) * dx + (y - ay) * dy) / length, 0), 1)

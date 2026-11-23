@@ -104,6 +104,18 @@ final class PanelViewer: DocumentViewer {
         }
     }
 
+    @ObservationIgnored var placementEnded: (() -> Void)?
+    @ObservationIgnored var placements: [(page: Int, point: ViewPoint)] = []
+    @ObservationIgnored var placementsCancelled = 0
+
+    func beginPlacement(page: Int, point: ViewPoint) {
+        placements.append((page, point))
+    }
+
+    func cancelPlacement() {
+        placementsCancelled += 1
+    }
+
     func pageToView(_ page: Int) -> ViewMatrix? { nil }
     func viewToPage(_ view: ViewPoint, nearest: Bool) -> PagePoint? { nil }
 

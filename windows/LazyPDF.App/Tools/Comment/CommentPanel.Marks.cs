@@ -32,6 +32,11 @@ public partial class CommentPanel
             host.ShowProblem(new Problem(Loc.T("Text not drawn"), AnnotationText.NoFont));
             return false;
         }
+        catch (ArgumentOutOfRangeException)
+        {
+            Restore(tab);
+            return false;
+        }
         catch (ArgumentException)
         {
             Restore(tab);
@@ -246,6 +251,7 @@ public partial class CommentPanel
 
     private void Edit_SelectionChanged(object? sender, EventArgs e)
     {
+        FlushLook();
         _fresh = false;
         ShowSelected();
     }
@@ -254,7 +260,19 @@ public partial class CommentPanel
 
     private void Edit_Resized(PdfAnnotation mark, Rect box) => Change(Loc.T("Resize"), m => m.Resize(mark, box));
 
-    private void Edit_VertexMoved(PdfAnnotation mark, int index, Point to) => Change(Loc.T("Move point"), m => m.MovePoint(mark, index, to));
+    private void Edit_VertexMoved(PdfAnnotation mark, int index, Point to)
+    {
+        if (!_allowed || MarkWork.Running)
+        {
+            _edit?.Redraw();
+            return;
+        }
+        if (Change(Loc.T("Move point"), m => m.MovePoint(mark, index, to))) Host?.SetStatus(Loc.T("Point {0} moved", index + 1));
+    }
+
+    private void Edit_VertexPicked(int index) => Host?.SetStatus(Loc.T("Point {0} picked", index + 1));
+
+    private void Edit_VertexAdded(PdfAnnotation mark, int after, Point to) => Change(Loc.T("Add point"), m => m.InsertPoint(mark, after, to));
 
     private void Edit_EditRequested(PdfAnnotation mark) => EditTextOf(mark);
 
@@ -294,6 +312,11 @@ public partial class CommentPanel
             corners.Finish();
             e.Handled = true;
         }
+        else if (e.Key == Key.Delete && _edit is { PickedVertex: >= 0, Current: { } picked } picking)
+        {
+            RemovePicked(picking, picked);
+            e.Handled = true;
+        }
         else if (e.Key == Key.Delete && _edit?.Current is not null)
         {
             DeleteSelected();
@@ -301,13 +324,26 @@ public partial class CommentPanel
         }
     }
 
+    // Delete on a picked corner takes the corner away, not the mark.
+    private void RemovePicked(EditTool edit, PdfAnnotation mark)
+    {
+        int index = edit.PickedVertex;
+        edit.ClearPick(closeCross: true);
+        edit.Redraw();
+        if (Tab is not { } tab) return;
+        if (NewMarker(tab).CanRemovePoint(mark, index)) Change(Loc.T("Remove point"), m => m.RemovePoint(mark, index));
+        else Host?.SetStatus(Loc.T("That point cannot be removed."));
+    }
+
     private void ShowSelected()
     {
         var mark = _edit?.Current;
         SelectedRow.Visibility = mark is null ? Visibility.Collapsed : Visibility.Visible;
-        LineStyleBox.IsEnabled = mark is null ? Marker.TakesLine(_tool) : Marker.TakesLine(mark);
-        FillBox.IsEnabled = mark is null ? Marker.TakesFill(_tool) : Marker.TakesFill(mark);
-        HeadRow.Visibility = (mark is null ? _tool == MarkTool.Arrow : HasHead(mark)) ? Visibility.Visible : Visibility.Collapsed;
+        bool foreign = mark is not null && Marker.Foreign(mark);
+        Swatches.IsEnabled = WidthSlider.IsEnabled = OpacitySlider.IsEnabled = !foreign;
+        LineStyleBox.IsEnabled = !foreign && (mark is null ? Marker.TakesLine(_tool) : Marker.TakesLine(mark));
+        FillBox.IsEnabled = !foreign && (mark is null ? Marker.TakesFill(_tool) : Marker.TakesFill(mark));
+        HeadRow.Visibility = (mark is null ? _tool is MarkTool.Line or MarkTool.Arrow : HasHead(mark)) ? Visibility.Visible : Visibility.Collapsed;
         IconRow.Visibility = (mark is null ? _tool == MarkTool.Note : mark.Type == AnnotationType.Text) ? Visibility.Visible : Visibility.Collapsed;
         if (mark is null)
         {
@@ -317,6 +353,10 @@ public partial class CommentPanel
         _drawing ??= CurrentStyle();
         SelectedTitle.Text = Loc.T("Selected: {0}", AnnotationText.KindName(mark.Type));
         EditText.IsEnabled = mark.Type is AnnotationType.Text or AnnotationType.FreeText || mark.Contents is { Length: > 0 };
+        PointHint.Visibility = Marker.HasPoints(mark) ? Visibility.Visible : Visibility.Collapsed;
+        PointHint.Text = _tool != MarkTool.Edit ? Loc.T("Choose Move marks to move or add a point from the keyboard.")
+            : Marker.PlainPolygon(mark) ? Loc.T("Press Enter on a point to pick it, move it with the arrow keys, then press Enter again. Press Enter on a side to add a point, or Delete on a picked point to remove it.")
+            : Loc.T("Press Enter on a point to pick it, move it with the arrow keys, then press Enter again.");
         _loading = true;
         WidthSlider.Value = Math.Clamp(mark.Border.Width, WidthSlider.Minimum, WidthSlider.Maximum);
         OpacitySlider.Value = Math.Clamp(Math.Round(mark.Opacity * 20) * 5, OpacitySlider.Minimum, OpacitySlider.Maximum);
@@ -331,6 +371,7 @@ public partial class CommentPanel
         ShowColour(Marker.RgbOf(text is null ? mark.Color : text.TextColor ?? [0]));
         ShowFill(Marker.RgbOf(mark.InteriorColor));
         LineStyleBox.SelectedIndex = (int)Marker.LineOf(mark);
+        StartHeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == mark.StartEnding);
         HeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == mark.EndEnding);
         IconBox.SelectedIndex = Array.FindIndex(Icons, i => i.Value == mark.IconName);
         _loading = false;
@@ -346,6 +387,7 @@ public partial class CommentPanel
         ShowColour(kept.Color);
         ShowFill(kept.Fill);
         LineStyleBox.SelectedIndex = (int)kept.Dash;
+        StartHeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == kept.StartHead);
         HeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == kept.Head);
         IconBox.SelectedIndex = Array.FindIndex(Icons, i => i.Value == kept.Icon);
         FontFamilyBox.SelectedItem = kept.Family;

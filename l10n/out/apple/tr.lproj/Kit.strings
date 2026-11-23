@@ -116,6 +116,7 @@
 "Add link" = "Bağlantı ekle";
 "Add or change a link" = "Bağlantı ekle veya değiştir";
 "Add pictures" = "Resim ekle";
+"Add point" = "Nokta ekle";
 "Add step" = "Adım ekle";
 "Add tags" = "Etiket ekle";
 "Add the signer's certificate to those you trust. Do it only after checking it with them." = "İmzalayanın sertifikasını güvendiklerinize ekler. Bunu ancak onunla doğruladıktan sonra yapın.";
@@ -196,6 +197,7 @@
 "Area" = "Alan";
 "Arrange" = "Sırala";
 "Arrow" = "Ok";
+"Arrow head" = "Ok ucu";
 "Arrow keys move it. Enter places it. Escape cancels." = "Ok tuşları taşır. Enter yerleştirir. Esc iptal eder.";
 "Ask the signer to sign again with SHA-256." = "İmzalayandan SHA-256 ile yeniden imzalamasını isteyin.";
 "Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve." = "İmzalayandan en az 2048 bitlik bir RSA anahtarıyla ya da P-256 veya daha güçlü bir eğri üzerinde bir ECDSA anahtarıyla yeniden imzalamasını isteyin.";
@@ -220,6 +222,7 @@
 "Background color" = "Arka plan rengi";
 "Backward" = "Arkaya";
 "Balanced" = "Dengeli";
+"Bar" = "Çubuk";
 "Batch" = "Toplu işlem";
 "Bates number place" = "Bates numarası konumu";
 "Bates numbers" = "Bates numaraları";
@@ -366,6 +369,7 @@
 "Choose the folders again. The system gives Lazy PDF access to a folder only when you pick it." = "Klasörleri yeniden seçin. Sistem, Lazy PDF'ye bir klasöre erişimi yalnızca siz seçtiğinizde verir.";
 "Choose what to put on the page, then press Place on page." = "Sayfaya neyi koyacağınızı seçin, sonra Sayfaya yerleştir düğmesine basın.";
 "Choose where the results go, then watch the folder." = "Sonuçların nereye gideceğini seçin, sonra klasörü izleyin.";
+"Circle" = "Daire";
 "Clean file" = "Dosyayı temizle";
 "Clean for sharing" = "Paylaşım için temizle";
 "Cleaning the file" = "Dosya temizleniyor";
@@ -399,6 +403,7 @@
 "Close the side panel" = "Yan paneli kapat";
 "Close the tool" = "Aracı kapat";
 "Close {0}?" = "{0} kapatılsın mı?";
+"Closed arrow" = "Kapalı ok";
 "Cloud" = "Bulut";
 "Color" = "Renk";
 "Color changed." = "Renk değişti.";
@@ -479,6 +484,7 @@
 "Cut pages" = "Sayfaları kes";
 "Dark" = "Koyu";
 "Dark pages" = "Koyu sayfalar";
+"Dashed" = "Kesikli";
 "Data follows the last %%EOF." = "Son %%EOF'tan sonra veri var.";
 "Data not read" = "Veriler okunamadı";
 "Data the program that made the file keeps for its own editing. Reading the file does not need it. Keep this off if you open the file in that program." = "Dosyayı oluşturan programın kendi düzenlemesi için sakladığı veriler. Dosyayı okumak için gerekmez. Dosyayı o programda açıyorsanız bunu kapalı tutun.";
@@ -504,6 +510,7 @@
 "Description not saved" = "Açıklama kaydedilmedi";
 "Description saved." = "Açıklama kaydedildi.";
 "Descriptions, links and names" = "Açıklamalar, bağlantılar ve adlar";
+"Diamond" = "Eşkenar dörtgen";
 "Differences" = "Farklar";
 "Digital signatures" = "Dijital imzalar";
 "Digits" = "Basamak";
@@ -531,6 +538,7 @@
 "Done" = "Bitti";
 "Done, with notes" = "Bitti, notlarla";
 "Done." = "Bitti.";
+"Dotted" = "Noktalı";
 "Drag a box on a page." = "Bir sayfa üzerinde kutu çizin.";
 "Drag a box on the page, then type." = "Sayfada bir kutu çizin, sonra yazın.";
 "Drag a box, then type." = "Bir kutu sürükleyin, sonra yazın.";
@@ -790,6 +798,7 @@
 "Headings out of order: {0}{1}. Start at level 1 and go down one level at a time." = "Sırası bozuk başlıklar: {0}{1}. 1. seviyeden başlayın ve birer seviye inin.";
 "Height ({0})" = "Yükseklik ({0})";
 "Height in mm" = "Yükseklik (mm)";
+"Help" = "Yardım";
 "Hidden layers" = "Gizli katmanlar";
 "Hidden text" = "Gizli metin";
 "Hide a field" = "Alanı gizle";
@@ -825,6 +834,7 @@
 "Indent" = "İçeri al";
 "Indent tag" = "Etiketi içeri al";
 "Initials" = "Baş harfler";
+"Insert" = "Ekle";
 "Insert and replace" = "Ekle ve değiştir";
 "Insert blank page" = "Boş sayfa ekle";
 "Insert pages" = "Sayfa ekle";
@@ -864,6 +874,7 @@
 "Keeps detail for printing. Pictures stay up to 300 dpi. Very little is lost." = "Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır. Çok az şey kaybolur.";
 "Keeps some private data" = "Bazı özel verileri korur";
 "Keeps the proof that the certificate was good. The signature can then be checked after it expires." = "Sertifikanın geçerli olduğunun kanıtını saklar. İmza, sertifikanın süresi dolduktan sonra da denetlenebilir.";
+"Key" = "Anahtar";
 "Key cannot be used" = "Anahtar kullanılamıyor";
 "Keychain" = "Anahtar zinciri";
 "Keywords" = "Anahtar sözcükler";
@@ -1013,6 +1024,7 @@
 "Move later" = "Sonraya taşı";
 "Move marks" = "İşaretleri taşı";
 "Move pages" = "Sayfaları taşı";
+"Move point" = "Noktayı taşı";
 "Move step down" = "Adımı aşağı taşı";
 "Move step up" = "Adımı yukarı taşı";
 "Move tag" = "Etiketi taşı";
@@ -1033,6 +1045,7 @@
 "New bookmark" = "Yeni yer imi";
 "New field" = "Yeni alan";
 "New file" = "Yeni dosya";
+"New paragraph" = "Yeni paragraf";
 "New: {0}" = "Yeni: {0}";
 "Next match" = "Sonraki eşleşme";
 "Next number is {0}." = "Sıradaki numara {0}.";
@@ -1123,6 +1136,7 @@
 "Not supported yet" = "Henüz desteklenmiyor";
 "Not visible" = "Görünmez";
 "Note" = "Not";
+"Note icon" = "Not simgesi";
 "Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it." = "Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır.";
 "Nothing else is wrong. Marking writes the PDF/UA-1 identifier into the file." = "Başka bir sorun yok. İşaretleme, PDF/UA-1 tanımlayıcısını dosyaya yazar.";
 "Nothing exported" = "Dışa aktarılan bir şey yok";
@@ -1200,6 +1214,7 @@
 "Open a file first" = "Önce bir dosya açın";
 "Open a link" = "Bağlantı aç";
 "Open a text file" = "Metin dosyası aç";
+"Open arrow" = "Açık ok";
 "Open files" = "Açık dosyalar";
 "Open in another app" = "Başka uygulamada aç";
 "Open in new tabs" = "Yeni sekmelerde aç";
@@ -1306,6 +1321,7 @@
 "Pages with only pictures: {0}{1}. Run text recognition so the words can be read." = "Yalnızca resim içeren sayfalar: {0}{1}. Sözcükler okunabilsin diye metin tanımayı çalıştırın.";
 "Pages {0} to {1} are numbered." = "{0}. ile {1}. sayfalar numaralanır.";
 "Paper" = "Kağıt";
+"Paragraph" = "Paragraf";
 "Paragraph changed." = "Paragraf değişti.";
 "Part and Art can only be at the top or inside Document, Part or Art." = "Part ve Art yalnızca en üstte ya da Document, Part veya Art içinde olabilir.";
 "Part of this page could not be drawn sharply." = "Bu sayfanın bir kısmı net çizilemedi.";
@@ -1370,6 +1386,8 @@
 "Place: {0}" = "Yer: {0}";
 "Placed on page {0}." = "{0}. sayfaya yerleştirildi.";
 "Plain text (.txt)" = "Düz metin (.txt)";
+"Point {0} moved" = "{0}. nokta taşındı";
+"Point {0} picked" = "{0}. nokta seçildi";
 "Polygon" = "Çokgen";
 "Polyline" = "Çoklu çizgi";
 "Portrait" = "Dikey";
@@ -1465,6 +1483,7 @@
 "Remove other hidden program data" = "Başka programların gizli verilerini kaldır";
 "Remove page labels" = "Sayfa etiketlerini kaldır";
 "Remove picture" = "Resmi kaldır";
+"Remove point" = "Noktayı kaldır";
 "Remove private keys" = "Özel anahtarları kaldır";
 "Remove protection" = "Korumayı kaldır";
 "Remove stamp" = "Damgayı kaldır";
@@ -1529,6 +1548,8 @@
 "Results" = "Sonuçlar";
 "Results folder" = "Sonuç klasörü";
 "Results go to" = "Sonuçların gideceği yer";
+"Reversed closed arrow" = "Ters kapalı ok";
+"Reversed open arrow" = "Ters açık ok";
 "Review" = "Gözden geçir";
 "Rich text (.rtf)" = "Zengin metin (.rtf)";
 "Right" = "Sağ";
@@ -1704,12 +1725,14 @@
 "Size window to page" = "Pencereyi sayfaya uydur";
 "Size {0} to {1}" = "Boyut {0} iken {1} oldu";
 "Size {0} x {1} pt to {2} x {3} pt" = "Boyut {0} x {1} pt iken {2} x {3} pt oldu";
+"Slash" = "Eğik çizgi";
 "Slide {0}" = "Slayt {0}";
 "Small" = "Küçük";
 "Smaller" = "Küçült";
 "Smallest file. Pictures drop to 96 dpi, black and white pictures become 1-bit, and some detail is lost." = "En küçük dosya. Resimler 96 dpi'ye düşer, siyah beyaz resimler 1 bit olur ve bir miktar ayrıntı kaybolur.";
 "SmartArt on slides" = "slayttaki SmartArt grafikleri";
 "Snap to text and lines" = "Metne ve çizgilere yapış";
+"Solid" = "Düz";
 "Some characters are missing" = "Bazı karakterler eksik";
 "Some characters have no letter in the font and were left out." = "Bazı karakterlerin yazı tipinde karşılığı yok ve atlandı.";
 "Some comments left out" = "Bazı yorumlar alınmadı";
@@ -1728,6 +1751,7 @@
 "Split file" = "Dosyayı böl";
 "Split this file" = "Bu dosyayı böl";
 "Splitting file" = "Dosya bölünüyor";
+"Square" = "Kare";
 "Squiggly" = "Dalgalı";
 "Squiggly underline" = "Dalgalı alt çizgi";
 "Stamp" = "Damga";
@@ -1741,6 +1765,7 @@
 "Stamps removed." = "Damgalar kaldırıldı.";
 "Stands for" = "Karşılığı";
 "Start at" = "Başlangıç";
+"Start head" = "Başlangıç ucu";
 "Start over" = "Baştan başla";
 "Start over (Esc)" = "Baştan başla (Esc)";
 "Start the shape over" = "Şekle baştan başla";
@@ -1845,6 +1870,7 @@
 "That mark has no area. Drag farther and try again." = "Bu işaretin bir alanı yok. Daha uzağa sürükleyip yeniden deneyin.";
 "That password is not right." = "Parola doğru değil.";
 "That picture is too large. Pick a smaller one." = "Bu resim çok büyük. Daha küçük bir resim seçin.";
+"That point cannot be removed." = "Bu nokta kaldırılamaz.";
 "That saved signature could not be read. Choose another." = "Kayıtlı imza okunamadı. Başka bir tane seçin.";
 "The .p12 file could not be opened. Check the password and that the file is a .p12." = ".p12 dosyası açılamadı. Parolayı ve dosyanın bir .p12 olduğunu denetleyin.";
 "The /CIDSet does not list every glyph shown or held in the font program." = "/CIDSet, yazı tipi programında gösterilen ya da tutulan her glifi listelemiyor.";

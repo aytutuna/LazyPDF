@@ -220,6 +220,16 @@ public protocol DocumentViewer: AnyObject {
     /// Takes the primary button on the pages from the viewer. Nil gives it back; setting another cancels the one before.
     var pointerTool: PagePointerTool? { get set }
 
+    /// Shows the key placement cross at a point of the page, as if Enter had opened it there, so the arrow keys move it from that
+    /// point. A tool calls it from a press that came from Enter.
+    func beginPlacement(page: Int, point: ViewPoint)
+
+    /// Closes the cross; `placementEnded` is called when one was open.
+    func cancelPlacement()
+
+    /// Called when the cross was closed without an Enter on it: Escape, a new tool, or `cancelPlacement`.
+    var placementEnded: (() -> Void)? { get set }
+
     /// The characters of a page and their places in PDF user space for this revision of the file; nil when the text
     /// cannot be read.
     func text(_ page: Int) async -> TextPage?

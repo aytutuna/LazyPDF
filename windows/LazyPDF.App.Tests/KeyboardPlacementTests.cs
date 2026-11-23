@@ -85,6 +85,59 @@ public sealed class KeyboardPlacementTests
     });
 
     [Fact]
+    public Task APlacementBegunByAToolStartsTheCrossAtThatPoint() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+
+        viewer.BeginPlacement(0, new Point(40, 60));
+        Assert.True(viewer.PlaceWithKeys(Key.Enter));
+
+        Assert.Equal(["press", "release"], tool.Calls.Select(c => c.Kind));
+        Assert.Equal(new Point(40, 60), tool.Calls[0].Pointer.Point);
+        Assert.True(tool.Calls[0].Pointer.FromKeys);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheArrowKeysMoveACrossBegunAtAPoint() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+
+        viewer.BeginPlacement(0, new Point(40, 60));
+        viewer.PlaceWithKeys(Key.Right);
+        viewer.PlaceWithKeys(Key.Enter);
+
+        Assert.True(tool.Calls[0].Pointer.Point.X > 40);
+        Assert.Equal(60, tool.Calls[0].Pointer.Point.Y, 6);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task EscapeAndCancelRaiseAPlacementEndedButAnEnterDoesNot() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        int ended = 0;
+        viewer.PlacementEnded += (_, _) => ended++;
+
+        viewer.PlaceWithKeys(Key.Enter);
+        viewer.PlaceWithKeys(Key.Enter);
+        Assert.Equal(0, ended);
+
+        viewer.PlaceWithKeys(Key.Enter);
+        viewer.PlaceWithKeys(Key.Escape);
+        Assert.Equal(1, ended);
+
+        viewer.BeginPlacement(0, new Point(40, 60));
+        viewer.CancelPlacement();
+        viewer.CancelPlacement();
+        Assert.Equal(2, ended);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task NoClickIsPlacedWhileTheNewPagesAreStillLoading() => Sta.Run(async () =>
     {
         var renderer = new GatedRenderer();
