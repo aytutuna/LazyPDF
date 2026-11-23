@@ -4,8 +4,8 @@ import UniformTypeIdentifiers
 import LazyPDFApp
 
 // Follows windows/LazyPDF.App/TabPageDrop.cs: pages dragged from a grid and let go on the strip. A tab of another file takes
-// a copy at its end, the empty part of the strip makes a new tab, and Home and the tab the pages are in refuse. The tab id drags
-// of TabStrip are another type and pass these by.
+// a copy at its end, the empty part of the strip makes a new tab, and Home and the tab the pages are in refuse. A tab's own
+// drag is taken by the same onDrop (TabIdDrop), since a dropDestination beside it keeps the page drag from reaching this delegate.
 
 /// Where on the strip a page drag is let go.
 enum PageDropPlace {
@@ -18,8 +18,8 @@ private struct TabPageDrop: DropDelegate {
     let vm: AppViewModel
     let place: PageDropPlace
     @Binding var hot: Bool
-    /// A tab id dragged on the iPhone and iPad, which let go on this tab reorders the strip; nil where the drop is the page copy only.
-    let moveTab: ((String) -> Bool)?
+    /// What a drag of a tab let go here does; nil where only pages are taken.
+    let tabs: TabIdDrop?
 
     private var accepts: Bool {
         switch place {
@@ -34,7 +34,7 @@ private struct TabPageDrop: DropDelegate {
     }
 
     func validateDrop(info: DropInfo) -> Bool {
-        isPage(info) || (moveTab != nil && info.hasItemsConforming(to: [.plainText]))
+        isPage(info) || (tabs.map { info.hasItemsConforming(to: $0.types) } ?? false)
     }
 
     func dropEntered(info: DropInfo) {
@@ -53,7 +53,7 @@ private struct TabPageDrop: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         hot = false
-        if !isPage(info) { return dropTab(info) }
+        if !isPage(info) { return tabs?.take(info) ?? false }
         guard accepts else {
             PageDragSession.end()
             return false
@@ -70,25 +70,17 @@ private struct TabPageDrop: DropDelegate {
         return true
     }
 
-    private func dropTab(_ info: DropInfo) -> Bool {
-        guard let moveTab, let provider = info.itemProviders(for: [.plainText]).first else { return false }
-        _ = provider.loadObject(ofClass: NSString.self) { id, _ in
-            guard let id = id as? String else { return }
-            Task { @MainActor in _ = moveTab(id) }
-        }
-        return true
-    }
 }
 
 private struct PageDropTarget: ViewModifier {
     let vm: AppViewModel
-    let moveTab: ((String) -> Bool)?
     let place: PageDropPlace
+    let tabs: TabIdDrop?
     @State private var hot = false
 
     func body(content: Content) -> some View {
         content
-            .onDrop(of: [PageDrag.type, .plainText], delegate: TabPageDrop(vm: vm, place: place, hot: $hot, moveTab: moveTab))
+            .onDrop(of: [PageDrag.type] + (tabs?.types ?? []), delegate: TabPageDrop(vm: vm, place: place, hot: $hot, tabs: tabs))
             .overlay {
                 // The status line says what happened, so the outline is only a hint.
                 if hot { RoundedRectangle(cornerRadius: 6).stroke(Color.accentColor, lineWidth: 2).accessibilityHidden(true) }
@@ -97,8 +89,8 @@ private struct PageDropTarget: ViewModifier {
 }
 
 extension View {
-    func pageDropTarget(_ vm: AppViewModel, _ place: PageDropPlace, moveTab: ((String) -> Bool)? = nil) -> some View {
-        modifier(PageDropTarget(vm: vm, moveTab: moveTab, place: place))
+    func pageDropTarget(_ vm: AppViewModel, _ place: PageDropPlace, tabs: TabIdDrop? = nil) -> some View {
+        modifier(PageDropTarget(vm: vm, place: place, tabs: tabs))
     }
 }
 #endif
