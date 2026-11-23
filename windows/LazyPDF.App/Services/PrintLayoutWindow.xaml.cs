@@ -69,7 +69,8 @@ internal sealed partial class PrintLayoutWindow : Window
         PrintButton.IsEnabled = problem is null;
         SidesHint.Text = current is { Layout: { Booklet: true, Parity: PrintParity.All, Reverse: false } }
             ? Loc.T("Two-sided printing must flip on the short edge.")
-            : Loc.T("To print both sides by hand, print the odd sides, turn the stack over and print the even sides.");
+            : imposes ? Loc.T("To print both sides by hand, print the odd sides, turn the stack over and print the even sides.")
+            : Loc.T("Odd and even go by page number. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.");
         Summary.Text = current is { } c ? c.Layout.Summary(_range, _documentPages) : "";
     }
 

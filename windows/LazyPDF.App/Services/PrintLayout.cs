@@ -77,8 +77,9 @@ public sealed record PrintLayout(int PerSheet = 1, bool Booklet = false, PrintPa
         if (real == 0) parts.Add(Loc.T("No sides are left to print."));
         else
         {
-            if (Parity == PrintParity.Odd) parts.Add(Loc.T("Odd sides (fronts): {0} of {1}.", real, sides));
-            if (Parity == PrintParity.Even) parts.Add(Loc.T("Even sides (backs): {0} of {1}.", real, sides));
+            // Without a layout odd and even go by page number, so they are not the fronts and backs of the range.
+            if (Parity == PrintParity.Odd) parts.Add(Imposes ? Loc.T("Odd sides (fronts): {0} of {1}.", real, sides) : Loc.T("Odd pages: {0} of {1}.", real, sides));
+            if (Parity == PrintParity.Even) parts.Add(Imposes ? Loc.T("Even sides (backs): {0} of {1}.", real, sides) : Loc.T("Even pages: {0} of {1}.", real, sides));
             if (sent.Contains(-1))
                 parts.Add(Reverse ? Loc.T("{0} sides: a blank is added at the start of the even run so each back meets its front.", sides)
                     : Loc.T("{0} sides: a blank is added at the end of the even run so each back meets its front.", sides));

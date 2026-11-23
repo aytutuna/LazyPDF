@@ -237,6 +237,13 @@ public sealed class PrintLayoutTests
     }
 
     [Fact]
+    public void APlainSummaryCallsOddAndEvenPagesNotFrontsAndBacks()
+    {
+        Assert.Equal("4 pages. Odd pages: 2 of 4.", new PrintLayout(Parity: PrintParity.Odd).Summary([1, 2, 3, 4], 8));
+        Assert.Equal("4 pages. Even pages: 2 of 4.", new PrintLayout(Parity: PrintParity.Even).Summary([1, 2, 3, 4], 8));
+    }
+
+    [Fact]
     public void ALayoutSummaryCountsSidesAndPapers()
     {
         Assert.Equal("8 pages: 4 sides on 2 pieces of paper.", new PrintLayout(Booklet: true).Summary(null, 8));

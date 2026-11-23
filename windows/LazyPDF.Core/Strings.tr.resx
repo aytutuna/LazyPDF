@@ -2125,6 +2125,9 @@
   <data name="Even pages only" xml:space="preserve">
     <value>Yalnızca çift sayfalar</value>
   </data>
+  <data name="Even pages: {0} of {1}." xml:space="preserve">
+    <value>Çift sayfalar: {1} sayfanın {0} tanesi.</value>
+  </data>
   <data name="Even sides (backs): {0} of {1}." xml:space="preserve">
     <value>Çift yüzler (arka yüzler): {1} yüzün {0} tanesi.</value>
   </data>
@@ -4147,11 +4150,17 @@
   <data name="Objects left out" xml:space="preserve">
     <value>Nesneler dışarıda bırakıldı</value>
   </data>
+  <data name="Odd and even go by page number. To print both sides by hand, print the odd pages, turn the stack over and print the even pages." xml:space="preserve">
+    <value>Tek ve çift, sayfa numarasına göre belirlenir. İki yüzü elle yazdırmak için önce tek sayfaları yazdırın, destede çevirin, sonra çift sayfaları yazdırın.</value>
+  </data>
   <data name="Odd pages" xml:space="preserve">
     <value>Tek sayfalar</value>
   </data>
   <data name="Odd pages only" xml:space="preserve">
     <value>Yalnızca tek sayfalar</value>
+  </data>
+  <data name="Odd pages: {0} of {1}." xml:space="preserve">
+    <value>Tek sayfalar: {1} sayfanın {0} tanesi.</value>
   </data>
   <data name="Odd sides (fronts): {0} of {1}." xml:space="preserve">
     <value>Tek yüzler (ön yüzler): {1} yüzün {0} tanesi.</value>
