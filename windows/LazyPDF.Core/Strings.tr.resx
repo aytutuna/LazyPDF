@@ -4150,8 +4150,8 @@
   <data name="Objects left out" xml:space="preserve">
     <value>Nesneler dışarıda bırakıldı</value>
   </data>
-  <data name="Odd and even go by page number. To print both sides by hand, print the odd pages, turn the stack over and print the even pages." xml:space="preserve">
-    <value>Tek ve çift, sayfa numarasına göre belirlenir. İki yüzü elle yazdırmak için önce tek sayfaları yazdırın, destede çevirin, sonra çift sayfaları yazdırın.</value>
+  <data name="Odd and even count the pages you print from the first one. To print both sides by hand, print the odd pages, turn the stack over and print the even pages." xml:space="preserve">
+    <value>Tek ve çift, yazdırdığınız sayfalar ilkinden başlayarak sayılır. İki yüzü elle yazdırmak için önce tek sayfaları yazdırın, destede çevirin, sonra çift sayfaları yazdırın.</value>
   </data>
   <data name="Odd pages" xml:space="preserve">
     <value>Tek sayfalar</value>

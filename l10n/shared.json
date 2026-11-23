@@ -9417,8 +9417,8 @@
   "To print both sides by hand, print the odd sides, turn the stack over and print the even sides.": {
     "tr": "İki yüzü elle yazdırmak için önce tek yüzleri yazdırın, destede çevirin, sonra çift yüzleri yazdırın."
   },
-  "Odd and even go by page number. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.": {
-    "tr": "Tek ve çift, sayfa numarasına göre belirlenir. İki yüzü elle yazdırmak için önce tek sayfaları yazdırın, destede çevirin, sonra çift sayfaları yazdırın."
+  "Odd and even count the pages you print from the first one. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.": {
+    "tr": "Tek ve çift, yazdırdığınız sayfalar ilkinden başlayarak sayılır. İki yüzü elle yazdırmak için önce tek sayfaları yazdırın, destede çevirin, sonra çift sayfaları yazdırın."
   },
   "Odd pages: {0} of {1}.": {
     "tr": "Tek sayfalar: {1} sayfanın {0} tanesi."

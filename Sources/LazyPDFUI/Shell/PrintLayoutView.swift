@@ -125,7 +125,7 @@ private struct PhoneOptions: View {
     private func hint(_ layout: PrintLayout) -> String {
         if layout.booklet && layout.parity == .all && !layout.reverse { return L10n.t("Two-sided printing must flip on the short edge.") }
         if layout.imposes { return L10n.t("To print both sides by hand, print the odd sides, turn the stack over and print the even sides.") }
-        return L10n.t("Odd and even go by page number. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.")
+        return L10n.t("Odd and even count the pages you print from the first one. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.")
     }
 }
 

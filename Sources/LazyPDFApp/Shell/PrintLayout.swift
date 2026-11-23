@@ -65,13 +65,13 @@ public struct PrintLayout: Equatable, Sendable {
     }
 
     /// The pages to print: the typed range or all of them. Without a layout they are cut down to the odd or even ones by
-    /// page number and reversed, and -1 stands for the blank that keeps the backs of a manual two-sided run on the right
+    /// place in the range and reversed, and -1 stands for the blank that keeps the backs of a manual two-sided run on the right
     /// paper. With a layout the range is returned as it is, since odd, even and reverse then act on the sides.
     public func pages(count: Int) -> [Int] {
         let chosen = range.isEmpty ? Array(0..<count) : PageRange.parse(range, count).pages
         if imposes { return chosen }
-        let kept = chosen.filter { keeps($0) }
-        return arrange(kept, pad: parity == .even && !kept.isEmpty && chosen.filter { $0 % 2 == 0 }.count > kept.count)
+        let kept = chosen.enumerated().filter { keeps($0.offset) }.map(\.element)
+        return arrange(kept, pad: parity == .even && !kept.isEmpty && chosen.count % 2 == 1)
     }
 
     /// How many sides the layout makes of this many pages.
@@ -124,7 +124,7 @@ public struct PrintLayout: Equatable, Sendable {
         if real == 0 {
             parts.append(L10n.t("No sides are left to print."))
         } else {
-            // Without a layout odd and even go by page number, so they are not the fronts and backs of the range.
+            // Without a layout odd and even count the pages from the first one printed.
             if parity == .odd {
                 parts.append(imposes ? L10n.t("Odd sides (fronts): {0} of {1}.", real, sides) : L10n.t("Odd pages: {0} of {1}.", real, sides))
             }

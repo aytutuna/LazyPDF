@@ -113,6 +113,13 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertEqual(layout.pages(count: 3), [2, 1, 0])
     }
 
+    func test_oddAndEvenCountFromTheFirstPageOfARange() {
+        XCTAssertEqual(PrintLayout(parity: .odd, range: "2-6").pages(count: 8), [1, 3, 5])
+        XCTAssertEqual(PrintLayout(parity: .even, range: "2-6").pages(count: 8), [2, 4, -1])
+        XCTAssertEqual(PrintLayout(parity: .odd, range: "2-5").pages(count: 8), [1, 3])
+        XCTAssertEqual(PrintLayout(parity: .even, range: "2-5").pages(count: 8), [2, 4])
+    }
+
     func test_aLayoutLeavesTheRangeToTheSides() {
         let layout = PrintLayout(perSheet: 2, parity: .even, reverse: true, range: "2-6")
 
@@ -159,7 +166,7 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertTrue(PrintLayout(perSheet: 2, parity: .even).isEmpty(count: 2))
         XCTAssertFalse(PrintLayout(perSheet: 2, parity: .even).isEmpty(count: 3))
         XCTAssertTrue(PrintLayout(parity: .even).isEmpty(count: 1))
-        XCTAssertTrue(PrintLayout(parity: .odd, range: "2").isEmpty(count: 3))
+        XCTAssertTrue(PrintLayout(parity: .even, range: "2").isEmpty(count: 3))
     }
 
     func test_aGapTooWideForTheSheetIsRefused() {

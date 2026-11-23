@@ -73,7 +73,7 @@ internal sealed partial class PrintLayoutWindow : Window
         SidesHint.Text = current is { Layout: { Booklet: true, Parity: PrintParity.All, Reverse: false } }
             ? Loc.T("Two-sided printing must flip on the short edge.")
             : imposes ? Loc.T("To print both sides by hand, print the odd sides, turn the stack over and print the even sides.")
-            : Loc.T("Odd and even go by page number. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.");
+            : Loc.T("Odd and even count the pages you print from the first one. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.");
         string summary = current is { } c ? c.Layout.Summary(_range, _documentPages) : "";
         bool summaryChanged = Summary.Text != summary;
         Summary.Text = summary;

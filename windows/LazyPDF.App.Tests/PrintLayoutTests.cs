@@ -32,6 +32,18 @@ public sealed class PrintLayoutTests
     }
 
     [Fact]
+    public void OddAndEvenCountFromTheFirstPageOfTheRange()
+    {
+        var odd = new PrintLayout(Parity: PrintParity.Odd);
+        var even = new PrintLayout(Parity: PrintParity.Even);
+
+        Assert.Equal([1, 3, 5], odd.Pages([1, 2, 3, 4, 5], 8));
+        Assert.Equal([2, 4, -1], even.Pages([1, 2, 3, 4, 5], 8));
+        Assert.Equal([1, 3], odd.Pages([1, 2, 3, 4], 8));
+        Assert.Equal([2, 4], even.Pages([1, 2, 3, 4], 8));
+    }
+
+    [Fact]
     public void OddOrEvenAloneDoesNotImpose()
     {
         var layout = new PrintLayout(Parity: PrintParity.Odd);

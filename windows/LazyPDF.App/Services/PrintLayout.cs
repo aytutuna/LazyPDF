@@ -22,20 +22,20 @@ public sealed record PrintLayout(int PerSheet = 1, bool Booklet = false, PrintPa
 
     /// <summary>
     /// The pages to print: the chosen range (null for all). Without a layout it is cut down to the odd or even
-    /// pages by page number and reversed, and -1 stands for the blank that keeps the backs of a manual two-sided
+    /// pages by place in the range and reversed, and -1 stands for the blank that keeps the backs of a manual two-sided
     /// run on the right paper. With a layout the range is returned as it is, since odd, even and reverse then act on the sides.
     /// </summary>
     public List<int> Pages(IReadOnlyList<int>? range, int count)
     {
         var pages = range ?? Enumerable.Range(0, count).ToList();
         if (Imposes) return [.. pages];
-        var kept = pages.Where(i => Parity switch
+        var kept = pages.Where((_, position) => Parity switch
         {
-            PrintParity.Odd => i % 2 == 0,
-            PrintParity.Even => i % 2 == 1,
+            PrintParity.Odd => position % 2 == 0,
+            PrintParity.Even => position % 2 == 1,
             _ => true,
         }).ToList();
-        return Arrange(kept, Parity == PrintParity.Even && kept.Count > 0 && pages.Count(i => i % 2 == 0) > kept.Count);
+        return Arrange(kept, Parity == PrintParity.Even && kept.Count > 0 && pages.Count % 2 == 1);
     }
 
     /// <summary>How many sides the layout makes of this many pages.</summary>
@@ -77,7 +77,7 @@ public sealed record PrintLayout(int PerSheet = 1, bool Booklet = false, PrintPa
         if (real == 0) parts.Add(Loc.T("No sides are left to print."));
         else
         {
-            // Without a layout odd and even go by page number, so they are not the fronts and backs of the range.
+            // Without a layout odd and even count the pages from the first one printed.
             if (Parity == PrintParity.Odd) parts.Add(Imposes ? Loc.T("Odd sides (fronts): {0} of {1}.", real, sides) : Loc.T("Odd pages: {0} of {1}.", real, sides));
             if (Parity == PrintParity.Even) parts.Add(Imposes ? Loc.T("Even sides (backs): {0} of {1}.", real, sides) : Loc.T("Even pages: {0} of {1}.", real, sides));
             if (sent.Contains(-1))
