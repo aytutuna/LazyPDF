@@ -139,6 +139,58 @@ final class PageTransferTests: XCTestCase {
         XCTAssertEqual(slow.pageCount, 2)
     }
 
+    func test_aPageThatTakesItsSizeFromThePagesNodeKeepsIt() async throws {
+        let source = try PdfDocument.open(Pdfs.text(3, "From"))
+        let root = try XCTUnwrap(source.dict(source.catalog, "Pages"))
+        root["MediaBox"] = PdfArray([PdfNumber(0), PdfNumber(0), PdfNumber(300), PdfNumber(400)])
+        for page in source.pages { _ = page.dictionary.remove("MediaBox") }
+        let (a, b) = try pair(from: try source.saveRewrite(PdfSaveOptions()), to: Pdfs.text(1, "To"))
+        XCTAssertFalse(a.tab.document.pages[1].dictionary.containsKey("MediaBox"))
+
+        await PageTransfer.copy(payload(a, [1]), to: b.tab, host: a.host)
+
+        let copied = b.tab.document.pages[1]
+        XCTAssertTrue(copied.dictionary.containsKey("MediaBox"))
+        XCTAssertEqual(copied.mediaBox, PdfRect(0, 0, 300, 400))
+    }
+
+    func test_aUserUnitComesAcrossWithThePage() async throws {
+        let (a, b) = try pair(to: Pdfs.text(1, "To"))
+        a.tab.document.pages[0].dictionary["UserUnit"] = PdfNumber(2)
+        try a.tab.commit("Unit")
+        let shown = PageGeometry(a.tab.document.pages[0])
+
+        await PageTransfer.copy(payload(a, [0]), to: b.tab, host: a.host)
+
+        let copied = PageGeometry(b.tab.document.pages[1])
+        XCTAssertEqual(copied.width, shown.width, accuracy: 0.01)
+        XCTAssertEqual(copied.height, shown.height, accuracy: 0.01)
+        XCTAssertNotEqual(copied.width, PageGeometry(b.tab.document.pages[0]).width, accuracy: 0.01)
+    }
+
+    func test_aFormFieldThatClashesWithOneInTheTargetIsRenamedAndBothAreKept() async throws {
+        let (a, b) = try pair(from: try FormPdfs.standard(), to: try FormPdfs.standard())
+        let before = PdfForm.read(b.tab.document).fields.map(\.name)
+
+        await PageTransfer.copy(payload(a, [0]), to: b.tab, host: a.host)
+
+        let names = PdfForm.read(b.tab.document).fields.map(\.name)
+        XCTAssertEqual(names.count, before.count * 2)
+        XCTAssertEqual(Set(names).count, names.count)
+        XCTAssertTrue(before.allSatisfy(names.contains))
+        XCTAssertTrue(a.host.problems.isEmpty)
+    }
+
+    func test_anEncryptedTargetStaysEncryptedAfterTheCopy() async throws {
+        let (a, b) = try pair(from: Pdfs.text(3, "From"), to: try Pdfs.restricted(.all, pages: 2))
+
+        await PageTransfer.copy(payload(a, [0]), to: b.tab, host: a.host)
+
+        XCTAssertEqual(b.tab.pageCount, 3)
+        XCTAssertTrue(b.tab.document.isEncrypted)
+        XCTAssertTrue(a.host.problems.isEmpty)
+    }
+
     func test_aSourceThatLimitsCopyingCannotBeCopiedFrom() async throws {
         let (a, b) = try pair(from: Pdfs.restricted(.print, pages: 3))
 

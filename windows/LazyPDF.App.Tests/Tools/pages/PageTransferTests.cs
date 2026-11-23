@@ -86,6 +86,41 @@ public sealed class PageTransferTests
     });
 
     [Fact]
+    public Task APageThatTakesItsSizeFromThePagesNodeKeepsIt() => Sta.Run(async () =>
+    {
+        var source = PdfDocument.Open(Pdfs.Text(3, "From"));
+        source.Dict(source.Catalog, "Pages")!["MediaBox"] = new PdfArray([new PdfNumber(0), new PdfNumber(0), new PdfNumber(300), new PdfNumber(400)]);
+        foreach (var page in source.Pages) page.Dictionary.Remove("MediaBox");
+        using var from = Tab(source.SaveRewrite(), "a.pdf");
+        using var to = Tab(Pdfs.Text(1, "Other"), "b.pdf");
+        Assert.False(from.Document.Pages[1].Dictionary.ContainsKey("MediaBox"));
+
+        await PageTransfer.CopyAsync(Pick(from, 1), to, Hosting(from, to));
+
+        var copied = to.Document.Pages[1];
+        Assert.True(copied.Dictionary.ContainsKey("MediaBox"));
+        Assert.Equal(300, copied.MediaBox.Width);
+        Assert.Equal(400, copied.MediaBox.Height);
+    });
+
+    [Fact]
+    public Task AFormFieldThatClashesWithOneInTheTargetIsRenamedAndBothAreKept() => Sta.Run(async () =>
+    {
+        using var from = Tab(FormPdfs.Standard(), "a.pdf");
+        using var to = Tab(FormPdfs.Standard(), "b.pdf");
+        var before = PdfForm.Read(to.Document, new FakeFonts()).Fields.Select(f => f.Name).ToList();
+        var host = Hosting(from, to);
+
+        await PageTransfer.CopyAsync(Pick(from, 0), to, host);
+
+        var names = PdfForm.Read(to.Document, new FakeFonts()).Fields.Select(f => f.Name).ToList();
+        Assert.Equal(before.Count * 2, names.Count);
+        Assert.Equal(names.Count, names.Distinct().Count());
+        Assert.All(before, name => Assert.Contains(name, names));
+        Assert.Empty(host.Problems);
+    });
+
+    [Fact]
     public Task ASourceThatLimitsCopyingIsRefusedAndTheTargetStaysAsItWas() => Sta.Run(async () =>
     {
         using var from = Tab(Locked(PdfPermissions.Print), "locked.pdf");
