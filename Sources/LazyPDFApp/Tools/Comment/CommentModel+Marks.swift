@@ -86,7 +86,9 @@ extension CommentModel {
     private func compose(_ tab: DocumentTab, _ page: Int, _ area: ViewRect, _ size: Double, _ text: String,
                          keep: @escaping (String) -> Bool) {
         guard let viewer else { return }
-        let box = ViewRect(area.x, area.y, max(area.width, 120), max(area.height, 40))
+        let sheet = viewer.pageSize(page)
+        let width = max(area.width, 120), height = max(area.height, 40)
+        let box = ViewRect(min(max(area.x, 0), max(sheet.width - width, 0)), min(max(area.y, 0), max(sheet.height - height, 0)), width, height)
         let opened = OverlayField(Self.fieldId, area: box, text: text, look: OverlayTextLook(size: size), multiline: true,
                                   label: L10n.t("Text of the mark")) { [weak self] typed in
             guard let self else { return }
