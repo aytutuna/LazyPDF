@@ -569,6 +569,18 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void ANoteWithAnotherIconNameKeepsItThroughALookChange()
+    {
+        using var f = new CommentFixture();
+        var note = f.Marker.Add(MarkTool.Note, 0, [new(200, 300)], Red);
+        note = f.Marker.SetIcon(note, "Star");
+
+        var faded = f.Marker.SetOpacity(f.Marker.Recolor(note, [0, 0, 1]), 0.5);
+
+        Assert.Equal("Star", faded.IconName);
+    }
+
+    [Fact]
     public void MovingOneEndOfALineLeavesTheOtherAndKeepsBothInTheBox()
     {
         using var f = new CommentFixture();

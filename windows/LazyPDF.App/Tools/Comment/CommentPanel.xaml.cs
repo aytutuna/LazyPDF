@@ -36,7 +36,8 @@ public partial class CommentPanel : ToolPanel
 
     private static readonly (string Name, string Value)[] Icons =
     [
-        (Loc.T("Note"), "Note"), (Loc.T("Comment"), "Comment"),
+        (Loc.T("Note"), "Note"), (Loc.T("Comment"), "Comment"), (Loc.T("Help"), "Help"), (Loc.T("Insert"), "Insert"),
+        (Loc.T("Key"), "Key"), (Loc.T("New paragraph"), "NewParagraph"), (Loc.T("Paragraph"), "Paragraph"),
     ];
 
     private static readonly (MarkTool Tool, string Text, string Glyph, string Hint)[] Tools =

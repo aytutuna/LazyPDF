@@ -19,12 +19,48 @@ internal sealed partial class AppearanceBuilder
             return c;
         }
         c.W.Rect(0.5, 0.5, w - 1, h - 1).FillAndStroke();
+        if (NoteGlyph(c, a.IconName, w, h)) return c;
         for (int i = 0; i < 3; i++)
         {
             double y = h * (0.72 - 0.2 * i);
             c.W.MoveTo(w * 0.2, y).LineTo(w * 0.8, y).Stroke();
         }
         return c;
+    }
+
+    private bool NoteGlyph(AppearanceCanvas c, string? name, double w, double h)
+    {
+        switch (name)
+        {
+            case "Help":
+                c.W.MoveTo(w * 0.35, h * 0.68).CurveTo(w * 0.35, h * 0.88, w * 0.65, h * 0.88, w * 0.65, h * 0.68)
+                    .CurveTo(w * 0.65, h * 0.55, w * 0.5, h * 0.52, w * 0.5, h * 0.38).Stroke();
+                c.Color(Black, stroke: false);
+                c.W.Rect(w * 0.45, h * 0.16, w * 0.1, h * 0.1).Fill();
+                return true;
+            case "Insert":
+                c.W.MoveTo(w * 0.2, h * 0.2).LineTo(w * 0.5, h * 0.8).LineTo(w * 0.8, h * 0.2).Stroke();
+                return true;
+            case "Key":
+                c.W.MoveTo(w * 0.15, h * 0.5).LineTo(w * 0.3, h * 0.67).LineTo(w * 0.45, h * 0.5).LineTo(w * 0.3, h * 0.33).Close().Stroke();
+                c.W.MoveTo(w * 0.45, h * 0.5).LineTo(w * 0.85, h * 0.5).Stroke();
+                c.W.MoveTo(w * 0.68, h * 0.5).LineTo(w * 0.68, h * 0.32).Stroke();
+                c.W.MoveTo(w * 0.82, h * 0.5).LineTo(w * 0.82, h * 0.32).Stroke();
+                return true;
+            case "NewParagraph":
+                c.W.MoveTo(w * 0.75, h * 0.8).LineTo(w * 0.75, h * 0.4).LineTo(w * 0.35, h * 0.4).Stroke();
+                c.Color(Black, stroke: false);
+                c.W.MoveTo(w * 0.18, h * 0.4).LineTo(w * 0.38, h * 0.58).LineTo(w * 0.38, h * 0.22).Close().Fill();
+                return true;
+            case "Paragraph":
+                c.W.MoveTo(w * 0.7, h * 0.8).LineTo(w * 0.45, h * 0.8).CurveTo(w * 0.2, h * 0.8, w * 0.2, h * 0.46, w * 0.45, h * 0.46)
+                    .LineTo(w * 0.55, h * 0.46).Stroke();
+                c.W.MoveTo(w * 0.55, h * 0.2).LineTo(w * 0.55, h * 0.8).Stroke();
+                c.W.MoveTo(w * 0.7, h * 0.2).LineTo(w * 0.7, h * 0.8).Stroke();
+                return true;
+            default:
+                return false;
+        }
     }
 
     private AppearanceCanvas Caret(PdfAnnotation a)
