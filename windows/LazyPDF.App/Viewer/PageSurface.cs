@@ -509,7 +509,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     /// <summary>The text of a page arrived. If it is the page in view, its value changed; if a reader asked for it, its text did.</summary>
     public void TextLoaded(int page, bool asked)
     {
-        if (page == _page) Tell(AutomationEvents.PropertyChanged, peer => peer.PageChanged());
+        if (page == _page) Tell(AutomationEvents.PropertyChanged, peer => peer.ValueChanged());
         if (asked) TextChanged();
     }
 

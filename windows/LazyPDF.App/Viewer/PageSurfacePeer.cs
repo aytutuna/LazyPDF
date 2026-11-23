@@ -78,8 +78,11 @@ internal sealed class PageSurfacePeer(PageSurface owner) : FrameworkElementAutom
     public void PageChanged()
     {
         RaisePropertyChangedEvent(AutomationElementIdentifiers.NameProperty, "", GetNameCore());
-        RaisePropertyChangedEvent(ValuePatternIdentifiers.ValueProperty, "", Value);
+        ValueChanged();
     }
+
+    /// <summary>The text of the page in view arrived or changed; its name did not.</summary>
+    public void ValueChanged() => RaisePropertyChangedEvent(ValuePatternIdentifiers.ValueProperty, "", Value);
 
     /// <summary>The links in view changed.</summary>
     public void LinksChanged()
