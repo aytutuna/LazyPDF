@@ -14,6 +14,7 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
     let viewer: ViewerModel
     private(set) lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
     private var menuPoint = NSPoint.zero
+    private var pageElements = PageElementCache<NSAccessibilityElement>()
 
     init(viewer: ViewerModel) {
         self.viewer = viewer
@@ -176,20 +177,24 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
     // The text views of open fields follow, so a person using VoiceOver can reach what is being typed.
     override func accessibilityChildren() -> [Any]? {
         let offset = viewer.offset
-        let pages = viewer.visiblePages.compactMap { page -> NSAccessibilityElement? in
-            guard let matrix = viewer.pageToView(page) else { return nil }
-            let size = viewer.pageSize(page)
-            let area = PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))
+        let visible = viewer.visiblePages.filter { viewer.pageToView($0) != nil }
+        let pages = pageElements.elements(for: visible, epoch: viewer.textEpoch) { page in
             let element = NSAccessibilityElement()
             element.setAccessibilityParent(self)
             element.setAccessibilityRole(.group)
             element.setAccessibilityLabel(L10n.t("Page {0} of {1}", page + 1, viewer.pageCount))
+            return element
+        }
+        // The elements stay, so what moves with the scroll and the text is set on each query.
+        for (page, element) in zip(visible, pages) {
+            guard let matrix = viewer.pageToView(page) else { continue }
+            let size = viewer.pageSize(page)
+            let area = PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))
             element.setAccessibilityValue(viewer.pageText(page))
             let local = NSRect(x: area.x + offset.x, y: area.y + offset.y, width: area.width, height: area.height)
             if let window {
                 element.setAccessibilityFrame(window.convertToScreen(convert(local, to: nil)))
             }
-            return element
         }
         return pages as [Any] + fields.views as [Any]
     }

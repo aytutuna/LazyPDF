@@ -41,6 +41,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     private var selecting = false
     private var editMenu: UIEditMenuInteraction?
     private lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
+    private var pageElements = PageElementCache<UIAccessibilityElement>()
     private let toolPress = UILongPressGestureRecognizer()
     private let handlePan = UIPanGestureRecognizer()
     private var handleDragging = false
@@ -425,15 +426,19 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     // The text views of open fields follow, so a person using VoiceOver can reach what is being typed.
     override var accessibilityElements: [Any]? {
         get {
-            let pages = viewer.visiblePages.compactMap { page -> UIAccessibilityElement? in
-                guard let matrix = viewer.pageToView(page) else { return nil }
-                let size = viewer.pageSize(page)
-                let area = PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))
+            let visible = viewer.visiblePages.filter { viewer.pageToView($0) != nil }
+            let pages = pageElements.elements(for: visible, epoch: viewer.textEpoch) { page in
                 let element = UIAccessibilityElement(accessibilityContainer: self)
                 element.accessibilityLabel = L10n.t("Page {0} of {1}", page + 1, viewer.pageCount)
+                return element
+            }
+            // The elements stay, so what moves with the scroll and the text is set on each query.
+            for (page, element) in zip(visible, pages) {
+                guard let matrix = viewer.pageToView(page) else { continue }
+                let size = viewer.pageSize(page)
+                let area = PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))
                 element.accessibilityValue = viewer.pageText(page)
                 element.accessibilityFrameInContainerSpace = CGRect(x: area.x, y: area.y, width: area.width, height: area.height)
-                return element
             }
             return pages as [Any] + fields.views as [Any]
         }

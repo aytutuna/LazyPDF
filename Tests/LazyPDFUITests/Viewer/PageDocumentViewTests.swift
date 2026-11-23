@@ -134,6 +134,47 @@ final class PageDocumentViewTests: XCTestCase {
         XCTAssertEqual(names.first, "Page 1 of 2")
     }
 
+    private func pageElements(_ shown: Shown) -> [NSAccessibilityElement] {
+        (shown.view.accessibilityChildren() ?? []).compactMap { $0 as? NSAccessibilityElement }
+    }
+
+    func test_aQueryFindsTheSameElementsAsTheOneBefore() async throws {
+        let shown = try await open()
+
+        let first = pageElements(shown)
+        let second = pageElements(shown)
+
+        XCTAssertFalse(first.isEmpty)
+        XCTAssertEqual(first.count, second.count)
+        XCTAssertTrue(zip(first, second).allSatisfy { $0 === $1 })
+    }
+
+    func test_theElementsAreMadeAgainAfterTheTextIsReset() async throws {
+        let shown = try await open()
+        let before = pageElements(shown)
+
+        shown.viewer.resetText()
+        let after = pageElements(shown)
+
+        XCTAssertEqual(before.count, after.count)
+        XCTAssertFalse(before.first === after.first)
+    }
+
+    func test_theElementsAreMadeAgainAfterANewRevision() async throws {
+        let shown = try await open()
+        let before = pageElements(shown)
+        let tab = try XCTUnwrap(shown.viewer.tab)
+        var metadata = DocumentMetadata.read(tab.session.document)
+        metadata.title = "New title"
+        try metadata.write(tab.session.document)
+        let epoch = shown.viewer.textEpoch
+
+        XCTAssertTrue(try tab.commit("Properties"))
+        await until { shown.viewer.textEpoch != epoch }
+
+        XCTAssertFalse(before.first === pageElements(shown).first)
+    }
+
     func test_theMenuOffersCopyLookUpShareAndSelectAll() async throws {
         let shown = try await open()
         let event = try XCTUnwrap(NSEvent.mouseEvent(with: .rightMouseDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
