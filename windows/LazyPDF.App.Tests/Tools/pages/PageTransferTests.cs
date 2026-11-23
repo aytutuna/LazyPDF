@@ -1,4 +1,5 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Comment;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
@@ -213,6 +214,35 @@ public sealed class PageTransferTests
 
         Assert.Equal(2, to.PageCount);
         Assert.Single(host.Problems);
+    });
+
+    private sealed class UnfinishedRenderer : IDocumentRenderer
+    {
+        public bool Load(PdfEditSession session, string? password) => true;
+
+        public Task<bool> LoadAsync(PdfEditSession session, string? password) => new TaskCompletionSource<bool>().Task;
+
+        public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi) => null;
+
+        public void Dispose() { }
+    }
+
+    [Fact]
+    public Task ATargetThatIsStillLoadingIsRefusedWithANotice() => Sta.Run(async () =>
+    {
+        using var from = Open(2, "a.pdf");
+        using var to = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), new UnfinishedRenderer(), null, "b.pdf");
+        var host = Hosting(from, to);
+        Pdfs.Retitle(to.Session, "New title");
+        to.Commit("Properties");
+
+        await PageTransfer.CopyAsync(Pick(from, 0), to, host);
+
+        Assert.Equal(2, to.PageCount);
+        var problem = Assert.Single(host.Problems);
+        Assert.Equal("b.pdf is still loading. Try again in a moment.", problem.Text);
     });
 
     [Fact]
