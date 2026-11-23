@@ -207,7 +207,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         // The session bytes are already new; the search must not reuse the text read from the old ones.
         _text = null;
         _source = null;
-        ForgetRequests();
+        TextReset();
         if (Search.Query.Length > 0) _ = Search.Restart();
         RefreshBar();
         StateChanged?.Invoke(this, EventArgs.Empty);

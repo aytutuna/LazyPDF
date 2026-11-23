@@ -42,7 +42,11 @@ public partial class PageViewer : ITextHost
     Caret? ITextHost.AutomationCaret
     {
         get => _automationCaret;
-        set => _automationCaret = value;
+        set
+        {
+            _automationCaret = value;
+            if (value is not null) Surface.TellSelection();
+        }
     }
 
     TextPage? ITextHost.Peek(int page)
@@ -111,15 +115,17 @@ public partial class PageViewer : ITextHost
     // A page arrived from the pool, whoever asked for it.
     private void PageArrived(int page)
     {
-        _wanted.Remove(page);
-        Surface.TextLoaded(page);
+        Surface.TextLoaded(page, _wanted.Remove(page));
     }
 
-    private void ForgetRequests()
+    // What a reader read is gone; ranges it holds stay valid while the tab and its revision do, and read the new text.
+    private void TextReset()
     {
         _pending.Clear();
         _wanted.Clear();
         _readRange = null;
         _unreadable = false;
+        _automationCaret = null;
+        Surface.TextReset();
     }
 }

@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Automation.Peers;
+using System.Windows.Input;
+using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
@@ -206,5 +209,115 @@ public sealed class TextHostTests
         Assert.Null(missing);
         Assert.True(watch.ElapsedMilliseconds < 2000);
         await Sta.Until(() => host.Peek(25) is not null);
+    });
+
+    // What a screen reader would hear, from the start of the call; the events the opening queued are let through first.
+    private static async Task<List<AutomationEvents>> Listen(PageViewer viewer)
+    {
+        await viewer.Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var told = new List<AutomationEvents>();
+        viewer.Surface.Told += told.Add;
+        return told;
+    }
+
+    [Fact]
+    public Task APreloadForPaintingTellsNoTextChange() => Sta.Run(async () =>
+    {
+        var (viewer, _, tab) = Open(30);
+        using var _ = tab;
+        var told = await Listen(viewer);
+
+        typeof(PageViewer).GetMethod("PreloadText", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, []);
+        await Sta.Until(() => Source(viewer) is { } source && viewer.VisiblePages.Take(8).All(p => source.Peek(p) is not null));
+        await Task.Delay(200);
+
+        Assert.DoesNotContain(AutomationEvents.TextPatternOnTextChanged, told);
+    });
+
+    [Fact]
+    public Task APageAReaderAskedForTellsOneTextChange() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(5);
+        using var _ = tab;
+        var told = await Listen(viewer);
+
+        Assert.Null(host.Peek(3));
+        await Sta.Until(() => host.Peek(3) is not null);
+        await Task.Delay(200);
+
+        Assert.Single(told, AutomationEvents.TextPatternOnTextChanged);
+    });
+
+    [Fact]
+    public Task TheValueOfThePageInViewChangesWhenItsTextArrives() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(3);
+        using var _ = tab;
+        var told = await Listen(viewer);
+
+        Assert.Null(host.Peek(0));
+        await Sta.Until(() => host.Peek(0) is not null);
+
+        Assert.Contains(AutomationEvents.PropertyChanged, told);
+    });
+
+    [Fact]
+    public Task AResetTellsTextAndStructureAndForgetsTheReadersPlace() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(2);
+        using var _ = tab;
+        var told = await Listen(viewer);
+        host.AutomationCaret = new Caret(0, 1);
+        told.Clear();
+
+        Call(viewer, "Tab_Changed");
+
+        Assert.Null(host.AutomationCaret);
+        Assert.Contains(AutomationEvents.StructureChanged, told);
+        await Task.Delay(200);
+        Assert.Single(told, AutomationEvents.TextPatternOnTextChanged);
+
+        told.Clear();
+        viewer.Show(null);
+
+        Assert.Contains(AutomationEvents.StructureChanged, told);
+        await Task.Delay(200);
+        Assert.Single(told, AutomationEvents.TextPatternOnTextChanged);
+    });
+
+    [Fact]
+    public Task AChangeOfSelectionIsToldOnceAndSoIsTheReadersOwnPlace() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(2);
+        using var _ = tab;
+        var told = await Listen(viewer);
+
+        viewer.SelectAll();
+        Assert.Single(told, AutomationEvents.TextPatternOnTextSelectionChanged);
+
+        host.AutomationCaret = new Caret(1, 0);
+        Assert.Equal(2, told.Count(e => e == AutomationEvents.TextPatternOnTextSelectionChanged));
+    });
+
+    [Fact]
+    public Task TheCaretIsToldToAReaderThatListensAndSpokenOtherwise() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(1);
+        using var _ = tab;
+        await viewer.GetTextAsync(0);
+        await viewer.ToggleCaret();
+        var told = await Listen(viewer);
+
+        Assert.True(viewer.MoveCaret(Key.Right, false, false));
+
+        Assert.Single(told, AutomationEvents.TextPatternOnTextSelectionChanged);
+        Assert.Equal("H", viewer.Speech.Text);
+
+        viewer.Speech.Text = "";
+        viewer.Surface.Listening = kind => kind == AutomationEvents.TextPatternOnTextSelectionChanged;
+        Assert.True(viewer.MoveCaret(Key.Right, false, false));
+
+        Assert.Equal("", viewer.Speech.Text);
+        Assert.Equal(2, told.Count(e => e == AutomationEvents.TextPatternOnTextSelectionChanged));
     });
 }

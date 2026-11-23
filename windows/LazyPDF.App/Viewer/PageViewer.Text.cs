@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -60,6 +61,7 @@ public partial class PageViewer
             _selectionGeometry.Clear();
             Surface.InvalidateVisual();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
+            Surface.TellSelection();
         };
         _preload.Tick += (_, _) =>
         {
@@ -73,14 +75,13 @@ public partial class PageViewer
     {
         _text = null;
         _source = null;
-        ForgetRequests();
+        TextReset();
         _links.Clear();
         _focusLink = null;
         _selectionGeometry.Clear();
         _hitGeometry.Clear();
         CancelPendingSelection();
         _selection.Clear();
-        _automationCaret = null;
         _caretMode = false;
     }
 
@@ -326,7 +327,8 @@ public partial class PageViewer
             if (extend) _selection.Extend(caret);
             else _selection.Set(caret, caret);
             RevealCaret(caret);
-            if (caret.Page == focus.Page) Speak(Moved(text, key, index, Math.Min(caret.Index, count)));
+            // A reader that follows the selection says the move itself.
+            if (caret.Page == focus.Page && !Surface.Listening(AutomationEvents.TextPatternOnTextSelectionChanged)) Speak(Moved(text, key, index, Math.Min(caret.Index, count)));
         }
         return true;
     }

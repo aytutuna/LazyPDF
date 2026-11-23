@@ -498,10 +498,47 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         TellLinks();
     }
 
-    /// <summary>The text of a page arrived; if it is the page in view, its value for a screen reader changed.</summary>
-    public void TextLoaded(int page)
+    /// <summary>What screen readers are told of the text, whether or not one listens; tests watch it.</summary>
+    internal event Action<AutomationEvents>? Told;
+
+    /// <summary>Whether a screen reader listens for an event; tests stand in for one.</summary>
+    internal Func<AutomationEvents, bool> Listening { get; set; } = AutomationPeer.ListenerExists;
+
+    private bool _textChangeQueued;
+
+    /// <summary>The text of a page arrived. If it is the page in view, its value changed; if a reader asked for it, its text did.</summary>
+    public void TextLoaded(int page, bool asked)
     {
-        if (page == _page && AutomationPeer.ListenerExists(AutomationEvents.PropertyChanged) && UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) peer.PageChanged();
+        if (page == _page) Tell(AutomationEvents.PropertyChanged, peer => peer.PageChanged());
+        if (asked) TextChanged();
+    }
+
+    /// <summary>The text a reader can read changed; one event goes out however many changes there are in a turn of the dispatcher.</summary>
+    public void TextChanged()
+    {
+        if (_textChangeQueued) return;
+        _textChangeQueued = true;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+        {
+            _textChangeQueued = false;
+            Tell(AutomationEvents.TextPatternOnTextChanged, peer => peer.RaiseAutomationEvent(AutomationEvents.TextPatternOnTextChanged));
+        });
+    }
+
+    /// <summary>What was read is gone: another file is shown or the file changed.</summary>
+    public void TextReset()
+    {
+        TextChanged();
+        Tell(AutomationEvents.StructureChanged, peer => peer.RaiseAutomationEvent(AutomationEvents.StructureChanged));
+    }
+
+    public void TellSelection() =>
+        Tell(AutomationEvents.TextPatternOnTextSelectionChanged, peer => peer.RaiseAutomationEvent(AutomationEvents.TextPatternOnTextSelectionChanged));
+
+    private void Tell(AutomationEvents kind, Action<PageSurfacePeer> raise)
+    {
+        Told?.Invoke(kind);
+        if (Listening(kind) && UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) raise(peer);
     }
 
     private void TellLinks()
