@@ -78,6 +78,27 @@ public sealed class DocumentUnits
         return new Caret(pos.Page, _pages(pos.Page) is { } text ? text.CharStart(pos.Offset) : 0);
     }
 
+    /// <summary>
+    /// The carets of a selection that covers the stretch, snapped outwards to whole characters: the start to the
+    /// character holding its unit, the end to the one after the character holding its last unit. Null when the
+    /// stretch covers no character or a page it needs is not loaded.
+    /// </summary>
+    public (Caret Anchor, Caret Focus)? Selection(DocPos start, DocPos end)
+    {
+        start = Normalize(start);
+        end = Normalize(end);
+        if (start >= end || start.Page >= _count) return null;
+        Caret from, to;
+        if (_pages(start.Page) is { } first) from = new Caret(start.Page, first.CharStart(start.Offset));
+        else if (start.Offset == 0) from = new Caret(start.Page, 0);
+        else return null;
+        if (end.Page >= _count) to = new Caret(_count - 1, int.MaxValue);
+        else if (_pages(end.Page) is { } last) to = new Caret(end.Page, last.CharEnd(end.Offset));
+        else if (end.Offset == 0) to = new Caret(end.Page, 0);
+        else return null;
+        return to > from ? (from, to) : null;
+    }
+
     public Walk Move(DocPos from, TextUnit unit, int count)
     {
         var pos = Normalize(from);

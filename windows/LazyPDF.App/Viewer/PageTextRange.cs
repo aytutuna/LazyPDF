@@ -3,6 +3,7 @@ using System.Windows.Automation;
 using System.Windows.Automation.Provider;
 using System.Windows.Automation.Text;
 using LazyPDF.App.Documents;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Viewer;
 
@@ -140,10 +141,41 @@ internal sealed class PageTextRange : ITextRangeProvider
         return text.ToString();
     }
 
-    // TODO: search and attributes come with the next step; until then they report nothing.
+    /// <summary>
+    /// The first (last when <paramref name="backward"/>) hit inside the range. It looks at the loaded pages only and
+    /// stops at the first one that is not, which is requested; the answer is then null, as when nothing is found.
+    /// </summary>
     public ITextRangeProvider? FindText(string text, bool backward, bool ignoreCase)
     {
-        Checked();
+        var (host, _) = Checked();
+        if (text.Length == 0) return null;
+        var options = new TextSearchOptions(MatchCase: !ignoreCase);
+        int last = Math.Min(_end.Offset == 0 && _end.Page > _start.Page ? _end.Page - 1 : _end.Page, host.PageCount - 1);
+        for (int i = 0, count = last - _start.Page + 1; i < count; i++)
+        {
+            int page = backward ? last - i : _start.Page + i;
+            if (host.Peek(page) is not { } loaded) return null;
+            IReadOnlyList<SearchMatch> hits;
+            try
+            {
+                hits = TextSearch.Find(loaded, text, options);
+            }
+            catch (OperationCanceledException)
+            {
+                continue;
+            }
+            var units = PageUiaText.Of(loaded);
+            (DocPos From, DocPos To)? found = null;
+            foreach (var hit in hits)
+            {
+                if (hit.Range.End <= hit.Range.Start) continue;
+                var (from, to) = (new DocPos(page, units.OffsetOf(hit.Range.Start)), new DocPos(page, units.EndOf(hit.Range.End - 1)));
+                if (to <= from || from < _start || to > _end) continue;
+                found = (from, to);
+                if (!backward) break;
+            }
+            if (found is var (a, b)) return Create(host, a, b, Provider);
+        }
         return null;
     }
 
@@ -153,10 +185,51 @@ internal sealed class PageTextRange : ITextRangeProvider
         return null;
     }
 
+    /// <summary>
+    /// Font name, size and color of the characters of the range, reading direction, and read-only. Hidden is not
+    /// reported: OCR text is drawn invisible and is the text to read.
+    /// </summary>
     public object GetAttributeValue(int attribute)
     {
-        Checked();
-        return AutomationElement.NotSupported;
+        var (host, _) = Checked();
+        if (attribute == TextPatternIdentifiers.IsReadOnlyAttribute.Id) return true;
+        Func<TextPage, TextChar, object>? read = null;
+        if (attribute == TextPatternIdentifiers.FontNameAttribute.Id) read = (_, c) => c.Font?.Name ?? "";
+        else if (attribute == TextPatternIdentifiers.FontSizeAttribute.Id) read = (_, c) => Math.Round(c.Size, 2);
+        else if (attribute == TextPatternIdentifiers.ForegroundColorAttribute.Id) read = (_, c) => c.Color.R | c.Color.G << 8 | c.Color.B << 16;
+        else if (attribute == TextPatternIdentifiers.TextFlowDirectionsAttribute.Id) read = (page, c) => page.Lines[c.Line] switch
+        {
+            { IsVertical: true } => FlowDirections.Vertical,
+            { IsRtl: true } => FlowDirections.RightToLeft,
+            _ => FlowDirections.Default,
+        };
+        if (read is null) return AutomationElement.NotSupported;
+        object? value = null;
+        foreach (var (page, c) in Characters(host))
+        {
+            var next = read(page, c);
+            if (value is null) value = next;
+            else if (!value.Equals(next)) return TextPattern.MixedAttributeValue;
+        }
+        return value ?? AutomationElement.NotSupported;
+    }
+
+    // The characters with text that the range covers on the pages that are loaded, up to the first one that is not; an empty range has the one it is in front of.
+    private IEnumerable<(TextPage Page, TextChar Char)> Characters(ITextHost host)
+    {
+        for (int page = _start.Page; page < host.PageCount && (page < _end.Page || (page == _end.Page && _end.Offset > 0) || _start == _end); page++)
+        {
+            if (host.Peek(page) is not { } loaded) yield break;
+            var text = PageUiaText.Of(loaded);
+            int first = text.CharStart(page == _start.Page ? _start.Offset : 0);
+            int to = _start == _end ? first + 1 : text.CharEnd(page == _end.Page ? _end.Offset : text.Length);
+            for (int i = first; i < Math.Min(to, loaded.Chars.Count); i++)
+            {
+                var c = loaded.Chars[i];
+                if (c.Text.Length > 0 && !c.IsSpace && c.Font is not null) yield return (loaded, c);
+            }
+            if (_start == _end) yield break;
+        }
     }
 
     public double[] GetBoundingRectangles()
@@ -171,11 +244,19 @@ internal sealed class PageTextRange : ITextRangeProvider
         Provider?.Reveal(_start, _end, alignToTop);
     }
 
-    // A place only: the reader's position is kept for GetSelection and the viewer's own selection is left alone.
+    // An empty range is only a place the reader keeps for GetSelection, so the user's own selection is left alone.
     public void Select()
     {
         var (host, units) = Checked();
-        if (_start == _end) host.AutomationCaret = units.ToCaret(_start);
+        if (_start == _end)
+        {
+            host.AutomationCaret = units.ToCaret(_start);
+            Provider?.Reveal(_start, _end, true);
+        }
+        else if (units.Selection(_start, _end) is { } selection)
+        {
+            host.SetSelection(selection.Anchor, selection.Focus);
+        }
     }
 
     public void AddToSelection() => throw new InvalidOperationException("The text takes one selection.");

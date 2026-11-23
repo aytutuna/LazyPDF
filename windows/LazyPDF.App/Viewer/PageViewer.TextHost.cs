@@ -28,6 +28,15 @@ public partial class PageViewer : ITextHost
 
     (Caret Anchor, Caret Focus)? ITextHost.Selection => _selection.IsEmpty ? null : (_selection.Anchor, _selection.Focus);
 
+    bool ITextHost.SetSelection(Caret anchor, Caret focus)
+    {
+        if (_tab is null) return false;
+        // A drag or double click still under way would take the selection back.
+        CancelPendingSelection();
+        _selection.Set(anchor, focus);
+        return true;
+    }
+
     Caret? ITextHost.BrowsingCaret => _caretMode ? _selection.Focus : null;
 
     Caret? ITextHost.AutomationCaret

@@ -143,6 +143,19 @@ public sealed class PageUiaText
     /// </summary>
     public int OffsetOf(int character) => _offsets[Math.Clamp(character, 0, _offsets.Length - 1)];
 
+    /// <summary>The offset just after the last unit of a character, or of the last character before it that is in the string; 0 when there is none.</summary>
+    public int EndOf(int character)
+    {
+        for (int i = Math.Min(character, _offsets.Length - 2); i >= 0; i--)
+        {
+            int at = _offsets[i];
+            if (at >= _units.Length || _units[at] != i) continue;
+            while (at < _units.Length && _units[at] == i) at++;
+            return at;
+        }
+        return 0;
+    }
+
     /// <summary>The first character a range starting at <paramref name="offset"/> covers: the one that owns that unit, or the next one after a separator.</summary>
     public int CharStart(int offset)
     {

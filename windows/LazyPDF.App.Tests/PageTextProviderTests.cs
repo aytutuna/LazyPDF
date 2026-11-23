@@ -458,6 +458,30 @@ public sealed class PageTextProviderTests
         await drawn.Task;
     });
 
+    [Fact]
+    public Task SelectingARangeSelectsInTheViewerWithoutCaretBrowsing() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdfs.Text(2));
+        using var _ = o;
+        int changes = 0;
+        o.Viewer.SelectionChanged += (_, _) => changes++;
+        var press = typeof(PageViewer).GetField("_press", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        int before = (int)press.GetValue(o.Viewer)!;
+        var range = Stretch(o, 1, "tests");
+
+        range.Select();
+
+        Assert.True(o.Viewer.HasSelection);
+        Assert.Equal(1, changes);
+        Assert.Null(o.Host.BrowsingCaret);
+        Assert.True((int)press.GetValue(o.Viewer)! > before);
+        var run = Assert.Single(await o.Viewer.GetSelectionAsync());
+        Assert.Equal("tests", run.Text);
+        Assert.Equal(1, run.Page);
+        var selection = Assert.Single(o.Provider.GetSelection());
+        Assert.Equal("tests", selection.GetText(-1));
+    });
+
     // A renderer whose load waits for the gate once one is set, so a test can stand between a tab's change and its drawing.
     private sealed class SlowRenderer : IDocumentRenderer
     {

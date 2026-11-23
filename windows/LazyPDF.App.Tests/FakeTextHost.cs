@@ -19,6 +19,13 @@ internal sealed class FakeTextHost(DocumentTab? tab, int pageCount, Func<int, Te
 
     public (Caret Anchor, Caret Focus)? Selection { get; set; }
 
+    public bool SetSelection(Caret anchor, Caret focus)
+    {
+        Selection = (anchor, focus);
+        AutomationCaret = null;
+        return true;
+    }
+
     public Caret? BrowsingCaret { get; set; }
 
     public Caret? AutomationCaret { get; set; }

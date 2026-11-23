@@ -27,6 +27,9 @@ public interface ITextHost
     /// <summary>The selected text, or null when nothing is selected.</summary>
     (Caret Anchor, Caret Focus)? Selection { get; }
 
+    /// <summary>Selects from one place to the other as the user would with the mouse, except that caret browsing is not turned on. False when no file is shown.</summary>
+    bool SetSelection(Caret anchor, Caret focus);
+
     /// <summary>The caret of caret browsing, or null when it is off.</summary>
     Caret? BrowsingCaret { get; }
 
