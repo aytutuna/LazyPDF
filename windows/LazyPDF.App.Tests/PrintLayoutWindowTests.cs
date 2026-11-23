@@ -34,6 +34,18 @@ public sealed class PrintLayoutWindowTests
         Assert.False(window.Current()!.Value.Layout.RightToLeft));
 
     [Fact]
+    public Task TheOddAndEvenItemsSayPagesUntilTheLayoutImposes() => With(window =>
+    {
+        Assert.Equal("Odd pages only", window.OddItem.Content);
+        Assert.Equal("Even pages only", window.EvenItem.Content);
+        window.BookletBox.IsChecked = true;
+        Assert.Equal("Odd sides only", window.OddItem.Content);
+        Assert.Equal("Even sides only", window.EvenItem.Content);
+        window.BookletBox.IsChecked = false;
+        Assert.Equal("Odd pages only", window.OddItem.Content);
+    });
+
+    [Fact]
     public Task AChangeUpdatesTheSummaryAndTheHint() => With(window =>
     {
         Assert.Equal("Two-sided printing must flip on the short edge.", window.SidesHint.Text);

@@ -64,6 +64,9 @@ internal sealed partial class PrintLayoutWindow : Window
         bool imposes = BookletBox.IsChecked == true || (int)PerSheetBox.SelectedItem > 1;
         PerSheetBox.IsEnabled = BookletBox.IsChecked != true;
         BindingBox.IsEnabled = GapBox.IsEnabled = BorderBox.IsEnabled = imposes;
+        // Without a layout a side is a page counted from the first one printed.
+        OddItem.Content = imposes ? Loc.T("Odd sides only") : Loc.T("Odd pages only");
+        EvenItem.Content = imposes ? Loc.T("Even sides only") : Loc.T("Even pages only");
         var current = Current();
         string? problem = current is null ? Loc.T("Type a gap from 0 to 25 mm.") : current.Value.Problem;
         bool problemChanged = GapProblem.Text != (problem ?? "");

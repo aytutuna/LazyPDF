@@ -37,8 +37,8 @@
             <TextBlock Text="{loc:T Which sides}" FontWeight="SemiBold" Style="{StaticResource BodyText}" Margin="0,20,0,4" />
             <ComboBox x:Name="ParityBox" AutomationProperties.Name="{loc:T Which sides}" SelectionChanged="Changed">
                 <ComboBoxItem Content="{loc:T All pages}" />
-                <ComboBoxItem Content="{loc:T Odd sides only}" />
-                <ComboBoxItem Content="{loc:T Even sides only}" />
+                <ComboBoxItem x:Name="OddItem" Content="{loc:T Odd sides only}" />
+                <ComboBoxItem x:Name="EvenItem" Content="{loc:T Even sides only}" />
             </ComboBox>
             <CheckBox x:Name="ReverseBox" Content="{loc:T Last side first}" Margin="0,12,0,0" Checked="Changed" Unchecked="Changed"
                       AutomationProperties.Name="{loc:T Last side first}" />
