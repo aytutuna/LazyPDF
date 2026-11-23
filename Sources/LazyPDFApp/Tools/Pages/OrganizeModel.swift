@@ -125,13 +125,13 @@ public final class OrganizeModel {
     }
 
     public func paste() async {
-        guard let tab, let pdf = PageClipboard.shared.pdf, !pdf.isEmpty else { return }
+        guard let tab, let host, let pdf = PageClipboard.shared.pdf, !pdf.isEmpty else { return }
         let at = insertIndex
         let count = PageClipboard.shared.count
-        await grid.applyAsync(tab, busy: L10n.t("Adding pages"), label: L10n.t("Paste pages"), select: Array(at..<at + count),
-                              status: L10n.plural(count, one: "{0} page pasted", other: "{0} pages pasted")) { document in
-            let source = try PdfDocument.open(pdf)
-            try Self.importAll(document, source, min(at, document.pages.count))
+        await PageJobs.gatedAsync(tab, host) { [weak self] in
+            guard await PageTransfer.paste(tab, host, pdf, count: count, at: at) else { return false }
+            self?.grid.rebuilt(tab, select: Array(at..<at + count))
+            return true
         }
     }
 

@@ -20,10 +20,7 @@ extension PageGrid {
     func applyNow(_ tab: DocumentTab, _ host: ToolHost, _ label: String, select: [Int]?, status: String,
                   afterwards: (@MainActor () -> Void)? = nil, _ change: (PdfDocument) throws -> Void) -> Bool {
         guard PageJobs.apply(tab, host, label, change, status) else { return false }
-        if self.tab === tab {
-            rebuild(select: select)
-            onRebuild?()
-        }
+        rebuilt(tab, select: select)
         afterwards?()
         return true
     }
@@ -40,13 +37,17 @@ extension PageGrid {
     func applyAsyncNow(_ tab: DocumentTab, _ host: ToolHost, busy: String, label: String, select: [Int]?, status: String,
                        afterwards: (@MainActor () -> Void)? = nil, _ change: @escaping @Sendable (PdfDocument) throws -> Void) async -> Bool {
         guard await PageJobs.applyAsync(tab, host, busy: busy, label: label, change, status: status) else { return false }
-        // The person may have gone to another tab while it ran; its pages are then not on show to choose.
-        if self.tab === tab {
-            rebuild(select: select)
-            onRebuild?()
-        }
+        rebuilt(tab, select: select)
         afterwards?()
         return true
+    }
+
+    /// Makes the cells again after `tab` was changed. The person may have gone to another tab while the change ran; its pages
+    /// are then not on show to choose.
+    func rebuilt(_ tab: DocumentTab, select: [Int]?) {
+        guard self.tab === tab else { return }
+        rebuild(select: select)
+        onRebuild?()
     }
 
     public func turn(_ pages: [Int], _ degrees: Int) {
@@ -109,12 +110,7 @@ extension PageGrid {
 
     public func extract(_ pages: [Int]) async {
         guard let tab, let host, !pages.isEmpty else { return }
-        let failed = Problem(L10n.t("Pages not extracted"), L10n.t("The pages could not be copied into a new file. Try fewer pages."))
-        guard let bytes = await PageJobs.copyOut(tab, host, pages, busy: L10n.t("Extracting pages"), failed: failed) else { return }
-        let stem = (tab.title as NSString).deletingPathExtension
-        await host.openNew(bytes, title: L10n.t("{0} extract.pdf", stem), password: nil, certificate: nil)
-        host.setStatus(L10n.plural(pages.count, one: "{0} page extracted", other: "{0} pages extracted"))
-        CopyRules.noteUnprotected(tab.document, host)
+        await PageTransfer.toNewTab(PageDragPayload(tab: tab, grid: self, pages: pages), host, files: true)
     }
 
     public func blank(_ place: InsertPlace) {
