@@ -27,7 +27,11 @@ public sealed class FillLayerTurnTests
             {
                 Entered.Add((name, value));
                 return true;
-            }, (_, _) => true, _ => { }, _ => { }, _ => { });
+            }, (name, values) =>
+            {
+                Chosen.Add((name, values.Count));
+                return true;
+            }, _ => { }, _ => { }, _ => { });
             Layer.Show(FormPdfs.Read(Tab), true);
             Stand.Window.Activate();
         }
@@ -37,6 +41,19 @@ public sealed class FillLayerTurnTests
         public FormStand Stand { get; }
         public FillLayer Layer { get; }
         public List<(string Name, string? Value)> Entered { get; } = [];
+        public List<(string Name, int Count)> Chosen { get; } = [];
+
+        // A left press on the control as the pointer would raise it; true when something handled it.
+        public static bool Press(FrameworkElement control)
+        {
+            var press = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+            {
+                RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent,
+                Source = control,
+            };
+            control.RaiseEvent(press);
+            return press.Handled;
+        }
 
         public FrameworkElement Control(string name) =>
             All(Stand.Window).First(e => AutomationProperties.GetName(e) == name);
@@ -233,6 +250,61 @@ public sealed class FillLayerTurnTests
         Assert.True(Panel.GetZIndex(Rig.Overlay(text)) > Panel.GetZIndex(next));
         Keyboard.ClearFocus();
         Assert.Equal(Panel.GetZIndex(next), Panel.GetZIndex(Rig.Overlay(text)));
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(90)]
+    [InlineData(270)]
+    public Task TheFirstPressOnAnIdleTurnedFieldOnlyFocusesIt(int rotation) => Sta.Run(() =>
+    {
+        using var rig = new Rig(rotation);
+        var text = rig.Control("name");
+
+        Assert.True(Rig.Press(text));
+
+        Assert.True(text.IsKeyboardFocusWithin);
+        Assert.IsType<RotateTransform>(Rig.Frame(text).RenderTransform);
+        Assert.False(Rig.Press(text));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AtViewZeroAPressIsLeftToTheControl() => Sta.Run(() =>
+    {
+        using var rig = new Rig(0);
+        var text = rig.Control("name");
+
+        Assert.False(Rig.Press(text));
+        Assert.False(text.IsKeyboardFocusWithin);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheFirstPressOnAnIdleListSelectsNothing() => Sta.Run(() =>
+    {
+        using var rig = new Rig(90);
+        var list = (ListBox)rig.Control("langs");
+
+        Assert.True(Rig.Press(list));
+
+        Assert.Empty(rig.Chosen);
+        Assert.True(list.IsKeyboardFocusWithin);
+        Assert.Equal(1.0, list.Opacity);
+        list.SelectedIndex = 1;
+        Assert.Equal([("langs", 1)], rig.Chosen);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task KeyboardFocusIsNotSwallowedAndTurnsAtOnce() => Sta.Run(() =>
+    {
+        using var rig = new Rig(180);
+        var combo = rig.Control("city");
+
+        Assert.True(combo.Focus());
+
+        Assert.IsType<RotateTransform>(Rig.Frame(combo).RenderTransform);
         return Task.CompletedTask;
     });
 }

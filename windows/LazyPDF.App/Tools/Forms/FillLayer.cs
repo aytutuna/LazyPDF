@@ -149,6 +149,17 @@ internal sealed partial class FillLayer
             slot.Frame.Height = slot.Box.Height;
             Decorate(slot);
             slot.Frame.IsKeyboardFocusWithinChanged += (_, e) => Focused(page, host, slots, slot, (bool)e.NewValue);
+            if (slot.Turns)
+            {
+                // The turn happens when the keyboard arrives, so the press that would have clicked the sideways
+                // control only focuses it; the next click lands on the control as it is then drawn.
+                slot.Frame.PreviewMouseLeftButtonDown += (_, e) =>
+                {
+                    if (_viewer.Rotation == 0 || slot.Frame.IsKeyboardFocusWithin || slot.Control is not { IsEnabled: true }) return;
+                    slot.Control.Focus();
+                    e.Handled = true;
+                };
+            }
             slot.Frame.PreviewKeyDown += (_, e) =>
             {
                 bool shift = Keyboard.Modifiers == ModifierKeys.Shift;
