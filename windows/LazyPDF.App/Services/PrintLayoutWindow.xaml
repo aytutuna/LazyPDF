@@ -29,7 +29,8 @@
             </ComboBox>
             <TextBlock Text="{loc:T Gap between pages (mm)}" Style="{StaticResource BodyText}" Margin="0,12,0,4" />
             <TextBox x:Name="GapBox" AutomationProperties.Name="{loc:T Gap between pages (mm)}" TextChanged="Changed" />
-            <TextBlock x:Name="GapProblem" Style="{StaticResource ReasonText}" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed" />
+            <TextBlock x:Name="GapProblem" Style="{StaticResource ReasonText}" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed"
+                       AutomationProperties.LiveSetting="Assertive" />
             <CheckBox x:Name="BorderBox" Content="{loc:T Border around each page}" Margin="0,12,0,0" Checked="Changed" Unchecked="Changed"
                       AutomationProperties.Name="{loc:T Border around each page}" />
 

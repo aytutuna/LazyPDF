@@ -50,6 +50,7 @@ public sealed class PrintLayoutWindowTests
 
         Assert.False(window.PrintButton.IsEnabled);
         Assert.Equal("Type a gap from 0 to 25 mm.", window.GapProblem.Text);
+        Assert.Equal(System.Windows.Automation.AutomationLiveSetting.Assertive, System.Windows.Automation.AutomationProperties.GetLiveSetting(window.GapProblem));
         window.GapBox.Text = "3";
         Assert.True(window.PrintButton.IsEnabled);
         Assert.Equal(System.Windows.Visibility.Collapsed, window.GapProblem.Visibility);

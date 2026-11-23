@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 
 namespace LazyPDF.App.Services;
@@ -64,6 +66,7 @@ internal sealed partial class PrintLayoutWindow : Window
         BindingBox.IsEnabled = GapBox.IsEnabled = BorderBox.IsEnabled = imposes;
         var current = Current();
         string? problem = current is null ? Loc.T("Type a gap from 0 to 25 mm.") : current.Value.Problem;
+        bool problemChanged = GapProblem.Text != (problem ?? "");
         GapProblem.Text = problem;
         GapProblem.Visibility = problem is null ? Visibility.Collapsed : Visibility.Visible;
         PrintButton.IsEnabled = problem is null;
@@ -71,8 +74,16 @@ internal sealed partial class PrintLayoutWindow : Window
             ? Loc.T("Two-sided printing must flip on the short edge.")
             : imposes ? Loc.T("To print both sides by hand, print the odd sides, turn the stack over and print the even sides.")
             : Loc.T("Odd and even go by page number. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.");
-        Summary.Text = current is { } c ? c.Layout.Summary(_range, _documentPages) : "";
+        string summary = current is { } c ? c.Layout.Summary(_range, _documentPages) : "";
+        bool summaryChanged = Summary.Text != summary;
+        Summary.Text = summary;
+        // WPF only announces a live region when its peer says it changed.
+        if (problemChanged && problem is not null) RaiseLiveRegionChanged(GapProblem);
+        if (summaryChanged) RaiseLiveRegionChanged(Summary);
     }
+
+    private static void RaiseLiveRegionChanged(UIElement element) =>
+        (UIElementAutomationPeer.FromElement(element) ?? UIElementAutomationPeer.CreatePeerForElement(element))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
 
     private void Print_Click(object sender, RoutedEventArgs e) => DialogResult = true;
 }
