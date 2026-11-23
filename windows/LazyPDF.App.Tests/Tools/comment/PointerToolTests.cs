@@ -385,6 +385,73 @@ public sealed class PointerToolTests
         return new EditTool(viewer, () => f.Marker);
     }
 
+    // A box in the corner of the page, so that its top left handle reaches past the edge.
+    private static (DrawTool Draw, EditTool Edit) DrawingOverASelectedMark(CommentFixture f, out List<MarkTool> drawn)
+    {
+        var viewer = ViewerStandIn.Create(out _);
+        f.Marker.Add(MarkTool.TextBox, 0, [new Point(0, 0), new Point(100, 60)], Red, "Look");
+        f.Tab.Commit("Text box");
+        var edit = new EditTool(viewer, () => f.Marker);
+        edit.Select(f.Marks(0).Single());
+        var made = new List<MarkTool>();
+        drawn = made;
+        var draw = new DrawTool(viewer, MarkTool.Rectangle, () => Red, (tool, _, _) => made.Add(tool),
+            p => edit.Holds(p) ? edit : null, edit.HandleUnder);
+        return (draw, edit);
+    }
+
+    [Fact]
+    public void AHandlePressJustOffThePageIsTakenByTheSelectedMarkAndNotDrawn()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var (draw, edit) = DrawingOverASelectedMark(f, out var drawn);
+            var off = Press(new Point(-3, -3));
+
+            Assert.True(draw.HandleUnder(off));
+            draw.Press(off);
+            draw.Move(Drag(new Point(-20, -20)));
+            draw.Release(Drag(new Point(-20, -20)));
+
+            Assert.Empty(drawn);
+            Assert.False(draw.Started);
+            Assert.NotNull(edit.Current);
+        });
+    }
+
+    [Fact]
+    public void AHandleReachesNoFartherThanTheViewerAsksAtHighZoom()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var viewer = ViewerStandIn.Create(out var stand);
+            stand.Zoom = 20;
+            f.Marker.Add(MarkTool.TextBox, 0, [new Point(0, 0), new Point(100, 60)], Red, "Look");
+            f.Tab.Commit("Text box");
+            var edit = new EditTool(viewer, () => f.Marker);
+            edit.Select(f.Marks(0).Single());
+
+            Assert.True(edit.HandleUnder(Press(new Point(-1, 0))));
+            Assert.False(edit.HandleUnder(Press(new Point(-1.8, 0))));
+        });
+    }
+
+    [Fact]
+    public void ABodyPressOffThePageIsNotAHandleAndAskingNeverLetsGoOfTheMark()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var (draw, edit) = DrawingOverASelectedMark(f, out _);
+
+            Assert.False(draw.HandleUnder(Press(new Point(-30, 30))));
+            Assert.False(draw.HandleUnder(Press(new Point(400, 400))));
+            Assert.NotNull(edit.Current);
+        });
+    }
+
     [Fact]
     public void APressOnAMarkSelectsItAndShowsAFrameWithEightHandles()
     {

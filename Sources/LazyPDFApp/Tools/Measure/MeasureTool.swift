@@ -53,6 +53,13 @@ final class MeasureTool: PagePointerTool {
         return true
     }
 
+    func handleUnder(_ pointer: PagePointer) -> Bool { onFirstDot(pointer) }
+
+    // The resolved point, as a click is closed on; resolving here changes nothing, so asking leaves `snapped` alone.
+    private func onFirstDot(_ pointer: PagePointer) -> Bool {
+        canFinish && pointer.page == page && near(resolved(pointer, sameShape: true).point, points[0], pointer.page)
+    }
+
     func press(_ pointer: PagePointer) {
         // A second finger cancels the press, so a finger's point is added on release.
         if pointer.touch {
@@ -71,8 +78,9 @@ final class MeasureTool: PagePointerTool {
             return
         }
         loadSnaps(pointer.page)
-        let at = resolve(pointer, sameShape: true)
-        if canFinish && near(at, points[0], pointer.page) {
+        let (at, isSnapped) = resolved(pointer, sameShape: true)
+        snapped = isSnapped
+        if onFirstDot(pointer) {
             finish()
             return
         }
@@ -87,7 +95,8 @@ final class MeasureTool: PagePointerTool {
 
     func move(_ pointer: PagePointer) {
         if pointer.pressed { return }
-        hover = resolve(pointer, sameShape: pointer.page == page)
+        let (point, isSnapped) = resolved(pointer, sameShape: pointer.page == page)
+        (hover, snapped) = (point, isSnapped)
         hoverPage = pointer.page
         loadSnaps(pointer.page)
         changed?()
@@ -156,18 +165,16 @@ final class MeasureTool: PagePointerTool {
         viewer.pageToView(page).map(ViewScale.of) ?? 0
     }
 
-    private func resolve(_ pointer: PagePointer, sameShape: Bool) -> ViewPoint {
-        snapped = false
+    private func resolved(_ pointer: PagePointer, sameShape: Bool) -> (point: ViewPoint, snapped: Bool) {
         let at = pointer.point
-        if (pointer.modifiers.contains(.shift) || straight) && sameShape, let last = points.last { return MeasureShape.straighten(last, at) }
-        guard snap, !pointer.modifiers.contains(.option), let corners = snaps[pointer.page] else { return at }
+        if (pointer.modifiers.contains(.shift) || straight) && sameShape, let last = points.last { return (MeasureShape.straighten(last, at), false) }
+        guard snap, !pointer.modifiers.contains(.option), let corners = snaps[pointer.page] else { return (at, false) }
         let scale = scale(pointer.page)
-        if scale <= 0 { return at }
+        if scale <= 0 { return (at, false) }
         let radius = Self.snapPixels / scale
         let found = MeasureShape.nearest(corners, at, radius) ?? MeasureShape.nearestOnLines(lines[pointer.page] ?? [], at, radius)
-        guard let found else { return at }
-        snapped = true
-        return found
+        guard let found else { return (at, false) }
+        return (found, true)
     }
 
     private func near(_ a: ViewPoint, _ b: ViewPoint, _ page: Int) -> Bool {

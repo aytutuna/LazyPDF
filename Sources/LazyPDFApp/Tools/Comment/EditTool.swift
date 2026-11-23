@@ -146,13 +146,7 @@ final class EditTool: PagePointerTool {
     // A finger that lands anywhere else scrolls the page.
     func takes(_ pointer: PagePointer) -> Bool {
         if !pointer.touch { return true }
-        if let selected = current, selected.pageIndex == pointer.page, !moveOnly {
-            if let points {
-                if vertexAt(points, pointer.point, pointer.page, touch: true) != nil { return true }
-            } else if handleAt(frame, pointer.point, pointer.page) != nil {
-                return true
-            }
-        }
+        if handleGrabbed(pointer) != nil { return true }
         return markAt(pointer.page, pointer.point, touch: true) != nil
     }
 
@@ -183,6 +177,15 @@ final class EditTool: PagePointerTool {
         }
     }
 
+    func handleUnder(_ pointer: PagePointer) -> Bool { handleGrabbed(pointer) != nil }
+
+    // One lookup for press, takes and handleUnder: a corner of a line or shape, else a handle of the frame.
+    private func handleGrabbed(_ pointer: PagePointer) -> Int? {
+        guard let selected = current, selected.pageIndex == pointer.page, !moveOnly else { return nil }
+        if let points { return vertexAt(points, pointer.point, pointer.page, touch: pointer.touch) }
+        return handleAt(frame, pointer.point, pointer.page)
+    }
+
     func press(_ pointer: PagePointer) {
         handle = -1
         vertex = -1
@@ -192,19 +195,16 @@ final class EditTool: PagePointerTool {
             redraw()
         }
         if pointer.fromKeys, let keyed = current, keyed.pageIndex == pointer.page, let points, !moveOnly, keyedPress(keyed, points, pointer) { return }
-        if let selected = current, selected.pageIndex == pointer.page, !moveOnly {
+        if let grabbed = handleGrabbed(pointer) {
             if let points {
-                if let grabbed = vertexAt(points, pointer.point, pointer.page, touch: pointer.touch) {
-                    vertex = grabbed
-                    pressedAt = points[grabbed]
-                    pressPoint = pointer.point
-                    return
-                }
-            } else if let grabbed = handleAt(frame, pointer.point, pointer.page) {
+                vertex = grabbed
+                pressedAt = points[grabbed]
+                pressPoint = pointer.point
+            } else {
                 handle = grabbed
                 begin(pointer.point)
-                return
             }
+            return
         }
         guard let hit = markAt(pointer.page, pointer.point, touch: pointer.touch) else {
             if current != nil { select(nil) }
@@ -400,7 +400,7 @@ final class EditTool: PagePointerTool {
         func distance(_ i: Int) -> Double { hypot(points[i].x - at.x, points[i].y - at.y) }
         guard let nearest = points.indices.min(by: { distance($0) < distance($1) }) else { return nil }
         let gap = points.indices.filter { $0 != nearest }.map { hypot(points[$0].x - points[nearest].x, points[$0].y - points[nearest].y) }.min()
-        let own = touch ? reach(page) : Self.grip / 2 / scale(page) + 2
+        let own = touch ? reach(page) : min(Self.grip / 2 / scale(page) + 2, reach(page))
         return distance(nearest) <= min(own, (gap ?? .infinity) / 2) ? nearest : nil
     }
 

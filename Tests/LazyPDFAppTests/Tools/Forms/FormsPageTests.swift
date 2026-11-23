@@ -485,6 +485,32 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertTrue(tool.takes(rig.pointer(ViewPoint(box.right + 6, 792 - box.bottom + 6), pressed: true)))
     }
 
+    func test_aPressOffThePageDrawsNothingWithAKindChosen() async throws {
+        let rig = try designing()
+        rig.model.newKind = .text
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        tool.press(rig.pointer(ViewPoint(-20, 300), pressed: true))
+        tool.release(rig.pointer(ViewPoint(-20, 300), pressed: false))
+
+        XCTAssertFalse(rig.tab.session.canUndo)
+    }
+
+    func test_theHandlesAreOnlyUnderAPointWithOneFieldSelectedAndNoEditRunning() async throws {
+        let rig = try designing()
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        let box = try XCTUnwrap(rig.form.find("name")?.widgets[0].rect)
+        let corner = rig.pointer(ViewPoint(box.right + 3, 792 - box.bottom + 3), pressed: true)
+
+        XCTAssertFalse(tool.handleUnder(corner))
+        rig.tap(rig.centre("name"))
+        XCTAssertTrue(tool.handleUnder(corner))
+        XCTAssertFalse(tool.handleUnder(rig.pointer(ViewPoint(box.right + 3, 792 - box.bottom + 3), pressed: true, page: 1)))
+        rig.model.isWorking = true
+        XCTAssertFalse(tool.handleUnder(corner))
+        rig.model.isWorking = false
+    }
+
     func test_aMoveThatEndsOffThePageStaysOnIt() async throws {
         let rig = try designing()
         let start = rig.centre("name")

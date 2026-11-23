@@ -77,4 +77,27 @@ final class EditSurfaceTests: XCTestCase {
         XCTAssertTrue(colors.allSatisfy { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty })
         XCTAssertEqual(colors.count, Set(colors.map { [$0.color.r, $0.color.g, $0.color.b] }).count)
     }
+
+    func test_aHandleOffThePageIsFoundOnlyInSelectModeForThePageOfTheSelection() async throws {
+        let rig = try ContentRig(EditPdf.make("BT /F1 12 Tf 0 700 Td (Hello from the tests.) Tj ET"))
+        let model = EditContentModel()
+        rig.attach(model)
+        let surface = try XCTUnwrap(model.surface)
+        let block = try XCTUnwrap(try PageEditor(rig.tab.session, 0).objects.first as? TextObject)
+        func at(_ page: Int) -> PagePointer {
+            let bounds = surface.selectionBounds()
+            let p = ViewPoint(bounds.left - 5, bounds.y + bounds.height / 2)
+            return PagePointer(page: page, point: p, view: p, pressed: true, clicks: 1)
+        }
+
+        surface.select(0, [block.id])
+        XCTAssertLessThan(at(0).point.x, 0)
+        XCTAssertTrue(surface.handleUnder(at(0)))
+        XCTAssertFalse(surface.handleUnder(at(1)))
+        surface.setMode(.link)
+        XCTAssertFalse(surface.handleUnder(at(0)))
+        surface.setMode(.select)
+        surface.clear()
+        XCTAssertFalse(surface.handleUnder(at(0)))
+    }
 }

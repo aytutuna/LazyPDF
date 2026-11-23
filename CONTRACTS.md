@@ -95,7 +95,7 @@ Panels with several jobs split into partial files (`PagesPanel.Edit.cs`, `PagesP
 - `Show`, `PageIndex`, `Zoom`, `GoToPage`, `GoToDestination`, `FollowAction`, `GoBack`, `GoForward`, `Reveal`.
 - `VisiblePages`, `PageSize`, `PageToView`, `ViewToPage`, `Geometry`. Page space is points from the top left of the page as shown, y down; `PageGeometry` converts to PDF user space.
 - `Overlay(page)` is a canvas over a page for previews and handles; it moves with the page.
-- `PointerTool` takes the left button as press, move, release (`IPagePointerTool`); without one the pointer pans or selects text.
+- `PointerTool` takes the left button as press, move, release (`IPagePointerTool`); without one the pointer pans or selects text. `HandleUnder(PagePointer)` (default false) says whether a handle the tool already holds is under the point; a press up to 32 view pixels off a page is delivered, with the page-space point of the first page, in layout order, that lies within reach and whose tool reports a handle there, only when it is true.
 - `GetTextAsync`, `GetSelectionAsync`, `SelectAll`, `ClearSelection` for text; `SetLayerVisible` for layers.
 - Events: `StateChanged`, `ViewChanged`, `PageChanged`, `ModeChanged`, `SelectionChanged`, `LayersChanged`.
 
@@ -1061,6 +1061,7 @@ A page with marks is either understood in full or turned into a picture. Removin
 ### App and form additions
 
 - `PagePointer` has a new last parameter `FromKeys` (default false). It is true for a click sent by Enter from the keyboard path; a pointer tool that draws a box gives such a click a default size instead of an empty box. `SignatureBoxTool`, `CropTool` and `RedactDrawTool` do this.
+- `IPagePointerTool` has a new member `HandleUnder(PagePointer)` (default false). A handle on the edge of a page reaches past it, so the viewer asks the tool about a press that misses every page but lies within 32 view pixels of one, and sends the press only when the tool says yes. It must have no side effect and use the same lookup as `Press` (with its guards), so a press off the page can only take an existing handle and never draw or select. `EditSurface`, `FieldTool`, the comment `EditTool` and `DrawTool` (through the panel) and `MeasureTool` (the first dot of a shape that can finish) answer. On Apple it is `PagePointerTool.handleUnder(_:)`, asked by `ViewerModel` for a mouse press and for `toolTakes`, so a finger on the outer half of a handle reaches the tool instead of scrolling; `EditSurface`, `FieldTool` (not while it is working), the comment `EditTool` and `MeasureTool` answer, from the lookup their `press` uses.
 - The keyboard path lives in `PageViewer.Placement.cs`: Enter shows a cross in the middle of the page in view, the arrow keys move it (Shift small steps, Ctrl big ones), Enter again clicks there, Escape lets go.
 - `ChangeGate.Refusal(PdfDocument)` returns a `Problem?`: `Problems.Restricted()` when the file was not opened as owner and lacks the Modify permission, else null.
 - `ChangeGate.RunAsync(tab, host, name, run)` checks `Refusal` first, asks before changing a signed or certified file, and shows a problem for `PdfPermissionException` or any other failure except out of memory.
