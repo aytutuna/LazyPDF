@@ -74,6 +74,9 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>Counts the saves that numbered the file's objects again, after which an object number no longer names the same thing.</summary>
     public int Rewrites { get; private set; }
 
+    /// <summary>For each rewrite, in order, the object number each page had before and has now (the rewrite keeps the pages in order); entry i belongs to the rewrite that made <see cref="Rewrites"/> i + 1.</summary>
+    public List<IReadOnlyDictionary<int, int>> RewriteMaps { get; } = [];
+
     /// <summary>The page the viewer shows, 0-based, kept here so each tab comes back as it was left.</summary>
     public int PageIndex { get; set; }
 
@@ -193,7 +196,11 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>Writes the file without its history to <paramref name="path"/> and goes on from that file.</summary>
     public void SaveCompact(string path)
     {
+        var before = Document.Pages.Select(p => p.Reference.Number).ToList();
         Session.SaveCompact(path);
+        var map = new Dictionary<int, int>();
+        for (int i = 0; i < before.Count && i < Document.Pages.Count; i++) map[before[i]] = Document.Pages[i].Reference.Number;
+        RewriteMaps.Add(map);
         _path = path;
         ReadOnly = false;
         Saved(rewritten: true);

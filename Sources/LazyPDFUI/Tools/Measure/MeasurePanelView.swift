@@ -7,6 +7,8 @@ import LazyPDFKit
 
 struct MeasurePanelView: View {
     let model: MeasureModel
+    @FocusState private var lengthFocused: Bool
+    @AccessibilityFocusState private var lengthSpoken: Bool
 
     var body: some View {
         ToolForm {
@@ -35,6 +37,10 @@ struct MeasurePanelView: View {
 
     private var scaleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
+            Text(model.scaleHeading)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .accessibilityAddTraits(.isHeader)
             LabelledField(L10n.t("On the page")) {
                 HStack {
                     number(L10n.t("Length on the page"), model.pageValue) { model.setPageValue($0) }
@@ -52,6 +58,69 @@ struct MeasurePanelView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Button { model.useForAll() } label: {
+                Text(L10n.t("Use for all pages")).frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+            .disabled(!model.canUseForAll)
+            calibrateSection
+        }
+    }
+
+    private var calibrateSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button { model.startCalibrate() } label: {
+                Label(L10n.t("Calibrate"), systemImage: "ruler").frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+            if let drawn = model.calibrateDrawn {
+                calibrateRow(drawn)
+            }
+        }
+    }
+
+    // What the drawn line reads goes to the length field as its hint too, since a screen reader says it when focus lands there.
+    // VoiceOver focus does not follow keyboard focus on iOS, so it is moved as well, once for every line drawn.
+    private func calibrateRow(_ drawn: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(drawn).font(.headline)
+            LabelledField(L10n.t("Real length")) {
+                HStack {
+                    TextField(L10n.t("Real length"), text: Binding(get: { model.calibrateValue }, set: { model.setCalibrateValue($0) }))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(minHeight: 44)
+                        .autocorrectionDisabled()
+                        .focused($lengthFocused)
+                        .accessibilityFocused($lengthSpoken)
+                        .accessibilityHint(drawn)
+                        .onSubmit { model.applyCalibration() }
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                    units(L10n.t("Real unit"), MeasureModel.realUnits, model.calibrateUnit) { model.setCalibrateUnit($0) }
+                }
+            }
+            HStack(spacing: 8) {
+                Button { model.applyCalibration() } label: {
+                    Text(L10n.t("Set scale")).frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                // A shortcut, since on the Mac the length field's editor takes Escape before onKeyPress would see it.
+                Button { model.cancelCalibrate() } label: {
+                    Text(L10n.t("Cancel")).frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut(.cancelAction)
+            }
+            if model.calibrateProblem {
+                Label(L10n.t("Type a length above zero."), systemImage: "exclamationmark.triangle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .task(id: model.calibrateLines) {
+            lengthFocused = true
+            lengthSpoken = true
         }
     }
 

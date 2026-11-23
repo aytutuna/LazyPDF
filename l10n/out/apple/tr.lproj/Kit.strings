@@ -269,6 +269,7 @@
 "By row" = "Satıra göre";
 "By type" = "Türe göre";
 "Bytes come before the %PDF header." = "%PDF üst bilgisinden önce baytlar var.";
+"Calibrate" = "Ölçeği ayarla";
 "Callout" = "Balon";
 "Cancel" = "İptal";
 "Cancel shape" = "Şekli iptal et";
@@ -385,6 +386,7 @@
 "Click text or a picture to change it. Drag to select several." = "Değiştirmek için bir metne veya resme tıklayın. Birkaçını seçmek için sürükleyin.";
 "Click the page where the text starts." = "Metnin başlayacağı yere sayfada tıklayın.";
 "Click the page, or drag a box, to place it." = "Yerleştirmek için sayfaya tıklayın ya da bir kutu sürükleyin.";
+"Click the two ends of something whose real length you know." = "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın.";
 "Click the two ends. Hold Shift for straight lines." = "İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun.";
 "Click to sign" = "İmzalamak için tıklayın";
 "Click where it should go." = "Yerleşeceği yere tıklayın.";
@@ -935,6 +937,7 @@
 "Like 3u, and the file must be tagged for screen readers. Untagged files need a language set first." = "3u gibi; ayrıca dosya ekran okuyucular için etiketli olmalı. Etiketsiz dosyalarda önce dil ayarlanmalı.";
 "Limit what people can do" = "Kişilerin yapabileceklerini sınırla";
 "Line" = "Çizgi";
+"Line drawn: {0}" = "Çizilen çizgi: {0}";
 "Line spacing" = "Satır aralığı";
 "Line spacing in points" = "Punto olarak satır aralığı";
 "Line width" = "Çizgi kalınlığı";
@@ -1521,6 +1524,7 @@
 "Replace pages" = "Sayfaları değiştir";
 "Replace text" = "Metni değiştir";
 "Replace the picture" = "Resmi değiştir";
+"Replace the scales on the other pages?" = "Diğer sayfalardaki ölçekler değiştirilsin mi?";
 "Replace their text" = "Metinlerini değiştir";
 "Replace with" = "Yeni metin";
 "Replace with a file" = "Dosyayla değiştir";
@@ -1602,6 +1606,7 @@
 "Saved {0} file in {1}.|other" = "{0} dosya {1} klasörüne kaydedildi.";
 "Saved {0}." = "{0} kaydedildi.";
 "Saved." = "Kaydedildi.";
+"Scale for page {0}" = "Sayfa {0} için ölçek";
 "Scale the content" = "İçeriği ölçekle";
 "Scan paper into a PDF with Lazy Scan." = "Kâğıdı Lazy Scan ile PDF olarak tarayın.";
 "Scan the paper" = "Kağıdı tara";
@@ -1650,6 +1655,7 @@
 "Sepia pages" = "Sepya sayfalar";
 "Set a password and decide what others may do." = "Bir parola belirleyin ve başkalarının neler yapabileceğine karar verin.";
 "Set has no name" = "Kümenin adı yok";
+"Set scale" = "Ölçeği uygula";
 "Set status" = "Durumu ayarla";
 "Set the document language first and Lazy PDF can tag the file itself." = "Önce belge dilini ayarlayın; Lazy PDF dosyayı kendisi etiketleyebilir.";
 "Set the tab order" = "Sekme sırasını ayarla";
@@ -1827,6 +1833,7 @@
 "Tap a picture, or pick text from the list. The list can select several." = "Bir resme dokunun ya da metni listeden seçin. Listeden birkaçı seçilebilir.";
 "Tap each corner, then tap Finish shape." = "Her köşeye dokunun, sonra Şekli bitir'e dokunun.";
 "Tap each corner, then tap Finish. Turn on Straight lines to keep them straight." = "Her köşeye dokunun, sonra Bitir'e dokunun. Düz tutmak için Düz çizgiler'i açın.";
+"Tap the two ends of something whose real length you know." = "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna dokunun.";
 "Tap the two ends. Turn on Straight lines to keep them straight." = "İki ucuna dokunun. Düz tutmak için Düz çizgiler'i açın.";
 "Text" = "Metin";
 "Text after the number" = "Numaradan sonraki metin";
@@ -2100,6 +2107,8 @@
 "The result opens as a new file. This file is not changed." = "Sonuç yeni bir dosya olarak açılır. Bu dosya değişmez.";
 "The role map leads {0} in a circle or through too many steps." = "Rol eşlemesi {0} türünü bir döngüye ya da çok fazla adıma götürüyor.";
 "The same form is painted twice." = "Aynı form iki kez çizilmiş.";
+"The scale on {0} other page will be replaced.|one" = "Diğer {0} sayfadaki ölçek değiştirilecek.";
+"The scale on {0} other page will be replaced.|other" = "Diğer {0} sayfadaki ölçek değiştirilecek.";
 "The second line must be a comment of four bytes above 127." = "İkinci satır, 127'nin üzerinde dört bayttan oluşan bir yorum olmalı.";
 "The security settings allow screen readers." = "Güvenlik ayarları ekran okuyuculara izin veriyor.";
 "The security settings do not allow assistive technology to extract text." = "Güvenlik ayarları yardımcı teknolojilerin metni almasına izin vermiyor.";
@@ -2301,6 +2310,7 @@
 "Two-sided printing must flip on the short edge." = "Çift taraflı yazdırma kısa kenardan çevirmeli olmalı.";
 "Type" = "Yaz";
 "Type a Permissions password to apply the limits." = "Sınırları uygulamak için bir İzin parolası yazın.";
+"Type a length above zero." = "Sıfırdan büyük bir uzunluk yazın.";
 "Type a name for the set, then save it." = "Küme için bir ad yazın, sonra kaydedin.";
 "Type a number from 0 to 200, or leave it empty to fit the text to the field." = "0 ile 200 arasında bir sayı yazın veya metni alana sığdırmak için boş bırakın.";
 "Type a number from 1 to {0}." = "1 ile {0} arasında bir sayı yazın.";
@@ -2334,6 +2344,7 @@
 "Use" = "Kullan";
 "Use a different password here." = "Burada farklı bir parola kullanın.";
 "Use a web address that starts with http:// or https://." = "http:// veya https:// ile başlayan bir web adresi yazın.";
+"Use for all pages" = "Tüm sayfalarda kullan";
 "Use other text, or install a font that has these letters." = "Başka bir metin kullanın ya da bu harfleri içeren bir yazı tipi yükleyin.";
 "Use {0}, {1} and {2}. A name that is taken gets a number." = "{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.";
 "Valid from {0} to {1}" = "Geçerlilik: {0} - {1}";

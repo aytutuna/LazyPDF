@@ -19,7 +19,7 @@ struct PageKey: Equatable {
 struct Pending: Equatable {
     let id = UUID()
     var item: MeasureItem
-    let key: PageKey
+    var key: PageKey
 
     /// The ones whose page is still in the file as it was, moved to where that page is now.
     static func keep(_ pending: [Pending], _ document: PdfDocument) -> [Pending] {
@@ -32,6 +32,18 @@ struct Pending: Equatable {
             guard let now = location[waiting.key.number], now.key == waiting.key else { return nil }
             var moved = waiting
             moved.item.page = now.index
+            return moved
+        }
+    }
+}
+
+extension Pending {
+    /// The same measurements with their pages under the numbers a rewrite gave them. One whose page is not in the map is gone,
+    /// and gets a number no page has so that `keep` drops it.
+    static func remap(_ pending: [Pending], _ map: [Int: Int]) -> [Pending] {
+        pending.map { waiting in
+            var moved = waiting
+            moved.key = PageKey(number: map[waiting.key.number] ?? -1, rotate: waiting.key.rotate, box: waiting.key.box, unit: waiting.key.unit)
             return moved
         }
     }

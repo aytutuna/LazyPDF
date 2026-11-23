@@ -2,7 +2,7 @@
 import SwiftUI
 import XCTest
 import LazyPDFKit
-import LazyPDFApp
+@testable import LazyPDFApp
 @testable import LazyPDFUI
 
 // A smoke test of the Measure panel: the view is drawn at the width of the inspector after its model is attached, empty and
@@ -31,6 +31,28 @@ final class MeasurePanelViewTests: XCTestCase {
 
         XCTAssertTrue(model.scaleProblem)
         XCTAssertNotEqual(after, before)
+    }
+
+    func test_aDrawnCalibrationLineAddsTheRowForItsLength() throws {
+        let rig = try ToolViewRig()
+        let model = MeasureModel(fonts: StandInFonts())
+        model.attach(rig.tab, rig.viewer, rig.host)
+        model.startCalibrate()
+        let before = try ToolPicture.ink(try ToolPicture.draw(MeasurePanelView(model: model), height: 1600))
+
+        let tool = try XCTUnwrap(model.tool)
+        for x in [0.0, 72] {
+            tool.press(PagePointer(page: 0, point: ViewPoint(x, 0), view: ViewPoint(x, 0), pressed: true, clicks: 1))
+        }
+        let drawn = try ToolPicture.ink(try ToolPicture.draw(MeasurePanelView(model: model), height: 1600))
+        model.setCalibrateValue("0")
+        model.applyCalibration()
+        let problem = try ToolPicture.ink(try ToolPicture.draw(MeasurePanelView(model: model), height: 1600))
+
+        XCTAssertEqual(model.calibrateDrawn, "Line drawn: 25.4 mm")
+        XCTAssertGreaterThan(drawn, before)
+        XCTAssertTrue(model.calibrateProblem)
+        XCTAssertGreaterThan(problem, drawn)
     }
 
     func test_theRegistryMakesThePanelForTheToolId() throws {

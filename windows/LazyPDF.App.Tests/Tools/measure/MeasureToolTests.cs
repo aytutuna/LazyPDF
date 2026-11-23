@@ -80,12 +80,46 @@ public sealed class MeasureToolTests
     }
 
     [Fact]
+    public void CalibrateModeIgnoresTwoClicksOnOneSpot()
+    {
+        var (tool, done, _) = Start(MeasureKind.Distance);
+        var reported = 0;
+        tool.Calibrated += (_, _) => reported++;
+        tool.Calibrate = true;
+
+        tool.Press(At(10, 10));
+        tool.Press(At(10, 10));
+
+        Assert.Equal(0, reported);
+        Assert.Empty(done);
+        Assert.Empty(tool.Points);
+    }
+
+    [Fact]
     public void ACalibratedLineSetsWhatLaterDistancesRead()
     {
-        var scale = MeasurePanel.ScaleFrom(72, 1, LengthUnit.Inch, LengthUnit.Inch);
+        var scale = MeasureScale.From(72, 1, LengthUnit.Inch, LengthUnit.Inch);
         var longer = new MeasureItem(MeasureKind.Distance, 0, [new Point(0, 0), new Point(144, 0)]);
 
         Assert.Equal("2 in", longer.Value(scale));
+        Assert.Equal("1 in = 1 in", scale.Ratio);
+    }
+
+    [Fact]
+    public void ACalibratedScaleReadsAsOneUnitOnThePage()
+    {
+        var scale = MeasureScale.From(72, 1, LengthUnit.Millimetre, LengthUnit.Metre);
+
+        Assert.Equal(1, scale.Page);
+        Assert.Equal("1 mm = 0.039370079 m", scale.Ratio);
+        Assert.Equal("1 m", scale.Length(72));
+    }
+
+    [Fact]
+    public void ACalibrationTooSmallToWriteDoesNotReadBack()
+    {
+        Assert.Null(MeasureScale.TryParse(MeasureScale.From(72, 1e-25, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
+        Assert.Null(MeasureScale.TryParse(MeasureScale.From(0, 1, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
     }
 
     [Fact]

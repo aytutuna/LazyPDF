@@ -39,6 +39,8 @@ public sealed class DiskNoticeTests
         await f.SettledAsync();
         Touch(path, 2, 10);
         await f.Vm.CheckDiskAsync();
+        // A quiet reload switches tabs, which starts a check of its own.
+        await f.SettledAsync();
         f.Vm.DismissMessage();
 
         File.Delete(path);

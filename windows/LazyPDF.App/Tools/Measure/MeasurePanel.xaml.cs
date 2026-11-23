@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
@@ -48,6 +49,55 @@ internal sealed class PageScales(MeasureScale start)
 
     // Writing marks changes what the pages hold.
     public void Forget() => _found.Clear();
+
+    // A rewrite numbers the objects again; a page that is not in the map is gone.
+    public void Remap(IReadOnlyDictionary<int, int> map)
+    {
+        Move(_typed, map);
+        Move(_found, map);
+    }
+
+    private static void Move<T>(Dictionary<int, T> scales, IReadOnlyDictionary<int, int> map)
+    {
+        var moved = scales.Where(p => map.ContainsKey(p.Key)).ToDictionary(p => map[p.Key], p => p.Value);
+        scales.Clear();
+        foreach (var (key, scale) in moved) scales[key] = scale;
+    }
+
+    // Object numbers come back after an undo, so what was typed for a page that is gone must not reach the next one.
+    public void Prune(PdfDocument document)
+    {
+        var live = document.Pages.Select(p => p.Reference.Number).ToHashSet();
+        foreach (var key in _typed.Keys.Where(k => !live.Contains(k)).ToList()) _typed.Remove(key);
+    }
+
+    /// <summary>How many pages of the document other than this one have a scale of their own that <see cref="SetAll"/> would replace.</summary>
+    public int OtherScaleCount(int except, PdfDocument document)
+    {
+        int count = 0;
+        for (int i = 0; i < document.Pages.Count; i++)
+        {
+            int key = Key(document, i);
+            if (key == except) continue;
+            if (_typed.ContainsKey(key)) count++;
+            else if (!_overridden)
+            {
+                if (!_found.TryGetValue(key, out var found)) _found[key] = found = MeasureScale.FindOnPage(document, document.Pages[i]);
+                if (found is not null) count++;
+            }
+        }
+        return count;
+    }
+}
+
+/// <summary>What the panel keeps for one tab.</summary>
+internal sealed class MeasureState(PageScales scales, int seenRewrites)
+{
+    public PageScales Scales { get; } = scales;
+
+    public List<Pending> Waiting { get; } = [];
+
+    public int SeenRewrites { get; set; } = seenRewrites;
 }
 
 /// <summary>
@@ -58,11 +108,11 @@ public partial class MeasurePanel : ToolPanel
 {
     private static readonly LengthUnit[] PageUnits = [LengthUnit.Millimetre, LengthUnit.Centimetre, LengthUnit.Inch];
 
-    // Kept per tab, so that measuring in one file and looking at another loses nothing.
-    private static readonly ConditionalWeakTable<DocumentTab, List<Pending>> Waiting = [];
+    // Kept per tab, so that measuring in one file and looking at another loses nothing. What a person typed stays;
+    // a scale read from marks in the file is only the start.
+    private static readonly ConditionalWeakTable<DocumentTab, MeasureState> States = [];
 
-    // What a person typed stays; a scale read from marks in the file is only the start.
-    private static readonly ConditionalWeakTable<DocumentTab, PageScales> Scales = [];
+    private MeasureState _state = new(new(MeasureScale.Actual), 0);
 
     private List<Pending> _waiting = [];
     private MeasureTool? _tool;
@@ -71,7 +121,7 @@ public partial class MeasurePanel : ToolPanel
     private bool _ready;
     private bool _paused;
     private double _calibrated;
-    private int _calibratedKey;
+    private int _calibratedPage;
 
     public MeasurePanel()
     {
@@ -89,14 +139,17 @@ public partial class MeasurePanel : ToolPanel
 
     protected override void OnAttach()
     {
-        _waiting = Waiting.GetOrCreateValue(Tab!);
         _paused = false;
-        if (!Scales.TryGetValue(Tab!, out var kept))
+        if (!States.TryGetValue(Tab!, out var kept))
         {
-            kept = new PageScales(MeasureScale.Find(Tab!.Document) ?? MeasureScale.Actual);
-            Scales.Add(Tab!, kept);
+            kept = new MeasureState(new PageScales(MeasureScale.Find(Tab!.Document) ?? MeasureScale.Actual), Tab.Rewrites);
+            States.Add(Tab, kept);
         }
-        _scales = kept;
+        _state = kept;
+        _waiting = kept.Waiting;
+        _scales = kept.Scales;
+        Sync();
+        _scales.Forget();
         ShowScale(ScaleOf(Viewer!.PageIndex));
         if (PerimeterMode.IsChecked != true && AreaMode.IsChecked != true) DistanceMode.IsChecked = true;
         _tool = new MeasureTool(Viewer!) { Kind = Kind(), Snap = SnapToggle.IsChecked == true };
@@ -143,6 +196,22 @@ public partial class MeasurePanel : ToolPanel
     // Moving to another tab, tool or panel is no decision about the readings; they stay in the list of their tab.
     public override bool HandInOnSwitch() => true;
 
+    // A save that numbered the objects again, made with another tool open, moved the pages under new numbers.
+    private void Sync()
+    {
+        while (_state.SeenRewrites < Tab!.Rewrites)
+        {
+            var map = Tab.RewriteMaps[_state.SeenRewrites++];
+            _scales.Remap(map);
+            var moved = Pending.Remap(_waiting, map);
+            _waiting.Clear();
+            _waiting.AddRange(moved);
+        }
+    }
+
+    // The viewer can be a step ahead of the panel, on another tab or a page that is gone.
+    private bool Shown(int page) => ReferenceEquals(Viewer?.Tab, Tab) && page >= 0 && page < Tab!.Document.Pages.Count;
+
     private MeasureScale ScaleOf(int page) => _scales.For(Tab!.Document, page);
 
     private List<MeasureItem> Items => [.. _waiting.Select(p => p.Item)];
@@ -182,19 +251,42 @@ public partial class MeasurePanel : ToolPanel
         var scale = new MeasureScale(page, UnitOf(PageUnit), real, UnitOf(RealUnit));
         good &= scale.IsValid;
         ScaleProblem.Visibility = good ? Visibility.Collapsed : Visibility.Visible;
-        if (!good) return;
-        _scales.Set(PageScales.Key(Tab!.Document, Viewer!.PageIndex), scale);
+        if (!good || !Shown(Viewer!.PageIndex)) return;
+        _scales.Set(PageScales.Key(Tab!.Document, Viewer.PageIndex), scale);
         Rebuild();
     }
 
     private void UseForAll_Click(object sender, RoutedEventArgs e)
     {
+        if (!Shown(Viewer!.PageIndex) || FieldScale() is null) return;
+        var tab = Tab!;
+        int others = _scales.OtherScaleCount(PageScales.Key(tab.Document, Viewer.PageIndex), tab.Document);
+        if (others == 0)
+        {
+            UseForAll();
+            return;
+        }
+        Host!.ShowNotice(Loc.T("Replace the scales on the other pages?"),
+            Loc.Plural(others, "The scale on {0} other page will be replaced.", "The scales on {0} other pages will be replaced."),
+            new NoticeAction(Loc.T("Use for all pages"), () =>
+            {
+                if (ReferenceEquals(Tab, tab)) UseForAll();
+            }));
+    }
+
+    private MeasureScale? FieldScale()
+    {
         if (!double.TryParse(PageValue.Text, CultureInfo.CurrentCulture, out double page)
-            || !double.TryParse(RealValue.Text, CultureInfo.CurrentCulture, out double real)) return;
+            || !double.TryParse(RealValue.Text, CultureInfo.CurrentCulture, out double real)) return null;
         var scale = new MeasureScale(page, UnitOf(PageUnit), real, UnitOf(RealUnit));
-        if (!scale.IsValid) return;
+        return scale.IsValid ? scale : null;
+    }
+
+    private void UseForAll()
+    {
+        if (!Shown(Viewer!.PageIndex) || FieldScale() is not { } scale) return;
         _scales.SetAll(scale);
-        ShowScale(ScaleOf(Viewer!.PageIndex));
+        ShowScale(ScaleOf(Viewer.PageIndex));
         Rebuild();
     }
 
@@ -207,14 +299,18 @@ public partial class MeasurePanel : ToolPanel
     private void ShowScale(MeasureScale scale)
     {
         _ready = false;
-        PageValue.Text = scale.Page.ToString(CultureInfo.CurrentCulture);
-        RealValue.Text = scale.Real.ToString(CultureInfo.CurrentCulture);
+        PageValue.Text = Shown(scale.Page);
+        RealValue.Text = Shown(scale.Real);
         SelectUnit(PageUnit, scale.PageUnit);
         SelectUnit(RealUnit, scale.RealUnit);
         _ready = true;
         ScaleHeading.Text = Loc.T("Scale for page {0}", Viewer!.PageLabel(Viewer.PageIndex));
         ScaleProblem.Visibility = Visibility.Collapsed;
     }
+
+    // A calibrated scale is a long fraction; the field shows six digits, since a screen reader says them all. The stored scale keeps its own.
+    private static string Shown(double value) =>
+        double.Parse(value.ToString("G6", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture).ToString("0.####################", CultureInfo.CurrentCulture);
 
     private static void SelectUnit(ComboBox box, LengthUnit unit) =>
         box.SelectedItem = box.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (LengthUnit)i.Tag == unit) ?? box.SelectedItem;
@@ -236,17 +332,17 @@ public partial class MeasurePanel : ToolPanel
     private void Tool_Calibrated(int page, double points)
     {
         _calibrated = points;
-        _calibratedKey = PageScales.Key(Tab!.Document, page);
+        _calibratedPage = page;
+        // The line is gone from the readout by now; the help text is what a screen reader says when focus lands on the field.
+        string drawn = Loc.T("Line drawn: {0}", ScaleOf(page).Length(points));
+        CalibrateDrawn.Text = drawn;
+        AutomationProperties.SetHelpText(CalibrateValue, drawn);
         CalibrateProblem.Visibility = Visibility.Collapsed;
         SelectUnit(CalibrateUnit, UnitOf(RealUnit));
         CalibrateRow.Visibility = Visibility.Visible;
         CalibrateValue.Focus();
         CalibrateValue.SelectAll();
     }
-
-    // Two points of a page and the length a person says they stand for make the scale.
-    internal static MeasureScale ScaleFrom(double points, double length, LengthUnit pageUnit, LengthUnit realUnit) =>
-        new(points * LengthUnits.PointInMetres / pageUnit.Metres(), pageUnit, length, realUnit);
 
     private void Calibrate_Click(object sender, RoutedEventArgs e)
     {
@@ -270,18 +366,19 @@ public partial class MeasurePanel : ToolPanel
 
     private void SetScale_Click(object sender, RoutedEventArgs e)
     {
+        if (!Shown(_calibratedPage)) return;
         if (!double.TryParse(CalibrateValue.Text, CultureInfo.CurrentCulture, out double length) || !(length > 0))
         {
             CalibrateProblem.Visibility = Visibility.Visible;
             return;
         }
-        var scale = ScaleFrom(_calibrated, length, UnitOf(PageUnit), UnitOf(CalibrateUnit));
-        if (!scale.IsValid)
+        var scale = MeasureScale.From(_calibrated, length, UnitOf(PageUnit), UnitOf(CalibrateUnit));
+        if (MeasureScale.TryParse(scale.Ratio) is null)
         {
             CalibrateProblem.Visibility = Visibility.Visible;
             return;
         }
-        _scales.Set(_calibratedKey, scale);
+        _scales.Set(PageScales.Key(Tab!.Document, _calibratedPage), scale);
         ShowScale(ScaleOf(Viewer!.PageIndex));
         EndCalibrate();
         Rebuild();
@@ -320,9 +417,13 @@ public partial class MeasurePanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
+        Sync();
         _tool?.Forget();
         _scales.Forget();
+        _scales.Prune(Tab!.Document);
+        EndCalibrate();
         DropStale();
+        ShowScale(ScaleOf(Viewer!.PageIndex));
         Rebuild();
     }
 
