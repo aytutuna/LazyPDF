@@ -138,6 +138,198 @@ final class MarkListTests: XCTestCase {
         XCTAssertEqual(list.add([one]), 1)
     }
 
+    private func box(_ page: Int, _ left: Double, _ bottom: Double, _ label: String = "box") -> MarkItem {
+        MarkItem(RedactionMark.fromRect(page, PdfRect(left, bottom, left + 40, bottom + 10)), label, isBox: true)
+    }
+
+    func test_replacingAMarkKeepsTheCountSortsAndUndoesInOneStep() {
+        let list = MarkList()
+        let low = item(0, 10, 100, "low")
+        let high = item(0, 10, 500, "high")
+        list.add([low, high])
+        var changes = 0
+        list.changed = { changes += 1 }
+
+        let moved = item(0, 10, 20, "moved")
+        list.replace(high, moved)
+
+        XCTAssertEqual(list.items.map(\.label), ["low", "moved"])
+        XCTAssertEqual(changes, 1)
+        XCTAssertNotEqual(moved.id, high.id)
+        XCTAssertEqual(list.add([item(0, 10, 20.1)]), 0)
+        XCTAssertTrue(list.canUndo)
+        list.remove(list.items[1])
+        list.undo()
+        list.undo()
+
+        XCTAssertEqual(list.items.map(\.label), ["high", "low"])
+        XCTAssertEqual(list.add([item(0, 10, 500)]), 0)
+        XCTAssertEqual(list.add([item(0, 10, 20)]), 1)
+    }
+
+    func test_undoBringsBackTheExactQuadsOfAReplacedBox() {
+        let list = MarkList()
+        let old = box(0, 10.123, 100.456)
+        list.add([old])
+
+        list.replace(old, box(0, 50, 60))
+        list.undo()
+
+        XCTAssertEqual(list.items.count, 1)
+        XCTAssertEqual(list.items[0].id, old.id)
+        XCTAssertEqual(list.items[0].mark.quads[0].bounds.left, 10.123)
+        XCTAssertEqual(list.items[0].mark.quads[0].bounds.bottom, 100.456)
+    }
+
+    func test_replacingAMissingItemDoesNothing() {
+        let list = MarkList()
+        list.add([item(0, 10, 100)])
+        var changes = 0
+        list.changed = { changes += 1 }
+
+        list.replace(item(0, 10, 300), item(0, 20, 300))
+
+        XCTAssertEqual(list.items.count, 1)
+        XCTAssertEqual(changes, 0)
+        list.undo()
+        XCTAssertTrue(list.items.isEmpty)
+    }
+
+    func test_replacingOntoAnExistingMarkKeepsBoth() {
+        let list = MarkList()
+        let fixed = item(0, 10, 100, "fixed")
+        let moving = box(0, 10, 300)
+        list.add([fixed, moving])
+
+        list.replace(moving, box(0, 10, 100))
+
+        XCTAssertEqual(list.items.count, 2)
+        XCTAssertEqual(list.add([item(0, 10, 100)]), 0)
+        list.remove(list.items[0])
+        XCTAssertEqual(list.items.count, 1)
+        XCTAssertEqual(list.add([item(0, 10, 100)]), 0)
+    }
+
+    func test_aReplacedBoxKeepsItsLabelAndFlag() {
+        let list = MarkList()
+        let old = box(0, 10, 100, "Box")
+        list.add([old])
+
+        list.replace(old, MarkItem(RedactionMark.fromRect(0, PdfRect(15, 100, 55, 110)), old.label, isBox: old.isBox))
+
+        XCTAssertEqual(list.items[0].label, "Box")
+        XCTAssertTrue(list.items[0].isBox)
+    }
+
+    func test_aRunOfCoalescingReplacesIsOneStep() {
+        let list = MarkList()
+        let first = box(0, 10, 100)
+        list.add([first])
+        let second = box(0, 11, 100)
+        let third = box(0, 12, 100)
+        let fourth = box(0, 13, 100)
+
+        list.replace(first, second, coalesce: true)
+        list.replace(second, third, coalesce: true)
+        list.replace(third, fourth, coalesce: true)
+        list.undo()
+
+        XCTAssertEqual(list.items.map(\.id), [first.id])
+        list.undo()
+        XCTAssertTrue(list.items.isEmpty)
+        XCTAssertFalse(list.canUndo)
+    }
+
+    func test_anyOtherChangeBreaksTheRun() {
+        func run(_ interrupt: (MarkList, MarkItem) -> Void) -> Int {
+            let list = MarkList()
+            let first = box(0, 10, 100)
+            list.add([first])
+            let second = box(0, 11, 100)
+            list.replace(first, second, coalesce: true)
+            interrupt(list, second)
+            let third = box(0, 12, 100)
+            list.replace(list.items.first { $0.id == second.id } ?? second, third, coalesce: true)
+            var steps = 0
+            while list.canUndo {
+                list.undo()
+                steps += 1
+            }
+            return steps
+        }
+
+        XCTAssertEqual(run { _, _ in }, 2)
+        XCTAssertEqual(run { list, _ in list.add([self.item(0, 10, 400)]) }, 4)
+        XCTAssertEqual(run { list, _ in list.forget() }, 1)
+    }
+
+    func test_aReleaseThatIsNotCoalescedStartsANewStep() {
+        let list = MarkList()
+        let first = box(0, 10, 100)
+        list.add([first])
+        let second = box(0, 11, 100)
+        let third = box(0, 12, 100)
+        let fourth = box(0, 13, 100)
+        list.replace(first, second, coalesce: true)
+        list.replace(second, third)
+        list.replace(third, fourth, coalesce: true)
+
+        list.undo()
+        XCTAssertEqual(list.items.map(\.id), [third.id])
+        list.undo()
+        XCTAssertEqual(list.items.map(\.id), [second.id])
+        list.undo()
+        XCTAssertEqual(list.items.map(\.id), [first.id])
+    }
+
+    func test_undoGoesBackThroughAddRemoveAndClear() {
+        let list = MarkList()
+        let one = item(0, 10, 100)
+        let two = item(0, 10, 200)
+        list.add([one])
+        list.add([two])
+        list.remove(one)
+        list.clear()
+
+        list.undo()
+        XCTAssertEqual(list.items.map(\.id), [two.id])
+        list.undo()
+        XCTAssertEqual(list.items.count, 2)
+        list.undo()
+        list.undo()
+        XCTAssertTrue(list.items.isEmpty)
+        XCTAssertFalse(list.canUndo)
+        XCTAssertEqual(list.add([one]), 1)
+    }
+
+    func test_historyKeepsTwentySteps() {
+        let list = MarkList()
+        for at in 0..<25 { list.add([item(0, Double(at) * 10, 100)]) }
+
+        var steps = 0
+        while list.canUndo {
+            list.undo()
+            steps += 1
+        }
+
+        XCTAssertEqual(steps, 20)
+        XCTAssertEqual(list.items.count, 5)
+    }
+
+    func test_forgettingTheHistoryRaisesChangedOnlyWhenThereWasOne() {
+        let list = MarkList()
+        var changes = 0
+        list.changed = { changes += 1 }
+
+        list.forget()
+        XCTAssertEqual(changes, 0)
+        list.add([item(0, 10, 100)])
+        list.forget()
+
+        XCTAssertEqual(changes, 2)
+        XCTAssertFalse(list.canUndo)
+    }
+
     func test_aBoxIsInUserSpaceWithTheOriginAtTheBottom() {
         let geometry = PageGeometry(PdfRect(0, 0, 200, 300), 0)
 

@@ -33,6 +33,7 @@ public struct MarkItem: Identifiable, Equatable {
 /// What is marked on a document so far, in reading order. Nothing is written to the file until the redaction is applied.
 public final class MarkList {
     private static let samePlace = 0.5
+    private static let maxSteps = 20
 
     // Marks by page and the unit square of their first corner, so that a new one is compared only with its neighbours.
     private struct Cell: Hashable {
@@ -42,8 +43,14 @@ public final class MarkList {
     }
 
     private var cells: [Cell: [MarkItem]] = [:]
+    private var history: [[MarkItem]] = []
+
+    // The item the last coalescing replace produced, so a run of nudges of it is one step of undo.
+    private var lastEdited: UUID?
 
     public private(set) var items: [MarkItem] = []
+
+    public var canUndo: Bool { !history.isEmpty }
 
     /// Called after the list changed.
     public var changed: (() -> Void)?
@@ -53,6 +60,7 @@ public final class MarkList {
     /// Adds what is not marked already and returns how many were new.
     @discardableResult
     public func add(_ new: [MarkItem]) -> Int {
+        let before = items
         var added = 0
         for item in new {
             if neighbours(item).contains(where: { Self.same($0, item) }) { continue }
@@ -61,19 +69,15 @@ public final class MarkList {
             added += 1
         }
         if added == 0 { return 0 }
-        // The keys are worked out once and the position breaks ties, so the order is the one the marks came in.
-        items = items.enumerated().map { (at: $0.offset, item: $0.element, top: Self.top($0.element.mark), left: Self.left($0.element.mark)) }
-            .sorted { a, b in
-                if a.item.page != b.item.page { return a.item.page < b.item.page }
-                if a.top != b.top { return a.top > b.top }
-                return a.left != b.left ? a.left < b.left : a.at < b.at
-            }.map { $0.item }
+        push(before)
+        items = Self.sorted(items)
         changed?()
         return added
     }
 
     public func remove(_ item: MarkItem) {
         guard let at = items.firstIndex(where: { $0.id == item.id }) else { return }
+        push(items)
         items.remove(at: at)
         cells[cell(item)]?.removeAll { $0.id == item.id }
         changed?()
@@ -83,18 +87,71 @@ public final class MarkList {
     @discardableResult
     public func removeValues() -> Bool {
         guard items.contains(where: { $0.value != nil }) else { return false }
+        push(items)
         items.removeAll { $0.value != nil }
-        cells = [:]
-        for item in items { cells[cell(item), default: []].append(item) }
+        rebuildCells()
         changed?()
         return true
     }
 
+    /// Puts `new` where `old` was, for a box that was moved or resized. One step of undo, or, with `coalesce`, the same
+    /// step as the last coalescing replace of `old` when that is what made it. Like Windows, it does not look for a twin.
+    public func replace(_ old: MarkItem, _ new: MarkItem, coalesce: Bool = false) {
+        guard items.contains(where: { $0.id == old.id }) else { return }
+        if coalesce && old.id == lastEdited {
+            lastEdited = new.id
+        } else {
+            push(items)
+            lastEdited = coalesce ? new.id : nil
+        }
+        items = Self.sorted(items.filter { $0.id != old.id } + [new])
+        rebuildCells()
+        changed?()
+    }
+
     public func clear() {
         if items.isEmpty { return }
+        push(items)
         items = []
         cells = [:]
         changed?()
+    }
+
+    public func undo() {
+        guard let last = history.popLast() else { return }
+        lastEdited = nil
+        items = last
+        rebuildCells()
+        changed?()
+    }
+
+    /// Drops the history, for when the marks no longer belong to the file. Changed is raised so a shown Undo goes away.
+    public func forget() {
+        lastEdited = nil
+        if history.isEmpty { return }
+        history = []
+        changed?()
+    }
+
+    private func push(_ before: [MarkItem]) {
+        lastEdited = nil
+        history.append(before)
+        if history.count > Self.maxSteps { history.removeFirst() }
+    }
+
+    private func rebuildCells() {
+        cells = [:]
+        for item in items { cells[cell(item), default: []].append(item) }
+    }
+
+    // The keys are worked out once and the position breaks ties, so the order is the one the marks came in.
+    private static func sorted(_ items: [MarkItem]) -> [MarkItem] {
+        items.enumerated().map { (at: $0.offset, item: $0.element, top: top($0.element.mark), left: left($0.element.mark)) }
+            .sorted { a, b in
+                if a.item.page != b.item.page { return a.item.page < b.item.page }
+                if a.top != b.top { return a.top > b.top }
+                return a.left != b.left ? a.left < b.left : a.at < b.at
+            }.map { $0.item }
     }
 
     private func cell(_ item: MarkItem) -> Cell {
