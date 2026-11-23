@@ -7,18 +7,22 @@ import LazyPDFKit
 /// is only where the comment or field sits, and it is not applied as a mark.
 public struct MarkItem: Identifiable, Equatable {
     public let id = UUID()
+
+    /// What the list shows the item by: a box that was moved or resized is a new item in the same row.
+    public let row: UUID
     public let mark: RedactionMark
     public let label: String
     public let isBox: Bool
     public let value: RedactionValueMatch?
     public let place: String?
 
-    public init(_ mark: RedactionMark, _ label: String, isBox: Bool = false, value: RedactionValueMatch? = nil, place: String? = nil) {
+    public init(_ mark: RedactionMark, _ label: String, isBox: Bool = false, value: RedactionValueMatch? = nil, place: String? = nil, row: UUID? = nil) {
         self.mark = mark
         self.label = label
         self.isBox = isBox
         self.value = value
         self.place = place
+        self.row = row ?? id
     }
 
     public var page: Int { mark.page }

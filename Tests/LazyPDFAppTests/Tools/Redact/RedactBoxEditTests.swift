@@ -417,4 +417,33 @@ final class RedactBoxEditTests: XCTestCase {
         XCTAssertNil(frame(rig))
         XCTAssertNil(rig.viewer.overlay(0).item("redact.edit.grip.0"))
     }
+
+    func test_aMovedBoxStaysInItsRowSoTheRowKeepsItsFocus() async throws {
+        let (model, rig) = try attached()
+        let original = try selectedBox(model, rig)
+
+        model.nudge(.right)
+        model.nudge(.wider)
+        XCTAssertEqual(model.marks.map(\.row), [original.row])
+        XCTAssertNotEqual(model.marks[0].id, original.id)
+
+        model.undo()
+        XCTAssertEqual(model.marks.map(\.row), [original.row])
+    }
+
+    func test_everyStepOfTheKeyboardAndOfAScreenReaderMovesTheBoxByItsOwnAmount() async throws {
+        let steps: [(BoxMove, [Double])] = [
+            (.left, [49, 702, 149, 732]), (.right, [51, 702, 151, 732]), (.up, [50, 703, 150, 733]), (.down, [50, 701, 150, 731]),
+            (.wider, [50, 702, 151, 732]), (.narrower, [50, 702, 149, 732]), (.taller, [50, 701, 150, 732]), (.shorter, [50, 703, 150, 732]),
+        ]
+        XCTAssertEqual(Set(steps.map(\.0)), Set(BoxMove.allCases))
+        for (move, expected) in steps {
+            let (model, rig) = try attached()
+            _ = try selectedBox(model, rig)
+
+            model.nudge(move)
+
+            XCTAssertEqual(bounds(model), expected, "\(move)")
+        }
+    }
 }

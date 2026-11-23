@@ -27,6 +27,25 @@ final class RedactPanelViewTests: XCTestCase {
         XCTAssertGreaterThan(try ink(model), empty)
     }
 
+    func test_aSelectedBoxAndTheUndoButtonAreDrawn() async throws {
+        let rig = try ToolViewRig(PdfFromText.create("Write to ann@example.com today.", fonts: StandInFonts()).bytes)
+        let model = RedactModel(fonts: nil, images: nil)
+        model.attach(rig.tab, rig.viewer, rig.host)
+        model.setDrawing(true)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        tool.press(PagePointer(page: 0, point: ViewPoint(50, 60), view: ViewPoint(50, 60), pressed: true, clicks: 1))
+        tool.release(PagePointer(page: 0, point: ViewPoint(150, 90), view: ViewPoint(150, 90), pressed: false, clicks: 0))
+        model.setDrawing(false)
+        let before = try ink(model)
+
+        model.jump(model.marks[0])
+        model.nudge(.right)
+
+        XCTAssertTrue(model.canUndo)
+        XCTAssertNotNil(model.selected)
+        XCTAssertGreaterThan(try ink(model), before)
+    }
+
     func test_aFileThatCannotBeChangedSaysSoInsteadOfOfferingTheTools() throws {
         let session = try PdfEditSession.open(StandInPdfs.text(1))
         let document = session.document

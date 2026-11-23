@@ -3624,6 +3624,24 @@
   "Move down": {
     "tr": "Aşağı taşı"
   },
+  "Move left": {
+    "tr": "Sola taşı"
+  },
+  "Move right": {
+    "tr": "Sağa taşı"
+  },
+  "Wider": {
+    "tr": "Daha geniş"
+  },
+  "Narrower": {
+    "tr": "Daha dar"
+  },
+  "Taller": {
+    "tr": "Daha uzun"
+  },
+  "Shorter": {
+    "tr": "Daha kısa"
+  },
   "Remove": {
     "tr": "Kaldır"
   },

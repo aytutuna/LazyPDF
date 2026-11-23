@@ -351,7 +351,7 @@ public final class RedactModel: ToolPanelModel {
     // The geometry is the one the rectangle was worked out in, which the viewer may no longer have by the time a drag ends.
     func boxEdited(_ old: MarkItem, to rect: ViewRect, _ geometry: PageGeometry, resized: Bool, coalesce: Bool = false) {
         let mark = MarkShapes.box(old.page, geometry, from: rect.topLeft, to: ViewPoint(rect.right, rect.bottom))
-        guard replace(old, MarkItem(mark, old.label, isBox: true), coalesce: coalesce) else { return }
+        guard replace(old, MarkItem(mark, old.label, isBox: true, row: old.row), coalesce: coalesce) else { return }
         host?.setStatus(resized ? L10n.t("Box resized.") : L10n.t("Box moved."))
     }
 

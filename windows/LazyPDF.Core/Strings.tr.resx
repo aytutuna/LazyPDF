@@ -3616,6 +3616,9 @@
   <data name="Move later" xml:space="preserve">
     <value>Sonraya taşı</value>
   </data>
+  <data name="Move left" xml:space="preserve">
+    <value>Sola taşı</value>
+  </data>
   <data name="Move marks" xml:space="preserve">
     <value>İşaretleri taşı</value>
   </data>
@@ -3627,6 +3630,9 @@
   </data>
   <data name="Move point" xml:space="preserve">
     <value>Noktayı taşı</value>
+  </data>
+  <data name="Move right" xml:space="preserve">
+    <value>Sağa taşı</value>
   </data>
   <data name="Move step down" xml:space="preserve">
     <value>Adımı aşağı taşı</value>
@@ -3675,6 +3681,9 @@
   </data>
   <data name="Narrow" xml:space="preserve">
     <value>Dar</value>
+  </data>
+  <data name="Narrower" xml:space="preserve">
+    <value>Daha dar</value>
   </data>
   <data name="Need another language? In Settings, Language and region, add it and its Optical character recognition." xml:space="preserve">
     <value>Başka bir dil mi gerekiyor? Ayarlar'da Dil ve bölge altında dili ve Optik karakter tanıma özelliğini ekleyin.</value>
@@ -5812,6 +5821,9 @@
   <data name="Share" xml:space="preserve">
     <value>Paylaş</value>
   </data>
+  <data name="Shorter" xml:space="preserve">
+    <value>Daha kısa</value>
+  </data>
   <data name="Show" xml:space="preserve">
     <value>Göster</value>
   </data>
@@ -6324,6 +6336,9 @@
   </data>
   <data name="Takes effect the next time Lazy PDF starts." xml:space="preserve">
     <value>Lazy PDF'yi bir sonraki başlatışınızda geçerli olur.</value>
+  </data>
+  <data name="Taller" xml:space="preserve">
+    <value>Daha uzun</value>
   </data>
   <data name="Tap a field on the page to fill it in, or choose it from the list." xml:space="preserve">
     <value>Doldurmak için sayfada bir alana dokunun ya da listeden seçin.</value>
@@ -8238,6 +8253,9 @@
   </data>
   <data name="Wide" xml:space="preserve">
     <value>Geniş</value>
+  </data>
+  <data name="Wider" xml:space="preserve">
+    <value>Daha geniş</value>
   </data>
   <data name="Width" xml:space="preserve">
     <value>Kalınlık</value>
