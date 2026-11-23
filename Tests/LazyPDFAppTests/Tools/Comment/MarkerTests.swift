@@ -302,20 +302,36 @@ final class MarkerTests: XCTestCase {
         var look = markRed
         look.fill = [1, 1, 1]
         look.dash = .dashed
-        let box = try f.marker.add(.rectangle, 0, drag, look)
+        try f.marker.add(.rectangle, 0, drag, look)
         var arrowLook = markRed
         arrowLook.startHead = .circle
         arrowLook.head = .diamond
         _ = try f.marker.add(.arrow, 0, drag, arrowLook)
 
-        let reread = f.marks()
+        XCTAssertTrue(try f.tab.commit("Marks"))
+        let reopened = try PdfDocument.open(f.tab.session.current)
+        let reread = PdfAnnotations.read(reopened, reopened.pages[0])
+        let rect = try XCTUnwrap(reread.first { $0.type == .square })
 
-        XCTAssertEqual(reread.first { $0.reference == box.reference }?.interiorColor, [1, 1, 1])
-        XCTAssertEqual(Marker.lineOf(try XCTUnwrap(reread.first { $0.reference == box.reference })), .dashed)
+        XCTAssertEqual(rect.interiorColor, [1, 1, 1])
+        XCTAssertEqual(Marker.lineOf(rect), .dashed)
         let arrow = try XCTUnwrap(reread.first { $0.type == .line })
         XCTAssertEqual(arrow.startEnding, .circle)
         XCTAssertEqual(arrow.endEnding, .diamond)
         XCTAssertEqual(arrow.intent, "LineArrow")
+    }
+
+    func test_aTextBoxIsDrawnClearWhateverFillAndDashAreChosen() async throws {
+        let f = try CommentFixture()
+        var look = markRed
+        look.fill = [1, 1, 0]
+        look.dash = .dashed
+
+        let box = try f.marker.add(.textBox, 0, drag, look, "Hello")
+
+        XCTAssertTrue(box.interiorColor?.isEmpty ?? true)
+        XCTAssertNil(box.dictionary["IC"])
+        XCTAssertTrue(box.border.dash.isEmpty)
     }
 
     func test_aPlainLineHasNoHeadUnlessOneIsChosen() async throws {
@@ -440,6 +456,32 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(kept.rect, measured.rect)
         XCTAssertNotNil(kept.dictionary["Measure"])
         XCTAssertEqual(kept.contents, "3 m")
+    }
+
+    func test_aCloudWithoutABulgeIsLeftAlone() async throws {
+        let square = [markPt(100, 100), markPt(300, 100), markPt(300, 300), markPt(100, 300)]
+        for bulge in [nil, 0.0] as [Double?] {
+            let f = try CommentFixture()
+            let made = try f.marker.add(.polygon, 0, square, markRed)
+            made.dictionary["IT"] = PdfName("PolygonCloud")
+            if let bulge {
+                let effect = PdfDictionary()
+                effect["S"] = PdfName("C")
+                effect["I"] = PdfNumber(bulge)
+                made.dictionary["BE"] = effect
+            }
+            let foreign = try XCTUnwrap(f.marks().first)
+            XCTAssertTrue(Marker.foreign(foreign))
+            XCTAssertNil(f.marker.pointsOf(foreign))
+            let before = try f.document.data(try XCTUnwrap(f.document.stream(f.document.dict(foreign.dictionary, "AP"), "N")))
+
+            _ = try f.marker.recolor(foreign, [0, 0, 1])
+            _ = try f.marker.setOpacity(foreign, 0.5)
+            _ = try f.marker.setWidth(foreign, 9)
+
+            let after = try f.document.data(try XCTUnwrap(f.document.stream(f.document.dict(foreign.dictionary, "AP"), "N")))
+            XCTAssertEqual(before, after)
+        }
     }
 
     func test_aMeasurementTakesALookChangeButNoHead() async throws {
