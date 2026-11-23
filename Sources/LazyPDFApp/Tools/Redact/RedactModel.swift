@@ -36,6 +36,7 @@ public final class RedactModel: ToolPanelModel {
     public var selected: UUID?
 
     public private(set) var marks: [MarkItem] = []
+    public private(set) var canUndo = false
     public private(set) var result: RedactSummary?
 
     /// The file lets this opener read it but not change it, so nothing can be marked.
@@ -149,6 +150,7 @@ public final class RedactModel: ToolPanelModel {
     private func marksChanged() {
         guard let state else { return }
         marks = state.marks.items
+        canUndo = state.marks.canUndo
         tab?.pendingMarks = marks.count
         if let selected, !marks.contains(where: { $0.id == selected }) { self.selected = nil }
         drawOverlays(redrawAll: false)
@@ -268,6 +270,50 @@ public final class RedactModel: ToolPanelModel {
                         NoticeAction(L10n.t("Put them back")) { [weak self] in self?.putBack(removed, in: state, pages: pages, revision: revision) })
     }
 
+    public func undo() {
+        state?.marks.undo()
+    }
+
+    // MARK: Editing a box
+
+    /// The box of the list that is selected; value marks and whole selections are not boxes and are never edited.
+    var selectedBox: MarkItem? {
+        marks.first { $0.id == selected && $0.isBox }
+    }
+
+    public var canNudge: Bool {
+        guard let viewer, let box = selectedBox else { return false }
+        return box.page < viewer.pageCount
+    }
+
+    /// Moves or resizes the selected box by a step of the keyboard (1 point, 10 when `large`). Each step is in the list at
+    /// once; a run of them is one step of Undo.
+    public func nudge(_ move: BoxMove, large: Bool = false) {
+        guard let viewer, let box = selectedBox, box.page < viewer.pageCount else { return }
+        let geometry = viewer.geometry(box.page)
+        let rect = MarkShapes.place(geometry, box.mark)
+        let (arrow, resize) = move.keys
+        let moved = RedactDrawTool.nudge(rect, arrow, resize: resize, large: large, viewer.pageSize(box.page))
+        if moved == rect { return }
+        boxEdited(box, to: moved, geometry, resized: resize, coalesce: true)
+    }
+
+    // The geometry is the one the rectangle was worked out in, which the viewer may no longer have by the time a drag ends.
+    func boxEdited(_ old: MarkItem, to rect: ViewRect, _ geometry: PageGeometry, resized: Bool, coalesce: Bool = false) {
+        let mark = MarkShapes.box(old.page, geometry, from: rect.topLeft, to: ViewPoint(rect.right, rect.bottom))
+        guard replace(old, MarkItem(mark, old.label, isBox: true), coalesce: coalesce) else { return }
+        host?.setStatus(resized ? L10n.t("Box resized.") : L10n.t("Box moved."))
+    }
+
+    // The new item has an id of its own; it is selected before the list tells of the change, which would let the selection go.
+    @discardableResult
+    func replace(_ old: MarkItem, _ new: MarkItem, coalesce: Bool = false) -> Bool {
+        guard let state, marks.contains(where: { $0.id == old.id }) else { return false }
+        selected = new.id
+        state.marks.replace(old, new, coalesce: coalesce)
+        return true
+    }
+
     private static func pageNumbers(_ state: State) -> [Int]? {
         state.tab?.document.pages.map { $0.reference.number }
     }
@@ -353,6 +399,7 @@ public final class RedactModel: ToolPanelModel {
 
         // The marks are done with once the copy exists; the panel may be detached by now, so the count is set here too.
         state.marks.clear()
+        state.marks.forget()
         tab.pendingMarks = 0
         let summary = RedactSummary.of(made, flattenedAll: settings.flattenAll)
         incoming = summary
@@ -360,5 +407,24 @@ public final class RedactModel: ToolPanelModel {
         await host.openNew(made.bytes, title: incomingTitle, password: nil, certificate: nil)
         host.setStatus(summary.clean ? L10n.t("Redacted copy opened.") : L10n.t("Redacted copy has problems."))
         if encrypted { host.showNotice(L10n.t("The copy has no password"), L10n.t("Protect it before you share it."), nil) }
+    }
+}
+
+/// The ways a selected box is moved or resized from the keyboard or by a screen reader. Wider and narrower move the right
+/// edge, taller and shorter the bottom edge.
+public enum BoxMove: CaseIterable {
+    case left, right, up, down, wider, narrower, taller, shorter
+
+    var keys: (RedactDrawTool.Arrow, resize: Bool) {
+        switch self {
+        case .left: (.left, false)
+        case .right: (.right, false)
+        case .up: (.up, false)
+        case .down: (.down, false)
+        case .wider: (.right, true)
+        case .narrower: (.left, true)
+        case .taller: (.down, true)
+        case .shorter: (.up, true)
+        }
     }
 }
