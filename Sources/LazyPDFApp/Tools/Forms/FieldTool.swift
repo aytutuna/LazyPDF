@@ -51,6 +51,10 @@ final class FieldTool: PagePointerTool {
         model.commitCard()
         page = pointer.page
         start = pointer.point
+        // The viewer lets a press just off the page through for a handle; if the commit moved the selection, nothing is left to grab.
+        let size = model.view.pageSize(page)
+        let onPage = start.x >= 0 && start.x <= size.width && start.y >= 0 && start.y <= size.height
+        if !onPage && handleAt(model, page, start) == nil { return }
         if let found = handleAt(model, page, start), let selected = model.selectedBox() {
             begin(.size, selected.box)
             handle = found
