@@ -128,6 +128,7 @@ extension ViewerModel {
     func beginSelection(_ at: ViewPoint, clicks: Int, extend wanted: Bool) {
         pressTicket += 1
         let ticket = pressTicket
+        dragTicket = ticket
         anchorWaiting = nil
         multi = nil
         guard let hit = state.hit(at, nearest: true) else { return }
@@ -172,7 +173,7 @@ extension ViewerModel {
     }
 
     func dragSelection(_ at: ViewPoint) {
-        guard moved, let hit = state.hit(at, nearest: true) else { return }
+        guard moved, dragTicket == pressTicket, let hit = state.hit(at, nearest: true) else { return }
         guard let text = source?.peek(hit.page) else {
             Task { await loadPage(hit.page) }
             return

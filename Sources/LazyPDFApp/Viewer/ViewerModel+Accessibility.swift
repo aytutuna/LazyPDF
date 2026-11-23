@@ -33,6 +33,8 @@ extension ViewerModel {
     /// Selects a run of one page's characters, as a screen reader asks to. An empty run only moves the reader's own caret and
     /// leaves what the user selected alone.
     public func select(page: Int, _ range: LazyPDFKit.TextRange) {
+        // A mouse drag in progress must not overwrite what the reader just set.
+        pressTicket += 1
         if range.isEmpty {
             let caret = Caret(page, range.start)
             guard readerCaret != caret else { return }

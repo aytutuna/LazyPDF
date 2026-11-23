@@ -120,6 +120,18 @@ final class ViewerAccessibilityTests: XCTestCase {
         XCTAssertEqual(told, 1)
     }
 
+    func test_aScreenReaderSelectionIsNotOverwrittenByTheDragInProgress() async throws {
+        let viewer = try await open()
+        let box = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(0, 1)))
+        let far = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(20, 21)))
+        viewer.pointerDown(box.center)
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(2, 7))
+        viewer.pointerMove(far.center)
+
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(2, 7))
+    }
+
     func test_aCaretSelectsNothingButIsStillAPlace() async throws {
         let viewer = try await open()
         var told = 0

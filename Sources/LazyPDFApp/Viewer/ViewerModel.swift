@@ -61,6 +61,7 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var preloadTask: Task<Void, Never>?
     @ObservationIgnored var anchorWaiting: PagePoint?
     @ObservationIgnored var pressTicket = 0
+    @ObservationIgnored var dragTicket = 0
     @ObservationIgnored var multi: (start: Caret, end: Caret, clicks: Int)?
 
     // Pointer
