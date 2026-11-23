@@ -224,11 +224,11 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(draw.waitForExistence(timeout: 10))
         draw.click()
 
-        // The viewer gives each page a group with the page's own frame, so the drag lands on paper whatever the layout.
-        let page = app.groups["Page 1 of 3"].firstMatch
-        XCTAssertTrue(page.waitForExistence(timeout: 10))
-        let from = page.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.3))
-        from.press(forDuration: 0.3, thenDragTo: page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)),
+        // The page viewer is the largest scroll area; the first page fills the top of it whatever the zoom.
+        let areas = app.windows.firstMatch.scrollViews.allElementsBoundByIndex.filter { $0.label != "Open files" }
+        let viewer = try XCTUnwrap(areas.max { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height })
+        let from = viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.25))
+        from.press(forDuration: 0.3, thenDragTo: viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.35)),
                    withVelocity: .slow, thenHoldForDuration: 0.2)
         let row = app.buttons["Box, page 1"]
         XCTAssertTrue(row.waitForExistence(timeout: 10))
