@@ -18,6 +18,7 @@ final class EditTool: PagePointerTool {
     private var handle = -1
     private var vertex = -1
     private var picked = -1
+    private var pickedAt = ViewPoint.zero
     private var crossOpen = false
     private var wanted = -1
     private var points: [ViewPoint]?
@@ -79,8 +80,8 @@ final class EditTool: PagePointerTool {
         let count = points?.count
         current = marker().find(mark.pageIndex, reference.number)
         redraw()
-        // A look change that settles late must not cost the person their pick.
-        if current == nil || points?.count != count { clearPick() }
+        // A look change that settles late must not cost the person their pick, but an undo or redo that moved the corner does.
+        if current == nil || points?.count != count || movedSincePick() { clearPick() }
         if wanted >= 0, let points, wanted < points.count {
             pick(wanted)
             vertexPicked?(wanted)
@@ -94,8 +95,14 @@ final class EditTool: PagePointerTool {
         wanted = index
     }
 
+    private func movedSincePick() -> Bool {
+        guard picked >= 0, let points, picked < points.count else { return false }
+        return hypot(points[picked].x - pickedAt.x, points[picked].y - pickedAt.y) >= 0.5
+    }
+
     private func pick(_ index: Int) {
         picked = index
+        if let points, index < points.count { pickedAt = points[index] }
         crossOpen = false
         redraw()
         pickChanged?()
@@ -290,6 +297,7 @@ final class EditTool: PagePointerTool {
         if picked >= 0 { clearPick() }
         if let index = vertexAt(points, pointer.point, pointer.page, touch: false) {
             picked = index
+            pickedAt = points[index]
             crossOpen = true
             pickChanged?()
             viewer.placementEnded = { [weak self] in self?.placementEnded() }

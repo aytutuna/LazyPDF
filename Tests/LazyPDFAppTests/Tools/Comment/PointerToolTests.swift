@@ -838,6 +838,21 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(viewer.placementsCancelled, 1)
     }
 
+    func test_anUndoThatMovesThePickedCornerLetsGoOfThePick() async throws {
+        let (tool, f, viewer, _) = try shaped(.polygon, square)
+        _ = try f.marker.movePoint(tool.current!, 2, markPt(340, 330))
+        try f.tab.commit("Move point")
+        tool.refresh()
+        tool.press(keyed(markPt(340, 330)))
+        XCTAssertEqual(tool.pickedVertex, 2)
+
+        XCTAssertTrue(try f.tab.undo())
+        tool.refresh()
+
+        XCTAssertEqual(tool.pickedVertex, -1)
+        XCTAssertEqual(viewer.placementsCancelled, 1)
+    }
+
     func test_theViewerClosingTheCrossDropsThePick() async throws {
         let (tool, _, viewer, _) = try shaped(.polygon, square)
         tool.press(keyed(markPt(300, 300)))
