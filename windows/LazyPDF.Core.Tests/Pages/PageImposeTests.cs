@@ -96,6 +96,46 @@ public class PageImposeTests
         Assert.Equal(new PdfRect(0, 0, 400, 300), result.Document.Pages[0].MediaBox);
     }
 
+    // Page numbers in left to right order on one side.
+    private static string Across(PdfDocument document, int side) =>
+        string.Join(",", Placed(document, side).OrderBy(p => p.Box.Left).Select(p => p.Page));
+
+    [Fact]
+    public void BookletRightToLeftSwapsTheCellsOfEachSide()
+    {
+        var source = PageTestFiles.Open(8);
+        var options = new ImposeOptions(ImposeMode.Booklet, 300, 400, RightToLeft: true);
+        var document = PageOperations.Impose(source, [.. Enumerable.Range(0, 8)], options).Document;
+        Assert.Equal("8,1 | 2,7 | 6,3 | 4,5", Sheets(document));
+        Assert.Equal("1,8", Across(document, 0));
+        Assert.Equal("7,2", Across(document, 1));
+        Assert.Equal("3,6", Across(document, 2));
+        Assert.Equal("5,4", Across(document, 3));
+    }
+
+    [Fact]
+    public void NUpRightToLeftFillsColumnsFromTheRight()
+    {
+        var source = PageTestFiles.Open(4);
+        var options = new ImposeOptions(ImposeMode.NUp, 600, 400, 4, RightToLeft: true);
+        var document = PageOperations.Impose(source, [0, 1, 2, 3], options).Document;
+        var cells = Placed(document, 0);
+        Assert.Equal([1, 2, 3, 4], cells.Select(c => c.Page));
+        Assert.True(cells[0].Box.Left > cells[1].Box.Left);
+        Assert.True(cells[2].Box.Left > cells[3].Box.Left);
+        Assert.True(cells[0].Box.Bottom > cells[2].Box.Bottom);
+        Assert.Equal(cells[0].Box.Left, cells[2].Box.Left, 3);
+    }
+
+    [Fact]
+    public void LeftToRightIsTheDefault()
+    {
+        var source = PageTestFiles.Open(4);
+        var plain = PageOperations.Impose(source, [0, 1, 2, 3], new ImposeOptions(ImposeMode.NUp, 600, 400, 4)).Document;
+        Assert.True(Placed(plain, 0)[0].Box.Left < Placed(plain, 0)[1].Box.Left);
+        Assert.Equal(plain.Pages[0].Contents(), PageOperations.Impose(source, [0, 1, 2, 3], new ImposeOptions(ImposeMode.NUp, 600, 400, 4, RightToLeft: false)).Document.Pages[0].Contents());
+    }
+
     [Fact]
     public void BookletPadsWithBlanksToAMultipleOfFour()
     {
