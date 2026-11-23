@@ -184,6 +184,8 @@ final class PageDocumentViewTests: XCTestCase {
 
     func test_aPageBeyondThePreloadIsReadWhenAScreenReaderAsksForIt() async throws {
         let shown = try await open(pages: 12)
+        // The smallest zoom still keeps a page large, so the view is made tall enough for more pages than the preload reads.
+        shown.viewer.setScreen(viewport: ViewSize(900, 4000), pixelsPerDip: 1)
         shown.viewer.zoom = 0.15
         XCTAssertGreaterThan(shown.viewer.visiblePages.count, 8)
         let last = try XCTUnwrap(shown.viewer.visiblePages.last)
