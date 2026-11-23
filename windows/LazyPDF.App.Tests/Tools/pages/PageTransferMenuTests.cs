@@ -69,7 +69,7 @@ public sealed class PageTransferMenuTests
         Assert.False(shown.Button("CopyTo").IsEnabled);
         Opening(shown.View, "Thumbs_ContextMenuOpening");
         Assert.False(Entry(shown.View, "CopyToTab").IsEnabled);
-        Assert.All(PageMenu(shown.View).Items.OfType<MenuItem>(), item => Assert.False(item.IsEnabled));
+        Assert.True(PageMenu(shown.View).Items.OfType<MenuItem>().First().IsEnabled);
 
         host.Documents.Add(to);
         shown.Select(0, 1);
@@ -82,6 +82,8 @@ public sealed class PageTransferMenuTests
 
         shown.Select();
         Assert.False(shown.Button("CopyTo").IsEnabled);
+        Opening(shown.View, "Thumbs_ContextMenuOpening");
+        Assert.All(PageMenu(shown.View).Items.OfType<MenuItem>(), item => Assert.False(item.IsEnabled));
         return Task.CompletedTask;
     });
 
