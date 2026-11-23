@@ -400,7 +400,7 @@ final class EditTool: PagePointerTool {
         func distance(_ i: Int) -> Double { hypot(points[i].x - at.x, points[i].y - at.y) }
         guard let nearest = points.indices.min(by: { distance($0) < distance($1) }) else { return nil }
         let gap = points.indices.filter { $0 != nearest }.map { hypot(points[$0].x - points[nearest].x, points[$0].y - points[nearest].y) }.min()
-        let own = touch ? reach(page) : Self.grip / 2 / scale(page) + 2
+        let own = touch ? reach(page) : min(Self.grip / 2 / scale(page) + 2, reach(page))
         return distance(nearest) <= min(own, (gap ?? .infinity) / 2) ? nearest : nil
     }
 
