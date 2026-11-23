@@ -10,9 +10,14 @@ import LazyPDFApp
 
 @MainActor
 final class CertificatesPanelViewTests: XCTestCase {
-    private func model(_ rig: ToolViewRig) -> CertificatesModel {
+    private func model(_ rig: ToolViewRig, saved: Int = 0) throws -> CertificatesModel {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        let made = CertificatesModel(trust: SignatureTrust(directory: folder), transport: { Quiet() },
+        let codec = ImageIOCodec()
+        let store = SavedSignatures(directory: folder.appendingPathComponent("Signatures"), codec: codec)
+        let black = PdfRgbaImage(20, 10, (0..<20 * 10).flatMap { _ in [UInt8(0), 0, 0, 255] })
+        for _ in 0..<saved { try store.add(.signature, black) }
+        let made = CertificatesModel(trust: SignatureTrust(directory: folder), store: store,
+                                     system: SystemSignature(), codec: codec, transport: { Quiet() },
                                      importIdentity: { _, _ in throw InvalidDataException("No identity.") })
         made.attach(rig.tab, rig.viewer, rig.host)
         return made
@@ -31,7 +36,7 @@ final class CertificatesPanelViewTests: XCTestCase {
 
     func test_thePanelIsDrawnForEachWayOfSigning() throws {
         let rig = try ToolViewRig()
-        let model = model(rig)
+        let model = try model(rig)
         let keychain = try ink(model)
 
         model.useKeychain = false
@@ -41,6 +46,47 @@ final class CertificatesPanelViewTests: XCTestCase {
         XCTAssertGreaterThan(keychain, 300)
         XCTAssertGreaterThan(try ink(model), 300)
         XCTAssertFalse(model.urlNote.isEmpty)
+    }
+
+    func test_aPictureLookShowsTheSavedSignaturesOrSaysThereAreNone() throws {
+        let empty = try model(try ToolViewRig())
+        empty.setPlace(1)
+        let plain = try ink(empty)
+        empty.lookIndex = 1
+        let note = try ink(empty)
+        let full = try model(try ToolViewRig(), saved: 2)
+        full.setPlace(1)
+        full.lookIndex = 1
+        let list = try ink(full)
+
+        XCTAssertTrue(empty.needsPicture)
+        XCTAssertTrue(empty.rows.isEmpty)
+        XCTAssertEqual(full.rows.count, 2)
+        XCTAssertNotEqual(note, plain)
+        XCTAssertNotEqual(list, note)
+    }
+
+    func test_theLookIsNotOfferedForAnInvisibleSignature() throws {
+        let model = try model(try ToolViewRig(), saved: 1)
+        model.setPlace(0)
+        model.lookIndex = 0
+        let textOnly = try ink(model)
+
+        model.lookIndex = 2
+
+        XCTAssertFalse(model.showsLook)
+        XCTAssertEqual(try ink(model), textOnly)
+    }
+
+    func test_theSheetThatMakesAPictureIsDrawnFromTheCertificatesModel() throws {
+        let model = try model(try ToolViewRig())
+        model.makeNew()
+        model.maker.setName("Ada")
+
+        let sheet = SignatureMakerView(maker: model.maker, use: { model.useMade() }, cancel: { model.cancelMaker() },
+                                       choosePicture: { await model.chooseMakerPicture() })
+
+        XCTAssertGreaterThan(try ToolPicture.ink(try ToolPicture.draw(sheet, height: 560)), 200)
     }
 
     func test_theRegistryMakesThePanelForTheToolId() throws {

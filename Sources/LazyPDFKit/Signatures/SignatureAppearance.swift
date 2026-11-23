@@ -6,6 +6,28 @@ import Foundation
 enum SignatureAppearance {
     private static let margin = 3.0
 
+    /// What fits in the box, decided before anything is added to the document.
+    struct Layout {
+        let width: Double
+        let height: Double
+        let graphicsWidth: Double
+        let showGraphics: Bool
+        let showText: Bool
+    }
+
+    /// Picture and ink are drawn only when they have room inside the margins; without it the text gets the whole width.
+    /// Text is left out when it has no room either, and then no font is embedded.
+    static func plan(_ rect: PdfRect, _ rotate: Int, _ look: SignatureLook, _ text: String) -> Layout {
+        let sideways = rotate == 90 || rotate == 270
+        let width = sideways ? rect.height : rect.width, height = sideways ? rect.width : rect.height
+        let hasGraphics = look.jpeg != nil || look.image != nil || !(look.ink ?? []).isEmpty
+        var graphicsWidth = hasGraphics ? (text.isEmpty ? width : width * 0.4) : 0
+        let showGraphics = hasGraphics && graphicsWidth - 2 * margin > 0 && height - 2 * margin > 0
+        if !showGraphics { graphicsWidth = 0 }
+        let showText = !text.isEmpty && width - graphicsWidth - 2 * margin > 0 && height - 2 * margin > 0
+        return Layout(width: width, height: height, graphicsWidth: graphicsWidth, showGraphics: showGraphics, showText: showText)
+    }
+
     static func text(_ job: SignJob, _ look: SignatureLook) -> String {
         if let given = look.text { return given }
         let time = (try? job.request.time.toString("yyyy-MM-dd HH:mm zzz", .invariantCulture)) ?? ""
@@ -24,15 +46,13 @@ enum SignatureAppearance {
         return font
     }
 
-    /// The appearance for a widget at `rect` on a page turned `rotate` degrees clockwise: it is drawn upright as the
+    /// The appearance for a widget on a page turned `rotate` degrees clockwise: it is drawn upright as the
     /// page is shown, and its /Matrix turns it back into the page's own space (12.5.5).
-    static func draw(_ document: PdfDocument, _ rect: PdfRect, _ rotate: Int, _ look: SignatureLook, _ text: String, _ font: PdfDrawFont?) throws -> PdfReference {
-        let sideways = rotate == 90 || rotate == 270
-        let width = sideways ? rect.height : rect.width, height = sideways ? rect.width : rect.height
+    static func draw(_ document: PdfDocument, _ layout: Layout, _ rotate: Int, _ look: SignatureLook, _ text: String, _ font: PdfDrawFont?) throws -> PdfReference {
+        let width = layout.width, height = layout.height, graphicsWidth = layout.graphicsWidth
         let canvas = AppearanceCanvas(document, PdfRect(0, 0, width, height))
-        let hasImage = look.jpeg != nil || look.image != nil
-        let hasInk = !(look.ink ?? []).isEmpty
-        let graphicsWidth = (hasImage || hasInk) ? (font == nil ? width : width * 0.4) : 0
+        let hasImage = layout.showGraphics && (look.jpeg != nil || look.image != nil)
+        let hasInk = layout.showGraphics && !(look.ink ?? []).isEmpty
 
         if hasImage {
             var image: PdfImage?

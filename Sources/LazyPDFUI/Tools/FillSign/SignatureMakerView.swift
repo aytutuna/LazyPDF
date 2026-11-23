@@ -4,11 +4,14 @@ import LazyPDFApp
 import LazyPDFKit
 
 // The sheet that makes a signature or initials; follows windows/LazyPDF.App/Tools/FillSign/SignatureMaker.xaml. The ink and the image
-// made live in SignatureMakerModel; this draws them and passes the pen on.
+// made live in SignatureMakerModel; this draws them and passes the pen on. The owner says what Use, Cancel and Choose a
+// picture do, so Fill and Sign and the certificates panel share the sheet.
 
 struct SignatureMakerView: View {
-    let model: FillSignModel
-    var maker: SignatureMakerModel { model.maker }
+    let maker: SignatureMakerModel
+    let use: @MainActor () -> Void
+    let cancel: @MainActor () -> Void
+    let choosePicture: @MainActor () async -> Void
     #if os(iOS)
     private enum Source: String, Identifiable {
         case photos, camera, scanner
@@ -45,13 +48,13 @@ struct SignatureMakerView: View {
             Toggle(L10n.t("Keep for next time"), isOn: Binding(get: { maker.keep }, set: { maker.keep = $0 }))
             HStack {
                 Button {
-                    model.useMade()
+                    use()
                 } label: {
                     Label(L10n.t("Use"), systemImage: "checkmark").frame(minHeight: 44)
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(maker.image == nil)
-                Button(L10n.t("Cancel")) { model.cancelMaker() }
+                Button(L10n.t("Cancel")) { cancel() }
                     .frame(minHeight: 44)
                     .keyboardShortcut(.cancelAction)
             }
@@ -102,7 +105,7 @@ struct SignatureMakerView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Button {
-                    Task { await model.chooseMakerPicture() }
+                    Task { await choosePicture() }
                 } label: {
                     Label(L10n.t("Choose a picture"), systemImage: "photo").frame(minHeight: 44)
                 }

@@ -20,6 +20,45 @@ public struct SignaturePlaceChoice: Equatable, Identifiable {
     public var id: String { text }
 }
 
+/// What the visible signature shows besides the signer's text.
+public enum LookKind: Equatable {
+    case textOnly, pictureAndText, pictureOnly
+}
+
+public struct LookChoice: Equatable {
+    public let text: String
+    public let kind: LookKind
+}
+
+/// A row of the picture list: the picture made for this signing only, or a saved signature.
+public enum PictureRow: Identifiable {
+    case oneOff(PdfRgbaImage)
+    case saved(SavedRow)
+
+    public static let oneOffID = "one-off"
+
+    public var id: String {
+        switch self {
+        case .oneOff: return Self.oneOffID
+        case .saved(let row): return row.id
+        }
+    }
+
+    public var name: String {
+        switch self {
+        case .oneOff: return L10n.t("This signature only")
+        case .saved(let row): return row.name
+        }
+    }
+
+    public var image: PdfRgbaImage {
+        switch self {
+        case .oneOff(let image): return image
+        case .saved(let row): return row.image
+        }
+    }
+}
+
 public struct CertifyLevelChoice: Equatable {
     public let text: String
     public let level: CertificationLevel
@@ -64,12 +103,20 @@ public final class CertificatesModel: ToolPanelModel {
     public static let suggestedTimestampUrl = "http://timestamp.digicert.com"
     public var longTerm = false
     public var pfxPassword = ""
+    public var lookIndex = 0
+
+    /// The sheet that makes a new picture is up.
+    public var showMaker = false
+    public let maker: SignatureMakerModel
 
     public private(set) var identities: [CertificateChoice] = []
     public private(set) var places: [SignaturePlaceChoice] = []
     public private(set) var pfxName = ""
     public private(set) var boxText = ""
     public private(set) var working = false
+    public private(set) var rows: [PictureRow] = []
+    public private(set) var selected: String?
+    public private(set) var oneOff: PdfRgbaImage?
 
     // Bumped when the file changes, so what is derived from it is read again.
     private var fileVersion = 0
@@ -83,14 +130,17 @@ public final class CertificatesModel: ToolPanelModel {
     @ObservationIgnored private var pfx: [UInt8]?
     @ObservationIgnored private let trust: SignatureTrust
     @ObservationIgnored private let fonts: FontSource?
+    @ObservationIgnored private let store: SavedSignatures
     @ObservationIgnored private let makeTransport: () -> SigningTransport
     @ObservationIgnored private let importIdentity: ([UInt8], String) throws -> X509Certificate
 
     /// `importIdentity` reads a .p12 or .pfx file and its password into a certificate with its key.
-    public init(trust: SignatureTrust, fonts: FontSource? = nil, transport: @escaping () -> SigningTransport,
-                importIdentity: @escaping ([UInt8], String) throws -> X509Certificate) {
+    public init(trust: SignatureTrust, fonts: FontSource? = nil, store: SavedSignatures, system: SignatureSystem, codec: ImageCodec,
+                transport: @escaping () -> SigningTransport, importIdentity: @escaping ([UInt8], String) throws -> X509Certificate) {
         self.trust = trust
         self.fonts = fonts
+        self.store = store
+        maker = SignatureMakerModel(system: system, codec: codec)
         makeTransport = transport
         self.importIdentity = importIdentity
     }
@@ -108,12 +158,30 @@ public final class CertificatesModel: ToolPanelModel {
         ]
     }
 
+    public static var lookChoices: [LookChoice] {
+        [
+            LookChoice(text: L10n.t("Text only"), kind: .textOnly),
+            LookChoice(text: L10n.t("Picture and text"), kind: .pictureAndText),
+            LookChoice(text: L10n.t("Picture only"), kind: .pictureOnly),
+        ]
+    }
+
     var place: SignaturePlaceChoice? { places.indices.contains(placeIndex) ? places[placeIndex] : nil }
 
     public var drawsBox: Bool { place?.place == .box }
 
+    /// An invisible signature has no look to choose.
+    public var showsLook: Bool { place?.place != .invisible }
+
+    public var needsPicture: Bool { showsLook && lookKind != .textOnly }
+
+    private var lookKind: LookKind { Self.lookChoices[min(max(lookIndex, 0), Self.lookChoices.count - 1)].kind }
+
+    private var selectedRow: PictureRow? { rows.first { $0.id == selected } }
+
     public var canSign: Bool {
         guard !working, tab != nil else { return false }
+        if needsPicture && selectedRow == nil { return false }
         if useKeychain ? selectedIdentity == nil : pfxName.isEmpty { return false }
         if let place, place.place == .box, box == nil { return false }
         return !timestamp || CertificateSigning.isWebAddress(timestampUrl)
@@ -150,6 +218,7 @@ public final class CertificatesModel: ToolPanelModel {
             self?.refill()
         })
         refill()
+        fillSaved()
         if let field = host.takeSigningField(), let at = places.firstIndex(where: { $0.place == .field(field) }) { placeIndex = at }
     }
 
@@ -161,6 +230,8 @@ public final class CertificatesModel: ToolPanelModel {
         pfxPassword = ""
         pfx = nil
         pfxName = ""
+        oneOff = nil
+        showMaker = false
         tab = nil
         viewer = nil
         host = nil
@@ -211,6 +282,52 @@ public final class CertificatesModel: ToolPanelModel {
         pfxName = file.url.lastPathComponent
     }
 
+    // MARK: The picture
+
+    private func fillSaved() {
+        var list = oneOff.map { [PictureRow.oneOff($0)] } ?? []
+        list += store.list(.signature).compactMap { item in store.load(item).map { PictureRow.saved(SavedRow(item: item, image: $0)) } }
+        rows = list
+        selected = rows.first?.id
+    }
+
+    public func select(_ row: PictureRow) {
+        selected = row.id
+    }
+
+    public func makeNew() {
+        maker.reset()
+        showMaker = true
+    }
+
+    public func cancelMaker() {
+        showMaker = false
+    }
+
+    public func chooseMakerPicture() async {
+        guard let host else { return }
+        await maker.choosePicture(using: host.filePicker)
+    }
+
+    /// The sheet's Use: the picture made is used for this signing, and kept for next time when the switch says so.
+    public func useMade() {
+        guard let made = maker.image else { return }
+        showMaker = false
+        oneOff = nil
+        if maker.keep {
+            do {
+                let item = try store.add(.signature, made)
+                fillSaved()
+                selected = item.url.lastPathComponent
+                return
+            } catch {
+                host?.showProblem(Problem(L10n.t("Signature not kept"), L10n.t("It could not be saved. It will be used for this signing only.")))
+            }
+        }
+        oneOff = made
+        fillSaved()
+    }
+
     // MARK: The box
 
     public func drawBox() {
@@ -249,7 +366,7 @@ public final class CertificatesModel: ToolPanelModel {
 
     // MARK: Signing
 
-    private func choices(_ certificate: X509Certificate, _ place: SignaturePlaceChoice) -> SignChoices {
+    private func choices(_ certificate: X509Certificate, _ place: SignaturePlaceChoice, _ look: SignatureLook?) -> SignChoices {
         var field: String?
         if case .field(let name) = place.place { field = name }
         var rect: PdfRect?
@@ -259,7 +376,8 @@ public final class CertificatesModel: ToolPanelModel {
         let levels = Self.certifyChoices
         return SignChoices(certificate: certificate, field: field, page: place.place == .box ? box?.page ?? 0 : 0, rect: rect, reason: reason,
                            location: location, certify: levels[min(max(certifyIndex, 0), levels.count - 1)].level,
-                           timestampUrl: timestamp ? timestampUrl.trimmingCharacters(in: .whitespaces) : nil, longTerm: longTerm)
+                           timestampUrl: timestamp ? timestampUrl.trimmingCharacters(in: .whitespaces) : nil, longTerm: longTerm,
+                           look: look)
     }
 
     private func sign() async {
@@ -272,6 +390,23 @@ public final class CertificatesModel: ToolPanelModel {
         }
         // The controls can change while the signing waits on a server, so what they say is read now.
         let stamped = timestamp
+        var look: SignatureLook?
+        if needsPicture {
+            let picture: PdfRgbaImage?
+            switch selectedRow {
+            case .oneOff(let image)?: picture = image
+            case .saved(let row)?: picture = store.load(row.item)
+            case nil: picture = nil
+            }
+            guard let picture else {
+                host.showProblem(Problem(L10n.t("Signature not read"), L10n.t("That saved signature could not be read. Choose another.")))
+                return
+            }
+            var made = SignatureLook()
+            made.image = picture
+            if lookKind == .pictureOnly { made.text = "" }
+            look = made
+        }
         let certificate: X509Certificate
         if useKeychain {
             guard let choice = identities.first(where: { $0.id == selectedIdentity }), let held = host.verifyCertificate(choice) else {
@@ -287,12 +422,16 @@ public final class CertificatesModel: ToolPanelModel {
                 return
             }
         }
-        let picked = choices(certificate, place)
+        let picked = choices(certificate, place, look)
         let fonts = self.fonts
         await run(tab, host, L10n.t("Signing the file"), failedTitle: L10n.t("Not signed"), checksRevocation: picked.longTerm) { session, transport, now, token in
             try CertificateSigning.sign(session, picked, transport, fonts, now, token: token)
         } afterwards: { finished, covered, changed, transport in
             if !changed { return }
+            if self.oneOff != nil {
+                self.oneOff = nil
+                self.fillSaved()
+            }
             if stamped { self.trust.setTimestampUrl(picked.timestampUrl ?? "") }
             if !finished {
                 host.setStatus(L10n.t("Signed without validation data."))

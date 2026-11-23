@@ -6,7 +6,7 @@ import LazyPDFKit
 
 /// What the person picked in the panel. `field` is an empty signature field of the file, nil for a new one or none; `rect` the
 /// box of a new visible signature in user space, nil with no field makes it invisible; `timestampUrl` nil or empty for no time
-/// stamp; `longTerm` adds the revocation data (PAdES B-LT) and needs a time stamp.
+/// stamp; `longTerm` adds the revocation data (PAdES B-LT) and needs a time stamp; `look` is a picture or text for the box, nil for the default text.
 struct SignChoices {
     var certificate: X509Certificate
     var field: String?
@@ -17,6 +17,7 @@ struct SignChoices {
     var certify: CertificationLevel
     var timestampUrl: String?
     var longTerm: Bool
+    var look: SignatureLook?
 }
 
 /// Posts and fetches for a signing, and says why a request failed; `cancel` ends the one in flight.
@@ -66,6 +67,7 @@ enum CertificateSigning {
         request.timestamp = stamp
         request.level = stamp == nil ? .b : choices.longTerm ? .lt : .t
         request.fonts = fonts
+        request.look = choices.look
         return request
     }
 

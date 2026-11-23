@@ -46,7 +46,7 @@ public final class SavedSignatures {
         stamp.dateFormat = "yyyyMMddHHmmssSSS"
         let unique = UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(6).lowercased()
         let url = directory.appendingPathComponent("\(kind.rawValue)-\(stamp.string(from: Date()))-\(unique).png")
-        try Data(try PngWriter.encode(image)).write(to: url)
+        try Data(try PngWriter.encode(image)).write(to: url, options: .atomic)
         return SavedItem(kind: kind, url: url)
     }
 

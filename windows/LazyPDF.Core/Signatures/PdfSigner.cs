@@ -72,8 +72,9 @@ public static class PdfSigner
         bool visible = !target.Rect.IsEmpty;
         var look = request.Look ?? new SignatureLook();
         string text = visible ? SignatureAppearance.Text(job, look) : "";
-        var font = visible ? SignatureAppearance.AddFont(document, job, look, text) : null;
-        var appearance = visible ? SignatureAppearance.Draw(document, target.Rect, target.Page.Rotate, look, text, font) : null;
+        var layout = SignatureAppearance.Plan(target.Rect, target.Page.Rotate, look, text);
+        var font = visible ? SignatureAppearance.AddFont(document, job, look, layout.ShowText ? text : "") : null;
+        var appearance = visible ? SignatureAppearance.Draw(document, layout, target.Page.Rotate, look, text, font) : null;
 
         var chain = EmbeddedChain(request);
         int reserve = request.ReserveBytes > 0
