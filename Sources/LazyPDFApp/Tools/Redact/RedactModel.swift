@@ -321,6 +321,7 @@ public final class RedactModel: ToolPanelModel {
     }
 
     public func undo() {
+        if working { return }
         state?.marks.undo()
     }
 
@@ -339,7 +340,7 @@ public final class RedactModel: ToolPanelModel {
     /// Moves or resizes the selected box by a step of the keyboard (1 point, 10 when `large`). Each step is in the list at
     /// once; a run of them is one step of Undo.
     public func nudge(_ move: BoxMove, large: Bool = false) {
-        guard let viewer, let box = selectedBox, box.page < viewer.pageCount else { return }
+        guard !working, let viewer, let box = selectedBox, box.page < viewer.pageCount else { return }
         let geometry = viewer.geometry(box.page)
         let rect = MarkShapes.place(geometry, box.mark)
         let (arrow, resize) = move.keys
@@ -358,7 +359,7 @@ public final class RedactModel: ToolPanelModel {
     // The new item has an id of its own; it is selected before the list tells of the change, which would let the selection go.
     @discardableResult
     func replace(_ old: MarkItem, _ new: MarkItem, coalesce: Bool = false) -> Bool {
-        guard let state, marks.contains(where: { $0.id == old.id }) else { return false }
+        guard !working, let state, marks.contains(where: { $0.id == old.id }) else { return false }
         selected = new.id
         state.marks.replace(old, new, coalesce: coalesce)
         return true

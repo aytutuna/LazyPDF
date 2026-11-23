@@ -41,8 +41,11 @@ final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
     var filePicker: ToolFilePicker { self }
     var fileExporter: ToolFileExporter { self }
 
+    var whileBusy: (@MainActor () -> Void)?
+
     func runBusy(_ text: String, _ work: @MainActor (CancelToken) async throws -> Void) async throws {
         busyTexts.append(text)
+        whileBusy?()
         do {
             try await work(token)
         } catch is CancellationError {

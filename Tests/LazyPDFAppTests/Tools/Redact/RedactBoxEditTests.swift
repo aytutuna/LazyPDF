@@ -186,6 +186,24 @@ final class RedactBoxEditTests: XCTestCase {
         XCTAssertTrue(moved.contains("example"))
     }
 
+    func test_aBoxIsLeftAloneWhileTheCopyIsBeingMade() async throws {
+        let (model, rig) = try attached()
+        let box = try selectedBox(model, rig)
+        var during: [MarkItem] = []
+        rig.host.whileBusy = {
+            XCTAssertTrue(model.working)
+            model.nudge(.right)
+            model.boxEdited(box, to: ViewRect(10, 10, 50, 30), rig.viewer.geometry(0), resized: false)
+            model.undo()
+            during = model.marks
+        }
+
+        await model.action!.run()
+
+        XCTAssertEqual(during.map(\.id), [box.id])
+        XCTAssertFalse(rig.host.statuses.contains("Box moved."))
+    }
+
     // MARK: The tool
 
     private func frame(_ rig: SecurityRig) -> ViewRect? {

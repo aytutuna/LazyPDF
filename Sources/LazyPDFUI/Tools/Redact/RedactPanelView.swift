@@ -91,6 +91,7 @@ struct RedactPanelView: View {
                 if model.canUndo {
                     Button(L10n.t("Undo")) { model.undo() }
                         .buttonStyle(.borderless)
+                        .disabled(model.working)
                         .accessibilityLabel(L10n.t("Undo the last change to the marks"))
                         .help(L10n.t("Undo the last change to the marks"))
                 }
@@ -121,7 +122,7 @@ struct RedactPanelView: View {
                     .accessibilityLabel(item.spoken)
                     .accessibilityHint(item.isBox ? L10n.t("Select a box to move or resize it.") : "")
                     .accessibilityActions {
-                        if editing {
+                        if editing && !model.working {
                             ForEach(BoxMove.allCases, id: \.self) { move in
                                 Button(move.name) { model.nudge(move) }
                             }
