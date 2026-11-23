@@ -79,6 +79,7 @@ final class PageTextElement: NSAccessibilityElement {
 
     // Nothing selected on the page and no caret put there by VoiceOver has no place.
     override func accessibilitySelectedTextRange() -> NSRange {
+        if let at = viewer?.readerOffset(on: page) { return NSRange(location: at, length: 0) }
         guard let map, let chars = viewer?.selectedChars(on: page) else { return NSRange(location: NSNotFound, length: 0) }
         return Self.range(map.units(of: chars))
     }
@@ -90,6 +91,10 @@ final class PageTextElement: NSAccessibilityElement {
 
     override func setAccessibilitySelectedTextRange(_ range: NSRange) {
         guard let map, let viewer, range.location != NSNotFound else { return }
+        if range.length == 0 {
+            viewer.placeCaret(page: page, offset: range.location)
+            return
+        }
         viewer.select(page: page, map.chars(in: Self.units(range)))
     }
 

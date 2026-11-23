@@ -179,6 +179,19 @@ public sealed class PageTextProviderTests
     });
 
     [Fact]
+    public Task AReadersPlaceOnTheEndOfALineOrAPageIsReadBackAsItWas() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdfs.Text(2));
+        using var _ = o;
+        int pageBreak = o.Host.Peek(0)!.Text.Length;
+
+        PageTextRange.Create(o.Host, new DocPos(0, pageBreak), new DocPos(0, pageBreak), o.Provider)!.Select();
+
+        var place = Assert.IsType<PageTextRange>(Assert.Single(o.Provider.GetSelection()));
+        Assert.Equal((new DocPos(0, pageBreak), new DocPos(0, pageBreak)), place.Places);
+    });
+
+    [Fact]
     public Task TheCaretOfCaretBrowsingIsAnEmptyRangeToo() => Sta.Run(async () =>
     {
         var o = await Open(Pdfs.Text(1));

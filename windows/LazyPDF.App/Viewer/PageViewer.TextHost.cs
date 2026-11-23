@@ -16,7 +16,7 @@ public partial class PageViewer : ITextHost
     private readonly HashSet<int> _wanted = [];
     private (int First, int Last)? _readRange;
     private bool _unreadable;
-    private Caret? _automationCaret;
+    private DocPos? _automationCaret;
 
     DocumentTab? ITextHost.Tab => _tab;
 
@@ -43,7 +43,7 @@ public partial class PageViewer : ITextHost
 
     Caret? ITextHost.BrowsingCaret => _caretMode ? _selection.Focus : null;
 
-    Caret? ITextHost.AutomationCaret
+    DocPos? ITextHost.AutomationCaret
     {
         get => _automationCaret;
         set

@@ -396,6 +396,20 @@ public sealed class PageTextRangeTests
         Range(host, 0, 3, 0, 3).Select();
 
         Assert.Equal((new Caret(2, 1), new Caret(2, 2)), host.Selection);
-        Assert.Equal(new Caret(0, 3), host.AutomationCaret);
+        Assert.Equal(new DocPos(0, 3), host.AutomationCaret);
+    }
+
+    [Fact]
+    public void AnEmptyRangeOnASeparatorOrAPageBreakKeepsItsPlace()
+    {
+        using var tab = FakeTextHost.NewTab();
+        var host = Whole(tab);
+
+        foreach (int offset in new[] { 5, 8 })
+        {
+            Range(host, 0, offset).Select();
+
+            Assert.Equal(new DocPos(0, offset), host.AutomationCaret);
+        }
     }
 }

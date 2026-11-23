@@ -22,12 +22,19 @@ internal sealed class PageTextProvider(PageSurfacePeer peer, ITextHost host) : I
     // WPF has no ITextProvider2, so the caret reaches a reader only as a range without text.
     public ITextRangeProvider[] GetSelection()
     {
-        (Caret Anchor, Caret Focus)? selection = host.AutomationCaret is { } placed ? (placed, placed)
-            : host.Selection ?? (host.BrowsingCaret is { } caret ? (caret, caret) : null);
-        if (selection is not var (anchor, focus)) return [];
-        var units = PageTextRange.Units(host);
-        var (first, last) = anchor < focus ? (anchor, focus) : (focus, anchor);
-        var range = PageTextRange.Create(host, units.FromCaret(first).Pos, units.FromCaret(last).Pos, this);
+        PageTextRange? range;
+        if (host.AutomationCaret is { } placed)
+        {
+            range = PageTextRange.Create(host, placed, placed, this);
+        }
+        else
+        {
+            var selection = host.Selection ?? (host.BrowsingCaret is { } caret ? (caret, caret) : null);
+            if (selection is not var (anchor, focus)) return [];
+            var units = PageTextRange.Units(host);
+            var (first, last) = anchor < focus ? (anchor, focus) : (focus, anchor);
+            range = PageTextRange.Create(host, units.FromCaret(first).Pos, units.FromCaret(last).Pos, this);
+        }
         return range is null ? [] : [range];
     }
 

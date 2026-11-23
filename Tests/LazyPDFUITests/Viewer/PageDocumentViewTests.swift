@@ -236,6 +236,16 @@ final class PageDocumentViewTests: XCTestCase {
         XCTAssertEqual(copied, "Second")
     }
 
+    func test_aCaretOnALineBreakIsReadBackAsPlaced() async throws {
+        let shown = try await open(pages: 1, line: "First line\nSecond line here")
+        let element = try await pageText(shown)
+
+        element.setAccessibilitySelectedTextRange(NSRange(location: 10, length: 0))
+
+        XCTAssertEqual(element.accessibilitySelectedTextRange(), NSRange(location: 10, length: 0))
+        XCTAssertFalse(shown.viewer.hasSelection)
+    }
+
     func test_aSelectionFromAnotherPartOfTheViewerShowsInTheElement() async throws {
         let shown = try await open(pages: 1)
         let element = try await pageText(shown)

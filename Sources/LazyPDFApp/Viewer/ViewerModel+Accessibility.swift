@@ -23,11 +23,16 @@ extension ViewerModel {
     /// its caret at counts as an empty run, until the selection changes.
     public func selectedChars(on page: Int) -> LazyPDFKit.TextRange? {
         guard let text = source?.peek(page) else { return nil }
-        if let caret = readerCaret, caret.page == page {
-            let at = Swift.min(caret.index, text.chars.count)
-            return LazyPDFKit.TextRange(at, at)
+        if let at = readerOffset(on: page), let map = textMap(page) {
+            return map.chars(in: at..<at)
         }
         return selected.on(page, text.chars.count)
+    }
+
+    /// Where a screen reader put its caret on a page, in units of the page's text; a break between lines is a place too.
+    public func readerOffset(on page: Int) -> Int? {
+        guard let caret = readerCaret, caret.page == page else { return nil }
+        return caret.offset
     }
 
     /// Selects a run of one page's characters, as a screen reader asks to. An empty run only moves the reader's own caret and
@@ -36,14 +41,22 @@ extension ViewerModel {
         // A mouse drag in progress must not overwrite what the reader just set.
         pressTicket += 1
         if range.isEmpty {
-            let caret = Caret(page, range.start)
-            guard readerCaret != caret else { return }
-            readerCaret = caret
-            onSelectionChanged?()
+            guard let map = textMap(page) else { return }
+            placeCaret(page: page, offset: map.offset(ofChar: range.start))
             return
         }
         selected.set(Caret(page, range.start), Caret(page, range.end))
         readerCaret = nil
+    }
+
+    /// Puts a screen reader's caret at a unit of a page's text, a line break included, and leaves what the user selected alone.
+    public func placeCaret(page: Int, offset: Int) {
+        pressTicket += 1
+        guard let map = textMap(page) else { return }
+        let at = Swift.min(Swift.max(offset, 0), map.length)
+        guard readerCaret?.page != page || readerCaret?.offset != at else { return }
+        readerCaret = (page, at)
+        onSelectionChanged?()
     }
 
     /// The place of a run of characters in view space, nil when the page is not laid out or the run has no boxes.

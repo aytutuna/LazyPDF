@@ -146,6 +146,21 @@ final class ViewerAccessibilityTests: XCTestCase {
         XCTAssertEqual(told, 1)
     }
 
+    func test_aCaretOnALineBreakStaysThereWhenReadBack() async throws {
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(1, "First line\nSecond line here")), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        await viewer.loadPage(0)
+        let map = try XCTUnwrap(viewer.textMap(0))
+        let lineBreak = try XCTUnwrap(map.text.utf16.firstIndex(of: 0x0A)).utf16Offset(in: map.text)
+
+        viewer.placeCaret(page: 0, offset: lineBreak)
+
+        XCTAssertEqual(viewer.readerOffset(on: 0), lineBreak)
+        XCTAssertFalse(viewer.hasSelection)
+    }
+
     func test_aCaretLeavesTheUsersSelectionAloneAndIsAnswered() async throws {
         let viewer = try await open()
         viewer.select(page: 0, LazyPDFKit.TextRange(2, 7))

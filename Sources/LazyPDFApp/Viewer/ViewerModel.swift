@@ -57,7 +57,7 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var hitShapes: [Int: (others: [[ViewPoint]], current: [[ViewPoint]])] = [:]
     @ObservationIgnored var selectionShapes: [Int: [[ViewPoint]]] = [:]
     @ObservationIgnored var textMaps: [Int: PageTextMap] = [:]
-    @ObservationIgnored var readerCaret: Caret?
+    @ObservationIgnored var readerCaret: (page: Int, offset: Int)?
     @ObservationIgnored var preloadTask: Task<Void, Never>?
     @ObservationIgnored var anchorWaiting: PagePoint?
     @ObservationIgnored var pressTicket = 0

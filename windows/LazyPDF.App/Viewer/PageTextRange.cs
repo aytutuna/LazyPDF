@@ -250,7 +250,7 @@ internal sealed class PageTextRange : ITextRangeProvider
         var (host, units) = Checked();
         if (_start == _end)
         {
-            host.AutomationCaret = units.ToCaret(_start);
+            host.AutomationCaret = _start;
             Provider?.Reveal(_start, _end, true);
         }
         else if (units.Selection(_start, _end) is { } selection)

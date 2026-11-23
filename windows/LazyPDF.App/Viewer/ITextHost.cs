@@ -34,5 +34,5 @@ public interface ITextHost
     Caret? BrowsingCaret { get; }
 
     /// <summary>The place a screen reader last put its cursor at; it lasts until the user changes the selection or another file is shown.</summary>
-    Caret? AutomationCaret { get; set; }
+    DocPos? AutomationCaret { get; set; }
 }

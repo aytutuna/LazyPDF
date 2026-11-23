@@ -28,7 +28,7 @@ internal sealed class FakeTextHost(DocumentTab? tab, int pageCount, Func<int, Te
 
     public Caret? BrowsingCaret { get; set; }
 
-    public Caret? AutomationCaret { get; set; }
+    public DocPos? AutomationCaret { get; set; }
 
     public HashSet<int> Requested { get; } = [];
 

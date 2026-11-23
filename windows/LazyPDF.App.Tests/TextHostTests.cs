@@ -267,7 +267,7 @@ public sealed class TextHostTests
         var (viewer, host, tab) = Open(2);
         using var _ = tab;
         var told = await Listen(viewer);
-        host.AutomationCaret = new Caret(0, 1);
+        host.AutomationCaret = new DocPos(0, 1);
         told.Clear();
 
         Call(viewer, "Tab_Changed");
@@ -295,7 +295,7 @@ public sealed class TextHostTests
         viewer.SelectAll();
         Assert.Single(told, AutomationEvents.TextPatternOnTextSelectionChanged);
 
-        host.AutomationCaret = new Caret(1, 0);
+        host.AutomationCaret = new DocPos(1, 0);
         Assert.Equal(2, told.Count(e => e == AutomationEvents.TextPatternOnTextSelectionChanged));
     });
 
