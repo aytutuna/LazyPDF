@@ -16,7 +16,8 @@ internal static class PageJobs
             host.ShowProblem(problem);
             return false;
         }
-        if (MarkWork.Cautioned(tab, host, () => change())) return false;
+        int revision = tab.Revision;
+        if (MarkWork.Cautioned(tab, host, () => { if (Same(tab, host, revision)) change(); })) return false;
         return change();
     }
 
@@ -27,8 +28,17 @@ internal static class PageJobs
             host.ShowProblem(problem);
             return false;
         }
-        if (MarkWork.Cautioned(tab, host, () => _ = change())) return false;
+        int revision = tab.Revision;
+        if (MarkWork.Cautioned(tab, host, () => { if (Same(tab, host, revision)) _ = change(); })) return false;
         return await change();
+    }
+
+    // The page numbers an edit holds were read before the caution; an undo or another edit while it was up moves them.
+    private static bool Same(DocumentTab tab, IToolHost host, int revision)
+    {
+        if (tab.Revision == revision) return true;
+        host.ShowProblem(new Problem(Loc.T("Pages not changed"), Loc.T("The pages changed since they were picked. Pick them again.")));
+        return false;
     }
 
     public static bool Apply(DocumentTab tab, IToolHost host, string label, Action<PdfDocument> change, string status)

@@ -96,6 +96,21 @@ final class PageGateTests: XCTestCase {
         XCTAssertTrue(signed.tab.session.canUndo)
     }
 
+    func test_goOnAnywayDoesNothingWhenTheDocumentChangedMeanwhile() async throws {
+        let (model, rig) = try attached(Pdfs.signed(certified: false, pages: 4))
+        model.grid.select([1])
+        model.remove()
+        XCTAssertEqual(rig.host.notices.map(\.title), ["Check before going on"])
+        rig.tab.refresh()
+        let revision = rig.tab.revision
+
+        rig.host.notices[0].action?.run()
+
+        XCTAssertEqual(rig.tab.revision, revision)
+        XCTAssertEqual(rig.tab.pageCount, 4)
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Pages not changed"])
+    }
+
     func test_theCropBoxGoesWhenTheCropStartsAfterGoOnAnyway() async throws {
         let rig = try PagesRig(Pdfs.signed(certified: false, pages: 3))
         let model = PagesToolModel()

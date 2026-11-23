@@ -14,7 +14,8 @@ public enum PageJobs {
             host.showProblem(problem)
             return false
         }
-        if MarkWork.cautioned(tab, host, again: { _ = change() }) { return false }
+        let revision = tab.revision
+        if MarkWork.cautioned(tab, host, again: { if same(tab, host, revision) { _ = change() } }) { return false }
         return change()
     }
 
@@ -24,8 +25,16 @@ public enum PageJobs {
             host.showProblem(problem)
             return false
         }
-        if MarkWork.cautioned(tab, host, again: { Task { _ = await change() } }) { return false }
+        let revision = tab.revision
+        if MarkWork.cautioned(tab, host, again: { if same(tab, host, revision) { Task { _ = await change() } } }) { return false }
         return await change()
+    }
+
+    /// The page numbers an edit holds were read before the caution; an undo or another edit while it was up moves them.
+    private static func same(_ tab: DocumentTab, _ host: ToolHost, _ revision: Int) -> Bool {
+        if tab.revision == revision { return true }
+        host.showProblem(Problem(L10n.t("Pages not changed"), L10n.t("The pages changed since they were picked. Pick them again.")))
+        return false
     }
 
     @discardableResult

@@ -102,6 +102,26 @@ public sealed class PageGateTests
         Assert.Empty(host.Problems);
     });
 
+    [Fact]
+    public Task GoOnAnywayDoesNothingWhenTheDocumentChangedMeanwhile() => Sta.Run(() =>
+    {
+        using var tab = Signed();
+        var host = new StageHost();
+        using var shown = new Shown(tab, host);
+        shown.Select(1);
+        shown.Click("Remove");
+        Assert.Equal("Check before going on", Assert.Single(host.Notices));
+        tab.Refresh();
+        int revision = tab.Revision;
+
+        host.Actions[0]!.Run();
+
+        Assert.Equal(revision, tab.Revision);
+        Assert.Equal(4, tab.Document.Pages.Count);
+        Assert.Equal("Pages not changed", Assert.Single(host.Problems).Title);
+        return Task.CompletedTask;
+    });
+
     private static (PagesPanel Panel, ListBox Thumbs) Inspect(DocumentTab tab, StageHost host)
     {
         var panel = new PagesPanel();
