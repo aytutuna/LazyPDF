@@ -179,8 +179,11 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertTrue(try session.commit("Delete"))
         let tab = DocumentTab(session: session, renderer: FakeRenderer(), url: nil, title: "gap.pdf", password: nil, writer: FailingAfterWrite())
         let before = (0..<3).map { session.document.pages[$0].reference.number }
+        XCTAssertTrue(tab.isDirty)
 
         XCTAssertThrowsError(try tab.saveCompact(url))
+
+        XCTAssertTrue(tab.isDirty)
 
         let after = (0..<3).map { tab.document.pages[$0].reference.number }
         XCTAssertNotEqual(before, after)

@@ -192,12 +192,15 @@ public final class DocumentTab: StripTab {
     public func saveCompact(_ url: URL) throws {
         let old = session.document
         let before = old.pages.map { $0.reference.number }
+        let wasDirty = isDirty
         do {
             try writer.write(to: url) { try session.saveCompact($0.path) }
         } catch {
             // A coordinated writer runs the closure first, so the document may be swapped in before the replace fails.
             if session.document !== old {
                 noteRewrite(before)
+                // The swap cleared the history, so the edits only live in the dirty mark until a save works.
+                if wasDirty { unsaved = true }
                 refresh()
             }
             throw error
