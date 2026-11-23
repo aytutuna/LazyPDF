@@ -6,7 +6,7 @@ import LazyPDFKit
 /// One entry of the review list: the mark and a few words to know it by. A `value` is a hit in a comment or a field; its mark
 /// is only where the comment or field sits, and it is not applied as a mark.
 public struct MarkItem: Identifiable, Equatable {
-    public let id = UUID()
+    public let id: UUID
 
     /// What the list shows the item by: a box that was moved or resized is a new item in the same row.
     public let row: UUID
@@ -17,6 +17,8 @@ public struct MarkItem: Identifiable, Equatable {
     public let place: String?
 
     public init(_ mark: RedactionMark, _ label: String, isBox: Bool = false, value: RedactionValueMatch? = nil, place: String? = nil, row: UUID? = nil) {
+        let id = UUID()
+        self.id = id
         self.mark = mark
         self.label = label
         self.isBox = isBox
