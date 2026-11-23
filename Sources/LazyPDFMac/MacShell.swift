@@ -409,7 +409,7 @@ final class MacShell {
         var urls: [URL] = []
         for suffix in ["", "2"] {
             guard let name = Self.argument("-LazyPDFTestFile" + suffix, in: arguments),
-                  let text = Self.argument("-LazyPDFTestData" + suffix, in: arguments), let data = Data(base64Encoded: text) else { return }
+                  let text = Self.argument("-LazyPDFTestData" + suffix, in: arguments), let data = Data(base64Encoded: text) else { break }
             let url = FileManager.default.temporaryDirectory.appendingPathComponent(URL(fileURLWithPath: name).lastPathComponent)
             if (try? data.write(to: url)) != nil { urls.append(url) }
         }
