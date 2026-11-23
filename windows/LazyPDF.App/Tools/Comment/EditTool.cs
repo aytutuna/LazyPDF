@@ -69,6 +69,14 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     public void Refresh()
     {
         ClearPick(closeCross: true);
+        // The file changed, so a corner still being pulled out has nothing left to join.
+        if (_adding >= 0)
+        {
+            _adding = -1;
+            _vertex = -1;
+            _handle = -1;
+            _moving = false;
+        }
         if (Current is not { Reference: { } reference } mark) return;
         Current = marker().Find(mark.PageIndex, reference.Number);
         Redraw();
@@ -80,11 +88,12 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         Remove();
         if (Current is not { } mark || !marker().OnPage(mark)) return;
         _frame = marker().BoxOf(mark);
-        _points = marker().PointsOf(mark);
+        // A scroll or zoom redraws mid-drag, and the corner being pulled out is not in the file yet.
+        if (_adding < 0) _points = marker().PointsOf(mark);
         _moveOnly = Marker.Fixed(mark);
         if (_picked >= (_points?.Length ?? 0)) ClearPick(closeCross: true);
-        // An undo can leave fewer points than the one being dragged, and a corner still being pulled out is lost with the points.
-        if (_vertex >= (_points?.Length ?? 0) || _adding >= 0)
+        // An undo can leave fewer points than the one being dragged.
+        if (_vertex >= (_points?.Length ?? 0))
         {
             _vertex = -1;
             _adding = -1;

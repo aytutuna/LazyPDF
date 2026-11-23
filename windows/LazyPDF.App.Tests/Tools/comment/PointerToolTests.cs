@@ -570,6 +570,26 @@ public sealed class PointerToolTests
     }
 
     [Fact]
+    public void ARedrawFromAScrollKeepsACornerBeingPulledOut()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var tool = Polygon(f);
+            var added = new List<(int, Point)>();
+            tool.VertexAdded += (_, after, to) => added.Add((after, to));
+
+            tool.Press(Control(new Point(200, 100)));
+            tool.Move(Drag(new Point(230, 60)));
+            tool.Redraw();
+            tool.Move(Drag(new Point(240, 50)));
+            tool.Release(Drag(new Point(240, 50)));
+
+            Assert.Equal((0, new Point(240, 50)), Assert.Single(added));
+        });
+    }
+
+    [Fact]
     public void ACtrlClickOnASideAddsACornerOnTheLine()
     {
         OnSta(() =>
