@@ -79,7 +79,7 @@ struct PageTile: View {
         .modifier(DoubleTap(action: open.map { open in { open(cell.index) } }))
         .onTapGesture { tapped() }
         .onDrag {
-            grid.dragging = grid.target(cell.index)
+            grid.beginDrag(cell.index)
             return NSItemProvider(item: Data() as NSData, typeIdentifier: PageDrag.type.identifier)
         }
         .onDrop(of: [PageDrag.type, .fileURL], delegate: PageDropDelegate(grid: grid, page: cell.index, width: tileWidth, onFiles: onFiles))
@@ -154,7 +154,7 @@ private struct DoubleTap: ViewModifier {
     }
 }
 
-// The pages a drag carries are in the grid; the item only tells this grid's own drops from text or files from elsewhere (the
+// The pages a drag carries are in PageDragSession; the item only tells our own drops from text or files from elsewhere (the
 // format "LazyPDF.Pages" of PageDrag.cs).
 private enum PageDrag {
     static let type = UTType(exportedAs: "com.lazypdf.lazypdf.pages", conformingTo: .data)
@@ -180,7 +180,7 @@ private struct PageDropDelegate: DropDelegate {
 
     func validateDrop(info: DropInfo) -> Bool {
         if info.hasItemsConforming(to: [.fileURL]) { return onFiles != nil }
-        return page != nil && !grid.dragging.isEmpty && info.hasItemsConforming(to: [PageDrag.type])
+        return page != nil && grid.acceptsDrag && info.hasItemsConforming(to: [PageDrag.type])
     }
 
     func dropEntered(info: DropInfo) {
@@ -201,7 +201,6 @@ private struct PageDropDelegate: DropDelegate {
             guard let onFiles else { return false }
             let before = page == nil ? grid.cells.count : grid.dropIndex
             grid.unmark()
-            grid.dragging = []
             let providers = info.itemProviders(for: [.fileURL])
             Task { @MainActor in
                 var files: [ToolFile] = []
@@ -212,7 +211,11 @@ private struct PageDropDelegate: DropDelegate {
             }
             return true
         }
-        guard !grid.dragging.isEmpty else { return false }
+        guard grid.acceptsDrag else {
+            grid.unmark()
+            PageDragSession.end()
+            return false
+        }
         grid.dropPages()
         return true
     }

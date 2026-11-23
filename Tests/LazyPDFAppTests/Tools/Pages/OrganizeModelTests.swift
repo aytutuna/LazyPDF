@@ -114,21 +114,25 @@ final class OrganizeModelTests: XCTestCase {
         model.grid.remove([2, 3, 4, 5])
         let was = rig.tab.order
 
-        model.grid.dragging = [4, 5]
+        PageDragSession.begin(PageDragPayload(tab: rig.tab, grid: model.grid, pages: [4, 5]))
         model.grid.mark(0, after: false)
         model.grid.dropPages()
 
         XCTAssertEqual(rig.tab.order, was)
-        XCTAssertTrue(model.grid.dragging.isEmpty)
+        XCTAssertNil(PageDragSession.current)
     }
 
-    func test_aDragLeftOverFromBeforeAnEditIsForgotten() async throws {
-        let (model, _) = try attached()
-        model.grid.dragging = [3]
+    func test_aDragLeftOverFromBeforeAnEditMovesNothing() async throws {
+        let (model, rig) = try attached()
+        model.grid.beginDrag(3)
 
         model.grid.remove([0])
+        let was = rig.tab.order
+        model.grid.mark(0, after: false)
 
-        XCTAssertTrue(model.grid.dragging.isEmpty)
+        XCTAssertFalse(model.grid.acceptsDrag)
+        XCTAssertFalse(model.grid.dropPages())
+        XCTAssertEqual(rig.tab.order, was)
     }
 
     func test_deleteRemovesTheSelectedPagesInOneStepThatUndoBringsBack() async throws {
@@ -225,7 +229,8 @@ final class OrganizeModelTests: XCTestCase {
     func test_draggingPagesMarksTheGapAndDropMovesThemAsOneStep() async throws {
         let (model, rig) = try attached()
         let was = rig.tab.order
-        model.grid.dragging = [0, 1]
+        model.grid.select([0, 1])
+        model.grid.beginDrag(0)
 
         model.grid.mark(4, after: false)
         XCTAssertTrue(model.grid.cells[4].dropBefore)

@@ -15,9 +15,6 @@ public final class PageGrid {
     public private(set) var boxWidth: Double
     public private(set) var boxHeight: Double
 
-    /// The pages a drag in progress carries.
-    @ObservationIgnored public var dragging: [Int] = []
-
     /// Called when the person chooses pages, not when an edit puts the choice back.
     @ObservationIgnored public var onSelect: (() -> Void)?
 
@@ -66,7 +63,6 @@ public final class PageGrid {
     public func rebuild(select: [Int]?) {
         for cell in cells { cell.release() }
         marked = nil
-        dragging = []
         anchor = nil
         guard let tab else { return }
         let document = tab.document
@@ -184,13 +180,28 @@ public final class PageGrid {
         return marked.dropAfter ? marked.index + 1 : marked.index
     }
 
-    /// The drag ended over the marked gap: the pages it carries move there. Files dropped use `dropIndex` themselves.
-    public func dropPages() {
+    /// A drag starts on `page`: it carries the chosen pages when the page is one of them, else the page alone.
+    public func beginDrag(_ page: Int) {
+        guard let tab else { return }
+        PageDragSession.begin(PageDragPayload(tab: tab, grid: self, pages: target(page)))
+    }
+
+    /// True when the drag in progress carries pages of this grid's tab, as they stand now.
+    public var acceptsDrag: Bool {
+        guard let tab, let drag = PageDragSession.current, drag.tab === tab, !drag.pages.isEmpty, drag.revision == tab.revision else { return false }
+        // The pages a drag carried may be gone when it lands, after an undo or an edit from elsewhere.
+        return drag.pages.allSatisfy { $0 >= 0 && $0 < cells.count }
+    }
+
+    /// The drag ended over the marked gap: the pages it carries move there. Files dropped use `dropIndex` themselves. The drag
+    /// is over either way.
+    @discardableResult
+    public func dropPages() -> Bool {
         let before = dropIndex
         unmark()
-        let pages = dragging
-        dragging = []
-        // The pages a drag carried may be gone when it lands, after an undo or an edit from elsewhere.
-        if !pages.isEmpty, pages.allSatisfy({ $0 >= 0 && $0 < cells.count }) { moveTo(pages, before) }
+        let pages = acceptsDrag ? PageDragSession.current?.pages : nil
+        PageDragSession.end()
+        guard let pages else { return false }
+        return moveTo(pages, before)
     }
 }
