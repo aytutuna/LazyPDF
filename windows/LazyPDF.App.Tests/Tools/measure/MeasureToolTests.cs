@@ -196,6 +196,22 @@ public sealed class MeasureToolTests
     }
 
     [Fact]
+    public void APressOffThePageTakesTheFirstDotAndClosesTheShapeButNoOtherPoint()
+    {
+        var (tool, done, _) = Start(MeasureKind.Area);
+        tool.Press(At(0, 0));
+        tool.Press(At(100, 0));
+        tool.Press(At(-300, 60));
+
+        Assert.False(tool.HandleUnder(At(-300, 60)));
+        Assert.True(tool.HandleUnder(At(-2, -2)));
+        tool.Press(At(-2, -2));
+
+        var item = Assert.Single(done);
+        Assert.Equal(3, item.Points.Count);
+    }
+
+    [Fact]
     public void ShiftKeepsTheNextPointOnAStraightLine()
     {
         var (tool, done, _) = Start(MeasureKind.Distance);
