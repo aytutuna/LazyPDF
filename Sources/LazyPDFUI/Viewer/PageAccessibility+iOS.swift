@@ -46,7 +46,8 @@ final class PageReadingElement: UIAccessibilityElement, UIAccessibilityReadingCo
     func textLoaded() {
         guard asked else { return }
         asked = false
-        UIAccessibility.post(notification: .layoutChanged, argument: self)
+        let focused = (UIAccessibility.focusedElement(using: nil) as AnyObject?) === self
+        UIAccessibility.post(notification: .layoutChanged, argument: focused ? self : nil)
     }
 
     func accessibilityPageContent() -> String? { read()?.text }
