@@ -156,6 +156,17 @@ public partial class MainWindow
         catch (System.Printing.PrintSystemException) { return []; }
     }
 
+    // The part of the paper the printer reaches, for the ticket's orientation; empty when the driver cannot say.
+    private static Rect PrintableArea(System.Printing.PrintQueue queue, System.Printing.PrintTicket ticket)
+    {
+        try
+        {
+            var area = queue.GetPrintCapabilities(ticket).PageImageableArea;
+            return area is null ? Rect.Empty : new Rect(area.OriginWidth, area.OriginHeight, area.ExtentWidth, area.ExtentHeight);
+        }
+        catch (System.Printing.PrintSystemException) { return Rect.Empty; }
+    }
+
     private async void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
     {
         await tab.Drawing;
@@ -176,6 +187,7 @@ public partial class MainWindow
         // A print queue belongs to the thread that made it, so the worker opens its own from the names.
         string server = dialog.PrintQueue.HostingPrintServer.Name, printer = dialog.PrintQueue.Name;
         var ticket = dialog.PrintTicket;
+        var printable = PrintableArea(dialog.PrintQueue, ticket);
         if (layout.Duplex(layout.Booklet && layout.Parity == PrintParity.All && !layout.Reverse ? OfferedDuplexing(dialog.PrintQueue, ticket) : []) is { } duplex)
             ticket.Duplexing = duplex;
         PagePaginator? paginator = null;
@@ -197,6 +209,7 @@ public partial class MainWindow
                 })
                 {
                     PageSize = size,
+                    Content = printable,
                 };
                 var done = new TaskCompletionSource();
                 var thread = new Thread(() =>
