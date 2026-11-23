@@ -5,9 +5,18 @@ import Foundation
 
 @MainActor
 final class RedactDrawTool: PagePointerTool {
-    private static let smallest = 4.0
+    nonisolated static let smallest = 4.0
     private static let keyBox = ViewSize(160, 24)
     static let colour = OverlayColor(red: 0xC4 / 255, green: 0x2B / 255, blue: 0x1C / 255)
+
+    /// The body of a box and its eight handles, clockwise from the top left.
+    enum Handle: CaseIterable {
+        case body, topLeft, top, topRight, right, bottomRight, bottom, bottomLeft, left
+    }
+
+    enum Arrow {
+        case left, right, up, down
+    }
 
     private let viewer: DocumentViewer
     private let boxDrawn: (Int, ViewPoint, ViewPoint) -> Void
@@ -59,5 +68,34 @@ final class RedactDrawTool: PagePointerTool {
     private func clamp(_ page: Int, _ point: ViewPoint) -> ViewPoint {
         let size = viewer.pageSize(page)
         return ViewPoint(min(max(point.x, 0), size.width), min(max(point.y, 0), size.height))
+    }
+
+    /// The box after a drag of `delta` (page space) on `handle`, kept on the page and at least `smallest` across.
+    nonisolated static func drag(_ rect: ViewRect, _ handle: Handle, _ delta: ViewPoint, _ page: ViewSize, smallest: Double = smallest) -> ViewRect {
+        func clamp(_ value: Double, _ low: Double, _ high: Double) -> Double { min(max(value, low), high) }
+        if handle == .body {
+            return ViewRect(clamp(rect.x + delta.x, 0, max(0, page.width - rect.width)),
+                            clamp(rect.y + delta.y, 0, max(0, page.height - rect.height)), rect.width, rect.height)
+        }
+        var (left, top, right, bottom) = (rect.left, rect.top, rect.right, rect.bottom)
+        if [.topLeft, .left, .bottomLeft].contains(handle) { left = clamp(left + delta.x, 0, max(0, right - smallest)) }
+        if [.topRight, .right, .bottomRight].contains(handle) { right = clamp(right + delta.x, left + smallest, max(left + smallest, page.width)) }
+        if [.topLeft, .top, .topRight].contains(handle) { top = clamp(top + delta.y, 0, max(0, bottom - smallest)) }
+        if [.bottomLeft, .bottom, .bottomRight].contains(handle) { bottom = clamp(bottom + delta.y, top + smallest, max(top + smallest, page.height)) }
+        return ViewRect(left, top, right - left, bottom - top)
+    }
+
+    /// The box after an arrow key: it moves, or with `resize` the right and bottom edges move instead. A step is 1 point, 10 when `large`.
+    nonisolated static func nudge(_ rect: ViewRect, _ arrow: Arrow, resize: Bool, large: Bool, _ page: ViewSize) -> ViewRect {
+        let step = large ? 10.0 : 1.0
+        let delta: ViewPoint
+        switch arrow {
+        case .left: delta = ViewPoint(-step, 0)
+        case .right: delta = ViewPoint(step, 0)
+        case .up: delta = ViewPoint(0, -step)
+        case .down: delta = ViewPoint(0, step)
+        }
+        if !resize { return drag(rect, .body, delta, page) }
+        return drag(rect, arrow == .left || arrow == .right ? .right : .bottom, delta, page)
     }
 }
