@@ -288,4 +288,14 @@ public sealed class PageTextRangeTests
         Assert.Equal(new DocPos(2, 0), last.Places.Start);
         Assert.Equal(new DocPos(2, 0), last.Places.End);
     }
+
+    [Fact]
+    public void ReadingARangeThatEndsOnAPageStartDoesNotAskForThatPage()
+    {
+        using var tab = FakeTextHost.NewTab();
+        var host = new FakeTextHost(tab, 5, p => p < 2 ? Sample[p] : null);
+
+        Assert.Equal("\n", Range(host, 1, 0, 2, 0).GetText(-1));
+        Assert.Empty(host.Requested);
+    }
 }

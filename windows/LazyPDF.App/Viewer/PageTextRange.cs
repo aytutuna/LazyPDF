@@ -129,7 +129,7 @@ internal sealed class PageTextRange : ITextRangeProvider
         var (host, _) = Checked();
         var text = new StringBuilder();
         int limit = maxLength < 0 ? int.MaxValue : maxLength;
-        for (int page = _start.Page; page <= _end.Page && page < host.PageCount && text.Length < limit; page++)
+        for (int page = _start.Page; (page < _end.Page || (page == _end.Page && _end.Offset > 0)) && page < host.PageCount && text.Length < limit; page++)
         {
             if (host.Peek(page) is not { } loaded) break;
             string whole = PageUiaText.Of(loaded).Text;
