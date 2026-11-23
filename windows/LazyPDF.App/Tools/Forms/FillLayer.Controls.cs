@@ -51,8 +51,6 @@ internal sealed partial class FillLayer
 
         public bool Turned { get; set; }
 
-        public bool MenuOpen { get; set; }
-
         /// <summary>Hands in what was typed and not yet kept; null for a control that keeps each change at once.</summary>
         public Action? Flush { get; set; }
     }

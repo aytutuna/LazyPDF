@@ -308,29 +308,59 @@ public sealed class FillLayerTurnTests
         return Task.CompletedTask;
     });
 
-    private static void RaiseMenu(FrameworkElement control, bool opening)
+    private static void RaiseMenuOpening(FrameworkElement control)
     {
-        var args = (ContextMenuEventArgs)Activator.CreateInstance(typeof(ContextMenuEventArgs), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, null, [control, opening], null)!;
-        args.RoutedEvent = opening ? FrameworkElement.ContextMenuOpeningEvent : FrameworkElement.ContextMenuClosingEvent;
+        var args = (ContextMenuEventArgs)Activator.CreateInstance(typeof(ContextMenuEventArgs), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, null, [control, true], null)!;
+        args.RoutedEvent = FrameworkElement.ContextMenuOpeningEvent;
         control.RaiseEvent(args);
     }
 
+    private static IEnumerable<ContextMenu> OpenMenus(DependencyObject parent)
+    {
+        if (parent is ContextMenu menu) yield return menu;
+        if (parent is not Visual) yield break;
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            foreach (var inner in OpenMenus(VisualTreeHelper.GetChild(parent, i))) yield return inner;
+        }
+    }
+
     [Fact]
-    public Task AFieldStaysTurnedUnderItsOwnMenuAndTurnsBackWhenTheMenuIsGone() => Sta.Run(async () =>
+    public Task ATextFieldStaysTurnedUnderItsOwnMenuAndTurnsBackWhenTheMenuIsGone() => Sta.Run(async () =>
     {
         using var rig = new Rig(90);
         var text = rig.Control("name");
         var frame = Rig.Frame(text);
         text.Focus();
 
-        RaiseMenu(text, opening: true);
-        Keyboard.ClearFocus();
+        RaiseMenuOpening(text);
+        await Task.Delay(100);
+        Assert.True(text.IsKeyboardFocusWithin);
         Assert.IsType<RotateTransform>(frame.RenderTransform);
 
-        RaiseMenu(text, opening: false);
-        await Sta.Until(() => frame.RenderTransform is null || frame.RenderTransform.Value.IsIdentity);
+        foreach (PresentationSource source in PresentationSource.CurrentSources)
+        {
+            if (source.RootVisual is Window || source.RootVisual is null) continue;
+            foreach (var menu in OpenMenus(source.RootVisual).ToList()) menu.IsOpen = false;
+        }
+        Keyboard.ClearFocus();
+        await Task.Delay(100);
 
         AssertDropped(text, rig.Box(Name));
+    });
+
+    [Fact]
+    public Task AListThatSawAMenuOpenStillTurnsBackWhenItLosesTheKeyboard() => Sta.Run(() =>
+    {
+        using var rig = new Rig(90);
+        var list = rig.Control("langs");
+        list.Focus();
+
+        RaiseMenuOpening(list);
+        Keyboard.ClearFocus();
+
+        AssertDropped(list, rig.Box(new PdfRect(60, 420, 200, 490)));
+        return Task.CompletedTask;
     });
 
     // Tab as the keyboard would raise it, on the control that has the keyboard.
