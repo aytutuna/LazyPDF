@@ -32,4 +32,46 @@ public sealed class PageOverlay : Canvas
         box.RenderTransformOrigin = new Point(0.5, 0.5);
         box.RenderTransform = viewRotation == 0 ? null : new RotateTransform(-viewRotation);
     }
+
+    /// <summary>The page-space rectangle a box covers once it is turned upright on a view turned by <paramref name="viewRotation"/>: same centre, width and height swapped at 90 and 270.</summary>
+    public static Rect UprightBounds(Rect box, int viewRotation)
+    {
+        if (viewRotation % 180 == 0) return box;
+        double cx = box.X + box.Width / 2, cy = box.Y + box.Height / 2;
+        return new Rect(cx - box.Height / 2, cy - box.Width / 2, box.Height, box.Width);
+    }
+
+    /// <summary>
+    /// Moves a box so that its upright footprint lies in the page. On an axis where it does not fit, the footprint
+    /// is aligned to the page edge that is at the screen's top or left.
+    /// </summary>
+    public static Rect Place(Rect box, Size page, int viewRotation)
+    {
+        var bounds = UprightBounds(box, viewRotation);
+        int turn = ((viewRotation % 360) + 360) % 360;
+        // The corner at the screen's top left is on the page's right edge from 180 on, and on its bottom edge at 90 and 180
+        bool atRight = turn is 180 or 270, atBottom = turn is 90 or 180;
+        double x = Fit(bounds.X, bounds.Width, page.Width, atRight);
+        double y = Fit(bounds.Y, bounds.Height, page.Height, atBottom);
+        return new Rect(box.X + x - bounds.X, box.Y + y - bounds.Y, box.Width, box.Height);
+    }
+
+    private static double Fit(double start, double length, double room, bool atEnd) =>
+        length > room ? (atEnd ? room - length : 0) : Math.Clamp(start, 0, room - length);
+
+    /// <summary>
+    /// The width and height an upright box may grow to, right and down on the screen, measured from the corner of
+    /// its footprint that sits at the screen's top left, to the page edges in those two directions.
+    /// </summary>
+    public static Size Room(Rect placed, Size page, int viewRotation)
+    {
+        var b = UprightBounds(placed, viewRotation);
+        return (((viewRotation % 360) + 360) % 360) switch
+        {
+            90 => new Size(b.Bottom, page.Width - b.X),
+            180 => new Size(b.Right, b.Bottom),
+            270 => new Size(page.Height - b.Y, b.Right),
+            _ => new Size(page.Width - b.X, page.Height - b.Y),
+        };
+    }
 }
