@@ -25,6 +25,7 @@ final class RedactDrawTool: PagePointerTool {
     private let viewer: DocumentViewer
     private let boxDrawn: (Int, ViewPoint, ViewPoint) -> Void
     private let boxEdited: (MarkItem, ViewRect, PageGeometry, Bool) -> Bool
+    private let nudge: (BoxMove, Bool) -> Void
     private var page = -1
     private var from = ViewPoint(0, 0)
 
@@ -37,15 +38,19 @@ final class RedactDrawTool: PagePointerTool {
     private var grab = ViewPoint.zero
     private var dragged = ViewRect(0, 0, 0, 0)
     private var shownOn = -1
+    // A press on the selected box gives it the arrow keys, as a click on its frame does on Windows. Any press the tool does
+    // not take, another box, or Enter for the placement cross gives them back to the viewer, which scrolls with them.
+    private var keys = false
 
     /// Whether a press away from the selected box draws a new one.
     var drawing = false
 
     init(_ viewer: DocumentViewer, boxDrawn: @escaping (Int, ViewPoint, ViewPoint) -> Void,
-         boxEdited: @escaping (MarkItem, ViewRect, PageGeometry, Bool) -> Bool) {
+         boxEdited: @escaping (MarkItem, ViewRect, PageGeometry, Bool) -> Bool, nudge: @escaping (BoxMove, Bool) -> Void) {
         self.viewer = viewer
         self.boxDrawn = boxDrawn
         self.boxEdited = boxEdited
+        self.nudge = nudge
     }
 
     var cursor: PointerCursor? { drawing ? .crosshair : nil }
@@ -54,6 +59,7 @@ final class RedactDrawTool: PagePointerTool {
     func show(_ item: MarkItem?, _ geometry: PageGeometry?) {
         handle = nil
         remove()
+        if item?.row != self.item?.row { keys = false }
         guard let item, let geometry, item.isBox, item.page < viewer.pageCount else {
             self.item = nil
             self.geometry = nil
@@ -86,12 +92,33 @@ final class RedactDrawTool: PagePointerTool {
 
     // A finger that lands anywhere else scrolls the page, and a click goes to the viewer, unless a new box is being drawn.
     func takes(_ pointer: PagePointer) -> Bool {
-        drawing || target(pointer) != nil
+        let taken = drawing || target(pointer) != nil
+        if !taken { keys = false }
+        return taken
+    }
+
+    // Arrows move the box, Option resizes it and Shift makes the step 10 points, while the box is in view.
+    func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
+        if key == .enter { keys = false }
+        guard keys, let item, handle == nil, page < 0, viewer.visiblePages.contains(item.page) else { return false }
+        let resize = modifiers.contains(.option)
+        let move: BoxMove
+        switch key {
+        case .left: move = resize ? .narrower : .left
+        case .right: move = resize ? .wider : .right
+        case .up: move = resize ? .shorter : .up
+        case .down: move = resize ? .taller : .down
+        default: return false
+        }
+        nudge(move, modifiers.contains(.shift))
+        return true
     }
 
     func press(_ pointer: PagePointer) {
         cancel()
+        keys = false
         if let grabbed = target(pointer) {
+            keys = !pointer.fromKeys
             handle = grabbed
             grab = pointer.point
             dragged = frame

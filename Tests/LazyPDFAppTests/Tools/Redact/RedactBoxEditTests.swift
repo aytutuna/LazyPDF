@@ -456,6 +456,47 @@ final class RedactBoxEditTests: XCTestCase {
         }
     }
 
+    func test_aPressOnTheBoxGivesItTheArrowsUntilAPressElsewhereOrEnter() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        func click(_ at: ViewPoint) {
+            let down = PagePointer(page: 0, point: at, view: at, pressed: true, clicks: 1)
+            guard tool.takes(down) else { return }
+            tool.press(down)
+            tool.release(PagePointer(page: 0, point: at, view: at, pressed: false, clicks: 1))
+        }
+
+        click(ViewPoint(100, 75))
+        XCTAssertTrue(tool.key(.right, modifiers: []))
+        XCTAssertTrue(tool.key(.right, modifiers: []))
+        XCTAssertEqual(bounds(model), [52, 702, 152, 732])
+        XCTAssertTrue(tool.key(.left, modifiers: [.option, .shift]))
+        XCTAssertEqual(bounds(model), [52, 702, 142, 732])
+        XCTAssertEqual(rig.host.statuses.last, "Box resized.")
+        XCTAssertFalse(tool.key(.escape, modifiers: []))
+
+        click(ViewPoint(300, 300))
+        XCTAssertFalse(tool.key(.right, modifiers: []))
+
+        click(ViewPoint(100, 75))
+        XCTAssertFalse(tool.key(.enter, modifiers: []))
+        XCTAssertFalse(tool.key(.down, modifiers: []))
+    }
+
+    func test_theArrowsStayWithTheViewerWhileTheBoxIsOutOfView() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        let at = ViewPoint(100, 75)
+        tool.press(PagePointer(page: 0, point: at, view: at, pressed: true, clicks: 1))
+        tool.release(PagePointer(page: 0, point: at, view: at, pressed: false, clicks: 1))
+
+        rig.viewer.pageIndex = 1
+        XCTAssertFalse(tool.key(.right, modifiers: []))
+        XCTAssertEqual(bounds(model), [50, 702, 150, 732])
+    }
+
     func test_aHitRowStaysSelectedWhenTheModelTakesItsOwnToolOff() async throws {
         let state = TabToolState()
         let rig = try SecurityRig(Pdfs.text(2, Self.line))
