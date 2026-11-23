@@ -246,6 +246,23 @@ final class PageTransferTests: XCTestCase {
         XCTAssertTrue(a.host.problems.isEmpty)
     }
 
+    func test_switchingTabsWhileTheSignedTargetNoticeIsUpDropsItAndCopiesNothing() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.dir.file("a.pdf", Pdfs.text(2)))
+        await f.vm.open(f.dir.file("signed.pdf", try Pdfs.signed(certified: false, pages: 2)))
+        let from = f.vm.documents[0], to = f.vm.documents[1]
+        f.vm.show(from)
+        let revision = to.revision
+
+        await PageTransfer.copy(PageDragPayload(tab: from, grid: nil, pages: [0]), to: to, host: f.vm)
+        XCTAssertNotNil(f.vm.message?.action)
+        f.vm.show(to)
+
+        XCTAssertNil(f.vm.message)
+        XCTAssertEqual(to.revision, revision)
+        XCTAssertEqual(to.pageCount, 2)
+    }
+
     func test_aChangeThatTheFileDoesNotTakeEndsAsPagesNotChanged() async throws {
         let (a, b) = try pair()
         let before = b.tab.session.current
