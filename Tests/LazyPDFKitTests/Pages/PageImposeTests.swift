@@ -219,4 +219,15 @@ final class PageImposeTests: XCTestCase {
         assertReadFails(try PageOperations.impose(document, [], ImposeOptions(mode: .nUp, sheetWidth: 400, sheetHeight: 300)), .damaged)
         assertReadFails(try nUp(document, 2, width: 0), .damaged)
     }
+
+    func test_keepPagesTakesTheNamedPagesInOrderWithBlanks() throws {
+        let document = try PageTestFiles.open(4)
+        try PageOperations.keepPages(document, [3, -1, 0], blankWidth: 200, blankHeight: 100)
+        XCTAssertEqual(PageTestFiles.order(document), [4, -1, 1])
+        XCTAssertEqual(document.pages[1].cropBox.width, 200, accuracy: 1e-3)
+        XCTAssertEqual(document.pages[1].cropBox.height, 100, accuracy: 1e-3)
+        let again = try PdfDocument.open(try document.saveRewrite())
+        XCTAssertEqual(again.pages.count, 3)
+        XCTAssertEqual(again.repairs, [])
+    }
 }

@@ -160,4 +160,24 @@ extension PageOperations {
         target.catalog.remove("AcroForm")
         return ImposeResult(document: target, sheets: sheets.count, annotationsFlattened: flattened, annotationsDropped: dropped)
     }
+
+    /// Makes the pages at these indexes, in this order, the pages of the document; -1 puts in an empty page of the given
+    /// size in points. The pages that are not named stay in the object table until the file is saved rewritten, which
+    /// writes only what the catalog reaches.
+    public static func keepPages(_ document: PdfDocument, _ order: [Int], blankWidth: Double, blankHeight: Double) throws {
+        let existing = document.pages.map(\.reference)
+        var kept: [PdfReference] = []
+        for index in order {
+            if index >= 0 {
+                kept.append(existing[index])
+                continue
+            }
+            let blank = PdfDictionary()
+            blank["Type"] = PdfName("Page")
+            blank["MediaBox"] = PdfRect(0, 0, blankWidth, blankHeight).toArray()
+            blank["Resources"] = PdfDictionary()
+            kept.append(try document.add(blank))
+        }
+        try PageTree.set(document, kept)
+    }
 }
