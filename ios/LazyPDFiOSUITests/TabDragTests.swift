@@ -49,13 +49,9 @@ final class TabDragTests: XCTestCase {
         XCTAssertTrue(plain.waitForExistence(timeout: 60))
         text.tap()
 
-        let tools = app.buttons["Tools"].firstMatch
-        XCTAssertTrue(tools.waitForExistence(timeout: 10))
-        tools.tap()
-        let search = app.searchFields.firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: 10))
-        search.tap()
-        search.typeText("Organize pages")
+        let group = app.buttons["Organize"].firstMatch
+        XCTAssertTrue(group.waitForExistence(timeout: 10))
+        group.tap()
         let row = app.buttons["Organize pages"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
