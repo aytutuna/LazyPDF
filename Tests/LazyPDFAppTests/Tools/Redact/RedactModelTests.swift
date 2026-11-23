@@ -203,6 +203,25 @@ final class RedactModelTests: XCTestCase {
         await waitUntil { model.marks.isEmpty }
     }
 
+    func test_aHitIsNotPutBackAfterTheFileWasEdited() async throws {
+        let state = TabToolState()
+        let rig = try SecurityRig(Pdfs.text(2, Self.line))
+        let model = RedactModel(fonts: FakeFonts(), images: FakeCodec(), state: state)
+        rig.attach(model)
+        let marks = try XCTUnwrap(state.redact[rig.tab]).marks
+        let hit = MarkItem(RedactionMark.fromRect(0, PdfRect(400, 100, 420, 120)), "hit", value: RedactionValueMatch(0, 2, .comment, 0, 3, "abc", .word))
+        let box = MarkItem(RedactionMark.fromRect(0, PdfRect(10, 10, 50, 20)), "Box", isBox: true)
+        marks.add([hit, box])
+
+        model.clearMarks()
+        let back = try XCTUnwrap(rig.host.lastNoticeAction)
+        PageOperations.rotate(rig.tab.document, [0], 90)
+        try rig.tab.commit("Rotate")
+        back.run()
+
+        XCTAssertEqual(model.marks.map(\.label), ["Box"])
+    }
+
     func test_marksAreDroppedWhenThePagesMoveUnderThem() async throws {
         let (model, rig) = try attached()
         model.query = "example"
