@@ -113,6 +113,7 @@ final class PageImposeTests: XCTestCase {
     }
 
     func test_aCancelledImposeThrows() async throws {
+        // Cancelled before impose runs, so the throw may come from the page import, not the checks between pages.
         let source = try PageTestFiles.open(3)
         let task = Task { () throws -> ImposeResult in
             while !Task.isCancelled { await Task.yield() }
