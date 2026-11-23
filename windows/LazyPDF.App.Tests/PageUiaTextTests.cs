@@ -110,6 +110,30 @@ public sealed class PageUiaTextTests
     }
 
     [Fact]
+    public void AGapBetweenRunsIsAnImpliedSpaceThatKeepsTheFormatRun()
+    {
+        var pages = Pages("BT /F1 10 Tf 100 700 Td (ab) Tj 14 0 Td (cd) Tj ET\n");
+        var t = PageUiaText.Of(pages[0]);
+        Assert.Equal("ab cd\n", t.Text);
+        Assert.Contains(pages[0].Chars, c => c.IsSpace && c.Font is null);
+        Assert.Equal([0], t.Starts(TextUnit.Format));
+        Assert.Equal([0, 3], t.Starts(TextUnit.Word));
+    }
+
+    [Fact]
+    public void ALineWithNothingToKeepAddsNoSeparatorAndItsCharactersTakeTheNextOffset()
+    {
+        var pages = Pages(Line(100, 700, "ab") + Line(100, 688, "  \u0080 ") + Line(100, 676, "cd"));
+        var t = PageUiaText.Of(pages[0]);
+        Assert.Equal("ab\ncd\n", t.Text);
+        int c = pages[0].Chars.Single(x => x.Text == "c").Index;
+        for (int i = 2; i < c; i++) Assert.Equal(3, t.OffsetOf(i));
+        Assert.Equal(c, t.CharStart(3));
+        Assert.Equal(c, t.CharEnd(3));
+        Assert.Equal([0, 3], t.Starts(TextUnit.Line));
+    }
+
+    [Fact]
     public void TheTextIsBuiltOncePerPage()
     {
         var page = Pages(Line(100, 700, "x"))[0];
