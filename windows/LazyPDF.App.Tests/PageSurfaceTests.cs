@@ -524,6 +524,29 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void AnOverlayChildOutsideThePageIsInTheRenderedBounds()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(2);
+            surface.SetZoom(1);
+            var overlay = surface.Overlay(0);
+            var size = surface.PageSize(0);
+            var mark = new System.Windows.Shapes.Rectangle { Width = 8, Height = 8, Fill = System.Windows.Media.Brushes.Black };
+            System.Windows.Controls.Canvas.SetLeft(mark, size.Width - 4);
+            System.Windows.Controls.Canvas.SetTop(mark, -4);
+            overlay.Children.Add(mark);
+
+            surface.Measure(Window);
+            surface.Arrange(new Rect(Window));
+            var bounds = System.Windows.Media.VisualTreeHelper.GetDescendantBounds(overlay);
+
+            Assert.True(bounds.Right > size.Width);
+            Assert.True(bounds.Top < 0);
+        });
+    }
+
+    [Fact]
     public void AFileTheSystemCannotDrawStillHasItsPagesLaidOut()
     {
         OnSta(() =>
