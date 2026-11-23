@@ -559,14 +559,16 @@ public sealed class KeyboardPlacementTests
     });
 
     // The press lands at the surface's origin; scrolling puts a page point there, so an offset past the page's end puts it in the gap.
+    // Zoomed past the view's width so the scroll can reach a column on the page; the offset is clamped to the extent otherwise.
     private static (PageViewer Viewer, RecordingTool Tool, double PageHeight) PressBelowFirstPage(bool handle, double below, DocumentTab tab)
     {
         var (viewer, tool) = Open(tab);
         tool.Handle = handle;
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetZoom(3);
         double height = viewer.PageSize(0).Height;
-        surface.GoToPage(0, new Point(100, height + below / surface.PageMatrix(0)!.Value.M22));
+        surface.GoToPage(0, new Point(100, height + below / surface.PageMatrix(0)!.Value.M22), keepX: true);
         typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
         return (viewer, tool, height);
     }
@@ -599,7 +601,14 @@ public sealed class KeyboardPlacementTests
     public Task APressFarFromEveryPageIsNotEvenAsked() => Sta.Run(() =>
     {
         using var tab = NewTab();
-        var (_, tool, _) = PressBelowFirstPage(true, 60, tab);
+        var (viewer, tool) = Open(tab);
+        tool.Handle = true;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        // The page is narrower than the view and centred, so the origin is far left of it; below a page is the next one, 12 px away.
+        surface.SetZoom(1);
+        surface.GoToPage(0, new Point(100, 100));
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
 
         Assert.Equal(0, tool.Asked);
         Assert.Empty(tool.Calls);
@@ -637,7 +646,8 @@ public sealed class KeyboardPlacementTests
         var (viewer, tool) = Open(tab);
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
-        surface.GoToPage(0, new Point(100, 100));
+        surface.SetZoom(3);
+        surface.GoToPage(0, new Point(100, 100), keepX: true);
         typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
 
         Assert.Equal(0, tool.Asked);
