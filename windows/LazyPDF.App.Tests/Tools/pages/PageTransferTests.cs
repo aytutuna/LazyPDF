@@ -201,6 +201,40 @@ public sealed class PageTransferTests
     });
 
     [Fact]
+    public Task SwitchingTabsWhileTheSignedTargetNoticeIsUpDropsItAndCopiesNothing() => Sta.Run(async () =>
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenFilesAsync([f.Dir.File("a.pdf", Pdfs.Text(2)), f.Dir.File("signed.pdf", StampsPanelTests.Signed(false, 2))]);
+        var from = f.Vm.Documents.First();
+        var to = f.Vm.Documents.Last();
+        f.Vm.ActiveTab = from;
+        int revision = to.Revision;
+
+        await PageTransfer.CopyAsync(Pick(from, 0), to, f.Vm);
+        Assert.NotNull(f.Vm.Message?.Action);
+        f.Vm.ActiveTab = to;
+
+        Assert.Null(f.Vm.Message);
+        Assert.Equal(revision, to.Revision);
+        Assert.Equal(2, to.PageCount);
+    });
+
+    [Fact]
+    public Task AChangeTheFilesPermissionsRefuseEndsAsAProblemNamingTheTarget() => Sta.Run(async () =>
+    {
+        using var to = Open(2, "b.pdf");
+        var host = Hosting(to);
+        int revision = to.Revision;
+
+        bool done = await PageJobs.ApplyAsync(to, host, "Adding", "Paste", _ => throw new PdfPermissionException("no"), "Done", to.Title);
+
+        Assert.False(done);
+        Assert.Equal(revision, to.Revision);
+        Assert.Equal("b.pdf cannot be changed", Assert.Single(host.Problems).Title);
+        Assert.Equal(2, to.PageCount);
+    });
+
+    [Fact]
     public Task PagesThatChangedSinceThePickAreNotCopied() => Sta.Run(async () =>
     {
         using var from = Open(4, "a.pdf");

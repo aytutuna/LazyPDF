@@ -70,16 +70,25 @@ internal static class PageJobs
     }
 
     // For the edits that copy pages in from another file: the work runs off the UI thread and the result goes to the tab it started on,
-    // wherever the person has moved to meanwhile.
-    public static async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, string status)
+    // wherever the person has moved to meanwhile. A tab that is not the one in view passes its <paramref name="file"/> name, since the host's own
+    // refusal for a change the file's permissions forbid does not say which file it is about.
+    public static async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, string status, string? file = null)
     {
-        bool done = false;
+        bool done = false, denied = false;
         try
         {
             await host.RunBusyAsync(busy, token => Task.Run(() =>
             {
                 token.ThrowIfCancellationRequested();
-                change(tab.Document);
+                try
+                {
+                    change(tab.Document);
+                }
+                catch (PdfPermissionException) when (file is not null)
+                {
+                    denied = true;
+                    return;
+                }
                 done = !token.IsCancellationRequested;
             }, token));
         }
@@ -90,6 +99,7 @@ internal static class PageJobs
         }
         if (done) return Commit(tab, host, label, status);
         tab.Session.Discard();
+        if (denied) host.ShowProblem(Problems.Restricted(file));
         return false;
     }
 

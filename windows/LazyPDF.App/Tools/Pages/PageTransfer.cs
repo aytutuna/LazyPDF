@@ -9,12 +9,12 @@ namespace LazyPDF.App.Tools.Pages;
 internal static class PageTransfer
 {
     /// <summary>Puts the pages of <paramref name="pdf"/> into <paramref name="target"/> at <paramref name="at"/>, or at its end when null. The end is read from the document being changed, so it cannot be stale.</summary>
-    public static Task<bool> PasteAsync(DocumentTab target, IToolHost host, byte[] pdf, int count, int? at) =>
+    public static Task<bool> PasteAsync(DocumentTab target, IToolHost host, byte[] pdf, int count, int? at, string? file = null) =>
         PageJobs.ApplyAsync(target, host, Loc.T("Adding pages"), Loc.T("Paste pages"), d =>
         {
             var source = PdfDocument.Open(pdf);
             PageOperations.ImportPages(d, source, [.. Enumerable.Range(0, source.Pages.Count)], Math.Min(at ?? d.Pages.Count, d.Pages.Count));
-        }, Loc.Plural(count, "{0} page pasted", "{0} pages pasted", count));
+        }, Loc.Plural(count, "{0} page pasted", "{0} pages pasted", count), file);
 
     /// <summary>Copies the dragged or chosen pages to the end of <paramref name="to"/>, which is not the tab they are in.</summary>
     public static Task CopyAsync(PagePayload from, DocumentTab to, IToolHost host) =>
@@ -45,7 +45,7 @@ internal static class PageTransfer
         }
         var failed = new Problem(Loc.T("Pages not copied"), Loc.T("The pages could not be copied. Try fewer pages."));
         if (await PageJobs.CopyOutAsync(from.Tab, host, from.Pages, Loc.T("Copying pages"), failed, files: false) is not var (bytes, _, dropped)) return;
-        if (!await PasteAsync(to, host, bytes, from.Pages.Length, null)) return;
+        if (!await PasteAsync(to, host, bytes, from.Pages.Length, null, to.Title)) return;
         host.SetStatus(Loc.Plural(from.Pages.Length, "Copied {0} page to {1}. Undo it in {1}.", "Copied {0} pages to {1}. Undo it in {1}.", to.Title));
         PageJobs.NoteSkippedAttachments(host, 0, dropped);
         CopyRules.NoteUnprotected(from.Tab.Document, host);
