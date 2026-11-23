@@ -54,6 +54,10 @@ public sealed partial class TextPage
     /// <summary>The whole page as text: lines separated by a line feed, blocks by a blank line, table cells by a tab.</summary>
     public string Text => _text ??= GetText(new TextRange(0, _chars.Length));
 
+    /// <summary>A page with no text, for one that could not be read.</summary>
+    public static TextPage Empty(int pageIndex) =>
+        new(pageIndex, new PdfRect(0, 0, 612, 792), new PageGeometry(new PdfRect(0, 0, 612, 792), 0), [], [], [], [], false);
+
     public static TextPage Create(PdfDocument document, PdfPage page, TextPageOptions? options = null) =>
         Create(new ContentInterpreter(document), page, options);
 

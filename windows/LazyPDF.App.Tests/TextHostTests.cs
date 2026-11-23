@@ -159,6 +159,21 @@ public sealed class TextHostTests
     });
 
     [Fact]
+    public Task AFileTheTextCannotBeReadFromIsAnEmptyDocument() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(3);
+        using var _ = tab;
+        typeof(PageViewer).GetField("_text", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(viewer, Task.FromResult<TextSource?>(null));
+
+        Assert.Null(host.Peek(1));
+        await Sta.Until(() => host.Peek(1) is not null);
+
+        Assert.Equal("", host.Peek(1)!.Text);
+        Assert.Equal("\n", PageUiaText.Of(host.Peek(1)!).Text);
+        Assert.DoesNotContain(1, Field<HashSet<int>>(viewer, "_wanted"));
+    });
+
+    [Fact]
     public Task ReadsNeverWaitForTheTextCache() => Sta.Run(async () =>
     {
         var (viewer, host, tab) = Open(30);

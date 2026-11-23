@@ -15,6 +15,7 @@ public partial class PageViewer : ITextHost
     private readonly HashSet<int> _pending = [];
     private readonly HashSet<int> _wanted = [];
     private (int First, int Last)? _readRange;
+    private bool _unreadable;
 
     DocumentTab? ITextHost.Tab => _tab;
 
@@ -28,6 +29,7 @@ public partial class PageViewer : ITextHost
     {
         if (_tab is not { } tab || (uint)page >= (uint)tab.PageCount) return null;
         NoteReading(page);
+        if (_unreadable) return TextPage.Empty(page);
         if (_source?.Peek(page) is { } text) return text;
         _wanted.Add(page);
         Request(page);
@@ -43,7 +45,16 @@ public partial class PageViewer : ITextHost
     {
         try
         {
-            await GetTextAsync(page);
+            var open = TextAsync();
+            if (await open is null && ReferenceEquals(open, _text))
+            {
+                _unreadable = true;
+                PageArrived(page);
+            }
+            else
+            {
+                await GetTextAsync(page);
+            }
         }
         finally
         {
@@ -74,7 +85,7 @@ public partial class PageViewer : ITextHost
 
     private void RequestIfMissing(int page)
     {
-        if (_source?.Peek(page) is null) Request(page);
+        if (!_unreadable && _source?.Peek(page) is null) Request(page);
     }
 
     // A page arrived from the pool, whoever asked for it.
@@ -89,5 +100,6 @@ public partial class PageViewer : ITextHost
         _pending.Clear();
         _wanted.Clear();
         _readRange = null;
+        _unreadable = false;
     }
 }

@@ -55,10 +55,23 @@ public sealed class TextSource
     {
         if ((uint)page >= (uint)PageCount) return Task.FromResult<TextPage?>(null);
         if (_pages.TryGetValue(page, out var task)) return task;
-        _pages[page] = task = Task.Run<TextPage?>(() => _cache.Get(page));
+        _pages[page] = task = Task.Run<TextPage?>(() => Read(page));
         _order.Enqueue(page);
         while (_order.Count > _keep) _pages.Remove(_order.Dequeue());
         return task;
+    }
+
+    // A page that cannot be read is an empty one, so a task that failed is not asked again and a walk goes past it.
+    private TextPage Read(int page)
+    {
+        try
+        {
+            return _cache.Get(page);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return TextPage.Empty(page);
+        }
     }
 
     /// <summary>Every match, page by page, as they are found; run it off the UI thread. Throws <see cref="OperationCanceledException"/>.</summary>
