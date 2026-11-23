@@ -459,6 +459,82 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Delete")
     }
 
+    private func shapeRig(_ corners: [ViewPoint]) throws -> Rig {
+        let rig = try attached()
+        try rig.f.marker.add(.polygon, 0, corners, markRed)
+        try rig.tab.commit("Polygon")
+        rig.model.pick(.edit)
+        rig.model.editTool?.select(marks(rig)[0])
+        return rig
+    }
+
+    private func keyedPress(_ rig: Rig, _ at: ViewPoint) {
+        let tool = rig.viewer.pointerTool!
+        tool.press(PagePointer(page: 0, point: at, view: at, pressed: true, clicks: 1, fromKeys: true))
+        tool.release(PagePointer(page: 0, point: at, view: at, pressed: false, clicks: 0, fromKeys: true))
+    }
+
+    private let square = [markPt(100, 100), markPt(300, 100), markPt(300, 300), markPt(100, 300)]
+
+    func test_draggingACornerIsOneMovePointStep() async throws {
+        let rig = try shapeRig(square)
+
+        click(rig, markPt(300, 300), dragTo: markPt(340, 330))
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Move point")
+        XCTAssertEqual(rig.host.statuses.last, "Point 3 moved")
+        let corners = try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))
+        XCTAssertEqual(corners[2].x, 340, accuracy: 0.5)
+        XCTAssertEqual(corners[2].y, 330, accuracy: 0.5)
+        XCTAssertEqual(corners[1].x, 300, accuracy: 0.5)
+        XCTAssertTrue(try rig.tab.undo())
+        XCTAssertEqual(try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))[2].x, 300, accuracy: 0.5)
+    }
+
+    func test_aKeyedPressOnASideAddsACornerAsOneStep() async throws {
+        let rig = try shapeRig(square)
+
+        keyedPress(rig, markPt(200, 100))
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Add point")
+        XCTAssertEqual(marks(rig)[0].vertices.count, 10)
+    }
+
+    func test_deleteOnAPickedCornerRemovesItAndOtherwiseDeletesTheMark() async throws {
+        let rig = try shapeRig(square)
+
+        keyedPress(rig, markPt(300, 300))
+        XCTAssertEqual(rig.host.statuses.last, "Point 3 picked")
+        XCTAssertTrue(rig.viewer.pointerTool!.key(.delete, modifiers: []))
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Remove point")
+        XCTAssertEqual(marks(rig)[0].vertices.count, 6)
+        XCTAssertEqual(marks(rig).count, 1)
+    }
+
+    func test_aTriangleKeepsItsCornersAndSaysSo() async throws {
+        let rig = try shapeRig([markPt(100, 100), markPt(300, 100), markPt(200, 300)])
+        let label = rig.tab.session.undoLabel
+
+        keyedPress(rig, markPt(200, 300))
+        XCTAssertTrue(rig.viewer.pointerTool!.key(.delete, modifiers: []))
+
+        XCTAssertEqual(rig.tab.session.undoLabel, label)
+        XCTAssertEqual(marks(rig)[0].vertices.count, 6)
+        XCTAssertEqual(rig.host.statuses.last, "That point cannot be removed.")
+        XCTAssertTrue(rig.host.problems.isEmpty)
+    }
+
+    func test_aPointEditRefusedForABadIndexOnlyRefreshes() async throws {
+        let rig = try shapeRig(square)
+        let mark = marks(rig)[0]
+
+        XCTAssertFalse(rig.model.change("Move point") { _ = try $0.movePoint(mark, 9, markPt(10, 10)) })
+
+        XCTAssertTrue(rig.host.problems.isEmpty)
+        XCTAssertEqual(marks(rig)[0].vertices.count, 8)
+    }
+
     func test_theViewersOwnHandButtonTakesThePointerBack() async throws {
         let rig = try attached()
         rig.model.pick(.rectangle)

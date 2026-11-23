@@ -147,6 +147,19 @@ public final class CommentModel: ToolPanelModel {
         edit.selectionChanged = { [weak self] in self?.showSelected() }
         edit.moved = { [weak self] mark, dx, dy in _ = self?.change(L10n.t("Move")) { _ = try $0.move(mark, dx, dy) } }
         edit.resized = { [weak self] mark, box in _ = self?.change(L10n.t("Resize")) { _ = try $0.resize(mark, box) } }
+        edit.vertexMoved = { [weak self] mark, index, to in
+            guard let self else { return }
+            if !self.canChange {
+                self.editTool?.redraw()
+            } else if self.change(L10n.t("Move point"), { _ = try $0.movePoint(mark, index, to) }) {
+                self.host?.setStatus(L10n.t("Point {0} moved", index + 1))
+            }
+        }
+        edit.vertexAdded = { [weak self] mark, after, to in
+            self?.change(L10n.t("Add point")) { _ = try $0.insertPoint(mark, after: after, at: to) }
+        }
+        edit.vertexRemoved = { [weak self] mark, index in self?.removePoint(mark, index) }
+        edit.vertexPicked = { [weak self] index in self?.host?.setStatus(L10n.t("Point {0} picked", index + 1)) }
         edit.editRequested = { [weak self] mark in self?.editText(of: mark) }
         edit.deleteRequested = { [weak self] in self?.deleteSelected() }
         editTool = edit

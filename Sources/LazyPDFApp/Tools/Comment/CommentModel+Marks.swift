@@ -19,6 +19,9 @@ extension CommentModel {
             restore(tab)
             host.showProblem(Problem(L10n.t("Text not drawn"), AnnotationText.noFont))
             return false
+        } catch MarkError.badPoint {
+            restore(tab)
+            return false
         } catch is ArgumentException {
             restore(tab)
             host.showProblem(Problem(L10n.t("Nothing to draw"), L10n.t("That mark has no area. Drag farther and try again.")))
@@ -145,6 +148,16 @@ extension CommentModel {
         field?.drop()
         compose(tab, mark.pageIndex, area, mark.type == .freeText ? Marker.textOf(mark).size : 12, mark.contents ?? "") { [self] text in
             text == (mark.contents ?? "") || change(L10n.t("Edit text")) { _ = try $0.setText(mark, text) }
+        }
+    }
+
+    // Delete on a picked corner takes the corner away, not the mark.
+    func removePoint(_ mark: PdfAnnotation, _ index: Int) {
+        guard let tab, canChange else { return }
+        if makeMarker(tab).canRemovePoint(mark, index) {
+            change(L10n.t("Remove point")) { _ = try $0.removePoint(mark, index) }
+        } else {
+            host?.setStatus(L10n.t("That point cannot be removed."))
         }
     }
 
