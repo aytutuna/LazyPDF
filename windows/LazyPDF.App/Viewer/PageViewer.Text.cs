@@ -368,15 +368,8 @@ public partial class PageViewer
     // The rectangle of page space that holds the quads (user space).
     private Rect PageBounds(int page, IEnumerable<TextQuad> quads)
     {
-        var geometry = Surface.Geometry(page);
         var area = Rect.Empty;
-        foreach (var quad in quads)
-        {
-            var box = quad.Bounds;
-            var (x1, y1) = geometry.ToDisplay(box.Left, box.Bottom);
-            var (x2, y2) = geometry.ToDisplay(box.Right, box.Top);
-            area.Union(new Rect(new Point(x1, y1), new Point(x2, y2)));
-        }
+        foreach (var quad in quads) area.Union(Surface.QuadArea(page, quad));
         return area;
     }
 

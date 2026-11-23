@@ -55,7 +55,7 @@ internal sealed class PageSurfacePeer(PageSurface owner) : FrameworkElementAutom
 
     internal AutomationPeer? PeerOf(IRawElementProviderSimple provider) => PeerFromProvider(provider);
 
-    internal PageGeometry Geometry(int page) => owner.Geometry(page);
+    internal PageSurface Surface => owner;
 
     public override object? GetPattern(PatternInterface pattern)
     {

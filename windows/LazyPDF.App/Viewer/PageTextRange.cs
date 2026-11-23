@@ -140,7 +140,7 @@ internal sealed class PageTextRange : ITextRangeProvider
         return text.ToString();
     }
 
-    // TODO: search, attributes and the geometry answers come with the steps after this one; until then they report nothing.
+    // TODO: search and attributes come with the next step; until then they report nothing.
     public ITextRangeProvider? FindText(string text, bool backward, bool ignoreCase)
     {
         Checked();
@@ -162,10 +162,14 @@ internal sealed class PageTextRange : ITextRangeProvider
     public double[] GetBoundingRectangles()
     {
         Checked();
-        return [];
+        return Provider?.Rectangles(_start, _end) ?? [];
     }
 
-    public void ScrollIntoView(bool alignToTop) => Checked();
+    public void ScrollIntoView(bool alignToTop)
+    {
+        Checked();
+        Provider?.Reveal(_start, _end, alignToTop);
+    }
 
     // A place only: the reader's position is kept for GetSelection and the viewer's own selection is left alone.
     public void Select()

@@ -33,7 +33,7 @@ public sealed class PageTextProviderTests
     private const int WmGetObject = 0x3D;
     private const int UiaRootObjectId = -25;
 
-    private static async Task<Opened> Open(byte[] pdf, IDocumentRenderer? renderer = null)
+    private static async Task<Opened> Open(byte[] pdf, IDocumentRenderer? renderer = null, bool load = true)
     {
         var tab = new DocumentTab(PdfEditSession.Open(pdf), renderer ?? new FakeRenderer(), null, "a.pdf");
         var viewer = new PageViewer(null);
@@ -44,7 +44,7 @@ public sealed class PageTextProviderTests
         viewer.Arrange(new Rect(0, 0, 800, 600));
         viewer.UpdateLayout();
         ITextHost host = viewer;
-        await Sta.Until(() => Enumerable.Range(0, tab.PageCount).All(p => host.Peek(p) is not null));
+        if (load) await Sta.Until(() => Enumerable.Range(0, tab.PageCount).All(p => host.Peek(p) is not null));
         var peer = (PageSurfacePeer)UIElementAutomationPeer.CreatePeerForElement(viewer.Surface);
         return new Opened(viewer, host, peer, (PageTextProvider)peer.GetPattern(PatternInterface.Text)!, tab, source);
     }
@@ -280,6 +280,182 @@ public sealed class PageTextProviderTests
         await Sta.Until(() => o.Host.Peek(1) is not null);
         Assert.Contains("Page 2.", between.GetText(-1));
         Assert.Throws<ElementNotAvailableException>(() => before.Clone());
+    });
+
+    // What the selection painter draws for the characters of a stretch of one page, on the screen, clipped to the view like the answer.
+    private static List<double> Painted(Opened o, int page, int from, int to)
+    {
+        var text = o.Host.Peek(page)!;
+        var units = PageUiaText.Of(text);
+        var surface = o.Viewer.Surface;
+        var bounds = (Func<int, IEnumerable<TextQuad>, Rect>)Delegate.CreateDelegate(typeof(Func<int, IEnumerable<TextQuad>, Rect>), o.Viewer,
+            typeof(PageViewer).GetMethod("PageBounds", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!);
+        var found = new List<double>();
+        foreach (var quad in text.Quads(new TextRange(units.CharStart(from), units.CharEnd(to))))
+        {
+            var area = Rect.Intersect(PageSpace.Transform(surface.PageMatrix(page)!.Value, bounds(page, [quad])), new Rect(surface.Viewport));
+            if (area.IsEmpty) continue;
+            var (a, b) = (surface.PointToScreen(area.TopLeft), surface.PointToScreen(area.BottomRight));
+            found.AddRange([a.X, a.Y, b.X - a.X, b.Y - a.Y]);
+        }
+        return found;
+    }
+
+    private static PageTextRange Stretch(Opened o, int page, string word)
+    {
+        int from = PageUiaText.Of(o.Host.Peek(page)!).Text.IndexOf(word, StringComparison.Ordinal);
+        return PageTextRange.Create(o.Host, new DocPos(page, from), new DocPos(page, from + word.Length), o.Provider)!;
+    }
+
+    private static void Arrange(Opened o)
+    {
+        o.Viewer.Measure(new Size(800, 600));
+        o.Viewer.Arrange(new Rect(0, 0, 800, 600));
+        o.Viewer.UpdateLayout();
+    }
+
+    public static IEnumerable<object[]> PageAndViewRotations() =>
+        from entries in new[] { "", "/Rotate 90", "/Rotate 180 /CropBox [50 60 450 760]", "/Rotate 270 /CropBox [100 100 500 700]" }
+        from view in new[] { 0, 90, 180, 270 }
+        select new object[] { entries, view };
+
+    [Theory]
+    [MemberData(nameof(PageAndViewRotations))]
+    public Task TheRectanglesOfARangeAreWhatTheSelectionPaints(string entries, int view) => Sta.Run(async () =>
+    {
+        var o = await Open(Pdf(entries, [Line(150, 500, "alpha beta gamma") + Line(150, 300, "delta")]));
+        using var _ = o;
+        o.Viewer.Surface.SetRotation(view);
+        o.Viewer.Surface.SetFit(FitMode.Page);
+        Arrange(o);
+        var range = Stretch(o, 0, "beta");
+
+        var rectangles = range.GetBoundingRectangles();
+
+        var expected = Painted(o, 0, range.Places.Start.Offset, range.Places.End.Offset);
+        Assert.Equal(4, expected.Count);
+        Assert.Equal(expected.Count, rectangles.Length);
+        for (int i = 0; i < rectangles.Length; i++) Assert.Equal(expected[i], rectangles[i], 6);
+    });
+
+    [Fact]
+    public Task OnlyTheLinesInViewHaveRectanglesAndVisibleRanges() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdf([Line(100, 700, "upper line") + Line(100, 100, "lower line")]));
+        using var _ = o;
+        o.Viewer.Surface.SetFit(FitMode.None);
+        o.Viewer.Surface.SetZoom(1.5);
+        o.Viewer.Surface.SetVerticalOffset(0);
+        Arrange(o);
+
+        var both = o.Provider.DocumentRange;
+
+        Assert.Equal(4, both.GetBoundingRectangles().Length);
+        Assert.Empty(Stretch(o, 0, "lower").GetBoundingRectangles());
+        var visible = Assert.Single(o.Provider.GetVisibleRanges());
+        Assert.Contains("upper line", visible.GetText(-1));
+        Assert.DoesNotContain("lower", visible.GetText(-1));
+
+        o.Viewer.Surface.SetVerticalOffset(2000);
+
+        Assert.Empty(Stretch(o, 0, "upper").GetBoundingRectangles());
+        var lower = Assert.Single(o.Provider.GetVisibleRanges());
+        Assert.Contains("lower line", lower.GetText(-1));
+        var range = Stretch(o, 0, "lower");
+        var expected = Painted(o, 0, range.Places.Start.Offset, range.Places.End.Offset);
+        Assert.Equal(4, expected.Count);
+        Assert.Equal(expected, range.GetBoundingRectangles());
+    });
+
+    [Fact]
+    public Task APagedLayoutHasRectanglesForTheSpreadOnly() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdfs.Text(3));
+        using var _ = o;
+        o.Viewer.Surface.SetArrangement(1, false, continuous: false);
+        Arrange(o);
+        var third = Stretch(o, 2, "Page 3");
+
+        Assert.Empty(third.GetBoundingRectangles());
+        Assert.Contains("Page 1", Assert.Single(o.Provider.GetVisibleRanges()).GetText(-1));
+
+        third.ScrollIntoView(true);
+
+        Assert.Equal(2, o.Viewer.Surface.CurrentPage);
+        Assert.Equal(4, third.GetBoundingRectangles().Length);
+    });
+
+    [Fact]
+    public Task ScrollingARangeIntoViewMovesNothingWhenItIsThere() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdf([Line(100, 700, "upper line") + Line(100, 100, "lower line")]));
+        using var _ = o;
+        o.Viewer.Surface.SetFit(FitMode.None);
+        o.Viewer.Surface.SetZoom(1.5);
+        o.Viewer.Surface.SetVerticalOffset(0);
+        Arrange(o);
+
+        Stretch(o, 0, "upper").ScrollIntoView(true);
+        Assert.Equal(0, o.Viewer.Surface.VerticalOffset);
+
+        Stretch(o, 0, "lower").ScrollIntoView(false);
+        Assert.True(o.Viewer.Surface.VerticalOffset > 0);
+        Assert.Equal(4, Stretch(o, 0, "lower").GetBoundingRectangles().Length);
+    });
+
+    [Fact]
+    public Task AnUnloadedPageIsRevealedAsAPage() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdfs.Text(30), load: false);
+        using var _ = o;
+        Assert.Null(o.Host.Peek(25));
+        var range = PageTextRange.Create(o.Host, new DocPos(25, 0), new DocPos(25, 0), o.Provider)!;
+
+        range.ScrollIntoView(true);
+
+        Assert.Equal(25, o.Viewer.Surface.CurrentPage);
+    });
+
+    [Fact]
+    public Task ARangeFromAPointIsWhereThePointIs() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdf([Line(100, 700, "alpha beta gamma")]));
+        using var _ = o;
+        Arrange(o);
+        var r = Stretch(o, 0, "beta").GetBoundingRectangles();
+
+        var found = o.Provider.RangeFromPoint(new Point(r[0] + r[2] / 2, r[1] + r[3] / 2));
+
+        Assert.NotNull(found);
+        found!.ExpandToEnclosingUnit(TextUnit.Word);
+        Assert.StartsWith("beta", found.GetText(-1));
+        Assert.Null(o.Provider.RangeFromPoint(new Point(-5000, -5000)));
+    });
+
+    [Fact]
+    public Task NothingIsAnsweredBetweenTheChangeAndTheDrawingOfATab() => Sta.Run(async () =>
+    {
+        var renderer = new SlowRenderer();
+        using var o = await Open(Pdfs.Text(2), renderer);
+        var r = Stretch(o, 0, "Hello").GetBoundingRectangles();
+        Assert.Equal(4, r.Length);
+        var at = new Point(r[0] + 1, r[1] + 1);
+        var drawn = new TaskCompletionSource();
+        o.Tab.Drawn += (_, _) => drawn.TrySetResult();
+        renderer.Gate = new TaskCompletionSource();
+
+        o.Tab.Refresh();
+        var between = o.Provider.DocumentRange;
+        double offset = o.Viewer.Surface.VerticalOffset;
+
+        Assert.False(o.Host.LayoutReady);
+        Assert.Empty(between.GetBoundingRectangles());
+        Assert.Empty(o.Provider.GetVisibleRanges());
+        Assert.Null(o.Provider.RangeFromPoint(at));
+        between.ScrollIntoView(false);
+        Assert.Equal(offset, o.Viewer.Surface.VerticalOffset);
+        renderer.Gate.SetResult();
+        await drawn.Task;
     });
 
     // A renderer whose load waits for the gate once one is set, so a test can stand between a tab's change and its drawing.
