@@ -139,6 +139,26 @@ public sealed class TextHostTests
     });
 
     [Fact]
+    public Task OnlyTheEndsOfWhatAReaderTouchedAreLoadedAhead() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(40);
+        using var _ = tab;
+        host.Peek(0);
+        host.Peek(39);
+        host.Peek(20);
+
+        await Sta.Until(() => Field<(int, int)?>(viewer, "_readRange") is null && Field<HashSet<int>>(viewer, "_pending").Count == 0);
+
+        var source = Source(viewer)!;
+        Assert.NotNull(source.Peek(0));
+        Assert.NotNull(source.Peek(39));
+        Assert.NotNull(source.Peek(20));
+        Assert.Null(source.Peek(10));
+        Assert.Null(source.Peek(30));
+        Assert.Equal(3, Enumerable.Range(0, 40).Count(p => source.Peek(p) is not null));
+    });
+
+    [Fact]
     public Task ReadsNeverWaitForTheTextCache() => Sta.Run(async () =>
     {
         var (viewer, host, tab) = Open(30);

@@ -67,10 +67,14 @@ public partial class PageViewer : ITextHost
     {
         if (_readRange is not (var first, var last) || _tab is not { } tab) return;
         _readRange = null;
-        for (int page = Math.Max(first - ReadAheadBefore, 0); page <= Math.Min(last + ReadAheadAfter, tab.PageCount - 1); page++)
-        {
-            if (_source?.Peek(page) is null) Request(page);
-        }
+        // Only the ends: pages between two far apart ones touched in the same burst are no business of the reader.
+        for (int page = Math.Max(first - ReadAheadBefore, 0); page < first; page++) RequestIfMissing(page);
+        for (int page = last + 1; page <= Math.Min(last + ReadAheadAfter, tab.PageCount - 1); page++) RequestIfMissing(page);
+    }
+
+    private void RequestIfMissing(int page)
+    {
+        if (_source?.Peek(page) is null) Request(page);
     }
 
     // A page arrived from the pool, whoever asked for it.
