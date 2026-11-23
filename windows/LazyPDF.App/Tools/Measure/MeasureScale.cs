@@ -58,7 +58,16 @@ public sealed record MeasureScale(double Page, LengthUnit PageUnit, double Real,
 
     public string Area(double squarePoints) => Number(squarePoints * PerPoint * PerPoint) + " " + RealUnit.Symbol() + "²";
 
-    public string Ratio => string.Create(CultureInfo.InvariantCulture, $"{Page:0.####} {PageUnit.Symbol()} = {Real:0.####} {RealUnit.Symbol()}");
+    public string Ratio => string.Create(CultureInfo.InvariantCulture, $"{Written(Page)} {PageUnit.Symbol()} = {Written(Real)} {RealUnit.Symbol()}");
+
+    // Eight significant digits: a file reads the scale back within a hundred millionth, however small one unit is.
+    private static double Rounded(double value) => double.Parse(value.ToString("G8", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
+
+    private static string Written(double value) => Rounded(value).ToString("0.####################", CultureInfo.InvariantCulture);
+
+    /// <summary>The scale that makes a line of <paramref name="points"/> read <paramref name="length"/>, written as one <paramref name="pageUnit"/> on the page standing for some real length.</summary>
+    public static MeasureScale From(double points, double length, LengthUnit pageUnit, LengthUnit realUnit) =>
+        new(1, pageUnit, Rounded(length / (points * LengthUnits.PointInMetres / pageUnit.Metres())), realUnit);
 
     /// <summary>The scale a <see cref="Ratio"/> text writes; null for any other text.</summary>
     public static MeasureScale? TryParse(string ratio)

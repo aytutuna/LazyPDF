@@ -8,7 +8,7 @@ import LazyPDFKit
 public enum MeasureWriter {
     private static let blue = [0.05, 0.38, 0.75]
 
-    public static func write(_ document: PdfDocument, _ items: [MeasureItem], _ scale: MeasureScale, author: String,
+    public static func write(_ document: PdfDocument, _ items: [MeasureItem], _ scaleOf: (MeasureItem) -> MeasureScale, author: String,
                              date: DateTimeOffset, fonts: FontSource? = nil) throws -> Int {
         // Nothing is written unless every page is still there, so a refusal leaves the document as it was.
         if items.contains(where: { $0.page < 0 || $0.page >= document.pages.count }) {
@@ -19,6 +19,7 @@ public enum MeasureWriter {
             let page = document.pages[item.page]
             let geometry = PageGeometry(page)
             let points: [PdfPoint] = item.points.map { geometry.toUser($0.x, $0.y) }
+            let scale = scaleOf(item)
             let value = item.value(scale)
             let info = AnnotationInfo(author: author, contents: "\(item.title): \(value)", subject: item.title, date: date)
             let style = AnnotationStyle(color: blue, width: 1.5)

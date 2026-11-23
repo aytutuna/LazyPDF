@@ -43,6 +43,12 @@ public final class DocumentTab: StripTab {
     /// Counts every change to the file's bytes (commit, undo, redo, save compact), so a viewer knows when to draw again.
     public private(set) var revision = 0
 
+    /// Counts the saves that rewrote the file and numbered its objects again.
+    @ObservationIgnored public private(set) var rewrites = 0
+
+    /// For each rewrite, in order, the object number each page had before and has now (a rewrite keeps the pages in order); entry i belongs to the rewrite that made `rewrites` i + 1.
+    @ObservationIgnored public private(set) var rewriteMaps: [[Int: Int]] = []
+
     /// Counts the times the renderer was loaded for the latest `revision`: a view that draws from the renderer follows this,
     /// since the load of a big file finishes after the revision changed.
     public private(set) var drawn = 0
@@ -184,9 +190,30 @@ public final class DocumentTab: StripTab {
 
     /// Writes the file without its history to `url` and goes on from that file.
     public func saveCompact(_ url: URL) throws {
-        try writer.write(to: url) { try session.saveCompact($0.path) }
+        let old = session.document
+        let before = old.pages.map { $0.reference.number }
+        let wasDirty = isDirty
+        do {
+            try writer.write(to: url) { try session.saveCompact($0.path) }
+        } catch {
+            // A coordinated writer runs the closure first, so the document may be swapped in before the replace fails.
+            if session.document !== old {
+                noteRewrite(before)
+                // The swap cleared the history, so the edits only live in the dirty mark until a save works.
+                if wasDirty { unsaved = true }
+                refresh()
+            }
+            throw error
+        }
+        noteRewrite(before)
         move(to: url)
         saved(rewritten: true)
+    }
+
+    private func noteRewrite(_ before: [Int]) {
+        let after = session.document.pages.map { $0.reference.number }
+        rewriteMaps.append(Dictionary(zip(before, after), uniquingKeysWith: { first, _ in first }))
+        rewrites += 1
     }
 
     /// The file on disk is not the one that was read or saved: another program changed or removed it.

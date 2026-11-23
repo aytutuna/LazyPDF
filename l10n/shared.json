@@ -5203,8 +5203,21 @@
   "Use for all pages": {
     "tr": "Tüm sayfalarda kullan"
   },
+  "Replace the scales on the other pages?": {
+    "tr": "Diğer sayfalardaki ölçekler değiştirilsin mi?"
+  },
+  "The scale on {0} other page will be replaced.": {
+    "other": "The scales on {0} other pages will be replaced.",
+    "tr": "Diğer {0} sayfadaki ölçek değiştirilecek."
+  },
+  "Line drawn: {0}": {
+    "tr": "Çizilen çizgi: {0}"
+  },
   "Click the two ends of something whose real length you know.": {
     "tr": "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın."
+  },
+  "Tap the two ends of something whose real length you know.": {
+    "tr": "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna dokunun."
   },
   "Snap to text and lines": {
     "tr": "Metne ve çizgilere yapış"

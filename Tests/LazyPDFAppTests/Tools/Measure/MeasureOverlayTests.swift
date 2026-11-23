@@ -30,7 +30,7 @@ final class MeasureOverlayTests: XCTestCase {
         tool.press(press(0, 0))
         tool.press(press(72, 0))
 
-        overlay.draw([], .actual)
+        overlay.draw([], { _ in .actual })
 
         let found = ids(viewer)
         XCTAssertEqual(found.filter { $0.contains(".dot.") }.count, 2)
@@ -45,12 +45,27 @@ final class MeasureOverlayTests: XCTestCase {
         let (_, overlay, viewer) = try start(.distance)
         let item = MeasureItem(.distance, 1, [ViewPoint(0, 0), ViewPoint(72, 0)])
 
-        overlay.draw([item], .actual)
+        overlay.draw([item], { _ in .actual })
 
         XCTAssertFalse(ids(viewer, page: 1).isEmpty)
         XCTAssertTrue(ids(viewer, page: 0).isEmpty)
         overlay.clear()
         XCTAssertTrue(ids(viewer, page: 1).isEmpty)
+    }
+
+    func test_eachPageLabelsItsMeasurementsInItsOwnScale() async throws {
+        let (_, overlay, viewer) = try start(.distance)
+        let items = [MeasureItem(.distance, 0, [ViewPoint(0, 0), ViewPoint(72, 0)]), MeasureItem(.distance, 1, [ViewPoint(0, 0), ViewPoint(72, 0)])]
+
+        overlay.draw(items) { $0 == 0 ? .actual : MeasureScale(1, .inch, 10, .foot) }
+
+        func label(_ page: Int) throws -> String {
+            let item = try XCTUnwrap(viewer.overlay(page).items.first { $0.id.hasSuffix(".label") })
+            guard case .text(let text) = item.shape else { throw XCTSkip("The label is not text.") }
+            return text.text
+        }
+        XCTAssertEqual(try label(0), "25.4 mm")
+        XCTAssertEqual(try label(1), "10 ft")
     }
 
     func test_aSnapMarkShowsForAMouseHoverAndNotForAPressAlone() async throws {
@@ -62,15 +77,15 @@ final class MeasureOverlayTests: XCTestCase {
         let corner = viewer.geometry(0).toDisplay(word.bounds.left, word.bounds.top)
 
         tool.press(press(corner.x + 1, corner.y - 1))
-        overlay.draw([], .actual)
+        overlay.draw([], { _ in .actual })
         XCTAssertFalse(ids(viewer).contains { $0.hasSuffix("snap") })
 
         tool.move(PagePointer(page: 0, point: ViewPoint(corner.x + 1, corner.y - 1), view: ViewPoint(0, 0), pressed: false, clicks: 0))
-        overlay.draw([], .actual)
+        overlay.draw([], { _ in .actual })
         XCTAssertTrue(ids(viewer).contains("measure.snap"))
 
         tool.reset()
-        overlay.draw([], .actual)
+        overlay.draw([], { _ in .actual })
         XCTAssertFalse(ids(viewer).contains("measure.snap"))
     }
 }

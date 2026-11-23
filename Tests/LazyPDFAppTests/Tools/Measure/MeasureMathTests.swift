@@ -30,6 +30,29 @@ final class MeasureMathTests: XCTestCase {
         }
     }
 
+    func test_aRatioKeepsEightDigitsSoASmallUnitReadsBackAsItWas() async {
+        let scale = MeasureScale(1, .millimetre, 0.02834646, .kilometre)
+        XCTAssertEqual(scale.ratio, "1 mm = 0.02834646 km")
+        XCTAssertEqual(MeasureScale.tryParse(scale.ratio), scale)
+        XCTAssertEqual(MeasureScale(1, .millimetre, 0.00015, .metre).ratio, "1 mm = 0.00015 m")
+    }
+
+    func test_aCalibratedScaleReadsAsOneUnitOnThePage() async {
+        let inches = MeasureScale.from(points: 72, length: 1, pageUnit: .inch, realUnit: .inch)
+        XCTAssertEqual(inches.ratio, "1 in = 1 in")
+        XCTAssertEqual(MeasureItem(.distance, 0, [p(0, 0), p(144, 0)]).value(inches), "2 in")
+
+        let metres = MeasureScale.from(points: 72, length: 1, pageUnit: .millimetre, realUnit: .metre)
+        XCTAssertEqual(metres.page, 1)
+        XCTAssertEqual(metres.ratio, "1 mm = 0.039370079 m")
+        XCTAssertEqual(metres.length(72), "1 m")
+    }
+
+    func test_aCalibrationTooSmallToWriteDoesNotReadBack() async {
+        XCTAssertNil(MeasureScale.tryParse(MeasureScale.from(points: 72, length: 1e-25, pageUnit: .millimetre, realUnit: .millimetre).ratio))
+        XCTAssertNil(MeasureScale.tryParse(MeasureScale.from(points: 0, length: 1, pageUnit: .millimetre, realUnit: .millimetre).ratio))
+    }
+
     func test_textThatIsNoRatioReadsAsNothing() async {
         for text in ["x", "1 mm", "0 mm = 1 m", "1 mm = 2 parsec", "1mm = 2 m", "1 mm = 2 m = 3 m"] {
             XCTAssertNil(MeasureScale.tryParse(text), text)

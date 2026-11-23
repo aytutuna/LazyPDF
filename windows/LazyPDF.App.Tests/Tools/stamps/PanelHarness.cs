@@ -106,6 +106,10 @@ public class FakeViewer : DispatchProxy
 
     public ViewerSearch? Search { get; private set; }
 
+    public DocumentTab? Tab { get; set; }
+
+    public int PageIndex { get; set; }
+
     public List<SelectedRun> Selected { get; } = [];
 
     private EventHandler? _selectionChanged;
@@ -121,6 +125,13 @@ public class FakeViewer : DispatchProxy
     {
         var viewer = Create<IDocumentViewer, FakeViewer>();
         ((FakeViewer)(object)viewer).Search = search;
+        return viewer;
+    }
+
+    internal static IDocumentViewer Create(DocumentTab tab)
+    {
+        var viewer = Create<IDocumentViewer, FakeViewer>();
+        ((FakeViewer)(object)viewer).Tab = tab;
         return viewer;
     }
 
@@ -147,9 +158,18 @@ public class FakeViewer : DispatchProxy
         "PageToView" => (Matrix?)Matrix.Identity,
         "Geometry" => new PageGeometry(new PdfRect(0, 0, 200, 300), 0),
         "get_Search" => Search,
+        "get_Tab" => Tab,
+        "get_PageIndex" => PageIndex,
+        "set_PageIndex" => Show((int)args![0]!),
         _ when method.ReturnType == typeof(void) || !method.ReturnType.IsValueType => null,
         _ => Activator.CreateInstance(method.ReturnType),
     };
+
+    private object? Show(int page)
+    {
+        PageIndex = page;
+        return null;
+    }
 
     private object? Clear()
     {

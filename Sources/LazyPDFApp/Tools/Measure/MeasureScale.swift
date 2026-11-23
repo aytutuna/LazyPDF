@@ -70,7 +70,12 @@ public struct MeasureScale: Equatable {
     }
 
     public var ratio: String {
-        "\(Self.invariant(page, 4)) \(pageUnit.symbol) = \(Self.invariant(real, 4)) \(realUnit.symbol)"
+        "\(Self.written(page)) \(pageUnit.symbol) = \(Self.written(real)) \(realUnit.symbol)"
+    }
+
+    /// Eight significant digits: a file reads the scale back within a hundred millionth, however small one unit is.
+    static func written(_ value: Double) -> String {
+        invariant(Double(String(format: "%.8g", value)) ?? value, 20)
     }
 
     /// The scale a `ratio` text writes; nil for any other text.
@@ -81,7 +86,13 @@ public struct MeasureScale: Equatable {
         return scale.isValid ? scale : nil
     }
 
-    /// The scale of the first measurement already in the file, looking at no more than 200 marks; nil when there is none or its page unit is not one the panel offers.
+    /// The scale that makes a line of `points` read `length`, written as one `pageUnit` on the page standing for some real length.
+    public static func from(points: Double, length: Double, pageUnit: LengthUnit, realUnit: LengthUnit) -> MeasureScale {
+        let real = length / (points * LengthUnits.pointInMetres / pageUnit.metres)
+        return MeasureScale(1, pageUnit, Double(String(format: "%.8g", real)) ?? real, realUnit)
+    }
+
+    /// The scale of the first measurement already in the file that the panel can show, looking at no more than 200 marks; nil when there is none.
     public static func find(_ document: PdfDocument) -> MeasureScale? {
         var seen = 0
         for page in document.pages {
@@ -89,13 +100,27 @@ public struct MeasureScale: Equatable {
             for item in annots.items {
                 seen += 1
                 if seen > 200 { return nil }
-                if let mark = document.resolve(item) as? PdfDictionary, let measure = document.dict(mark, "Measure"),
-                   let ratio = PdfText.read(document, measure, "R"), let scale = tryParse(ratio) {
-                    return MeasureModel.pageUnits.contains(scale.pageUnit) ? scale : nil
-                }
+                if let scale = of(document, item) { return scale }
             }
         }
         return nil
+    }
+
+    /// Like `find`, but for the marks of this one page.
+    public static func findOnPage(_ document: PdfDocument, _ page: PdfPage) -> MeasureScale? {
+        guard let annots = document.array(page.dictionary, "Annots") else { return nil }
+        for (index, item) in annots.items.enumerated() {
+            if index >= 200 { return nil }
+            if let scale = of(document, item) { return scale }
+        }
+        return nil
+    }
+
+    private static func of(_ document: PdfDocument, _ item: PdfObject) -> MeasureScale? {
+        guard let mark = document.resolve(item) as? PdfDictionary, let measure = document.dict(mark, "Measure"),
+              let ratio = PdfText.read(document, measure, "R"), let scale = tryParse(ratio),
+              MeasureModel.pageUnits.contains(scale.pageUnit) else { return nil }
+        return scale
     }
 
     private static func side(_ text: Substring) -> (Double, LengthUnit)? {

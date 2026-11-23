@@ -42,8 +42,7 @@ public final class TabToolState {
     let redact = TabTable<RedactModel.State>()
     let combine = TabTable<[CombineEntry]>()
     let compare = TabTable<HeldComparison>()
-    let measureLists = TabTable<PendingList>()
-    let measureScales = TabTable<MeasureScale>()
+    let measure = TabTable<MeasureState>()
     let figures = TabTable<AccessibilityModel.Kept>()
     let words = TabTable<OcrModel.KeptWord>()
 

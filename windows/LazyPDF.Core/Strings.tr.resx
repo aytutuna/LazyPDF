@@ -3337,6 +3337,9 @@
   <data name="Line" xml:space="preserve">
     <value>Çizgi</value>
   </data>
+  <data name="Line drawn: {0}" xml:space="preserve">
+    <value>Çizilen çizgi: {0}</value>
+  </data>
   <data name="Line spacing" xml:space="preserve">
     <value>Satır aralığı</value>
   </data>
@@ -5410,6 +5413,9 @@
   <data name="Replace the picture" xml:space="preserve">
     <value>Resmi değiştir</value>
   </data>
+  <data name="Replace the scales on the other pages?" xml:space="preserve">
+    <value>Diğer sayfalardaki ölçekler değiştirilsin mi?</value>
+  </data>
   <data name="Replace their text" xml:space="preserve">
     <value>Metinlerini değiştir</value>
   </data>
@@ -6454,6 +6460,9 @@
   <data name="Tap each corner, then tap Finish. Turn on Straight lines to keep them straight." xml:space="preserve">
     <value>Her köşeye dokunun, sonra Bitir'e dokunun. Düz tutmak için Düz çizgiler'i açın.</value>
   </data>
+  <data name="Tap the two ends of something whose real length you know." xml:space="preserve">
+    <value>Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna dokunun.</value>
+  </data>
   <data name="Tap the two ends. Turn on Straight lines to keep them straight." xml:space="preserve">
     <value>İki ucuna dokunun. Düz tutmak için Düz çizgiler'i açın.</value>
   </data>
@@ -7338,6 +7347,9 @@
   </data>
   <data name="The same form is painted twice." xml:space="preserve">
     <value>Aynı form iki kez çizilmiş.</value>
+  </data>
+  <data name="The scale on {0} other page will be replaced.|plural" xml:space="preserve">
+    <value>Diğer {0} sayfadaki ölçek değiştirilecek.</value>
   </data>
   <data name="The second line must be a comment of four bytes above 127." xml:space="preserve">
     <value>İkinci satır, 127'nin üzerinde dört bayttan oluşan bir yorum olmalı.</value>
