@@ -249,6 +249,33 @@ public sealed class TextHostTests
     });
 
     [Fact]
+    public Task AReadOverMorePagesThanAreKeptSettlesInsteadOfLoadingForever() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(100);
+        using var _ = tab;
+        var told = await Listen(viewer);
+        var whole = PageTextRange.Create(host, new DocPos(0, 0), new DocPos(100, 0))!;
+        int capacity = Source(viewer)?.Capacity ?? 48;
+        string text = "";
+
+        // A reader asks again each time the text changes.
+        for (int round = 0; round < 40; round++)
+        {
+            text = whole.GetText(-1);
+            await Task.Delay(100);
+        }
+        told.Clear();
+        text = whole.GetText(-1);
+        await Task.Delay(300);
+
+        Assert.DoesNotContain(AutomationEvents.TextPatternOnTextChanged, told);
+        Assert.Empty(Field<HashSet<int>>(viewer, "_pending"));
+        Assert.Contains("Page 1.", text);
+        Assert.DoesNotContain("Page 100.", text);
+        Assert.True(Enumerable.Range(0, capacity).All(p => Source(viewer)!.Peek(p) is not null));
+    });
+
+    [Fact]
     public Task TheValueOfThePageInViewChangesWhenItsTextArrives() => Sta.Run(async () =>
     {
         var (viewer, host, tab) = Open(3);

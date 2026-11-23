@@ -59,9 +59,21 @@ public partial class PageViewer : ITextHost
         NoteReading(page);
         if (_unreadable) return TextPage.Empty(page);
         if (_source?.Peek(page) is { } text) return text;
+        if (WouldPushOutTheWalk(page)) return null;
         _wanted.Add(page);
         Request(page);
         return null;
+    }
+
+    // A read over more pages than the source keeps cannot have them all. Loading one more would push out the first page
+    // it read, and the reader that asks again on the change would load that one and push out the next, for good.
+    private bool WouldPushOutTheWalk(int page)
+    {
+        if (_source is not { } source || _readRange is not (var first, var last)) return false;
+        int before = 0, after = 0;
+        for (int p = page - 1; p >= first && source.Peek(p) is not null; p--) before++;
+        for (int p = page + 1; p <= last && source.Peek(p) is not null; p++) after++;
+        return Math.Max(before, after) >= source.Capacity;
     }
 
     private void Request(int page)
@@ -106,9 +118,13 @@ public partial class PageViewer : ITextHost
     {
         if (_readRange is not (var first, var last) || _tab is not { } tab) return;
         _readRange = null;
-        // Only the ends: pages between two far apart ones touched in the same burst are no business of the reader.
-        for (int page = Math.Max(first - ReadAheadBefore, 0); page < first; page++) RequestIfMissing(page);
-        for (int page = last + 1; page <= Math.Min(last + ReadAheadAfter, tab.PageCount - 1); page++) RequestIfMissing(page);
+        // Only the ends: pages between two far apart ones touched in the same burst are no business of the reader. What
+        // the source has room for beyond the pages of the burst is all that is loaded ahead, so the burst stays at hand.
+        int room = (_source?.Capacity ?? int.MaxValue) - (last - first + 1);
+        int after = Math.Clamp(room, 0, ReadAheadAfter);
+        int before = Math.Clamp(room - after, 0, ReadAheadBefore);
+        for (int page = Math.Max(first - before, 0); page < first; page++) RequestIfMissing(page);
+        for (int page = last + 1; page <= Math.Min(last + after, tab.PageCount - 1); page++) RequestIfMissing(page);
     }
 
     private void RequestIfMissing(int page)

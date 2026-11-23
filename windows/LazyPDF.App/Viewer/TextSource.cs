@@ -46,6 +46,9 @@ public sealed class TextSource
     /// <summary>Keeps at least the text of <paramref name="visible"/> pages at hand, so a window full of selected pages does not push its own pages out. UI thread only.</summary>
     public void Retain(int visible) => _keep = Math.Max(Recent, visible + 8);
 
+    /// <summary>How many pages stay at hand for <see cref="Peek"/>.</summary>
+    public int Capacity => _keep;
+
     /// <summary>The text of a page if it has been made already. UI thread only.</summary>
     public TextPage? Peek(int page) =>
         _pages.TryGetValue(page, out var task) && task.IsCompletedSuccessfully ? task.Result : null;
