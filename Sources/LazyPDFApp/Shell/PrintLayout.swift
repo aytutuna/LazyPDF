@@ -98,6 +98,36 @@ public struct PrintLayout: Equatable, Sendable {
                       gap: gap, border: border, rightToLeft: rightToLeft)
     }
 
+    /// What the layout will print, for the sheet: the counts of pages, sides and papers, which sides go and the blank.
+    public func summary(documentPages: Int) -> String {
+        let pages = range.isEmpty ? documentPages : PageRange.parse(range, documentPages).pages.count
+        let sides = imposes ? sideCount(pages) : pages
+        let sent = imposes ? sheetsToPrint(sides) : self.pages(count: documentPages)
+        let real = sent.filter { $0 >= 0 }.count
+        let pagesText = L10n.plural(pages, one: "{0} page", other: "{0} pages")
+        var parts = [imposes
+            ? L10n.t("{0}: {1} on {2}.", pagesText, L10n.plural(sides, one: "{0} side", other: "{0} sides"),
+                     L10n.plural((sides + 1) / 2, one: "{0} piece of paper", other: "{0} pieces of paper"))
+            : pagesText + "."]
+        if real == 0 {
+            parts.append(L10n.t("No sides are left to print."))
+        } else {
+            // Without a layout odd and even go by page number, so they are not the fronts and backs of the range.
+            if parity == .odd {
+                parts.append(imposes ? L10n.t("Odd sides (fronts): {0} of {1}.", real, sides) : L10n.t("Odd pages: {0} of {1}.", real, sides))
+            }
+            if parity == .even {
+                parts.append(imposes ? L10n.t("Even sides (backs): {0} of {1}.", real, sides) : L10n.t("Even pages: {0} of {1}.", real, sides))
+            }
+            if sent.contains(-1) {
+                parts.append(reverse ? L10n.t("{0} sides: a blank is added at the start of the even run so each back meets its front.", sides)
+                             : L10n.t("{0} sides: a blank is added at the end of the even run so each back meets its front.", sides))
+            }
+            if reverse { parts.append(L10n.t("In reverse order.")) }
+        }
+        return parts.joined(separator: " ")
+    }
+
     /// A message when the gap leaves no room for the pages on a sheet of this size in points, else nil.
     public func validate(sheetWidth: Double, sheetHeight: Double) -> String? {
         guard imposes else { return nil }

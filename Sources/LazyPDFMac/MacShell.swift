@@ -266,7 +266,7 @@ final class MacShell {
     }
 
     private func systemPrint(_ tab: DocumentTab) {
-        guard let layout = askPrintLayout() else { return }
+        guard let layout = askPrintLayout(tab) else { return }
         if layout.isPlain {
             run(tab.canDraw ? MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title) : nil, tab, dropped: 0, panelShown: false)
         } else if layout.isEmpty(count: tab.document.pages.count) {
@@ -313,9 +313,12 @@ final class MacShell {
         }
     }
 
-    // The panel has pages per sheet of its own, so only the booklet is asked for.
-    private func askPrintLayout() -> PrintLayout? {
-        let choice = PrintLayoutChoice()
+    // The panel has pages per sheet, a page range, odd or even pages and a page order of its own, so only the booklet
+    // and its binding are asked for.
+    private func askPrintLayout(_ tab: DocumentTab) -> PrintLayout? {
+        let remembered = PrintLayout(booklet: PrintLayout.remembered(AppPreferencesStore.load(vm.settings)).booklet)
+        let choice = PrintLayoutChoice(remembered: remembered, rightToLeft: ViewerSettings.read(tab.document).rightToLeft,
+                                       documentPages: tab.document.pages.count)
         let view = NSHostingView(rootView: PrintLayoutView(choice: choice, onPhone: false).frame(width: 300))
         view.frame = NSRect(origin: .zero, size: view.fittingSize)
         let alert = NSAlert()
@@ -323,7 +326,10 @@ final class MacShell {
         alert.accessoryView = view
         alert.addButton(withTitle: L10n.t("Print"))
         alert.addButton(withTitle: L10n.t("Cancel"))
-        return alert.runModal() == .alertFirstButtonReturn ? choice.layout : nil
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        let layout = choice.layout
+        AppPreferencesStore.update(vm.settings) { layout.remember(in: &$0) }
+        return layout
     }
 
     // Preview, the usual default app, cannot show XFA. An Adobe reader does, so it gets the file when it is installed;

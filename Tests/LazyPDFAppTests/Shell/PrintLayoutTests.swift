@@ -284,6 +284,31 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertEqual(value, 7)
     }
 
+    func test_thePlainSummaryCountsPagesAndCallsOddAndEvenPagesNotFrontsAndBacks() {
+        XCTAssertEqual(PrintLayout().summary(documentPages: 8), "8 pages.")
+        XCTAssertEqual(PrintLayout().summary(documentPages: 1), "1 page.")
+        XCTAssertEqual(PrintLayout(reverse: true, range: "3-5").summary(documentPages: 8), "3 pages. In reverse order.")
+        XCTAssertEqual(PrintLayout(parity: .odd, range: "2-5").summary(documentPages: 8), "4 pages. Odd pages: 2 of 4.")
+        XCTAssertEqual(PrintLayout(parity: .even, range: "2-5").summary(documentPages: 8), "4 pages. Even pages: 2 of 4.")
+    }
+
+    func test_aLayoutSummaryCountsSidesAndPapers() {
+        XCTAssertEqual(PrintLayout(booklet: true).summary(documentPages: 8), "8 pages: 4 sides on 2 pieces of paper.")
+        XCTAssertEqual(PrintLayout(perSheet: 2).summary(documentPages: 1), "1 page: 1 side on 1 piece of paper.")
+        XCTAssertEqual(PrintLayout(booklet: true, parity: .odd).summary(documentPages: 8),
+                       "8 pages: 4 sides on 2 pieces of paper. Odd sides (fronts): 2 of 4.")
+        XCTAssertEqual(PrintLayout(perSheet: 4, parity: .even, range: "2-7").summary(documentPages: 20),
+                       "6 pages: 2 sides on 1 piece of paper. Even sides (backs): 1 of 2.")
+    }
+
+    func test_theSummaryNamesTheBlankOfAnOddCountAndSaysWhenNothingIsLeft() {
+        XCTAssertEqual(PrintLayout(perSheet: 2, parity: .even).summary(documentPages: 5),
+                       "5 pages: 3 sides on 2 pieces of paper. Even sides (backs): 1 of 3. 3 sides: a blank is added at the end of the even run so each back meets its front.")
+        XCTAssertTrue(PrintLayout(perSheet: 2, parity: .even, reverse: true).summary(documentPages: 5).contains("at the start of the even run"))
+        XCTAssertFalse(PrintLayout(perSheet: 2, parity: .odd).summary(documentPages: 5).contains("blank"))
+        XCTAssertEqual(PrintLayout(parity: .even).summary(documentPages: 1), "1 page. No sides are left to print.")
+    }
+
     func test_aNoteIsGivenOnlyForWhatWasLeftOff() {
         XCTAssertNil(PrintLayout.droppedNote(0))
         XCTAssertEqual(PrintLayout.droppedNote(1), "1 link or note without a picture was left off the sheets.")
