@@ -136,6 +136,18 @@ public class PageImposeTests
         Assert.Equal(plain.Pages[0].Contents(), PageOperations.Impose(source, [0, 1, 2, 3], new ImposeOptions(ImposeMode.NUp, 600, 400, 4, RightToLeft: false)).Document.Pages[0].Contents());
     }
 
+    [Theory]
+    [InlineData(ImposeMode.NUp)]
+    [InlineData(ImposeMode.Booklet)]
+    public void ACancelledTokenStopsImpose(ImposeMode mode)
+    {
+        var source = PageTestFiles.Open(3);
+        using var cancel = new CancellationTokenSource();
+        cancel.Cancel();
+        Assert.Throws<OperationCanceledException>(() =>
+            PageOperations.Impose(source, [0, 1, 2], new ImposeOptions(mode, 600, 400), cancel.Token));
+    }
+
     [Fact]
     public void BookletPadsWithBlanksToAMultipleOfFour()
     {
