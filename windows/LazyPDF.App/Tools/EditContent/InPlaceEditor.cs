@@ -127,7 +127,9 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
             var placed = PageOverlay.Place(area, page, turn);
             var room = PageOverlay.Room(placed, page, turn);
             box.MaxWidth = Math.Max(area.Width, room.Width);
-            box.MaxHeight = Math.Max(area.Height, room.Height);
+            // glyph bounds can be shorter than the box's one line, which would cut the line being edited
+            double line = box.FontFamily.LineSpacing * box.FontSize + 2 * box.BorderThickness.Top;
+            box.MaxHeight = Math.Max(Math.Max(area.Height, line), room.Height);
             Canvas.SetLeft(box, placed.X);
             Canvas.SetTop(box, placed.Y);
         }
