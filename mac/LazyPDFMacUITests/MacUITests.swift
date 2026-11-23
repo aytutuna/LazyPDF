@@ -214,8 +214,8 @@ final class MacUITests: XCTestCase {
         wait(for: [expectation(for: gone, evaluatedWith: tab(app))], timeout: 10)
     }
 
-    // The arrows reach the selected row only if a click on it moves the keyboard focus there; the model tests cannot see that.
-    func testArrowsOnTheSelectedBoxRowMoveAndResizeTheBox() throws {
+    // A click on the selected box gives it the arrow keys through the page view; the model tests cannot see that key path.
+    func testArrowsAfterAClickOnTheSelectedBoxMoveAndResizeIt() throws {
         let app = try launch(opening: true)
         XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
         choose(app, menu: "Tools", item: "Security")
@@ -234,6 +234,7 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         draw.click()
         row.click()
+        viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.475, dy: 0.3)).click()
 
         app.typeKey(.rightArrow, modifierFlags: [])
         XCTAssertTrue(element(app, "Box moved.").waitForExistence(timeout: 10))
