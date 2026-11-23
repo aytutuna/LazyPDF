@@ -271,8 +271,12 @@ public sealed partial class OrganizeView : ToolPanel
 
     private void Thumbs_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) => PageDrag.SelectUnder(Thumbs, e.OriginalSource);
 
-    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e) =>
-        CopyToTab.IsEnabled = Tab is { } tab && Host is { } host && Selected().Count > 0 && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
+    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        bool any = Selected().Count > 0;
+        foreach (var item in Thumbs.ContextMenu.Items.OfType<MenuItem>()) item.IsEnabled = any;
+        CopyToTab.IsEnabled = any && Tab is { } tab && Host is { } host && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
+    }
 
     private void CopyTo_Click(object sender, RoutedEventArgs e)
     {

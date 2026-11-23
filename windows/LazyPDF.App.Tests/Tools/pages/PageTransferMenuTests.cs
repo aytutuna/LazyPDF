@@ -22,6 +22,8 @@ public sealed class PageTransferMenuTests
     private static void Opening(object owner, string handler) =>
         owner.GetType().GetMethod(handler, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(owner, [owner, null]);
 
+    private static ContextMenu PageMenu(object owner) => ((ListBox)((FrameworkElement)owner).FindName("Thumbs")).ContextMenu;
+
     [Fact]
     public Task EveryOtherOpenFileGetsAnEntryThatCopiesTheSelection() => Sta.Run(async () =>
     {
@@ -67,6 +69,7 @@ public sealed class PageTransferMenuTests
         Assert.False(shown.Button("CopyTo").IsEnabled);
         Opening(shown.View, "Thumbs_ContextMenuOpening");
         Assert.False(Entry(shown.View, "CopyToTab").IsEnabled);
+        Assert.All(PageMenu(shown.View).Items.OfType<MenuItem>(), item => Assert.False(item.IsEnabled));
 
         host.Documents.Add(to);
         shown.Select(0, 1);
@@ -75,6 +78,7 @@ public sealed class PageTransferMenuTests
         var menu = Entry(shown.View, "CopyToTab");
         Assert.True(menu.IsEnabled);
         Assert.Equal("b.pdf", Assert.IsType<MenuItem>(Assert.Single(menu.Items)).Header);
+        Assert.All(PageMenu(shown.View).Items.OfType<MenuItem>(), item => Assert.True(item.IsEnabled));
 
         shown.Select();
         Assert.False(shown.Button("CopyTo").IsEnabled);
