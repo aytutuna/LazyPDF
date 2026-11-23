@@ -1,6 +1,7 @@
 import XCTest
 import UIKit
 import LazyPDFKit
+import LazyPDFApp
 import LazyPDFIOS
 
 @MainActor
@@ -15,6 +16,13 @@ final class SystemServiceTests: XCTestCase {
         XCTAssertTrue(UIPrintInteractionController.canPrint(item))
         XCTAssertEqual(info.jobName, "Report.pdf")
         XCTAssertEqual(info.outputType, .general)
+    }
+
+    func test_theInfoSetsTheDuplexFromTheLayout() {
+        XCTAssertEqual(IOSSystemPrint.info(name: "a.pdf", layout: PrintLayout(parity: .odd)).duplex, .none)
+        XCTAssertEqual(IOSSystemPrint.info(name: "a.pdf", layout: PrintLayout(parity: .even)).duplex, .none)
+        XCTAssertEqual(IOSSystemPrint.info(name: "a.pdf", layout: PrintLayout(reverse: true)).duplex, .none)
+        XCTAssertEqual(IOSSystemPrint.info(name: "a.pdf", layout: PrintLayout(booklet: true)).duplex, .shortEdge)
     }
 
     func test_aFileLockedWithAPasswordIsPrintedUnlocked() throws {

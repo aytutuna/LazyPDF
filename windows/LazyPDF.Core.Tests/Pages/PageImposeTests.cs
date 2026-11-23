@@ -96,6 +96,58 @@ public class PageImposeTests
         Assert.Equal(new PdfRect(0, 0, 400, 300), result.Document.Pages[0].MediaBox);
     }
 
+    // Page numbers in left to right order on one side.
+    private static string Across(PdfDocument document, int side) =>
+        string.Join(",", Placed(document, side).OrderBy(p => p.Box.Left).Select(p => p.Page));
+
+    [Fact]
+    public void BookletRightToLeftSwapsTheCellsOfEachSide()
+    {
+        var source = PageTestFiles.Open(8);
+        var options = new ImposeOptions(ImposeMode.Booklet, 300, 400, RightToLeft: true);
+        var document = PageOperations.Impose(source, [.. Enumerable.Range(0, 8)], options).Document;
+        Assert.Equal("8,1 | 2,7 | 6,3 | 4,5", Sheets(document));
+        Assert.Equal("1,8", Across(document, 0));
+        Assert.Equal("7,2", Across(document, 1));
+        Assert.Equal("3,6", Across(document, 2));
+        Assert.Equal("5,4", Across(document, 3));
+    }
+
+    [Fact]
+    public void NUpRightToLeftFillsColumnsFromTheRight()
+    {
+        var source = PageTestFiles.Open(4);
+        var options = new ImposeOptions(ImposeMode.NUp, 600, 400, 4, RightToLeft: true);
+        var document = PageOperations.Impose(source, [0, 1, 2, 3], options).Document;
+        var cells = Placed(document, 0);
+        Assert.Equal([1, 2, 3, 4], cells.Select(c => c.Page));
+        Assert.True(cells[0].Box.Left > cells[1].Box.Left);
+        Assert.True(cells[2].Box.Left > cells[3].Box.Left);
+        Assert.True(cells[0].Box.Bottom > cells[2].Box.Bottom);
+        Assert.Equal(cells[0].Box.Left, cells[2].Box.Left, 3);
+    }
+
+    [Fact]
+    public void LeftToRightIsTheDefault()
+    {
+        var source = PageTestFiles.Open(4);
+        var plain = PageOperations.Impose(source, [0, 1, 2, 3], new ImposeOptions(ImposeMode.NUp, 600, 400, 4)).Document;
+        Assert.True(Placed(plain, 0)[0].Box.Left < Placed(plain, 0)[1].Box.Left);
+        Assert.Equal(plain.Pages[0].Contents(), PageOperations.Impose(source, [0, 1, 2, 3], new ImposeOptions(ImposeMode.NUp, 600, 400, 4, RightToLeft: false)).Document.Pages[0].Contents());
+    }
+
+    [Theory]
+    [InlineData(ImposeMode.NUp)]
+    [InlineData(ImposeMode.Booklet)]
+    public void ACancelledTokenStopsImpose(ImposeMode mode)
+    {
+        var source = PageTestFiles.Open(3);
+        using var cancel = new CancellationTokenSource();
+        cancel.Cancel();
+        Assert.Throws<OperationCanceledException>(() =>
+            PageOperations.Impose(source, [0, 1, 2], new ImposeOptions(mode, 600, 400), cancel.Token));
+    }
+
     [Fact]
     public void BookletPadsWithBlanksToAMultipleOfFour()
     {
@@ -118,14 +170,19 @@ public class PageImposeTests
     }
 
     [Theory]
-    [InlineData(90)]
-    [InlineData(180)]
-    [InlineData(270)]
-    public void RotationAndCropBoxAreKept(int turn)
+    [InlineData(90, ImposeMode.NUp)]
+    [InlineData(180, ImposeMode.NUp)]
+    [InlineData(270, ImposeMode.NUp)]
+    [InlineData(90, ImposeMode.Booklet)]
+    [InlineData(180, ImposeMode.Booklet)]
+    [InlineData(270, ImposeMode.Booklet)]
+    public void RotationAndCropBoxAreKept(int turn, ImposeMode mode)
     {
         var document = PageTestFiles.Open(1, pageExtra: _ => $"/Rotate {turn} /CropBox [20 30 120 230]");
-        var result = PageOperations.Impose(document, [0], new ImposeOptions(ImposeMode.NUp, 400, 400, 2));
+        var result = PageOperations.Impose(document, [0], new ImposeOptions(mode, 400, 400, 2));
         var (_, box, matrix) = Placed(result.Document, 0)[0];
+        // A booklet's first side holds the blank back cover on the left and page 1 on the right.
+        if (mode == ImposeMode.Booklet) Assert.Equal(200, box.Left, 3);
         bool sideways = turn != 180;
         // The crop box is 100x200, shown 200x100 when sideways; the 200x400 cell scales it by 1 or 2.
         Assert.Equal(200, box.Width, 3);

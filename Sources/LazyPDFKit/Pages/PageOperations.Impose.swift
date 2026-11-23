@@ -24,14 +24,17 @@ public struct ImposeOptions {
     /// Space in points between pages and from the pages to the sheet edge.
     public var gap: Double
     public var border: Bool
+    /// Mirrors each row: `nUp` fills columns from the right, and a booklet swaps the two pages of every side.
+    public var rightToLeft: Bool
 
-    public init(mode: ImposeMode, sheetWidth: Double, sheetHeight: Double, perSheet: Int = 2, gap: Double = 0, border: Bool = false) {
+    public init(mode: ImposeMode, sheetWidth: Double, sheetHeight: Double, perSheet: Int = 2, gap: Double = 0, border: Bool = false, rightToLeft: Bool = false) {
         self.mode = mode
         self.sheetWidth = sheetWidth
         self.sheetHeight = sheetHeight
         self.perSheet = perSheet
         self.gap = gap
         self.border = border
+        self.rightToLeft = rightToLeft
     }
 }
 
@@ -121,7 +124,9 @@ extension PageOperations {
                 let shownWidth = (sideways ? h : w) * unit, shownHeight = (sideways ? w : h) * unit
                 let fit = min(cellWidth / shownWidth, cellHeight / shownHeight)
                 let placedWidth = shownWidth * fit, placedHeight = shownHeight * fit
-                let column = slot % columns, row = slot / columns
+                var column = slot % columns
+                let row = slot / columns
+                if options.rightToLeft { column = columns - 1 - column }
                 let x = gap + Double(column) * (cellWidth + gap) + (cellWidth - placedWidth) / 2
                 let y = height - gap - Double(row + 1) * cellHeight - Double(row) * gap + (cellHeight - placedHeight) / 2
                 // Turns the crop box upright with its lower-left corner at the origin.
@@ -154,5 +159,25 @@ extension PageOperations {
         // The importer carried the form fields over, but every widget is now flattened or dropped.
         target.catalog.remove("AcroForm")
         return ImposeResult(document: target, sheets: sheets.count, annotationsFlattened: flattened, annotationsDropped: dropped)
+    }
+
+    /// Makes the pages at these indexes, in this order, the pages of the document; -1 puts in an empty page of the given
+    /// size in points. The pages that are not named stay in the object table until the file is saved rewritten, which
+    /// writes only what the catalog reaches.
+    public static func keepPages(_ document: PdfDocument, _ order: [Int], blankWidth: Double, blankHeight: Double) throws {
+        let existing = document.pages.map(\.reference)
+        var kept: [PdfReference] = []
+        for index in order {
+            if index >= 0 {
+                kept.append(existing[index])
+                continue
+            }
+            let blank = PdfDictionary()
+            blank["Type"] = PdfName("Page")
+            blank["MediaBox"] = PdfRect(0, 0, blankWidth, blankHeight).toArray()
+            blank["Resources"] = PdfDictionary()
+            kept.append(try document.add(blank))
+        }
+        try PageTree.set(document, kept)
     }
 }

@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:loc="clr-namespace:LazyPDF.App"
-        Title="{loc:T Print layout}" Width="380" SizeToContent="Height" ResizeMode="NoResize" ShowInTaskbar="False"
+        Title="{loc:T Print layout}" Width="420" SizeToContent="Height" ResizeMode="NoResize" ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         Icon="{x:Static loc:AppIcon.Image}"
         FontFamily="{StaticResource TextFontFamily}"
@@ -11,23 +11,41 @@
     <DockPanel>
         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Style="{StaticResource AccentButtonStyle}" Content="{loc:T Print}" MinWidth="88" Margin="0,0,8,0" IsDefault="True"
+                <Button x:Name="PrintButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Print}" MinWidth="88" Margin="0,0,8,0" IsDefault="True"
                         AutomationProperties.Name="{loc:T Print}" Click="Print_Click" />
                 <Button Content="{loc:T _Cancel}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Cancel}" />
             </StackPanel>
         </Border>
         <StackPanel Margin="24,20,24,20">
-            <TextBlock Text="{loc:T Pages per sheet}" Style="{StaticResource BodyText}" Margin="0,0,0,4" />
-            <ComboBox x:Name="PerSheetBox" AutomationProperties.Name="{loc:T Pages per sheet}" />
-            <CheckBox x:Name="BookletBox" Content="{loc:T Booklet}" Margin="0,12,0,0" Checked="Booklet_Changed" Unchecked="Booklet_Changed"
+            <TextBlock Text="{loc:T Pages per sheet}" FontWeight="SemiBold" Style="{StaticResource BodyText}" Margin="0,0,0,4" />
+            <ComboBox x:Name="PerSheetBox" AutomationProperties.Name="{loc:T Pages per sheet}" SelectionChanged="Changed" />
+            <CheckBox x:Name="BookletBox" Content="{loc:T Booklet}" Margin="0,12,0,0" Checked="Changed" Unchecked="Changed"
                       AutomationProperties.Name="{loc:T Booklet}" />
             <TextBlock x:Name="BookletHint" Style="{StaticResource ReasonText}" TextWrapping="Wrap" Margin="0,4,0,0" />
-            <TextBlock Text="{loc:T Pages}" Style="{StaticResource BodyText}" Margin="0,12,0,4" />
-            <ComboBox x:Name="ParityBox" AutomationProperties.Name="{loc:T Pages}">
-                <ComboBoxItem Content="{loc:T All pages}" />
-                <ComboBoxItem Content="{loc:T Odd pages only}" />
-                <ComboBoxItem Content="{loc:T Even pages only}" />
+            <TextBlock Text="{loc:T Binding}" Style="{StaticResource BodyText}" Margin="0,12,0,4" />
+            <ComboBox x:Name="BindingBox" AutomationProperties.Name="{loc:T Binding}" SelectionChanged="Changed">
+                <ComboBoxItem Content="{loc:T Left}" />
+                <ComboBoxItem Content="{loc:T Right}" />
             </ComboBox>
+            <TextBlock Text="{loc:T Gap between pages (mm)}" Style="{StaticResource BodyText}" Margin="0,12,0,4" />
+            <TextBox x:Name="GapBox" AutomationProperties.Name="{loc:T Gap between pages (mm)}" TextChanged="Changed" />
+            <TextBlock x:Name="GapProblem" Style="{StaticResource ReasonText}" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed"
+                       AutomationProperties.LiveSetting="Assertive" />
+            <CheckBox x:Name="BorderBox" Content="{loc:T Border around each page}" Margin="0,12,0,0" Checked="Changed" Unchecked="Changed"
+                      AutomationProperties.Name="{loc:T Border around each page}" />
+
+            <TextBlock Text="{loc:T Which sides}" FontWeight="SemiBold" Style="{StaticResource BodyText}" Margin="0,20,0,4" />
+            <ComboBox x:Name="ParityBox" AutomationProperties.Name="{loc:T Which sides}" SelectionChanged="Changed">
+                <ComboBoxItem Content="{loc:T All pages}" />
+                <ComboBoxItem x:Name="OddItem" Content="{loc:T Odd sides only}" />
+                <ComboBoxItem x:Name="EvenItem" Content="{loc:T Even sides only}" />
+            </ComboBox>
+            <CheckBox x:Name="ReverseBox" Content="{loc:T Last side first}" Margin="0,12,0,0" Checked="Changed" Unchecked="Changed"
+                      AutomationProperties.Name="{loc:T Last side first}" />
+            <TextBlock x:Name="SidesHint" Style="{StaticResource ReasonText}" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+            <TextBlock x:Name="Summary" TextWrapping="Wrap" Margin="0,20,0,0" Style="{StaticResource BodyText}"
+                       AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
     </DockPanel>
 </Window>

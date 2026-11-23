@@ -12,7 +12,8 @@ public enum ImposeMode
 /// <param name="SheetWidth">Paper size in points, as the sheet is held. A booklet always uses the landscape orientation of it.</param>
 /// <param name="PerSheet">2, 4, 6, 9 or 16 for <see cref="ImposeMode.NUp"/>; ignored for a booklet.</param>
 /// <param name="Gap">Space in points between pages and from the pages to the sheet edge.</param>
-public sealed record ImposeOptions(ImposeMode Mode, double SheetWidth, double SheetHeight, int PerSheet = 2, double Gap = 0, bool Border = false);
+/// <param name="RightToLeft">Mirrors each row: n-up fills columns from the right, and a booklet swaps the two pages of every side.</param>
+public sealed record ImposeOptions(ImposeMode Mode, double SheetWidth, double SheetHeight, int PerSheet = 2, double Gap = 0, bool Border = false, bool RightToLeft = false);
 
 /// <param name="Document">The sheets, a new document that is not saved yet.</param>
 /// <param name="AnnotationsFlattened">Annotations whose appearance was drawn into the page they sat on.</param>
@@ -103,6 +104,7 @@ public static partial class PageOperations
                 double fit = Math.Min(cellWidth / shownWidth, cellHeight / shownHeight);
                 double placedWidth = shownWidth * fit, placedHeight = shownHeight * fit;
                 int column = slot % columns, row = slot / columns;
+                if (options.RightToLeft) column = columns - 1 - column;
                 double x = gap + column * (cellWidth + gap) + (cellWidth - placedWidth) / 2;
                 double y = height - gap - (row + 1) * cellHeight - row * gap + (cellHeight - placedHeight) / 2;
                 // Turns the crop box upright with its lower-left corner at the origin.

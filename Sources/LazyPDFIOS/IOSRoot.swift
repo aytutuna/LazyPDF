@@ -1,6 +1,7 @@
 #if os(iOS)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 import LazyPDFUI
 
 // The window of the iPhone and iPad app: AppWindow with the page viewer in the stage and the panels of SidePanelView, laid
@@ -36,7 +37,10 @@ struct IOSRoot: View {
             case .batch:
                 BatchSheet(host: vm, folders: shell.folders) { shell.sheet = nil }
             case .printLayout(let tab):
-                PrintLayoutSheet(print: { shell.print(tab, $0) }, close: { shell.sheet = nil })
+                PrintLayoutSheet(remembered: PrintLayout.remembered(AppPreferencesStore.load(vm.settings)),
+                                 rightToLeft: ViewerSettings.read(tab.document).rightToLeft, documentPages: tab.document.pages.count,
+                                 sheetWidth: IOSSystemPrint.paper.width, sheetHeight: IOSSystemPrint.paper.height,
+                                 print: { shell.print(tab, $0) }, close: { shell.sheet = nil })
             }
         }
         .environment(\.shortcutsInMenu, true)
