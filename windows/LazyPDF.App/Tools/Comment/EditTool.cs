@@ -24,6 +24,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     private int _handle = -1;
     private int _vertex = -1;
     private int _adding = -1;
+    private int _picked = -1;
     private Point[]? _points;
     private bool _moveOnly;
     private bool _moving;
@@ -47,10 +48,17 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     /// <summary>A corner was added after the one with this number, at the point.</summary>
     public event Action<PdfAnnotation, int, Point>? VertexAdded;
 
+    /// <summary>Enter on a corner or end took hold of it; the number is 0-based.</summary>
+    public event Action<int>? VertexPicked;
+
+    /// <summary>The corner or end that Enter took hold of and the arrow keys are moving; -1 when none.</summary>
+    public int PickedVertex => _picked;
+
     public event Action<PdfAnnotation>? EditRequested;
 
     public void Select(PdfAnnotation? mark)
     {
+        ClearPick(closeCross: true);
         Current = mark;
         Redraw();
         SelectionChanged?.Invoke(this, EventArgs.Empty);
@@ -59,6 +67,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     /// <summary>Finds the selected mark again after the file changed; it is let go if it is gone.</summary>
     public void Refresh()
     {
+        ClearPick(closeCross: true);
         if (Current is not { Reference: { } reference } mark) return;
         Current = marker().Find(mark.PageIndex, reference.Number);
         Redraw();
@@ -72,6 +81,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         _frame = marker().BoxOf(mark);
         _points = marker().PointsOf(mark);
         _moveOnly = Marker.Fixed(mark);
+        if (_picked >= (_points?.Length ?? 0)) ClearPick(closeCross: true);
         // An undo can leave fewer points than the one being dragged, and a corner still being pulled out is lost with the points.
         if (_vertex >= (_points?.Length ?? 0) || _adding >= 0)
         {
@@ -98,6 +108,12 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         _vertex = -1;
         _adding = -1;
         _moving = false;
+        if (!pointer.FromKeys && _picked >= 0)
+        {
+            ClearPick(closeCross: true);
+            Redraw();
+        }
+        if (pointer.FromKeys && Current is { } keyed && keyed.PageIndex == pointer.Page && _points is not null && !_moveOnly && KeyedPress(keyed, pointer)) return;
         if (Current is { } selected && selected.PageIndex == pointer.Page && !_moveOnly)
         {
             if (_points is not null)
@@ -194,8 +210,55 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         else Resized?.Invoke(mark, _frame);
     }
 
+    // The first Enter on a corner picks it and puts the cross there; the Enter that ends the arrow keys moves it.
+    private bool KeyedPress(PdfAnnotation mark, PagePointer pointer)
+    {
+        var points = _points!;
+        if (_picked >= 0)
+        {
+            int vertex = _picked;
+            ClearPick(closeCross: false);
+            if ((pointer.Point - points[vertex]).Length >= 0.5) VertexMoved?.Invoke(mark, vertex, pointer.Point);
+            else Redraw();
+            return true;
+        }
+        if (VertexAt(points, pointer.Point) is var v and >= 0)
+        {
+            _picked = v;
+            viewer.PlacementEnded += PlacementEnded;
+            Remove();
+            Draw(mark.PageIndex, _frame);
+            viewer.BeginPlacement(mark.PageIndex, points[v]);
+            VertexPicked?.Invoke(v);
+            return true;
+        }
+        if (marker().SegmentAt(mark, pointer.Point, Reach) is var side and >= 0)
+        {
+            VertexAdded?.Invoke(mark, side, pointer.Point);
+            return true;
+        }
+        return false;
+    }
+
+    // Escape closed the cross, so there is nothing left to move.
+    private void PlacementEnded(object? sender, EventArgs e)
+    {
+        ClearPick(closeCross: false);
+        Redraw();
+    }
+
+    /// <summary>Lets go of the picked corner and, when asked, closes the cross the arrow keys were moving.</summary>
+    public void ClearPick(bool closeCross)
+    {
+        if (_picked < 0) return;
+        _picked = -1;
+        viewer.PlacementEnded -= PlacementEnded;
+        if (closeCross) viewer.CancelPlacement();
+    }
+
     public void Cancel()
     {
+        ClearPick(closeCross: true);
         _moving = false;
         _handle = -1;
         _vertex = -1;
@@ -281,11 +344,12 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         Add(overlay, outline);
         double size = Grip / zoom;
         if (_moveOnly) return;
+        int at = 0;
         foreach (var spot in _points ?? Spots(frame))
         {
             Shape handle = _points is null
                 ? new Rectangle { Width = size, Height = size, Fill = Brushes.White, Stroke = Accent, StrokeThickness = 1.5 / zoom, IsHitTestVisible = false }
-                : new Ellipse { Width = size, Height = size, Fill = Brushes.White, Stroke = Accent, StrokeThickness = 1.5 / zoom, IsHitTestVisible = false };
+                : new Ellipse { Width = size, Height = size, Fill = at++ == _picked ? Accent : Brushes.White, Stroke = Accent, StrokeThickness = 1.5 / zoom, IsHitTestVisible = false };
             Canvas.SetLeft(handle, spot.X - size / 2);
             Canvas.SetTop(handle, spot.Y - size / 2);
             Add(overlay, handle);
@@ -310,6 +374,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     /// <summary>Takes the frame off the page and lets go of the selection.</summary>
     public void Clear()
     {
+        ClearPick(closeCross: true);
         Remove();
         Current = null;
     }

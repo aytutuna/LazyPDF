@@ -90,6 +90,7 @@
                 <Button x:Name="DeleteMark" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Delete}" Margin="4,0,0,0" HorizontalAlignment="Stretch"
                         AutomationProperties.Name="{loc:T Delete}" ToolTip="{loc:T Delete the selected mark.}" Click="DeleteMark_Click" />
             </UniformGrid>
+            <TextBlock x:Name="PointHint" Style="{StaticResource ReasonText}" Margin="0,8,0,0" Visibility="Collapsed" />
         </StackPanel>
 
         <TextBlock Text="{loc:T Look}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />

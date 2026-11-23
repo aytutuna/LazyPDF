@@ -376,13 +376,16 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         return Find(a.PageIndex, a.Reference!.Number) ?? written;
     }
 
+    /// <summary>A mark with ends or corners to move.</summary>
+    public static bool HasPoints(PdfAnnotation a) => UserPoints(a) is not null && !Fixed(a);
+
     // Corners can come and go on a polygon the app drew; a cloud keeps its corners and a line its two ends.
-    private static bool Plain(PdfAnnotation a) => a is { Type: AnnotationType.Polygon, Cloud: 0 } && !Fixed(a) && a.Vertices.Count >= 6;
+    public static bool PlainPolygon(PdfAnnotation a) => a is { Type: AnnotationType.Polygon, Cloud: 0 } && !Fixed(a) && a.Vertices.Count >= 6;
 
     /// <summary>Adds a corner between corner <paramref name="after"/> and the next one, the first when it is the last.</summary>
     public PdfAnnotation InsertPoint(PdfAnnotation a, int after, Point at)
     {
-        if (!Plain(a)) throw new ArgumentException("Corners cannot be added to this mark.", nameof(a));
+        if (!PlainPolygon(a)) throw new ArgumentException("Corners cannot be added to this mark.", nameof(a));
         if (after < 0 || after >= a.Vertices.Count / 2) throw new ArgumentOutOfRangeException(nameof(after));
         var (x, y) = new PageGeometry(document.Pages[a.PageIndex]).ToUser(at.X, at.Y);
         int cut = 2 * (after + 1);
@@ -390,11 +393,11 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     }
 
     /// <summary>A polygon keeps three corners at least.</summary>
-    public bool CanRemovePoint(PdfAnnotation a, int index) => Plain(a) && index >= 0 && index < a.Vertices.Count / 2 && a.Vertices.Count > 6;
+    public bool CanRemovePoint(PdfAnnotation a, int index) => PlainPolygon(a) && index >= 0 && index < a.Vertices.Count / 2 && a.Vertices.Count > 6;
 
     public PdfAnnotation RemovePoint(PdfAnnotation a, int index)
     {
-        if (Plain(a) && (index < 0 || index >= a.Vertices.Count / 2)) throw new ArgumentOutOfRangeException(nameof(index));
+        if (PlainPolygon(a) && (index < 0 || index >= a.Vertices.Count / 2)) throw new ArgumentOutOfRangeException(nameof(index));
         if (!CanRemovePoint(a, index)) throw new ArgumentException("A corner cannot be taken from this mark.", nameof(a));
         return WritePoints(a, [.. a.Vertices.Where((_, i) => i / 2 != index)]);
     }
@@ -402,7 +405,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     /// <summary>The corner that starts the side of a polygon nearest to the point, within the border and <paramref name="tolerance"/> of it; -1 when no side is that near.</summary>
     public int SegmentAt(PdfAnnotation a, Point at, double tolerance)
     {
-        if (!Plain(a)) return -1;
+        if (!PlainPolygon(a)) return -1;
         var (x, y) = new PageGeometry(document.Pages[a.PageIndex]).ToUser(at.X, at.Y);
         var xy = a.Vertices;
         int n = xy.Count / 2, best = -1;

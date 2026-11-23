@@ -260,7 +260,12 @@ public partial class CommentPanel
 
     private void Edit_Resized(PdfAnnotation mark, Rect box) => Change(Loc.T("Resize"), m => m.Resize(mark, box));
 
-    private void Edit_VertexMoved(PdfAnnotation mark, int index, Point to) => Change(Loc.T("Move point"), m => m.MovePoint(mark, index, to));
+    private void Edit_VertexMoved(PdfAnnotation mark, int index, Point to)
+    {
+        if (Change(Loc.T("Move point"), m => m.MovePoint(mark, index, to))) Host?.SetStatus(Loc.T("Point {0} moved", index + 1));
+    }
+
+    private void Edit_VertexPicked(int index) => Host?.SetStatus(Loc.T("Point {0} picked", index + 1));
 
     private void Edit_VertexAdded(PdfAnnotation mark, int after, Point to) => Change(Loc.T("Add point"), m => m.InsertPoint(mark, after, to));
 
@@ -302,11 +307,27 @@ public partial class CommentPanel
             corners.Finish();
             e.Handled = true;
         }
+        else if (e.Key == Key.Delete && _edit is { PickedVertex: >= 0, Current: { } picked } picking)
+        {
+            RemovePicked(picking, picked);
+            e.Handled = true;
+        }
         else if (e.Key == Key.Delete && _edit?.Current is not null)
         {
             DeleteSelected();
             e.Handled = true;
         }
+    }
+
+    // Delete on a picked corner takes the corner away, not the mark.
+    private void RemovePicked(EditTool edit, PdfAnnotation mark)
+    {
+        int index = edit.PickedVertex;
+        edit.ClearPick(closeCross: true);
+        edit.Redraw();
+        if (Tab is not { } tab) return;
+        if (NewMarker(tab).CanRemovePoint(mark, index)) Change(Loc.T("Remove point"), m => m.RemovePoint(mark, index));
+        else Host?.SetStatus(Loc.T("That point cannot be removed."));
     }
 
     private void ShowSelected()
@@ -327,6 +348,10 @@ public partial class CommentPanel
         _drawing ??= CurrentStyle();
         SelectedTitle.Text = Loc.T("Selected: {0}", AnnotationText.KindName(mark.Type));
         EditText.IsEnabled = mark.Type is AnnotationType.Text or AnnotationType.FreeText || mark.Contents is { Length: > 0 };
+        PointHint.Visibility = Marker.HasPoints(mark) ? Visibility.Visible : Visibility.Collapsed;
+        PointHint.Text = _tool != MarkTool.Edit ? Loc.T("Choose Move marks to move or add a point from the keyboard.")
+            : Marker.PlainPolygon(mark) ? Loc.T("Press Enter on a point to pick it, move it with the arrow keys, then press Enter again. Press Enter on a side to add a point, or Delete on a picked point to remove it.")
+            : Loc.T("Press Enter on a point to pick it, move it with the arrow keys, then press Enter again.");
         _loading = true;
         WidthSlider.Value = Math.Clamp(mark.Border.Width, WidthSlider.Minimum, WidthSlider.Maximum);
         OpacitySlider.Value = Math.Clamp(Math.Round(mark.Opacity * 20) * 5, OpacitySlider.Minimum, OpacitySlider.Maximum);

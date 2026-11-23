@@ -1243,6 +1243,9 @@
   <data name="Choose Edit fields to add some, or to find the blanks of a form." xml:space="preserve">
     <value>Alan eklemek veya formun boşluklarını bulmak için Alanları düzenle sekmesini seçin.</value>
   </data>
+  <data name="Choose Move marks to move or add a point from the keyboard." xml:space="preserve">
+    <value>Klavyeyle nokta taşımak ya da eklemek için İşaretleri taşı aracını seçin.</value>
+  </data>
   <data name="Choose a PFX file" xml:space="preserve">
     <value>PFX dosyası seç</value>
   </data>
@@ -4855,6 +4858,12 @@
   <data name="Plain text (.txt)" xml:space="preserve">
     <value>Düz metin (.txt)</value>
   </data>
+  <data name="Point {0} moved" xml:space="preserve">
+    <value>{0}. nokta taşındı</value>
+  </data>
+  <data name="Point {0} picked" xml:space="preserve">
+    <value>{0}. nokta seçildi</value>
+  </data>
   <data name="Polygon" xml:space="preserve">
     <value>Çokgen</value>
   </data>
@@ -4884,6 +4893,12 @@
   </data>
   <data name="Present (Ctrl+L)" xml:space="preserve">
     <value>Sunum yap (Ctrl+L)</value>
+  </data>
+  <data name="Press Enter on a point to pick it, move it with the arrow keys, then press Enter again." xml:space="preserve">
+    <value>Bir noktayı seçmek için üzerinde Enter'a basın, ok tuşlarıyla taşıyın, sonra yeniden Enter'a basın.</value>
+  </data>
+  <data name="Press Enter on a point to pick it, move it with the arrow keys, then press Enter again. Press Enter on a side to add a point, or Delete on a picked point to remove it." xml:space="preserve">
+    <value>Bir noktayı seçmek için üzerinde Enter'a basın, ok tuşlarıyla taşıyın, sonra yeniden Enter'a basın. Nokta eklemek için bir kenarda Enter'a basın, seçili noktayı kaldırmak için Delete'e basın.</value>
   </data>
   <data name="Preview" xml:space="preserve">
     <value>Önizleme</value>
@@ -5199,6 +5214,9 @@
   </data>
   <data name="Remove picture" xml:space="preserve">
     <value>Resmi kaldır</value>
+  </data>
+  <data name="Remove point" xml:space="preserve">
+    <value>Noktayı kaldır</value>
   </data>
   <data name="Remove private keys" xml:space="preserve">
     <value>Özel anahtarları kaldır</value>
@@ -6501,6 +6519,9 @@
   </data>
   <data name="That picture is too large. Pick a smaller one." xml:space="preserve">
     <value>Bu resim çok büyük. Daha küçük bir resim seçin.</value>
+  </data>
+  <data name="That point cannot be removed." xml:space="preserve">
+    <value>Bu nokta kaldırılamaz.</value>
   </data>
   <data name="That saved signature could not be read. Choose another." xml:space="preserve">
     <value>Kayıtlı imza okunamadı. Başka bir tane seçin.</value>

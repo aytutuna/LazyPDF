@@ -192,6 +192,15 @@ public interface IDocumentViewer
     /// <summary>Takes the left button on the pages from the viewer. Null gives it back; setting another cancels the one before.</summary>
     IPagePointerTool? PointerTool { get; set; }
 
+    /// <summary>Shows the key placement cross at a point of the page, as if Enter had opened it there, so the arrow keys move it from that point. Call it from a tool's press sent by Enter.</summary>
+    void BeginPlacement(int page, Point point);
+
+    /// <summary>Closes the cross; <see cref="PlacementEnded"/> is raised when one was open.</summary>
+    void CancelPlacement();
+
+    /// <summary>Raised when the cross was closed without an Enter on it: Escape, a new tool, or <see cref="CancelPlacement"/>.</summary>
+    event EventHandler? PlacementEnded;
+
     // ----- Text
 
     /// <summary>The characters of a page and their places in PDF user space, for this revision of the file; null when the text cannot be read.</summary>
