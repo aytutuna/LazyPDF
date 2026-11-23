@@ -111,6 +111,26 @@ final class ViewerHandlePressTests: XCTestCase {
         XCTAssertEqual(press.point.x, width + 5, accuracy: 0.01)
     }
 
+    func test_aPressJustOffTheRightEdgeOfARotatedViewIsOffThePageOnThatSide() async throws {
+        for rotation in [90, 270] {
+            let viewer = try open()
+            viewer.rotation = rotation
+            let width = viewer.pageSize(0).width
+            let tool = HandleTool(page: 0, at: ViewPoint(width, 100))
+            viewer.pointerTool = tool
+
+            viewer.pointerDown(try view(viewer, 0, width + 5, 100))
+            viewer.pointerUp(try view(viewer, 0, width + 5, 100))
+
+            let press = try XCTUnwrap(tool.pressed.first, "no press at \(rotation)")
+            XCTAssertEqual(press.point.x, width + 5, accuracy: 0.01)
+            XCTAssertEqual(press.point.y, 100, accuracy: 0.01)
+
+            viewer.pointerDown(try view(viewer, 0, width + 20, 100))
+            XCTAssertEqual(tool.pressed.count, 1, "gutter press at \(rotation)")
+        }
+    }
+
     func test_aPressInTheGutterBeyondTheHandleIsNotTheTools() async throws {
         let viewer = try open()
         let width = viewer.pageSize(0).width
