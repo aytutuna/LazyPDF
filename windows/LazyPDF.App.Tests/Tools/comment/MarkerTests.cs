@@ -355,17 +355,17 @@ public sealed class MarkerTests
         using var f = new CommentFixture();
         var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
 
-        var first = f.Marker.SetEnding(line, LineEnding.Diamond);
-        var second = f.Marker.SetEnding(first, LineEnding.OpenArrow);
+        var first = f.Marker.SetEnding(line, LineEnding.None, LineEnding.Diamond);
+        var second = f.Marker.SetEnding(first, LineEnding.None, LineEnding.OpenArrow);
 
         Assert.Equal(first.Rect.Width, second.Rect.Width);
         Assert.Equal(first.Rect.Height, second.Rect.Height);
 
         var wide = f.Marker.SetWidth(second, 6);
-        var bare = f.Marker.SetEnding(wide, LineEnding.None);
+        var bare = f.Marker.SetEnding(wide, LineEnding.None, LineEnding.None);
         Assert.Equal(Math.Min(bare.Line[0], bare.Line[2]) - 4, bare.Rect.Left, 6);
-        bare = f.Marker.SetEnding(f.Marker.SetWidth(bare, line.Border.Width), LineEnding.None);
-        var again = f.Marker.SetEnding(bare, LineEnding.Diamond);
+        bare = f.Marker.SetEnding(f.Marker.SetWidth(bare, line.Border.Width), LineEnding.None, LineEnding.None);
+        var again = f.Marker.SetEnding(bare, LineEnding.None, LineEnding.Diamond);
 
         Assert.Equal(line.Rect.Width, bare.Rect.Width, 6);
         Assert.Equal(first.Rect.Width, again.Rect.Width, 6);
@@ -496,6 +496,51 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void ALineHasNoHeadUnlessTheStyleGivesOne()
+    {
+        using var f = new CommentFixture();
+
+        f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        f.Marker.Add(MarkTool.Arrow, 0, Drag, Red with { Head = LineEnding.OpenArrow });
+
+        var marks = f.Marks();
+        Assert.Equal((LineEnding.None, LineEnding.None), (marks[0].StartEnding, marks[0].EndEnding));
+        Assert.Equal((LineEnding.None, LineEnding.OpenArrow), (marks[1].StartEnding, marks[1].EndEnding));
+    }
+
+    [Theory]
+    [InlineData(MarkTool.Line)]
+    [InlineData(MarkTool.Arrow)]
+    public void BothHeadsOfALineAreDrawnAndKeptThroughASave(MarkTool tool)
+    {
+        using var f = new CommentFixture();
+
+        foreach (var head in Enum.GetValues<LineEnding>()) f.Marker.Add(tool, 0, Drag, Red with { StartHead = head, Head = head });
+
+        var reopened = PdfDocument.Open(f.Document.SaveRewrite());
+        var read = PdfAnnotations.Read(reopened, reopened.Pages[0]);
+        Assert.Equal(Enum.GetValues<LineEnding>(), read.Select(m => m.StartEnding));
+        Assert.Equal(Enum.GetValues<LineEnding>(), read.Select(m => m.EndEnding));
+    }
+
+    [Fact]
+    public void BothHeadsAreSetReadBackAndGiveTheBoxRoomOnlyWhileTheyAreThere()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+
+        var headed = f.Marker.SetEnding(line, LineEnding.Circle, LineEnding.ClosedArrow);
+        var bare = f.Marker.SetEnding(headed, LineEnding.None, LineEnding.None);
+
+        Assert.Equal(LineEnding.Circle, headed.StartEnding);
+        Assert.Equal(LineEnding.ClosedArrow, headed.EndEnding);
+        Assert.True(headed.Rect.Width > line.Rect.Width);
+        Assert.True(headed.HasAppearance);
+        Assert.Equal(line.Rect.Width, bare.Rect.Width, 6);
+        Assert.Equal(line.Rect.Height, bare.Rect.Height, 6);
+    }
+
+    [Fact]
     public void ANoteTakesTheChosenIcon()
     {
         using var f = new CommentFixture();
@@ -513,7 +558,7 @@ public sealed class MarkerTests
         var note = f.Marker.Add(MarkTool.Note, 0, [new(200, 300)], Red);
         double width = line.Rect.Width;
 
-        var headed = f.Marker.SetEnding(line, LineEnding.Diamond);
+        var headed = f.Marker.SetEnding(line, LineEnding.None, LineEnding.Diamond);
         var iconed = f.Marker.SetIcon(note, "Help");
 
         Assert.Equal(LineEnding.Diamond, headed.EndEnding);
@@ -647,7 +692,7 @@ public sealed class MarkerTests
         Assert.Same(mark, f.Marker.SetWidth(mark, 6));
         Assert.Same(mark, f.Marker.SetFill(mark, [1, 1, 0]));
         Assert.Same(mark, f.Marker.SetDash(mark, LineStyle.Dashed));
-        Assert.Same(mark, f.Marker.SetEnding(mark, LineEnding.Diamond));
+        Assert.Same(mark, f.Marker.SetEnding(mark, LineEnding.None, LineEnding.Diamond));
         Assert.Throws<ArgumentException>(() => f.Marker.MovePoint(mark, 0, new Point(10, 10)));
         Assert.Equal(before, Strokes(f, Again(f, mark)));
     }

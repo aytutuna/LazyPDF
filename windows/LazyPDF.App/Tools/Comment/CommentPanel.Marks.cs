@@ -251,6 +251,7 @@ public partial class CommentPanel
 
     private void Edit_SelectionChanged(object? sender, EventArgs e)
     {
+        FlushLook();
         _fresh = false;
         ShowSelected();
     }
@@ -314,7 +315,7 @@ public partial class CommentPanel
         Swatches.IsEnabled = WidthSlider.IsEnabled = OpacitySlider.IsEnabled = !foreign;
         LineStyleBox.IsEnabled = !foreign && (mark is null ? Marker.TakesLine(_tool) : Marker.TakesLine(mark));
         FillBox.IsEnabled = !foreign && (mark is null ? Marker.TakesFill(_tool) : Marker.TakesFill(mark));
-        HeadRow.Visibility = (mark is null ? _tool == MarkTool.Arrow : HasHead(mark)) ? Visibility.Visible : Visibility.Collapsed;
+        HeadRow.Visibility = (mark is null ? _tool is MarkTool.Line or MarkTool.Arrow : HasHead(mark)) ? Visibility.Visible : Visibility.Collapsed;
         IconRow.Visibility = (mark is null ? _tool == MarkTool.Note : mark.Type == AnnotationType.Text) ? Visibility.Visible : Visibility.Collapsed;
         if (mark is null)
         {
@@ -338,6 +339,7 @@ public partial class CommentPanel
         ShowColour(Marker.RgbOf(text is null ? mark.Color : text.TextColor ?? [0]));
         ShowFill(Marker.RgbOf(mark.InteriorColor));
         LineStyleBox.SelectedIndex = (int)Marker.LineOf(mark);
+        StartHeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == mark.StartEnding);
         HeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == mark.EndEnding);
         IconBox.SelectedIndex = Array.FindIndex(Icons, i => i.Value == mark.IconName);
         _loading = false;
@@ -353,6 +355,7 @@ public partial class CommentPanel
         ShowColour(kept.Color);
         ShowFill(kept.Fill);
         LineStyleBox.SelectedIndex = (int)kept.Dash;
+        StartHeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == kept.StartHead);
         HeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == kept.Head);
         IconBox.SelectedIndex = Array.FindIndex(Icons, i => i.Value == kept.Icon);
         FontFamilyBox.SelectedItem = kept.Family;

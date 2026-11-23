@@ -2904,6 +2904,18 @@
   "Slash": {
     "tr": "Eğik çizgi"
   },
+  "Reversed open arrow": {
+    "tr": "Ters açık ok"
+  },
+  "Reversed closed arrow": {
+    "tr": "Ters kapalı ok"
+  },
+  "Bar": {
+    "tr": "Çubuk"
+  },
+  "Start head": {
+    "tr": "Başlangıç ucu"
+  },
   "Attach file": {
     "tr": "Dosya ekle"
   },

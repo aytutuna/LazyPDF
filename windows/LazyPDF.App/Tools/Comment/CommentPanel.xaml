@@ -106,6 +106,8 @@
         <TextBlock Text="{loc:T Line}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
         <ComboBox x:Name="LineStyleBox" AutomationProperties.Name="{loc:T Line}" SelectionChanged="Look_Changed" />
         <StackPanel x:Name="HeadRow" Visibility="Collapsed">
+            <TextBlock Text="{loc:T Start head}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+            <ComboBox x:Name="StartHeadBox" AutomationProperties.Name="{loc:T Start head}" SelectionChanged="Look_Changed" />
             <TextBlock Text="{loc:T Arrow head}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
             <ComboBox x:Name="HeadBox" AutomationProperties.Name="{loc:T Arrow head}" SelectionChanged="Look_Changed" />
         </StackPanel>

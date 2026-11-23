@@ -35,7 +35,7 @@ public enum LineStyle
 }
 
 /// <summary>How a new mark looks. A null colour takes the default of its kind.</summary>
-public sealed record MarkStyle(double[]? Color, double Width, double Opacity, string Family, double Size, FontStyles Font, double[]? Fill = null, LineStyle Dash = LineStyle.Solid, LineEnding Head = LineEnding.OpenArrow, string Icon = "Note")
+public sealed record MarkStyle(double[]? Color, double Width, double Opacity, string Family, double Size, FontStyles Font, double[]? Fill = null, LineStyle Dash = LineStyle.Solid, LineEnding Head = LineEnding.None, string Icon = "Note", LineEnding StartHead = LineEnding.None)
 {
     public static MarkStyle Default { get; } = new(null, 2, 1, "Helvetica", 12, FontStyles.Regular);
 
@@ -133,10 +133,10 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
                 return boxed;
             }
             case MarkTool.Line:
-                return _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info());
+                return _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info(), style.StartHead, style.Head);
             case MarkTool.Arrow:
             {
-                var arrow = _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info(), LineEnding.None, style.Head);
+                var arrow = _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info(), style.StartHead, style.Head);
                 arrow.Dictionary["IT"] = new PdfName("LineArrow");
                 return arrow;
             }
@@ -418,14 +418,14 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         return Find(a.PageIndex, a.Reference!.Number) ?? dashed;
     }
 
-    /// <summary>Gives a line the head at its end and room in its box to show it.</summary>
-    public PdfAnnotation SetEnding(PdfAnnotation a, LineEnding head)
+    /// <summary>Gives a line the heads at its two ends and room in its box to show them.</summary>
+    public PdfAnnotation SetEnding(PdfAnnotation a, LineEnding start, LineEnding end)
     {
         if (Fixed(a)) return a;
         var headed = _writer.Edit(a, redraw: true, () =>
         {
-            a.Dictionary["LE"] = new PdfArray([new PdfName(LineEnding.None.ToString()), new PdfName(head.ToString())]);
-            FitBox(a, a.Border.Width, head != LineEnding.None);
+            a.Dictionary["LE"] = new PdfArray([new PdfName(start.ToString()), new PdfName(end.ToString())]);
+            FitBox(a, a.Border.Width, start != LineEnding.None || end != LineEnding.None);
         });
         return Find(a.PageIndex, a.Reference!.Number) ?? headed;
     }

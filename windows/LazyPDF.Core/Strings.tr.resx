@@ -787,6 +787,9 @@
   <data name="Balanced" xml:space="preserve">
     <value>Dengeli</value>
   </data>
+  <data name="Bar" xml:space="preserve">
+    <value>Çubuk</value>
+  </data>
   <data name="Batch" xml:space="preserve">
     <value>Toplu işlem</value>
   </data>
@@ -5407,6 +5410,12 @@
   <data name="Results go to" xml:space="preserve">
     <value>Sonuçların gideceği yer</value>
   </data>
+  <data name="Reversed closed arrow" xml:space="preserve">
+    <value>Ters kapalı ok</value>
+  </data>
+  <data name="Reversed open arrow" xml:space="preserve">
+    <value>Ters açık ok</value>
+  </data>
   <data name="Review" xml:space="preserve">
     <value>Gözden geçir</value>
   </data>
@@ -6147,6 +6156,9 @@
   </data>
   <data name="Start at" xml:space="preserve">
     <value>Başlangıç</value>
+  </data>
+  <data name="Start head" xml:space="preserve">
+    <value>Başlangıç ucu</value>
   </data>
   <data name="Start over" xml:space="preserve">
     <value>Baştan başla</value>
