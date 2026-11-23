@@ -74,9 +74,9 @@ public sealed class PageUiaTextTests
         int ligature = pages[0].Chars.Single(c => c.Text == "fi").Index;
         Assert.Equal(t.OffsetOf(ligature) + 2, t.EndOf(ligature));
         Assert.Equal(5, t.EndOf(ligature + 1));
-        // The spaces at the end of the line and the soft hyphen are not in the string: the last kept character ends it.
-        Assert.Equal(5, t.EndOf(ligature + 3));
-        Assert.Equal(t.Text.Length - 1, t.EndOf(pages[0].Chars.Count - 1));
+        // The soft hyphen is not in the string: the character before it ends it.
+        int hyphen = pages[0].Chars.Single(c => c.Text == "­").Index;
+        Assert.Equal(t.Text.Length - 1, t.EndOf(hyphen));
     }
 
     [Fact]

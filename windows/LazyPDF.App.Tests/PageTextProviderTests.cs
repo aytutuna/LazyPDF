@@ -323,7 +323,7 @@ public sealed class PageTextProviderTests
     [MemberData(nameof(PageAndViewRotations))]
     public Task TheRectanglesOfARangeAreWhatTheSelectionPaints(string entries, int view) => Sta.Run(async () =>
     {
-        var o = await Open(Pdf(entries, [Line(150, 500, "alpha beta gamma") + Line(150, 300, "delta")]));
+        var o = await OpenTrueSize(Pdf(entries, [Line(150, 500, "alpha beta gamma") + Line(150, 300, "delta")]));
         using var _ = o;
         o.Viewer.Surface.SetRotation(view);
         o.Viewer.Surface.SetFit(FitMode.Page);
@@ -341,7 +341,7 @@ public sealed class PageTextProviderTests
     [Fact]
     public Task OnlyTheLinesInViewHaveRectanglesAndVisibleRanges() => Sta.Run(async () =>
     {
-        var o = await Open(Pdf([Line(100, 700, "upper line") + Line(100, 100, "lower line")]));
+        var o = await OpenTrueSize(Pdf([Line(100, 700, "upper line") + Line(100, 100, "lower line")]));
         using var _ = o;
         o.Viewer.Surface.SetFit(FitMode.None);
         o.Viewer.Surface.SetZoom(1.5);
@@ -388,7 +388,7 @@ public sealed class PageTextProviderTests
     [Fact]
     public Task ScrollingARangeIntoViewMovesNothingWhenItIsThere() => Sta.Run(async () =>
     {
-        var o = await Open(Pdf([Line(100, 700, "upper line") + Line(100, 100, "lower line")]));
+        var o = await OpenTrueSize(Pdf([Line(100, 700, "upper line") + Line(100, 100, "lower line")]));
         using var _ = o;
         o.Viewer.Surface.SetFit(FitMode.None);
         o.Viewer.Surface.SetZoom(1.5);
@@ -419,7 +419,7 @@ public sealed class PageTextProviderTests
     [Fact]
     public Task ARangeFromAPointIsWhereThePointIs() => Sta.Run(async () =>
     {
-        var o = await Open(Pdf([Line(100, 700, "alpha beta gamma")]));
+        var o = await OpenTrueSize(Pdf([Line(100, 700, "alpha beta gamma")]));
         using var _ = o;
         Arrange(o);
         var r = Stretch(o, 0, "beta").GetBoundingRectangles();
@@ -481,6 +481,27 @@ public sealed class PageTextProviderTests
         var selection = Assert.Single(o.Provider.GetSelection());
         Assert.Equal("tests", selection.GetText(-1));
     });
+
+    // Gives the pages the size they are drawn at, so the text of the file lies where the layout puts it.
+    private sealed class TrueSizeRenderer(byte[] pdf) : IDocumentRenderer
+    {
+        private readonly PdfDocument _document = PdfDocument.Open(pdf);
+        private readonly FakeRenderer _inner = new();
+
+        public bool Load(PdfEditSession session, string? password) => _inner.Load(session, password);
+
+        public (double Width, double Height) PageSize(int pageIndex)
+        {
+            var geometry = new PageGeometry(_document.Pages[pageIndex]);
+            return (geometry.Width, geometry.Height);
+        }
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi) => _inner.Render(pageIndex, dpi);
+
+        public void Dispose() => _inner.Dispose();
+    }
+
+    private static Task<Opened> OpenTrueSize(byte[] pdf) => Open(pdf, new TrueSizeRenderer(pdf));
 
     // A renderer whose load waits for the gate once one is set, so a test can stand between a tab's change and its drawing.
     private sealed class SlowRenderer : IDocumentRenderer
