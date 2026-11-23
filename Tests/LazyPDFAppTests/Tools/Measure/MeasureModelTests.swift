@@ -251,7 +251,7 @@ final class MeasureModelTests: XCTestCase {
     private func marked(_ scale: MeasureScale) throws -> [UInt8] {
         let session = try PdfEditSession.open(Pdfs.text())
         let line = MeasureItem(.distance, 0, [ViewPoint(100, 100), ViewPoint(172, 100)])
-        _ = try MeasureWriter.write(session.document, [line], scale, author: "Sam", date: DateTimeOffset(2026, 1, 5, 9, 0, 0))
+        _ = try MeasureWriter.write(session.document, [line], { _ in scale }, author: "Sam", date: DateTimeOffset(2026, 1, 5, 9, 0, 0))
         _ = try session.commit("Measure")
         return session.current
     }

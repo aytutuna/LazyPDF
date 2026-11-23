@@ -27,18 +27,18 @@ final class MeasureOverlay {
         drawn = 0
     }
 
-    func draw(_ items: [MeasureItem], _ scale: MeasureScale) {
+    func draw(_ items: [MeasureItem], _ scaleOf: (Int) -> MeasureScale) {
         clear()
         for item in items {
             shape(item.page, item.points, closed: item.kind != .distance, dashed: false, filled: item.kind == .area,
-                  label: item.value(scale), at: item.middle)
+                  label: item.value(scaleOf(item.page)), at: item.middle)
         }
         if tool.page >= 0, let last = tool.points.last {
             var points = tool.points
             let live = tool.hoverPage == tool.page && tool.hover != nil
             if live, let hover = tool.hover { points.append(hover) }
             let closed = tool.kind != .distance && points.count > 2
-            let text = points.count > 1 ? MeasureItem(tool.kind, tool.page, points).value(scale) : nil
+            let text = points.count > 1 ? MeasureItem(tool.kind, tool.page, points).value(scaleOf(tool.page)) : nil
             shape(tool.page, points, closed: closed, dashed: live, filled: closed && tool.kind == .area, label: text, at: points.last ?? last)
         }
         if tool.snapped, let at = tool.hover { marker(tool.hoverPage, at) }

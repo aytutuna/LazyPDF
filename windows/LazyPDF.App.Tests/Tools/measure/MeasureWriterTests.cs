@@ -47,6 +47,38 @@ public sealed class MeasureWriterTests
     }
 
     [Fact]
+    public void FindOnPageSkipsScalesThePanelCannotShowToo()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text());
+        var usable = new MeasureScale(1, LengthUnit.Millimetre, 10, LengthUnit.Metre);
+        MeasureWriter.Write(session.Document, [Line], new MeasureScale(1, LengthUnit.Metre, 1, LengthUnit.Metre), "Sam", Date);
+        MeasureWriter.Write(session.Document, [Line], usable, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        Assert.Equal(usable, MeasureScale.FindOnPage(reopened, reopened.Pages[0]));
+    }
+
+    [Fact]
+    public void ACalibrationOnATurnedPageReadsTheSameLengthsBack()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text());
+        PageOperations.Rotate(session.Document, [0], 90);
+        var scale = MeasureScale.From(72, 1, LengthUnit.Inch, LengthUnit.Inch);
+        var line = new MeasureItem(MeasureKind.Distance, 0, [new(10, 20), new(154, 20)]);
+        MeasureWriter.Write(session.Document, [line], scale, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        var written = PdfAnnotations.Read(reopened, reopened.Pages[0]).Single(a => a.Type == AnnotationType.Line);
+        double length = Math.Sqrt(Math.Pow(written.Line[2] - written.Line[0], 2) + Math.Pow(written.Line[3] - written.Line[1], 2));
+        var measure = Assert.IsType<PdfDictionary>(written.Dictionary["Measure"]);
+        double c = ((PdfNumber)Assert.IsType<PdfDictionary>(Assert.Single(((PdfArray)measure["X"]!).Items))["C"]!).Value;
+        Assert.Equal(2, length * c, 6);
+        Assert.EndsWith("2 in", written.Contents);
+    }
+
+    [Fact]
     public void ADistanceIsALineWithItsScale()
     {
         var all = WriteAndReopen(out var document, Line);
