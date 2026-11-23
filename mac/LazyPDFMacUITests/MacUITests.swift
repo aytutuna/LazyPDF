@@ -6,13 +6,18 @@ final class MacUITests: XCTestCase {
     }
 
     // The app is sandboxed and cannot read the test bundle, so the file travels in the launch arguments (MacShell.openTestFile).
-    private func launch(opening fixture: Bool) throws -> XCUIApplication {
+    private func launch(opening fixture: Bool, second: Bool = false) throws -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-AppleLanguages", "(en)"]
         if fixture {
             let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "plain-3", withExtension: "pdf"))
             let data = try Data(contentsOf: url)
             app.launchArguments += ["-LazyPDFTestFile", "plain-3.pdf", "-LazyPDFTestData", data.base64EncodedString()]
+        }
+        if second {
+            let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: "links-5", withExtension: "pdf"))
+            let data = try Data(contentsOf: url)
+            app.launchArguments += ["-LazyPDFTestFile2", "links-5.pdf", "-LazyPDFTestData2", data.base64EncodedString()]
         }
         app.launch()
         return app
@@ -190,6 +195,39 @@ final class MacUITests: XCTestCase {
         waitForWindows(app, 1)
         XCTAssertTrue(tab(app).waitForExistence(timeout: 20))
         XCTAssertTrue(element(app, "Moved plain-3.pdf to another window.").waitForExistence(timeout: 20))
+    }
+
+    private func linksTab(_ app: XCUIApplication) -> XCUIElement {
+        app.scrollViews["Open files"].buttons["links-5.pdf"]
+    }
+
+    func testDraggingATabBeforeAnotherReordersTheStrip() throws {
+        let app = try launch(opening: true, second: true)
+        XCTAssertTrue(linksTab(app).waitForExistence(timeout: 30))
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
+        XCTAssertLessThan(tab(app).frame.minX, linksTab(app).frame.minX)
+
+        drag(linksTab(app), to: tab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5)))
+
+        let moved = NSPredicate { _, _ in self.linksTab(app).frame.minX < self.tab(app).frame.minX }
+        wait(for: [XCTNSPredicateExpectation(predicate: moved, object: nil)], timeout: 10)
+    }
+
+    // The strip takes a dragged tab and dragged pages on the same views, so a page let go on a tab must still reach it.
+    func testDroppingAPageOnATabCopiesIt() throws {
+        let app = try launch(opening: true, second: true)
+        XCTAssertTrue(linksTab(app).waitForExistence(timeout: 30))
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
+        tab(app).click()
+        app.descendants(matching: .any)["Organize"].firstMatch.click()
+        app.menuItems["Organize pages"].firstMatch.click()
+        let page = app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Page 1'")).firstMatch
+        XCTAssertTrue(page.waitForExistence(timeout: 30))
+
+        page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.5, thenDragTo: linksTab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)), withVelocity: .slow, thenHoldForDuration: 0.4)
+
+        let status = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Copied 1 page to' OR value BEGINSWITH 'Copied 1 page to'")).firstMatch
+        XCTAssertTrue(status.waitForExistence(timeout: 20))
     }
 
     // The drag of a tab is watched from behind the strip, so a plain press must still reach the tab and its close button.

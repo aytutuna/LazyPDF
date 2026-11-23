@@ -396,7 +396,8 @@ final class MacShell {
 
     #if LAZYPDF_UITESTS
     // The UI tests cannot hand the sandboxed app a path it may read, so the file comes in the arguments and is written to
-    // the app's own temporary folder first: -LazyPDFTestFile name.pdf -LazyPDFTestData <base64>. Only the UI-test build
+    // the app's own temporary folder first: -LazyPDFTestFile name.pdf -LazyPDFTestData <base64>, and the same with a 2 after
+    // the key names for a second file. Only the UI-test build
     // compiles it (-DLAZYPDF_UITESTS), so the store binary ignores these arguments.
     private static func argument(_ key: String, in arguments: [String]) -> String? {
         arguments.firstIndex(of: key).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
@@ -404,10 +405,12 @@ final class MacShell {
 
     private func openTestFile() {
         let arguments = ProcessInfo.processInfo.arguments
-        guard let name = Self.argument("-LazyPDFTestFile", in: arguments), let text = Self.argument("-LazyPDFTestData", in: arguments),
-              let data = Data(base64Encoded: text) else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(URL(fileURLWithPath: name).lastPathComponent)
-        if (try? data.write(to: url)) != nil { open([url]) }
+        for suffix in ["", "2"] {
+            guard let name = Self.argument("-LazyPDFTestFile" + suffix, in: arguments),
+                  let text = Self.argument("-LazyPDFTestData" + suffix, in: arguments), let data = Data(base64Encoded: text) else { return }
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(URL(fileURLWithPath: name).lastPathComponent)
+            if (try? data.write(to: url)) != nil { open([url]) }
+        }
     }
     #endif
 }

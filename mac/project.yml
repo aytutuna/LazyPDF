@@ -72,6 +72,8 @@ targets:
       # The app is sandboxed and cannot read the test bundle, so the test hands it the file's bytes.
       - path: ../Tests/Fixtures/Pages/plain-3.pdf
         buildPhase: resources
+      - path: ../Tests/Fixtures/Pages/links-5.pdf
+        buildPhase: resources
     dependencies:
       - target: LazyPDFMacApp
     settings:
