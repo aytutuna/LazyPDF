@@ -11,6 +11,11 @@ extension ViewerModel {
         if let known = textMaps[page], known.page === text { return known }
         let made = PageTextMap(text)
         textMaps[page] = made
+        // A map holds its page's text, so only the pages in view keep one once many have been asked for.
+        if textMaps.count > 8 {
+            let shown = Set(visiblePages)
+            textMaps = textMaps.filter { shown.contains($0.key) || $0.key == page }
+        }
         return made
     }
 

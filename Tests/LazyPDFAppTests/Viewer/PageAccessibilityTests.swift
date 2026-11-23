@@ -149,6 +149,20 @@ final class ViewerAccessibilityTests: XCTestCase {
         XCTAssertNil(viewer.selectedChars(on: 0))
     }
 
+    func test_onlyTheMapsOfPagesInViewAreKeptOnceManyWereAsked() async throws {
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(12)), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        for page in 0..<12 {
+            await viewer.loadPage(page)
+            XCTAssertNotNil(viewer.textMap(page))
+        }
+
+        XCTAssertLessThanOrEqual(viewer.textMaps.count, 8)
+        XCTAssertNotNil(viewer.textMaps[11])
+    }
+
     func test_aCharacterIsFoundWhereItIsShown() async throws {
         let viewer = try await open()
         let box = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(4, 5)))
