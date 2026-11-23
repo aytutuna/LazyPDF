@@ -113,6 +113,17 @@ extension PageGrid {
         await PageTransfer.toNewTab(PageDragPayload(tab: tab, grid: self, pages: pages), host, files: true)
     }
 
+    /// The other open files a menu can copy pages to.
+    public var otherDocuments: [DocumentTab] {
+        host?.openDocuments.filter { $0 !== tab && !$0.isDisposed } ?? []
+    }
+
+    /// The "Copy to" entries of a menu and VoiceOver's actions: the pages go to the end of `other`.
+    public func copy(_ pages: [Int], to other: DocumentTab) async {
+        guard let tab, let host, !pages.isEmpty else { return }
+        await PageTransfer.copy(PageDragPayload(tab: tab, grid: self, pages: pages), to: other, host: host)
+    }
+
     public func blank(_ place: InsertPlace) {
         let at = PageEdits.insertAt(place, selection, cells.count)
         apply(L10n.t("Insert blank page"), select: [at], status: L10n.t("Blank page added.")) { document in

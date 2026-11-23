@@ -70,6 +70,7 @@ struct OrganizeView: View {
                         .disabled(!any)
                     Button(L10n.t("Paste"), systemImage: "doc.on.clipboard") { Task { await model.paste() } }
                         .disabled(!model.canPaste)
+                    CopyToMenu(grid: model.grid, pages: model.grid.selection)
                     Button(L10n.t("Select all"), systemImage: "checkmark.circle") { model.grid.selectAll() }
                     Button(L10n.t("Select none"), systemImage: "xmark.circle") { model.grid.selectNone() }
                         .disabled(!any)

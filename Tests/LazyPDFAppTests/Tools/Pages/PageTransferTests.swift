@@ -248,4 +248,20 @@ final class PageTransferTests: XCTestCase {
         XCTAssertTrue(a.host.openedNew.isEmpty)
         XCTAssertEqual(a.host.problems.map(\.title), ["Pages not copied"])
     }
+
+    func test_theMenusListTheOtherOpenFilesAndAnEntryCopiesThere() async throws {
+        let (a, b) = try pair()
+        let grid = PageGrid(boxWidth: 100, boxHeight: 140)
+        grid.attach(a.tab, a.host)
+
+        XCTAssertEqual(grid.otherDocuments.map(\.title), ["b.pdf"])
+        await grid.copy([1, 2], to: b.tab)
+
+        XCTAssertEqual(b.tab.pageCount, 8)
+        XCTAssertEqual(a.tab.pageCount, 6)
+        XCTAssertEqual(a.host.statuses.last, "Copied 2 pages to b.pdf. Undo it in b.pdf.")
+
+        a.host.openDocuments = [a.tab]
+        XCTAssertTrue(grid.otherDocuments.isEmpty)
+    }
 }
