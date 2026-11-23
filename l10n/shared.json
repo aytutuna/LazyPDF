@@ -8491,6 +8491,9 @@
   "It could not be saved. It can still be placed this time.": {
     "tr": "Kaydedilemedi. Bu seferlik yine de yerleştirilebilir."
   },
+  "It could not be saved. It will be used for this signing only.": {
+    "tr": "Kaydedilemedi. Yalnızca bu imzalama için kullanılacak."
+  },
   "Choose what to put on the page, then press Place on page.": {
     "tr": "Sayfaya neyi koyacağınızı seçin, sonra Sayfaya yerleştir düğmesine basın."
   },

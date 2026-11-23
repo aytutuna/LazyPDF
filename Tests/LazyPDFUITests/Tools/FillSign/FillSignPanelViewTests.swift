@@ -47,15 +47,20 @@ final class FillSignPanelViewTests: XCTestCase {
         XCTAssertNil(SignatureImage.cgImage(PdfRgbaImage(20, 10, [0, 0, 0, 0])))
     }
 
+    private func makerView(_ model: FillSignModel) -> SignatureMakerView {
+        SignatureMakerView(maker: model.maker, use: { model.useMade() }, cancel: { model.cancelMaker() },
+                           choosePicture: { await model.chooseMakerPicture() })
+    }
+
     func test_theSheetThatMakesASignatureIsDrawn() throws {
         let (panel, _) = try panel()
         let model = try XCTUnwrap(panel.model as? FillSignModel)
         model.makeNew()
         model.maker.setName("Ada")
 
-        let typed = try ToolPicture.ink(try ToolPicture.draw(SignatureMakerView(model: model), height: 560))
+        let typed = try ToolPicture.ink(try ToolPicture.draw(makerView(model), height: 560))
         model.maker.setMode(.draw)
-        let drawing = try ToolPicture.ink(try ToolPicture.draw(SignatureMakerView(model: model), height: 560))
+        let drawing = try ToolPicture.ink(try ToolPicture.draw(makerView(model), height: 560))
 
         XCTAssertGreaterThan(typed, 200)
         XCTAssertGreaterThan(drawing, 200)

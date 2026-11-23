@@ -2998,6 +2998,9 @@
   <data name="It could not be saved. It can still be placed this time." xml:space="preserve">
     <value>Kaydedilemedi. Bu seferlik yine de yerleştirilebilir.</value>
   </data>
+  <data name="It could not be saved. It will be used for this signing only." xml:space="preserve">
+    <value>Kaydedilemedi. Yalnızca bu imzalama için kullanılacak.</value>
+  </data>
   <data name="It has pictures of pages and no text. Make searchable (under Optimize) can read the pages, then export again. You can also save the pages as pictures." xml:space="preserve">
     <value>Sayfa resimleri var, metin yok. Aranabilir yap (İyileştir altında) sayfaları okuyabilir; sonra yeniden dışa aktarın. Sayfaları resim olarak da kaydedebilirsiniz.</value>
   </data>

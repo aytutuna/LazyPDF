@@ -141,6 +141,79 @@ public sealed class FillSignPanelTests
     });
 
     [Fact]
+    public Task AKeptSignatureThatCannotBeSavedIsStillUsedOnceForTheSigning() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        string blocked = dir.File("sigs", [1]);
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new CertificatesPanel(blocked);
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        var maker = (SignatureMaker)panel.FindName("Maker");
+        var list = (ListBox)panel.FindName("SavedList");
+        ((TextBox)maker.FindName("NameBox")).Text = "Ann";
+        ((CheckBox)maker.FindName("KeepBox")).IsChecked = true;
+
+        typeof(CertificatesPanel).GetMethod("Maker_Made", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(panel, [maker, EventArgs.Empty]);
+
+        var problem = host.Problems.Single();
+        Assert.Equal("Signature not kept", problem.Title);
+        Assert.Equal("It could not be saved. It will be used for this signing only.", problem.Text);
+        Assert.Single(list.Items);
+        Assert.Equal("OneOffRow", list.SelectedItem!.GetType().Name);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ASignatureThatCannotBeKeptIsStillPlacedThisTime() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        string blocked = dir.File("sigs", [1]);
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(blocked);
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        var maker = (SignatureMaker)panel.FindName("Maker");
+        var list = (ListBox)panel.FindName("SavedList");
+        ((TextBox)maker.FindName("NameBox")).Text = "Ann";
+        ((CheckBox)maker.FindName("KeepBox")).IsChecked = true;
+
+        typeof(FillSignPanel).GetMethod("Maker_Made", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(panel, [maker, EventArgs.Empty]);
+
+        var problem = host.Problems.Single();
+        Assert.Equal("Signature not kept", problem.Title);
+        Assert.Equal("It could not be saved. It can still be placed this time.", problem.Text);
+        Assert.Equal(-1, list.SelectedIndex);
+        Assert.True(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task LeavingTheCertificatesToolClosesTheMakerAndDropsTheOneOff() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new CertificatesPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, new RecordingHost());
+        var maker = (SignatureMaker)panel.FindName("Maker");
+        var button = (Button)panel.FindName("NewButton");
+        typeof(CertificatesPanel).GetMethod("New_Click", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(panel, [button, new RoutedEventArgs()]);
+        Assert.Equal(Visibility.Visible, maker.Visibility);
+
+        panel.Detach();
+
+        Assert.Equal(Visibility.Collapsed, maker.Visibility);
+        Assert.Equal(Visibility.Visible, button.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task TheSecondPressOfADoubleClickDoesNotPlaceAgainWhileKeepPlacing() => Sta.Run(() =>
     {
         using var dir = new TempDir();

@@ -107,6 +107,7 @@ public partial class CertificatesPanel : ToolPanel
         Stop();
         ClearBox();
         _oneOff = null;
+        CloseMaker();
         WhereBox.ItemsSource = null;
         FilePassword.Clear();
     }
@@ -150,16 +151,21 @@ public partial class CertificatesPanel : ToolPanel
         CloseMaker();
         if (Maker.Keep)
         {
-            _oneOff = null;
-            var item = _saved.Add(SavedKind.Signature, image);
-            FillSaved();
-            SavedList.SelectedIndex = ((List<object>)SavedList.ItemsSource).FindIndex(r => r is SavedRow row && row.Item == item);
+            try
+            {
+                var item = _saved.Add(SavedKind.Signature, image);
+                _oneOff = null;
+                FillSaved();
+                SavedList.SelectedIndex = ((List<object>)SavedList.ItemsSource).FindIndex(r => r is SavedRow row && row.Item == item);
+                return;
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                Host!.ShowProblem(new Problem(Loc.T("Signature not kept"), Loc.T("It could not be saved. It will be used for this signing only.")));
+            }
         }
-        else
-        {
-            _oneOff = image;
-            FillSaved();
-        }
+        _oneOff = image;
+        FillSaved();
     }
 
     private void Maker_Cancelled(object? sender, EventArgs e) => CloseMaker();

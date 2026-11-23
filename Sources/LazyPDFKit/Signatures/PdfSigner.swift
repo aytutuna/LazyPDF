@@ -72,8 +72,9 @@ public enum PdfSigner {
         let visible = !target.rect.isEmpty
         let look = request.look ?? SignatureLook()
         let text = visible ? SignatureAppearance.text(job, look) : ""
-        let font = try visible ? SignatureAppearance.addFont(document, job, look, text) : nil
-        let appearance = try visible ? SignatureAppearance.draw(document, target.rect, target.page.rotate, look, text, font) : nil
+        let layout = SignatureAppearance.plan(target.rect, target.page.rotate, look, text)
+        let font = try visible ? SignatureAppearance.addFont(document, job, look, layout.showText ? text : "") : nil
+        let appearance = try visible ? SignatureAppearance.draw(document, layout, target.page.rotate, look, text, font) : nil
 
         let chain = embeddedChain(request)
         let reserve = request.reserveBytes > 0
