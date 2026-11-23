@@ -262,6 +262,11 @@ public partial class CommentPanel
 
     private void Edit_VertexMoved(PdfAnnotation mark, int index, Point to)
     {
+        if (!_allowed || MarkWork.Running)
+        {
+            _edit?.Redraw();
+            return;
+        }
         if (Change(Loc.T("Move point"), m => m.MovePoint(mark, index, to))) Host?.SetStatus(Loc.T("Point {0} moved", index + 1));
     }
 
