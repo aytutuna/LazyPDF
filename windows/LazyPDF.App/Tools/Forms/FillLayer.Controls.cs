@@ -46,6 +46,11 @@ internal sealed partial class FillLayer
         public Action<FormField, int> Update { get; }
         public bool Missing { get; set; }
 
+        /// <summary>Text, password, combo and list controls stand upright on a turned view while they have the keyboard.</summary>
+        public bool Turns { get; set; }
+
+        public bool Turned { get; set; }
+
         /// <summary>Hands in what was typed and not yet kept; null for a control that keeps each change at once.</summary>
         public Action? Flush { get; set; }
     }

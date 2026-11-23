@@ -26,6 +26,7 @@ internal sealed partial class FillLayer
     private bool _canFill;
     private bool _highlight;
     private int _key;
+    private const int Raised = 10;
     private int _styledFor;
 
     /// <param name="enter">Takes a value typed or clicked into a field and says whether the field kept it.</param>
@@ -105,7 +106,12 @@ internal sealed partial class FillLayer
 
     private void Drop()
     {
-        foreach (var (page, (host, _)) in _pages) _viewer.Overlay(page).Children.Remove(host);
+        foreach (var (page, (host, _)) in _pages)
+        {
+            var overlay = _viewer.Overlay(page);
+            overlay.Children.Remove(host);
+            overlay.ClearValue(Panel.ZIndexProperty);
+        }
         _pages.Clear();
         _key = 0;
     }
@@ -142,10 +148,7 @@ internal sealed partial class FillLayer
             slot.Frame.Width = slot.Box.Width;
             slot.Frame.Height = slot.Box.Height;
             Decorate(slot);
-            slot.Frame.GotKeyboardFocus += (_, _) =>
-            {
-                if (Mouse.LeftButton != MouseButtonState.Pressed) _viewer.Reveal(page, slot.Box);
-            };
+            slot.Frame.IsKeyboardFocusWithinChanged += (_, e) => Focused(page, host, slots, slot, (bool)e.NewValue);
             slot.Frame.PreviewKeyDown += (_, e) =>
             {
                 bool shift = Keyboard.Modifiers == ModifierKeys.Shift;
@@ -155,6 +158,50 @@ internal sealed partial class FillLayer
         }
         _pages[page] = (host, slots);
         _viewer.Overlay(page).Children.Add(host);
+    }
+
+    // On a turned view the control being typed in is turned back and moved into the page, and drawn over its
+    // neighbours (and over the next page's layer) while it has the keyboard. Only a transform, position and order
+    // change, so nothing typed is lost and no text change is raised.
+    private void Focused(int page, Canvas host, List<Slot> slots, Slot slot, bool within)
+    {
+        int rotation = _viewer.Rotation;
+        if (!within)
+        {
+            if (slot.Turned) Release(page, host, slots, slot);
+            return;
+        }
+        if (!slot.Turns || rotation == 0)
+        {
+            if (Mouse.LeftButton != MouseButtonState.Pressed) _viewer.Reveal(page, slot.Box);
+            return;
+        }
+        var size = _viewer.PageSize(page);
+        var placed = PageOverlay.Place(slot.Box, size, rotation);
+        Canvas.SetLeft(slot.Frame, placed.X);
+        Canvas.SetTop(slot.Frame, placed.Y);
+        PageOverlay.KeepUpright(slot.Frame, rotation, slot.Box.Size);
+        slot.Turned = true;
+        host.Clip = null;
+        Panel.SetZIndex(slot.Frame, Raised);
+        Panel.SetZIndex(host, Raised);
+        Panel.SetZIndex(_viewer.Overlay(page), Raised);
+        _viewer.Reveal(page, PageOverlay.UprightBounds(placed, rotation));
+    }
+
+    private void Release(int page, Canvas host, List<Slot> slots, Slot slot)
+    {
+        slot.Turned = false;
+        slot.Frame.RenderTransform = null;
+        Canvas.SetLeft(slot.Frame, slot.Box.X);
+        Canvas.SetTop(slot.Frame, slot.Box.Y);
+        slot.Frame.ClearValue(Panel.ZIndexProperty);
+        // The host and the layer are shared by the page's slots, so they drop back only once none of them has the keyboard.
+        if (slots.Any(s => s.Control is { IsKeyboardFocusWithin: true })) return;
+        var size = _viewer.PageSize(page);
+        host.Clip = new RectangleGeometry(new Rect(0, 0, size.Width, size.Height));
+        host.ClearValue(Panel.ZIndexProperty);
+        _viewer.Overlay(page).ClearValue(Panel.ZIndexProperty);
     }
 
     // A page keeps its own tab order, so the last control of a page hands the keyboard to the first one of the next page that has any.
@@ -188,6 +235,7 @@ internal sealed partial class FillLayer
             _ => null,
         };
         if (slot is null) return null;
+        slot.Turns = field.Kind is FieldKind.Text or FieldKind.ComboBox or FieldKind.ListBox;
         slot.Missing = IsMissing(field);
         if (slot.Control is { } control)
         {
