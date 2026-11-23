@@ -222,7 +222,8 @@ public final class CommentModel: ToolPanelModel {
         var font = FontStyles.regular
         if bold { font.insert(.bold) }
         if italic { font.insert(.italic) }
-        return MarkStyle(color: color, width: width, opacity: opacity / 100, family: family, size: min(max(fontSize, 4), 144), font: font)
+        return MarkStyle(color: color, width: width, opacity: opacity / 100, family: family, size: min(max(fontSize, 4), 144), font: font,
+                         head: tool == .arrow ? .openArrow : .none)
     }
 
     func countFlattenable(_ tab: DocumentTab) {

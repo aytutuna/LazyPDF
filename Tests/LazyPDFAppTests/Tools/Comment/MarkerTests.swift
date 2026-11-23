@@ -273,7 +273,9 @@ final class MarkerTests: XCTestCase {
 
     func test_wideningAnArrowKeepsRoomForItsHead() async throws {
         let f = try CommentFixture()
-        let arrow = try f.marker.add(.arrow, 0, drag, markRed)
+        var headed = markRed
+        headed.head = .openArrow
+        let arrow = try f.marker.add(.arrow, 0, drag, headed)
         let wide = try f.marker.setWidth(arrow, 6)
 
         let room = AppearanceBuilder.endingSize(6) + 6
@@ -293,5 +295,154 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(wideInk.rect.width, pencil.rect.width + 2 * (6 - pencil.border.width / 2), accuracy: 1e-6)
         XCTAssertEqual(widePolygon.rect.width, polygon.rect.width + 2 * (12 - polygon.border.width), accuracy: 1e-6)
         XCTAssertEqual(widePolygon.rect.height, polygon.rect.height + 2 * (12 - polygon.border.width), accuracy: 1e-6)
+    }
+
+    func test_aFillDashAndHeadAreKeptThroughASaveAndReopen() async throws {
+        let f = try CommentFixture()
+        var look = markRed
+        look.fill = [1, 1, 1]
+        look.dash = .dashed
+        let box = try f.marker.add(.rectangle, 0, drag, look)
+        var arrowLook = markRed
+        arrowLook.startHead = .circle
+        arrowLook.head = .diamond
+        _ = try f.marker.add(.arrow, 0, drag, arrowLook)
+
+        let reread = f.marks()
+
+        XCTAssertEqual(reread.first { $0.reference == box.reference }?.interiorColor, [1, 1, 1])
+        XCTAssertEqual(Marker.lineOf(try XCTUnwrap(reread.first { $0.reference == box.reference })), .dashed)
+        let arrow = try XCTUnwrap(reread.first { $0.type == .line })
+        XCTAssertEqual(arrow.startEnding, .circle)
+        XCTAssertEqual(arrow.endEnding, .diamond)
+        XCTAssertEqual(arrow.intent, "LineArrow")
+    }
+
+    func test_aPlainLineHasNoHeadUnlessOneIsChosen() async throws {
+        let f = try CommentFixture()
+
+        let line = try f.marker.add(.line, 0, drag, markRed)
+
+        XCTAssertEqual(line.startEnding, .none)
+        XCTAssertEqual(line.endEnding, .none)
+    }
+
+    func test_aWhiteFillStaysWhiteWhenTheOutlineTurnsRed() async throws {
+        let f = try CommentFixture()
+        var look = markRed
+        look.fill = [1, 1, 1]
+        let made = try f.marker.add(.rectangle, 0, drag, look)
+
+        let red = try f.marker.recolor(made, [1, 0, 0])
+
+        XCTAssertEqual(red.color, [1, 0, 0])
+        XCTAssertEqual(red.interiorColor, [1, 1, 1])
+    }
+
+    func test_wideningADashedLineKeepsItDashed() async throws {
+        let f = try CommentFixture()
+        var look = markRed
+        look.dash = .dashed
+        let made = try f.marker.add(.line, 0, drag, look)
+
+        let wide = try f.marker.setWidth(made, 6)
+
+        XCTAssertEqual(Marker.lineOf(wide), .dashed)
+        XCTAssertEqual(wide.border.dash, [18, 12])
+    }
+
+    func test_theDashAndTheFillOfAMarkAreChanged() async throws {
+        let f = try CommentFixture()
+        let made = try f.marker.add(.oval, 0, drag, markRed)
+
+        let dotted = try f.marker.setDash(made, .dotted)
+        let filled = try f.marker.setFill(dotted, [0, 1, 0])
+        let plain = try f.marker.setFill(try f.marker.setDash(filled, .solid), nil)
+
+        XCTAssertEqual(Marker.lineOf(dotted), .dotted)
+        XCTAssertEqual(filled.interiorColor, [0, 1, 0])
+        XCTAssertEqual(Marker.lineOf(plain), .solid)
+        XCTAssertTrue(plain.interiorColor?.isEmpty ?? true)
+    }
+
+    func test_theHeadsAndTheIconOfAMarkAreChanged() async throws {
+        let f = try CommentFixture()
+        let line = try f.marker.add(.line, 0, drag, markRed)
+        let note = try f.marker.add(.note, 0, [markPt(200, 300)], markRed)
+
+        let headed = try f.marker.setEnding(line, .none, .diamond)
+        let iconed = try f.marker.setIcon(note, "Help")
+
+        XCTAssertEqual(headed.endEnding, .diamond)
+        XCTAssertEqual(headed.startEnding, .none)
+        XCTAssertTrue(headed.rect.width > line.rect.width)
+        XCTAssertEqual(iconed.iconName, "Help")
+    }
+
+    func test_aNoteTakesTheChosenIcon() async throws {
+        let f = try CommentFixture()
+        var look = markRed
+        look.icon = "Key"
+
+        let note = try f.marker.add(.note, 0, [markPt(200, 300)], look)
+
+        XCTAssertEqual(note.iconName, "Key")
+    }
+
+    func test_aLineWithALeaderLineACaptionOrACloudWithoutABulgeIsLeftAlone() async throws {
+        for key in ["LL", "LLE", "LLO", "Cap", "CO"] {
+            let f = try CommentFixture()
+            let line = try f.marker.add(.line, 0, drag, markRed)
+            line.dictionary[key] = PdfNumber(1)
+            let foreign = try XCTUnwrap(f.marks().first)
+            XCTAssertTrue(Marker.foreign(foreign), key)
+            let before = try f.document.data(try XCTUnwrap(f.document.stream(f.document.dict(foreign.dictionary, "AP"), "N")))
+
+            let results = [
+                try f.marker.recolor(foreign, [0, 0, 1]), try f.marker.setOpacity(foreign, 0.5), try f.marker.setWidth(foreign, 9),
+                try f.marker.setFill(foreign, [0, 1, 0]), try f.marker.setDash(foreign, .dotted),
+                try f.marker.setEnding(foreign, .circle, .circle),
+            ]
+
+            for result in results {
+                XCTAssertEqual(result.color, foreign.color, key)
+                XCTAssertEqual(result.border.width, foreign.border.width, key)
+                XCTAssertEqual(result.startEnding, .none, key)
+            }
+            let after = try f.document.data(try XCTUnwrap(f.document.stream(f.document.dict(foreign.dictionary, "AP"), "N")))
+            XCTAssertEqual(before, after, key)
+        }
+    }
+
+    func test_aMeasurementTakesALookChangeButNoHead() async throws {
+        let f = try CommentFixture()
+        let line = try f.marker.add(.line, 0, drag, markRed)
+        line.dictionary["Measure"] = PdfDictionary()
+        let measured = try XCTUnwrap(f.marks().first)
+        XCTAssertTrue(Marker.measured(measured))
+        XCTAssertTrue(Marker.isFixed(measured))
+        XCTAssertFalse(Marker.foreign(measured))
+
+        let blue = try f.marker.recolor(measured, [0, 0, 1])
+        let headed = try f.marker.setEnding(blue, .circle, .circle)
+
+        XCTAssertEqual(blue.color, [0, 0, 1])
+        XCTAssertEqual(headed.endEnding, .none)
+    }
+
+    func test_whichMarksTakeALineAndAFill() async throws {
+        XCTAssertTrue(Marker.takesLine(.rectangle))
+        XCTAssertTrue(Marker.takesLine(.pencil))
+        XCTAssertFalse(Marker.takesFill(.pencil))
+        XCTAssertTrue(Marker.takesFill(.cloud))
+        XCTAssertFalse(Marker.takesLine(.note))
+        let f = try CommentFixture()
+        let ink = try f.marker.add(.pencil, 0, [markPt(50, 50), markPt(150, 60), markPt(140, 160)], markRed)
+        let square = try f.marker.add(.rectangle, 0, drag, markRed)
+        let note = try f.marker.add(.note, 0, [markPt(200, 300)], markRed)
+        XCTAssertTrue(Marker.takesLine(ink))
+        XCTAssertFalse(Marker.takesFill(ink))
+        XCTAssertTrue(Marker.takesFill(square))
+        XCTAssertFalse(Marker.takesLine(note))
     }
 }
