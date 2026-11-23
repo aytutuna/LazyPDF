@@ -168,6 +168,7 @@ public partial class CommentPanel : ToolPanel
         _edit.Moved += Edit_Moved;
         _edit.Resized += Edit_Resized;
         _edit.VertexMoved += Edit_VertexMoved;
+        _edit.VertexAdded += Edit_VertexAdded;
         _edit.EditRequested += Edit_EditRequested;
         _bar = new SelectionBar(Viewer!, () => _tool == MarkTool.SelectText && _allowed, MarkSelection);
         Tab!.Changed += Tab_Changed;

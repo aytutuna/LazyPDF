@@ -757,4 +757,135 @@ public sealed class MarkerTests
         Assert.Null(f.Marker.PointsOf(box));
         Assert.Throws<ArgumentException>(() => f.Marker.MovePoint(line, 0, new Point(10, 10)));
     }
+
+    [Fact]
+    public void ACornerIsAddedInTheMiddleAndOnTheClosingSideOfAPolygon()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        var middle = f.Marker.InsertPoint(shape, 1, new Point(320, 200));
+        var closing = f.Marker.InsertPoint(middle, 4, new Point(60, 200));
+
+        var corners = f.Marker.PointsOf(closing)!;
+        Assert.Equal(6, corners.Length);
+        Assert.Equal(300, corners[1].X, 0.5);
+        Assert.Equal(320, corners[2].X, 0.5);
+        Assert.Equal(200, corners[2].Y, 0.5);
+        Assert.Equal(100, corners[4].X, 0.5);
+        Assert.Equal(60, corners[5].X, 0.5);
+        Assert.True(closing.HasAppearance);
+        var box = f.Marker.BoxOf(closing);
+        Assert.True(box.Left <= 60 && box.Right >= 320);
+    }
+
+    [Fact]
+    public void ACornerAddedThenUndoneLeavesTheOldPolygon()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+        Assert.True(f.Tab.Commit("Polygon"));
+
+        f.Marker.InsertPoint(Again(f, shape), 0, new Point(200, 100));
+        Assert.True(f.Tab.Commit("Add point"));
+        Assert.Equal(10, Again(f, shape).Vertices.Count);
+        Assert.True(f.Tab.Undo());
+
+        Assert.Equal(8, Again(f, shape).Vertices.Count);
+    }
+
+    [Fact]
+    public void ACornerCanBeTakenAwayUntilThreeAreLeft()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        Assert.True(f.Marker.CanRemovePoint(shape, 3));
+        var triangle = f.Marker.RemovePoint(shape, 1);
+
+        Assert.Equal(3, f.Marker.PointsOf(triangle)!.Length);
+        Assert.Equal(300, f.Marker.PointsOf(triangle)![1].X, 0.5);
+        Assert.Equal(300, f.Marker.PointsOf(triangle)![1].Y, 0.5);
+        Assert.False(f.Marker.CanRemovePoint(triangle, 0));
+        Assert.Throws<ArgumentException>(() => f.Marker.RemovePoint(triangle, 0));
+        Assert.Equal(6, Again(f, triangle).Vertices.Count);
+        Assert.False(f.Marker.CanRemovePoint(shape, 4));
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.RemovePoint(shape, 4));
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.InsertPoint(shape, 4, new Point(10, 10)));
+    }
+
+    [Fact]
+    public void ASideIsFoundByAPointOnItIncludingTheClosingOne()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        Assert.Equal(0, f.Marker.SegmentAt(shape, new Point(200, 102), 4));
+        Assert.Equal(1, f.Marker.SegmentAt(shape, new Point(298, 200), 4));
+        Assert.Equal(2, f.Marker.SegmentAt(shape, new Point(200, 300), 4));
+        Assert.Equal(3, f.Marker.SegmentAt(shape, new Point(100, 200), 4));
+        Assert.Equal(-1, f.Marker.SegmentAt(shape, new Point(200, 200), 4));
+    }
+
+    [Fact]
+    public void ACloudALineAndAMeasuredPolygonTakeNoCornersNorLoseAny()
+    {
+        using var f = new CommentFixture();
+        var cloud = f.Marker.Add(MarkTool.Cloud, 0, Square, Red);
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        var area = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+        area.Dictionary["Measure"] = new PdfDictionary();
+        area = Again(f, area);
+
+        foreach (var mark in new[] { cloud, line, area })
+        {
+            Assert.Throws<ArgumentException>(() => f.Marker.InsertPoint(mark, 0, new Point(200, 100)));
+            Assert.False(f.Marker.CanRemovePoint(mark, 0));
+            Assert.Throws<ArgumentException>(() => f.Marker.RemovePoint(mark, 0));
+            Assert.Equal(-1, f.Marker.SegmentAt(mark, new Point(200, 100), 4));
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void CornersMoveAndComeAndGoInUserSpaceOnATurnedPage(int degrees)
+    {
+        using var f = new CommentFixture();
+        f.Document.Pages[0].Dictionary["Rotate"] = new PdfNumber(degrees);
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+        var at = new Point(320, 210);
+
+        var added = f.Marker.InsertPoint(shape, 1, at);
+
+        var (ux, uy) = f.Geometry.ToUser(at.X, at.Y);
+        Assert.Equal(ux, added.Vertices[4], 0.001);
+        Assert.Equal(uy, added.Vertices[5], 0.001);
+        Assert.Equal(at.X, f.Marker.PointsOf(added)![2].X, 0.001);
+        var moved = f.Marker.MovePoint(added, 2, new Point(340, 220));
+        (ux, uy) = f.Geometry.ToUser(340, 220);
+        Assert.Equal(ux, moved.Vertices[4], 0.001);
+        Assert.Equal(uy, moved.Vertices[5], 0.001);
+        var removed = f.Marker.RemovePoint(moved, 2);
+        Assert.Equal(shape.Vertices.Count, removed.Vertices.Count);
+        for (int i = 0; i < shape.Vertices.Count; i++) Assert.Equal(shape.Vertices[i], removed.Vertices[i], 0.001);
+    }
+
+    [Fact]
+    public void CornersKeepTheirPlaceOnAPageWithAUserUnit()
+    {
+        using var f = new CommentFixture();
+        f.Document.Pages[0].Dictionary["UserUnit"] = new PdfNumber(2);
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        var added = f.Marker.InsertPoint(shape, 0, new Point(200, 100));
+        var moved = f.Marker.MovePoint(added, 1, new Point(210, 90));
+
+        var (ux, uy) = f.Geometry.ToUser(210, 90);
+        Assert.Equal(ux, moved.Vertices[2], 0.001);
+        Assert.Equal(uy, moved.Vertices[3], 0.001);
+        Assert.Equal(210, f.Marker.PointsOf(moved)![1].X, 0.001);
+    }
 }

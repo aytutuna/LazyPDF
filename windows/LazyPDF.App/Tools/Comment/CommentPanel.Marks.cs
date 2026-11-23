@@ -262,6 +262,8 @@ public partial class CommentPanel
 
     private void Edit_VertexMoved(PdfAnnotation mark, int index, Point to) => Change(Loc.T("Move point"), m => m.MovePoint(mark, index, to));
 
+    private void Edit_VertexAdded(PdfAnnotation mark, int after, Point to) => Change(Loc.T("Add point"), m => m.InsertPoint(mark, after, to));
+
     private void Edit_EditRequested(PdfAnnotation mark) => EditTextOf(mark);
 
     private void EditText_Click(object sender, RoutedEventArgs e)

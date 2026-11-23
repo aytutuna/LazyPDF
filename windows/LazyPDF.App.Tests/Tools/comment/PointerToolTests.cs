@@ -533,6 +533,134 @@ public sealed class PointerToolTests
         });
     }
 
+    private static PagePointer Control(Point at, int clicks = 1) => new(0, at, at, true, clicks, ModifierKeys.Control);
+
+    private static readonly Point[] Corners = [new(100, 100), new(300, 100), new(300, 300), new(100, 300)];
+
+    private static EditTool Polygon(CommentFixture f, MarkTool kind = MarkTool.Polygon)
+    {
+        var viewer = ViewerStandIn.Create(out _);
+        f.Marker.Add(kind, 0, Corners, Red);
+        f.Tab.Commit("Shape");
+        var tool = new EditTool(viewer, () => f.Marker);
+        tool.Select(f.Marks().Single());
+        return tool;
+    }
+
+    [Fact]
+    public void ACtrlPressOnASideAddsACornerThereAndADragPullsItOutInOneStep()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var tool = Polygon(f);
+            var added = new List<(int, Point)>();
+            int moved = 0;
+            tool.VertexAdded += (_, after, to) => added.Add((after, to));
+            tool.VertexMoved += (_, _, _) => moved++;
+
+            tool.Press(Control(new Point(200, 100)));
+            tool.Move(Drag(new Point(230, 60)));
+            tool.Move(Drag(new Point(240, 50)));
+            tool.Release(Drag(new Point(240, 50)));
+
+            Assert.Equal((0, new Point(240, 50)), Assert.Single(added));
+            Assert.Equal(0, moved);
+        });
+    }
+
+    [Fact]
+    public void ACtrlClickOnASideAddsACornerOnTheLine()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var tool = Polygon(f);
+            var added = new List<(int, Point)>();
+            tool.VertexAdded += (_, after, to) => added.Add((after, to));
+
+            tool.Press(Control(new Point(300, 200)));
+            tool.Release(Drag(new Point(300, 200)));
+
+            Assert.Equal((1, new Point(300, 200)), Assert.Single(added));
+        });
+    }
+
+    [Fact]
+    public void ACtrlDoubleClickAddsOneCornerAndNeverOpensTheTextEditor()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var tool = Polygon(f);
+            int added = 0, edits = 0;
+            tool.VertexAdded += (mark, after, to) =>
+            {
+                added++;
+                f.Marker.InsertPoint(mark, after, to);
+                tool.Refresh();
+            };
+            tool.EditRequested += _ => edits++;
+
+            tool.Press(Control(new Point(200, 100)));
+            tool.Release(Drag(new Point(200, 100)));
+            tool.Press(Control(new Point(200, 100), clicks: 2));
+            tool.Release(Drag(new Point(200, 100)));
+
+            Assert.Equal(1, added);
+            Assert.Equal(0, edits);
+        });
+    }
+
+    [Fact]
+    public void ACtrlPressOnACloudOrALineAddsNothing()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var cloud = Polygon(f, kind: MarkTool.Cloud);
+            int added = 0, moved = 0;
+            cloud.VertexAdded += (_, _, _) => added++;
+            cloud.Moved += (_, _) => moved++;
+
+            cloud.Press(Control(new Point(300, 200)));
+            cloud.Move(Drag(new Point(320, 200)));
+            cloud.Release(Drag(new Point(320, 200)));
+
+            Assert.Equal(0, added);
+            Assert.Equal(1, moved);
+        });
+    }
+
+    [Fact]
+    public void OnAVeryShortLineAPressGoesToTheNearerEndOrMovesTheMark()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var viewer = ViewerStandIn.Create(out _);
+            f.Marker.Add(MarkTool.Line, 0, [new Point(100, 100), new Point(104, 100)], Red);
+            f.Tab.Commit("Line");
+            var tool = new EditTool(viewer, () => f.Marker);
+            tool.Select(f.Marks().Single());
+            var ends = new List<int>();
+            int moved = 0;
+            tool.VertexMoved += (_, index, _) => ends.Add(index);
+            tool.Moved += (_, _) => moved++;
+
+            tool.Press(Press(new Point(103, 100)));
+            tool.Move(Drag(new Point(120, 140)));
+            tool.Release(Drag(new Point(120, 140)));
+            tool.Refresh();
+            tool.Press(Press(new Point(102, 101.5)));
+            tool.Move(Drag(new Point(130, 150)));
+            tool.Release(Drag(new Point(130, 150)));
+
+            Assert.Equal([1], ends);
+            Assert.Equal(1, moved);
+        });
+    }
+
     [Fact]
     public void RedrawingAfterTheMarksPageWentAwayDrawsNothing()
     {

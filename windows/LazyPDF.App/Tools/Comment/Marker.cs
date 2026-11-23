@@ -361,14 +361,63 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         double[] xy = [.. old];
         xy[2 * index] = x;
         xy[2 * index + 1] = y;
-        var moved = _writer.Edit(a, redraw: true, () =>
+        return WritePoints(a, xy);
+    }
+
+    // The snapshot still holds the old points, and the box is made from them.
+    private PdfAnnotation WritePoints(PdfAnnotation a, double[] xy)
+    {
+        var written = _writer.Edit(a, redraw: true, () =>
         {
             a.Dictionary[PointKey(a)] = new PdfArray([.. xy.Select(v => (PdfObject)new PdfNumber(v))]);
-            // The snapshot still holds the old points, and the box is made from them.
             var shifted = a.Type == AnnotationType.Line ? a with { Line = xy } : a with { Vertices = xy };
             FitBox(shifted, a.Border.Width, a.StartEnding != LineEnding.None || a.EndEnding != LineEnding.None);
         });
-        return Find(a.PageIndex, a.Reference!.Number) ?? moved;
+        return Find(a.PageIndex, a.Reference!.Number) ?? written;
+    }
+
+    // Corners can come and go on a polygon the app drew; a cloud keeps its corners and a line its two ends.
+    private static bool Plain(PdfAnnotation a) => a is { Type: AnnotationType.Polygon, Cloud: 0 } && !Fixed(a) && a.Vertices.Count >= 6;
+
+    /// <summary>Adds a corner between corner <paramref name="after"/> and the next one, the first when it is the last.</summary>
+    public PdfAnnotation InsertPoint(PdfAnnotation a, int after, Point at)
+    {
+        if (!Plain(a)) throw new ArgumentException("Corners cannot be added to this mark.", nameof(a));
+        if (after < 0 || after >= a.Vertices.Count / 2) throw new ArgumentOutOfRangeException(nameof(after));
+        var (x, y) = new PageGeometry(document.Pages[a.PageIndex]).ToUser(at.X, at.Y);
+        int cut = 2 * (after + 1);
+        return WritePoints(a, [.. a.Vertices.Take(cut), x, y, .. a.Vertices.Skip(cut)]);
+    }
+
+    /// <summary>A polygon keeps three corners at least.</summary>
+    public bool CanRemovePoint(PdfAnnotation a, int index) => Plain(a) && index >= 0 && index < a.Vertices.Count / 2 && a.Vertices.Count > 6;
+
+    public PdfAnnotation RemovePoint(PdfAnnotation a, int index)
+    {
+        if (Plain(a) && (index < 0 || index >= a.Vertices.Count / 2)) throw new ArgumentOutOfRangeException(nameof(index));
+        if (!CanRemovePoint(a, index)) throw new ArgumentException("A corner cannot be taken from this mark.", nameof(a));
+        return WritePoints(a, [.. a.Vertices.Where((_, i) => i / 2 != index)]);
+    }
+
+    /// <summary>The corner that starts the side of a polygon nearest to the point, within the border and <paramref name="tolerance"/> of it; -1 when no side is that near.</summary>
+    public int SegmentAt(PdfAnnotation a, Point at, double tolerance)
+    {
+        if (!Plain(a)) return -1;
+        var (x, y) = new PageGeometry(document.Pages[a.PageIndex]).ToUser(at.X, at.Y);
+        var xy = a.Vertices;
+        int n = xy.Count / 2, best = -1;
+        double nearest = tolerance + a.Border.Width / 2;
+        for (int i = 0; i < n; i++)
+        {
+            int j = (i + 1) % n;
+            double d = Distance(xy[2 * i], xy[2 * i + 1], xy[2 * j], xy[2 * j + 1], x, y);
+            if (d <= nearest)
+            {
+                nearest = d;
+                best = i;
+            }
+        }
+        return best;
     }
 
     public PdfAnnotation Resize(PdfAnnotation a, Rect box)

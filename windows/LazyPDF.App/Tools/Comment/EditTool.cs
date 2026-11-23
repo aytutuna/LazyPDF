@@ -23,6 +23,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     private readonly List<UIElement> _drawn = [];
     private int _handle = -1;
     private int _vertex = -1;
+    private int _adding = -1;
     private Point[]? _points;
     private bool _moveOnly;
     private bool _moving;
@@ -42,6 +43,9 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     public event Action<PdfAnnotation, Rect>? Resized;
 
     public event Action<PdfAnnotation, int, Point>? VertexMoved;
+
+    /// <summary>A corner was added after the one with this number, at the point.</summary>
+    public event Action<PdfAnnotation, int, Point>? VertexAdded;
 
     public event Action<PdfAnnotation>? EditRequested;
 
@@ -68,10 +72,11 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         _frame = marker().BoxOf(mark);
         _points = marker().PointsOf(mark);
         _moveOnly = Marker.Fixed(mark);
-        // An undo can leave fewer points than the one being dragged.
-        if (_vertex >= (_points?.Length ?? 0))
+        // An undo can leave fewer points than the one being dragged, and a corner still being pulled out is lost with the points.
+        if (_vertex >= (_points?.Length ?? 0) || _adding >= 0)
         {
             _vertex = -1;
+            _adding = -1;
             _handle = -1;
             _moving = false;
         }
@@ -82,7 +87,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     public bool Holds(PagePointer pointer)
     {
         if (Current is not { } mark || mark.PageIndex != pointer.Page) return false;
-        if (!_moveOnly && HandleAt(_points ?? Spots(_frame), pointer.Point) >= 0) return true;
+        if (!_moveOnly && (_points is null ? HandleAt(Spots(_frame), pointer.Point) : VertexAt(_points, pointer.Point)) >= 0) return true;
         var hit = marker().At(pointer.Page, pointer.Point, Reach);
         return hit is not null && hit.Reference?.Number == mark.Reference?.Number;
     }
@@ -91,15 +96,27 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     {
         _handle = -1;
         _vertex = -1;
+        _adding = -1;
         _moving = false;
         if (Current is { } selected && selected.PageIndex == pointer.Page && !_moveOnly)
         {
             if (_points is not null)
             {
-                if (HandleAt(_points, pointer.Point) is var v and >= 0)
+                if (VertexAt(_points, pointer.Point) is var v and >= 0)
                 {
                     _vertex = v;
                     _from = _points[v];
+                    return;
+                }
+                // The corner is added as the press lands, so a click adds one on the side and a drag pulls it out.
+                if (pointer.Modifiers.HasFlag(ModifierKeys.Control) && !pointer.FromKeys && marker().SegmentAt(selected, pointer.Point, Reach) is var side and >= 0)
+                {
+                    _adding = side;
+                    _vertex = side + 1;
+                    _points = [.. _points[..(side + 1)], pointer.Point, .. _points[(side + 1)..]];
+                    _from = pointer.Point;
+                    Remove();
+                    Draw(selected.PageIndex, _frame);
                     return;
                 }
             }
@@ -150,9 +167,11 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         if (Current is not { } mark || (!_moving && _handle < 0 && _vertex < 0)) return;
         bool moving = _moving;
         int vertex = _vertex;
+        int adding = _adding;
         _moving = false;
         _handle = -1;
         _vertex = -1;
+        _adding = -1;
         if (vertex >= 0)
         {
             if (_points is null || vertex >= _points.Length)
@@ -161,7 +180,8 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
                 return;
             }
             var to = _points[vertex];
-            if ((to - _from).Length < 0.5) Redraw();
+            if (adding >= 0) VertexAdded?.Invoke(mark, adding, to);
+            else if ((to - _from).Length < 0.5) Redraw();
             else VertexMoved?.Invoke(mark, vertex, to);
             return;
         }
@@ -179,6 +199,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         _moving = false;
         _handle = -1;
         _vertex = -1;
+        _adding = -1;
         Redraw();
     }
 
@@ -210,6 +231,20 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
             return inside.IsEmpty ? frame : inside;
         }
         return new Rect(Math.Clamp(frame.X, 0, Math.Max(0, bounds.Width - frame.Width)), Math.Clamp(frame.Y, 0, Math.Max(0, bounds.Height - frame.Height)), frame.Width, frame.Height);
+    }
+
+    // The nearer corner wins, and a press between two close corners belongs to neither, so a short line can still be moved.
+    private int VertexAt(Point[] points, Point at)
+    {
+        int nearest = -1;
+        for (int i = 0; i < points.Length; i++)
+        {
+            if (nearest < 0 || (points[i] - at).Length < (points[nearest] - at).Length) nearest = i;
+        }
+        if (nearest < 0) return -1;
+        double gap = points.Where((_, i) => i != nearest).Select(p => (p - points[nearest]).Length).DefaultIfEmpty(double.MaxValue).Min();
+        double reach = Math.Min(Grip / 2 / Math.Max(viewer.Zoom, 0.1) + 2, gap / 2);
+        return (points[nearest] - at).Length <= reach ? nearest : -1;
     }
 
     private int HandleAt(Point[] spots, Point at)

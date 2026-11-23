@@ -406,6 +406,9 @@
   <data name="Add pictures" xml:space="preserve">
     <value>Resim ekle</value>
   </data>
+  <data name="Add point" xml:space="preserve">
+    <value>Nokta ekle</value>
+  </data>
   <data name="Add property" xml:space="preserve">
     <value>Özellik ekle</value>
   </data>

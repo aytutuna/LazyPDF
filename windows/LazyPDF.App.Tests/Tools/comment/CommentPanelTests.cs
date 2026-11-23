@@ -505,6 +505,26 @@ public sealed class CommentPanelTests
     });
 
     [Fact]
+    public Task ACtrlClickOnASideOfASelectedPolygonAddsACornerInOneUndoStep() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], MarkStyle.Default);
+        Assert.True(f.Tab.Commit("Polygon"));
+        var panel = Attached(f);
+        var edit = Get<EditTool>(panel, "_edit");
+        edit.Select(f.Marks().Single());
+
+        edit.Press(new PagePointer(0, new Point(200, 100), new Point(200, 100), true, 1, ModifierKeys.Control));
+        edit.Move(new PagePointer(0, new Point(220, 60), new Point(220, 60), true, 0, ModifierKeys.None));
+        edit.Release(new PagePointer(0, new Point(220, 60), new Point(220, 60), false, 0, ModifierKeys.None));
+
+        Assert.Equal(10, Marked(f, made).Vertices.Count);
+        Assert.True(f.Tab.Undo());
+        Assert.Equal(8, Marked(f, made).Vertices.Count);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task AMarkWithPartsWeCannotRedrawDisablesTheLookAndOffersNoHead() => Sta.Run(() =>
     {
         using var f = new CommentFixture();
