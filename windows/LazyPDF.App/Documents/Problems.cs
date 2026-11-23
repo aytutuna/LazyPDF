@@ -26,8 +26,9 @@ public static class Problems
     };
 
     /// <summary>What Core's <see cref="UnauthorizedAccessException"/> means in a tool: the file's own permissions forbid the change.</summary>
-    public static Problem Restricted() =>
-        new(Loc.T("This file cannot be changed"), Loc.T("Its permissions do not allow it. Open it with the owner password."));
+    public static Problem Restricted(string? file = null) => file is null
+        ? new(Loc.T("This file cannot be changed"), Loc.T("Its permissions do not allow it. Open it with the owner password."))
+        : new(Loc.T("This file cannot be changed"), Loc.T("The permissions of {0} do not allow it. Open it with the owner password.", file));
 
     public static Problem Tool(Exception error, string action) => error switch
     {

@@ -95,12 +95,7 @@ public sealed partial class OrganizeView
     {
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
-        var failed = new Problem(Loc.T("Pages not extracted"), Loc.T("The pages could not be copied into a new file. Try fewer pages."));
-        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Extracting pages"), failed) is not var (bytes, skipped, dropped)) return;
-        if (!await host.OpenNewAsync(bytes, Loc.T("{0} extract.pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title)))) return;
-        PageJobs.NoteSkippedAttachments(host, skipped, dropped);
-        host.SetStatus(Loc.Plural(pages.Count, "{0} page extracted", "{0} pages extracted", pages.Count));
-        CopyRules.NoteUnprotected(tab.Document, host);
+        await PageTransfer.ToNewTabAsync(new PagePayload(tab, [.. pages], tab.Revision), host, files: true);
     }
 
     private async void Copy_Click(object sender, RoutedEventArgs e) => await CopyAsync(Selected());
@@ -137,17 +132,13 @@ public sealed partial class OrganizeView
         int count = PageClipboard.Count;
         await PageJobs.GatedAsync(tab, host, async () =>
         {
-            bool done = await PageJobs.ApplyAsync(tab, host, Loc.T("Adding pages"), Loc.T("Paste pages"), d => ImportAll(d, PdfDocument.Open(pdf), at),
-                                                  Loc.Plural(count, "{0} page pasted", "{0} pages pasted", count));
+            bool done = await PageTransfer.PasteAsync(tab, host, pdf, count, at);
             if (done) Reselect(tab, Enumerable.Range(at, count));
             return done;
         });
     }
 
     private int InsertIndex() => PageEdits.InsertAt((InsertPlace)Place.SelectedIndex, Selected(), Cells.Count);
-
-    private static void ImportAll(PdfDocument target, PdfDocument source, int at) =>
-        PageOperations.ImportPages(target, source, [.. Enumerable.Range(0, source.Pages.Count)], at);
 
     private void Blank_Click(object sender, RoutedEventArgs e)
     {

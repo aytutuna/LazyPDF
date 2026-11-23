@@ -1582,6 +1582,9 @@
   <data name="Copied the area as a picture." xml:space="preserve">
     <value>Alan resim olarak kopyalandı.</value>
   </data>
+  <data name="Copied {0} page to {1}. Undo it in {1}.|plural" xml:space="preserve">
+    <value>{0} sayfa {1} dosyasına kopyalandı. Geri almak için {1} dosyasında Geri al'ı kullanın.</value>
+  </data>
   <data name="Copied." xml:space="preserve">
     <value>Kopyalandı.</value>
   </data>
@@ -1605,6 +1608,9 @@
   </data>
   <data name="Copy is not protected" xml:space="preserve">
     <value>Kopya korumasız</value>
+  </data>
+  <data name="Copy pages" xml:space="preserve">
+    <value>Sayfaları kopyala</value>
   </data>
   <data name="Copy path" xml:space="preserve">
     <value>Yolu kopyala</value>
@@ -4203,6 +4209,9 @@
   </data>
   <data name="One of the pictures could not be read. Close any program that has it open and try again." xml:space="preserve">
     <value>Resimlerden biri okunamadı. Dosyayı açık tutan programları kapatıp yeniden deneyin.</value>
+  </data>
+  <data name="One of the two files is not open any more." xml:space="preserve">
+    <value>İki dosyadan biri artık açık değil.</value>
   </data>
   <data name="One page" xml:space="preserve">
     <value>Tek sayfa</value>
@@ -7174,6 +7183,9 @@
   <data name="The page is not in the file." xml:space="preserve">
     <value>Sayfa dosyada yok.</value>
   </data>
+  <data name="The pages changed since they were picked. Pick them again." xml:space="preserve">
+    <value>Sayfalar seçildikten sonra değişti. Yeniden seçin.</value>
+  </data>
   <data name="The pages changed, so the marks no longer fit. Mark them again." xml:space="preserve">
     <value>Sayfalar değişti, bu yüzden işaretler artık uymuyor. Yeniden işaretleyin.</value>
   </data>
@@ -7230,6 +7242,9 @@
   </data>
   <data name="The permissions of this file do not allow filling in forms." xml:space="preserve">
     <value>Bu dosyanın izinleri form doldurmaya izin vermiyor.</value>
+  </data>
+  <data name="The permissions of {0} do not allow it. Open it with the owner password." xml:space="preserve">
+    <value>{0} dosyasının izinleri buna izin vermiyor. Sahip parolasıyla açın.</value>
   </data>
   <data name="The presentation cannot be made into a PDF. Only .pptx files up to 100 MB with a slide to show can be; older .ppt files must be saved as .pptx first." xml:space="preserve">
     <value>Sunu PDF'ye çevrilemiyor. Yalnızca gösterilecek slaytı olan, 100 MB'a kadar .pptx dosyaları çevrilebilir; eski .ppt dosyalarını önce .pptx olarak kaydedin.</value>
@@ -8182,6 +8197,9 @@
   <data name="Wait for the job to end, or cancel it, then move the tab." xml:space="preserve">
     <value>İşin bitmesini bekleyin ya da iptal edin, sonra sekmeyi taşıyın.</value>
   </data>
+  <data name="Wait for the running job to finish, then try again." xml:space="preserve">
+    <value>Çalışan işin bitmesini bekleyin, sonra yeniden deneyin.</value>
+  </data>
   <data name="Waiting to be added" xml:space="preserve">
     <value>Eklenmeyi bekleyen</value>
   </data>
@@ -8971,6 +8989,9 @@
   <data name="{0} is being reloaded. Try again in a moment." xml:space="preserve">
     <value>{0} yeniden yükleniyor. Biraz sonra yeniden deneyin.</value>
   </data>
+  <data name="{0} is certified, so changing it makes viewers report it as altered." xml:space="preserve">
+    <value>{0} onaylı, bu yüzden değiştirmek görüntüleyicilerde değiştirilmiş olarak görünür.</value>
+  </data>
   <data name="{0} is encrypted for the holders of certain certificates. Pick the certificate that can open it." xml:space="preserve">
     <value>{0}, belirli sertifikaların sahipleri için şifrelenmiş. Onu açabilen sertifikayı seçin.</value>
   </data>
@@ -9016,8 +9037,14 @@
   <data name="{0} is read-only. You can work on it, but save your changes with Save as." xml:space="preserve">
     <value>{0} salt okunur. Üzerinde çalışabilirsiniz, ancak değişikliklerinizi Farklı kaydet ile kaydedin.</value>
   </data>
+  <data name="{0} is signed, so changing it breaks the signatures." xml:space="preserve">
+    <value>{0} imzalı, bu yüzden değiştirmek imzaları bozar.</value>
+  </data>
   <data name="{0} is signed. Saving it compact writes it again and the signatures no longer hold. Save and Save as keep them." xml:space="preserve">
     <value>{0} imzalı. Sıkıştırılmış kaydetmek dosyayı yeniden yazar ve imzalar geçerliliğini yitirir. Kaydet ve Farklı kaydet imzaları korur.</value>
+  </data>
+  <data name="{0} is still loading. Try again in a moment." xml:space="preserve">
+    <value>{0} hâlâ yükleniyor. Biraz sonra yeniden deneyin.</value>
   </data>
   <data name="{0} is the file this copy would replace. Pick another name." xml:space="preserve">
     <value>Bu kopya {0} dosyasının yerine yazılırdı. Başka bir ad seçin.</value>

@@ -16,6 +16,7 @@ internal sealed class StageHost : IToolHost
     public List<Problem> Problems { get; } = [];
     public List<string> Opened { get; } = [];
     public List<string> Notices { get; } = [];
+    public List<string> NoticeTexts { get; } = [];
     public List<NoticeAction?> Actions { get; } = [];
     public string Status { get; private set; } = "";
     public List<DocumentTab> Documents { get; } = [];
@@ -47,6 +48,7 @@ internal sealed class StageHost : IToolHost
     public void ShowNotice(string title, string text, NoticeAction? action = null)
     {
         Notices.Add(title);
+        NoticeTexts.Add(text);
         Actions.Add(action);
     }
 

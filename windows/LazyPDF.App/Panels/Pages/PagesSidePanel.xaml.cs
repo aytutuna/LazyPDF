@@ -341,12 +341,7 @@ public partial class PagesSidePanel : ToolPanel
     {
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
-        var failed = new Problem(Loc.T("Pages not extracted"), Loc.T("The pages could not be copied into a new file. Try fewer pages."));
-        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Extracting pages"), failed) is not var (bytes, skipped, dropped)) return;
-        if (!await host.OpenNewAsync(bytes, Loc.T("{0} extract.pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title)))) return;
-        PageJobs.NoteSkippedAttachments(host, skipped, dropped);
-        host.SetStatus(Loc.Plural(pages.Count, "{0} page extracted", "{0} pages extracted", pages.Count));
-        CopyRules.NoteUnprotected(tab.Document, host);
+        await PageTransfer.ToNewTabAsync(new PagePayload(tab, [.. pages], tab.Revision), host, files: true);
     }
 
     private void Blank_Click(object sender, RoutedEventArgs e) => InsertBlank();
