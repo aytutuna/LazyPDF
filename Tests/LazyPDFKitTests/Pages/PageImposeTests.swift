@@ -80,6 +80,52 @@ final class PageImposeTests: XCTestCase {
         XCTAssertEqual(result.document.pages[0].mediaBox, PdfRect(0, 0, 400, 300))
     }
 
+    // Page numbers in left to right order on one side.
+    private func across(_ document: PdfDocument, _ side: Int) throws -> String {
+        try placed(document, side).sorted { $0.box.left < $1.box.left }.map { String($0.page) }.joined(separator: ",")
+    }
+
+    func test_bookletRightToLeftSwapsTheCellsOfEachSide() throws {
+        let options = ImposeOptions(mode: .booklet, sheetWidth: 300, sheetHeight: 400, rightToLeft: true)
+        let document = try PageOperations.impose(try PageTestFiles.open(8), Array(0..<8), options).document
+        XCTAssertEqual(try sheets(document), "8,1 | 2,7 | 6,3 | 4,5")
+        XCTAssertEqual(try across(document, 0), "1,8")
+        XCTAssertEqual(try across(document, 1), "7,2")
+        XCTAssertEqual(try across(document, 2), "3,6")
+        XCTAssertEqual(try across(document, 3), "5,4")
+    }
+
+    func test_nUpRightToLeftFillsColumnsFromTheRight() throws {
+        let options = ImposeOptions(mode: .nUp, sheetWidth: 600, sheetHeight: 400, perSheet: 4, rightToLeft: true)
+        let document = try PageOperations.impose(try PageTestFiles.open(4), [0, 1, 2, 3], options).document
+        let cells = try placed(document, 0)
+        XCTAssertEqual(cells.map { $0.page }, [1, 2, 3, 4])
+        XCTAssertTrue(cells[0].box.left > cells[1].box.left)
+        XCTAssertTrue(cells[2].box.left > cells[3].box.left)
+        XCTAssertTrue(cells[0].box.bottom > cells[2].box.bottom)
+        XCTAssertEqual(cells[0].box.left, cells[2].box.left, accuracy: 0.001)
+    }
+
+    func test_leftToRightIsTheDefault() throws {
+        let document = try nUp(try PageTestFiles.open(4), 4).document
+        let cells = try placed(document, 0)
+        XCTAssertTrue(cells[0].box.left < cells[1].box.left)
+    }
+
+    func test_aCancelledImposeThrows() async throws {
+        let source = try PageTestFiles.open(3)
+        let task = Task { () throws -> ImposeResult in
+            while !Task.isCancelled { await Task.yield() }
+            return try PageOperations.impose(source, [0, 1, 2], ImposeOptions(mode: .nUp, sheetWidth: 600, sheetHeight: 400))
+        }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+    }
+
     func test_bookletPadsWithBlanksToAMultipleOfFour() throws {
         let result = try booklet(try PageTestFiles.open(5))
         XCTAssertEqual(result.sheets, 4)

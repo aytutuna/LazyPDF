@@ -24,14 +24,17 @@ public struct ImposeOptions {
     /// Space in points between pages and from the pages to the sheet edge.
     public var gap: Double
     public var border: Bool
+    /// Mirrors each row: `nUp` fills columns from the right, and a booklet swaps the two pages of every side.
+    public var rightToLeft: Bool
 
-    public init(mode: ImposeMode, sheetWidth: Double, sheetHeight: Double, perSheet: Int = 2, gap: Double = 0, border: Bool = false) {
+    public init(mode: ImposeMode, sheetWidth: Double, sheetHeight: Double, perSheet: Int = 2, gap: Double = 0, border: Bool = false, rightToLeft: Bool = false) {
         self.mode = mode
         self.sheetWidth = sheetWidth
         self.sheetHeight = sheetHeight
         self.perSheet = perSheet
         self.gap = gap
         self.border = border
+        self.rightToLeft = rightToLeft
     }
 }
 
@@ -121,7 +124,9 @@ extension PageOperations {
                 let shownWidth = (sideways ? h : w) * unit, shownHeight = (sideways ? w : h) * unit
                 let fit = min(cellWidth / shownWidth, cellHeight / shownHeight)
                 let placedWidth = shownWidth * fit, placedHeight = shownHeight * fit
-                let column = slot % columns, row = slot / columns
+                var column = slot % columns
+                let row = slot / columns
+                if options.rightToLeft { column = columns - 1 - column }
                 let x = gap + Double(column) * (cellWidth + gap) + (cellWidth - placedWidth) / 2
                 let y = height - gap - Double(row + 1) * cellHeight - Double(row) * gap + (cellHeight - placedHeight) / 2
                 // Turns the crop box upright with its lower-left corner at the origin.
