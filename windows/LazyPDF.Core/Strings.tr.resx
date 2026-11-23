@@ -406,6 +406,9 @@
   <data name="Add pictures" xml:space="preserve">
     <value>Resim ekle</value>
   </data>
+  <data name="Add point" xml:space="preserve">
+    <value>Nokta ekle</value>
+  </data>
   <data name="Add property" xml:space="preserve">
     <value>Özellik ekle</value>
   </data>
@@ -786,6 +789,9 @@
   </data>
   <data name="Balanced" xml:space="preserve">
     <value>Dengeli</value>
+  </data>
+  <data name="Bar" xml:space="preserve">
+    <value>Çubuk</value>
   </data>
   <data name="Batch" xml:space="preserve">
     <value>Toplu işlem</value>
@@ -1242,6 +1248,9 @@
   </data>
   <data name="Choose Edit fields to add some, or to find the blanks of a form." xml:space="preserve">
     <value>Alan eklemek veya formun boşluklarını bulmak için Alanları düzenle sekmesini seçin.</value>
+  </data>
+  <data name="Choose Move marks to move or add a point from the keyboard." xml:space="preserve">
+    <value>Klavyeyle nokta taşımak ya da eklemek için İşaretleri taşı aracını seçin.</value>
   </data>
   <data name="Choose a PFX file" xml:space="preserve">
     <value>PFX dosyası seç</value>
@@ -2854,6 +2863,9 @@
   <data name="Height in mm" xml:space="preserve">
     <value>Yükseklik (mm)</value>
   </data>
+  <data name="Help" xml:space="preserve">
+    <value>Yardım</value>
+  </data>
   <data name="Hidden layers" xml:space="preserve">
     <value>Gizli katmanlar</value>
   </data>
@@ -2982,6 +2994,9 @@
   </data>
   <data name="Ink" xml:space="preserve">
     <value>Mürekkep</value>
+  </data>
+  <data name="Insert" xml:space="preserve">
+    <value>Ekle</value>
   </data>
   <data name="Insert and replace" xml:space="preserve">
     <value>Ekle ve değiştir</value>
@@ -3120,6 +3135,9 @@
   </data>
   <data name="Keeps the proof that the certificate was good. The signature can then be checked after it expires. It asks the servers named in the certificates." xml:space="preserve">
     <value>Sertifikanın geçerli olduğunun kanıtını saklar. İmza, sertifikanın süresi dolduktan sonra da denetlenebilir. Sertifikalarda adı geçen sunuculara sorar.</value>
+  </data>
+  <data name="Key" xml:space="preserve">
+    <value>Anahtar</value>
   </data>
   <data name="Key cannot be used" xml:space="preserve">
     <value>Anahtar kullanılamıyor</value>
@@ -3723,6 +3741,9 @@
   </data>
   <data name="New page" xml:space="preserve">
     <value>Yeni sayfa</value>
+  </data>
+  <data name="New paragraph" xml:space="preserve">
+    <value>Yeni paragraf</value>
   </data>
   <data name="New: {0}" xml:space="preserve">
     <value>Yeni: {0}</value>
@@ -4660,6 +4681,9 @@
   <data name="Paper" xml:space="preserve">
     <value>Kağıt</value>
   </data>
+  <data name="Paragraph" xml:space="preserve">
+    <value>Paragraf</value>
+  </data>
   <data name="Paragraph changed." xml:space="preserve">
     <value>Paragraf değişti.</value>
   </data>
@@ -4894,6 +4918,12 @@
   <data name="Plain text (.txt)" xml:space="preserve">
     <value>Düz metin (.txt)</value>
   </data>
+  <data name="Point {0} moved" xml:space="preserve">
+    <value>{0}. nokta taşındı</value>
+  </data>
+  <data name="Point {0} picked" xml:space="preserve">
+    <value>{0}. nokta seçildi</value>
+  </data>
   <data name="Polygon" xml:space="preserve">
     <value>Çokgen</value>
   </data>
@@ -4923,6 +4953,12 @@
   </data>
   <data name="Present (Ctrl+L)" xml:space="preserve">
     <value>Sunum yap (Ctrl+L)</value>
+  </data>
+  <data name="Press Enter on a point to pick it, move it with the arrow keys, then press Enter again." xml:space="preserve">
+    <value>Bir noktayı seçmek için üzerinde Enter'a basın, ok tuşlarıyla taşıyın, sonra yeniden Enter'a basın.</value>
+  </data>
+  <data name="Press Enter on a point to pick it, move it with the arrow keys, then press Enter again. Press Enter on a side to add a point, or Delete on a picked point to remove it." xml:space="preserve">
+    <value>Bir noktayı seçmek için üzerinde Enter'a basın, ok tuşlarıyla taşıyın, sonra yeniden Enter'a basın. Nokta eklemek için bir kenarda Enter'a basın, seçili noktayı kaldırmak için Delete'e basın.</value>
   </data>
   <data name="Preview" xml:space="preserve">
     <value>Önizleme</value>
@@ -5242,6 +5278,9 @@
   <data name="Remove picture" xml:space="preserve">
     <value>Resmi kaldır</value>
   </data>
+  <data name="Remove point" xml:space="preserve">
+    <value>Noktayı kaldır</value>
+  </data>
   <data name="Remove private keys" xml:space="preserve">
     <value>Özel anahtarları kaldır</value>
   </data>
@@ -5454,6 +5493,12 @@
   </data>
   <data name="Results go to" xml:space="preserve">
     <value>Sonuçların gideceği yer</value>
+  </data>
+  <data name="Reversed closed arrow" xml:space="preserve">
+    <value>Ters kapalı ok</value>
+  </data>
+  <data name="Reversed open arrow" xml:space="preserve">
+    <value>Ters açık ok</value>
   </data>
   <data name="Review" xml:space="preserve">
     <value>Gözden geçir</value>
@@ -6196,6 +6241,9 @@
   <data name="Start at" xml:space="preserve">
     <value>Başlangıç</value>
   </data>
+  <data name="Start head" xml:space="preserve">
+    <value>Başlangıç ucu</value>
+  </data>
   <data name="Start over" xml:space="preserve">
     <value>Baştan başla</value>
   </data>
@@ -6534,6 +6582,9 @@
   </data>
   <data name="That picture is too large. Pick a smaller one." xml:space="preserve">
     <value>Bu resim çok büyük. Daha küçük bir resim seçin.</value>
+  </data>
+  <data name="That point cannot be removed." xml:space="preserve">
+    <value>Bu nokta kaldırılamaz.</value>
   </data>
   <data name="That saved signature could not be read. Choose another." xml:space="preserve">
     <value>Kayıtlı imza okunamadı. Başka bir tane seçin.</value>

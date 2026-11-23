@@ -1032,4 +1032,49 @@ final class ViewerModelTests: XCTestCase {
         viewer.scrollTo(x: 0, y: 200)
         XCTAssertEqual(redraws, 1)
     }
+
+    func test_aToolCanOpenTheCrossAtAPointAndHearsOfEscape() async throws {
+        let (viewer, _) = try open()
+        let tool = RecordingTool()
+        viewer.pointerTool = tool
+        var ended = 0
+        viewer.placementEnded = { ended += 1 }
+
+        viewer.beginPlacement(page: 0, point: ViewPoint(120, 80))
+
+        XCTAssertEqual(viewer.placement?.point, ViewPoint(120, 80))
+        XCTAssertTrue(viewer.placeWithKeys(.escape))
+        XCTAssertNil(viewer.placement)
+        XCTAssertEqual(ended, 1)
+    }
+
+    func test_enterOnAnOpenedCrossClicksThereWithoutAnEnd() async throws {
+        let (viewer, _) = try open()
+        let tool = RecordingTool()
+        viewer.pointerTool = tool
+        var ended = 0
+        viewer.placementEnded = { ended += 1 }
+
+        viewer.beginPlacement(page: 0, point: ViewPoint(120, 80))
+        viewer.placeWithKeys(.enter)
+
+        XCTAssertEqual(tool.calls.map(\.kind), ["press", "release"])
+        XCTAssertEqual(tool.calls[0].pointer.point, ViewPoint(120, 80))
+        XCTAssertEqual(ended, 0)
+    }
+
+    func test_cancellingTheCrossTellsTheToolOnlyWhenOneWasOpen() async throws {
+        let (viewer, _) = try open()
+        viewer.pointerTool = RecordingTool()
+        var ended = 0
+        viewer.placementEnded = { ended += 1 }
+
+        viewer.cancelPlacement()
+        XCTAssertEqual(ended, 0)
+        viewer.beginPlacement(page: 0, point: ViewPoint(10, 10))
+        viewer.cancelPlacement()
+
+        XCTAssertEqual(ended, 1)
+        XCTAssertNil(viewer.placement)
+    }
 }

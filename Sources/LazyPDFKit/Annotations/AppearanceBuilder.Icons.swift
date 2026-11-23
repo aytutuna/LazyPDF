@@ -18,11 +18,41 @@ extension AppearanceBuilder {
             return c
         }
         c.w.rect(0.5, 0.5, w - 1, h - 1).fillAndStroke()
+        if noteGlyph(c, a.iconName, w, h) { return c }
         for i in 0..<3 {
             let y = h * (0.72 - 0.2 * Double(i))
             c.w.moveTo(w * 0.2, y).lineTo(w * 0.8, y).stroke()
         }
         return c
+    }
+
+    private func noteGlyph(_ c: AppearanceCanvas, _ name: String?, _ w: Double, _ h: Double) -> Bool {
+        switch name {
+        case "Help":
+            c.w.moveTo(w * 0.35, h * 0.68).curveTo(w * 0.35, h * 0.88, w * 0.65, h * 0.88, w * 0.65, h * 0.68)
+                .curveTo(w * 0.65, h * 0.55, w * 0.5, h * 0.52, w * 0.5, h * 0.38).stroke()
+            c.color(Self.black, stroke: false)
+            c.w.rect(w * 0.45, h * 0.16, w * 0.1, h * 0.1).fill()
+        case "Insert":
+            c.w.moveTo(w * 0.2, h * 0.2).lineTo(w * 0.5, h * 0.8).lineTo(w * 0.8, h * 0.2).stroke()
+        case "Key":
+            c.w.moveTo(w * 0.15, h * 0.5).lineTo(w * 0.3, h * 0.67).lineTo(w * 0.45, h * 0.5).lineTo(w * 0.3, h * 0.33).close().stroke()
+            c.w.moveTo(w * 0.45, h * 0.5).lineTo(w * 0.85, h * 0.5).stroke()
+            c.w.moveTo(w * 0.68, h * 0.5).lineTo(w * 0.68, h * 0.32).stroke()
+            c.w.moveTo(w * 0.82, h * 0.5).lineTo(w * 0.82, h * 0.32).stroke()
+        case "NewParagraph":
+            c.w.moveTo(w * 0.75, h * 0.8).lineTo(w * 0.75, h * 0.4).lineTo(w * 0.35, h * 0.4).stroke()
+            c.color(Self.black, stroke: false)
+            c.w.moveTo(w * 0.18, h * 0.4).lineTo(w * 0.38, h * 0.58).lineTo(w * 0.38, h * 0.22).close().fill()
+        case "Paragraph":
+            c.w.moveTo(w * 0.7, h * 0.8).lineTo(w * 0.45, h * 0.8).curveTo(w * 0.2, h * 0.8, w * 0.2, h * 0.46, w * 0.45, h * 0.46)
+                .lineTo(w * 0.55, h * 0.46).stroke()
+            c.w.moveTo(w * 0.55, h * 0.2).lineTo(w * 0.55, h * 0.8).stroke()
+            c.w.moveTo(w * 0.7, h * 0.2).lineTo(w * 0.7, h * 0.8).stroke()
+        default:
+            return false
+        }
+        return true
     }
 
     func caret(_ a: PdfAnnotation) -> AppearanceCanvas {

@@ -198,4 +198,25 @@ final class FreeTextTests: XCTestCase {
         XCTAssertTrue(note.flags.contains(.noZoom))
         XCTAssertTrue(AnnotationFixtures.operators(try AnnotationFixtures.appearance(document, note)).contains("B"))
     }
+
+    func test_everyNoteIconIsDrawnDifferentlyInsideTheRect() throws {
+        let (document, writer, page) = try start()
+        var seen = Set<[UInt8]>()
+        for name in ["Note", "Comment", "Help", "Insert", "Key", "NewParagraph", "Paragraph"] {
+            let note = try writer.addNote(page, PdfRect(100, 700, 120, 720), AnnotationInfo(author: "A", contents: "x"), icon: name)
+            XCTAssertTrue(seen.insert(try document.data(try AnnotationFixtures.normal(document, note))).inserted, name)
+            for (path, _) in try AnnotationFixtures.draw(document, note).paths {
+                XCTAssertTrue(path.bounds.left >= -0.01 && path.bounds.bottom >= -0.01, name)
+                XCTAssertTrue(path.bounds.right <= note.rect.width + 0.01 && path.bounds.top <= note.rect.height + 0.01, name)
+            }
+        }
+    }
+
+    func test_anotherNoteIconNameIsKeptWhenTheLookChanges() throws {
+        let (document, writer, page) = try start()
+        let note = try writer.addNote(page, PdfRect(100, 700, 120, 720), AnnotationInfo(author: "A", contents: "x"), icon: "Star")
+        _ = try writer.setColor(note, [1, 0, 0])
+        let reread = PdfAnnotations.read(try AnnotationFixtures.reopen(document), document.pages[0])
+        XCTAssertEqual(reread.first?.iconName, "Star")
+    }
 }

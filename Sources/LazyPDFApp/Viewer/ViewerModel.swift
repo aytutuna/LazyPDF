@@ -86,6 +86,7 @@ public final class ViewerModel: DocumentViewer {
 
     /// A pointer tool was taken or given back, for a view that handles touches differently while one is set.
     @ObservationIgnored public var onToolChange: (() -> Void)?
+    @ObservationIgnored public var placementEnded: (() -> Void)?
 
     public internal(set) var tab: DocumentTab?
 

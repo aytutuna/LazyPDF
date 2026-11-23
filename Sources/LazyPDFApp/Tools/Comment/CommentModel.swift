@@ -20,6 +20,19 @@ public struct MarkPaletteItem: Identifiable {
 public struct SelectedMark: Equatable {
     public let title: String
     public let canEditText: Bool
+
+    /// A line whose heads can change.
+    public var canHead = false
+    public var canFill = false
+    public var canDash = false
+    public var isNote = false
+
+    /// A mark another app drew that would lose parts if it were drawn again: only moving and deleting are left to it.
+    public var isForeign = false
+
+    /// A polygon the app drew, whose corners can come and go; it must keep three.
+    public var canAddPoint = false
+    public var canRemovePoint = false
 }
 
 /// A mark of the page in view, listed while Move marks is the tool, so that a person without the pointer can pick one.
@@ -43,6 +56,14 @@ public final class CommentModel: ToolPanelModel {
     public private(set) var fontSize = 12.0
     public private(set) var bold = false
     public private(set) var italic = false
+    public private(set) var fill: [Double]?
+    public private(set) var dash = LineStyle.solid
+    public private(set) var head = LineEnding.none
+    public private(set) var startHead = LineEnding.none
+    public private(set) var icon = "Note"
+
+    /// The corner of the selected polygon that was picked, for the Remove point button; -1 when none.
+    public private(set) var pickedPoint = -1
     public private(set) var stampName = AnnotationText.stampLabel(AnnotationText.standardStamps[0])
     public private(set) var allowed = true
     public private(set) var hint = ""
@@ -75,11 +96,15 @@ public final class CommentModel: ToolPanelModel {
     @ObservationIgnored private let touch: Bool
     @ObservationIgnored private var settling: Task<Void, Never>?
     @ObservationIgnored private var unsettled = Set<LookPart>()
+    @ObservationIgnored private var pendingMark: PdfAnnotation?
+    @ObservationIgnored private var pendingLook: MarkStyle?
     @ObservationIgnored private var loading = false
     @ObservationIgnored private var drawingLook: MarkStyle?
+    @ObservationIgnored private var headTool: MarkTool?
+    @ObservationIgnored private var toolHeads: [MarkTool: (start: LineEnding, end: LineEnding)] = [.line: (.none, .none), .arrow: (.none, .openArrow)]
 
     enum LookPart {
-        case colour, width, opacity, font
+        case colour, width, opacity, font, fill, dash, startHead, head, icon
     }
 
     /// `touch` is set for a phone or tablet, where the hints speak of taps and the Finish button, not of double clicks.
@@ -117,6 +142,34 @@ public final class CommentModel: ToolPanelModel {
         ]
     }
 
+    /// The fills of the list: none, the colours without Automatic and Black, then white and black.
+    public static var fills: [(name: String, rgb: [Double]?)] {
+        [(L10n.t("None"), nil)] + Array(colours[1..<7]) + [(L10n.t("White"), [1, 1, 1]), colours[7]]
+    }
+
+    public static var heads: [(name: String, value: LineEnding)] {
+        [(L10n.t("None"), .none), (L10n.t("Open arrow"), .openArrow), (L10n.t("Closed arrow"), .closedArrow),
+         (L10n.t("Reversed open arrow"), .rOpenArrow), (L10n.t("Reversed closed arrow"), .rClosedArrow), (L10n.t("Circle"), .circle),
+         (L10n.t("Square"), .square), (L10n.t("Diamond"), .diamond), (L10n.t("Slash"), .slash), (L10n.t("Bar"), .butt)]
+    }
+
+    /// The seven names the standard gives a note's icon.
+    public static var icons: [(name: String, value: String)] {
+        [(L10n.t("Note"), "Note"), (L10n.t("Comment"), "Comment"), (L10n.t("Help"), "Help"), (L10n.t("Insert"), "Insert"),
+         (L10n.t("Key"), "Key"), (L10n.t("New paragraph"), "NewParagraph"), (L10n.t("Paragraph"), "Paragraph")]
+    }
+
+    public static var lines: [(name: String, value: LineStyle)] {
+        [(L10n.t("Solid"), .solid), (L10n.t("Dashed"), .dashed), (L10n.t("Dotted"), .dotted)]
+    }
+
+    /// Whether `rgb` is the fill the next mark takes, within the tolerance the list is matched by.
+    public func isFill(_ rgb: [Double]?) -> Bool {
+        guard let fill else { return rgb == nil }
+        guard let rgb, rgb.count == fill.count else { return false }
+        return zip(rgb, fill).allSatisfy { abs($0 - $1) < 0.03 }
+    }
+
     /// The labels of the standard stamps, the choices of the stamp text.
     public var stamps: [String] { AnnotationText.standardStamps.map(AnnotationText.stampLabel) }
 
@@ -134,6 +187,15 @@ public final class CommentModel: ToolPanelModel {
 
     public var showsStamp: Bool { tool == .stamp }
 
+    // The controls a mark or the drawing tool takes; the tool's own are shown while nothing is selected.
+    public var showsFill: Bool { selected?.canFill ?? Marker.takesFill(tool) }
+    public var showsDash: Bool { selected?.canDash ?? Marker.takesLine(tool) }
+    public var showsHeads: Bool { selected?.canHead ?? (tool == .line || tool == .arrow) }
+    public var showsIcon: Bool { selected?.isNote ?? (tool == .note) }
+
+    /// The selected mark would lose parts if it were drawn again, so the look controls are off.
+    public var looksLocked: Bool { selected?.isForeign == true }
+
     public var action: ToolAction? {
         ToolAction(L10n.t("Flatten comments"), symbol: "square.stack.3d.down.right",
                    canRun: { [self] in allowed && !MarkWork.shared.running && flattenable > 0 }, run: { [self] in await flatten() })
@@ -144,9 +206,26 @@ public final class CommentModel: ToolPanelModel {
         self.viewer = viewer
         self.host = host
         let edit = EditTool(viewer: viewer, marker: { [unowned self] in self.makeMarker(tab) })
-        edit.selectionChanged = { [weak self] in self?.showSelected() }
+        edit.selectionChanged = { [weak self] in
+            self?.flushLook()
+            self?.showSelected()
+        }
         edit.moved = { [weak self] mark, dx, dy in _ = self?.change(L10n.t("Move")) { _ = try $0.move(mark, dx, dy) } }
         edit.resized = { [weak self] mark, box in _ = self?.change(L10n.t("Resize")) { _ = try $0.resize(mark, box) } }
+        edit.vertexMoved = { [weak self] mark, index, to in
+            guard let self else { return }
+            if !self.canChange {
+                self.editTool?.redraw()
+            } else if self.change(L10n.t("Move point"), { _ = try $0.movePoint(mark, index, to) }) {
+                self.host?.setStatus(L10n.t("Point {0} moved", index + 1))
+            }
+        }
+        edit.vertexAdded = { [weak self] mark, after, to in
+            self?.change(L10n.t("Add point")) { _ = try $0.insertPoint(mark, after: after, at: to) }
+        }
+        edit.vertexRemoved = { [weak self] mark, index in self?.removePoint(mark, index) }
+        edit.vertexPicked = { [weak self] index in self?.host?.setStatus(L10n.t("Point {0} picked", index + 1)) }
+        edit.pickChanged = { [weak self] in self?.pickedPoint = self?.editTool?.pickedVertex ?? -1 }
         edit.editRequested = { [weak self] mark in self?.editText(of: mark) }
         edit.deleteRequested = { [weak self] in self?.deleteSelected() }
         editTool = edit
@@ -180,9 +259,7 @@ public final class CommentModel: ToolPanelModel {
 
     public func detach() {
         host?.takesSelectionMarks(nil)
-        settling?.cancel()
-        settling = nil
-        unsettled = []
+        flushLook()
         field?.finish()
         watch?.stop()
         watch = nil
@@ -197,6 +274,7 @@ public final class CommentModel: ToolPanelModel {
         active = nil
         field = nil
         selected = nil
+        pickedPoint = -1
         marks = []
         canFinishShape = false
         shapeStarted = false
@@ -206,6 +284,7 @@ public final class CommentModel: ToolPanelModel {
     }
 
     public func handIn() -> Bool {
+        flushLook()
         field?.finish()
         return true
     }
@@ -222,7 +301,8 @@ public final class CommentModel: ToolPanelModel {
         var font = FontStyles.regular
         if bold { font.insert(.bold) }
         if italic { font.insert(.italic) }
-        return MarkStyle(color: color, width: width, opacity: opacity / 100, family: family, size: min(max(fontSize, 4), 144), font: font)
+        return MarkStyle(color: color, width: width, opacity: opacity / 100, family: family, size: min(max(fontSize, 4), 144), font: font,
+                         fill: fill, dash: dash, head: head, startHead: startHead, icon: icon)
     }
 
     func countFlattenable(_ tab: DocumentTab) {
@@ -254,6 +334,11 @@ public final class CommentModel: ToolPanelModel {
     private func choose(setMode: Bool = true) {
         guard let viewer, let edit = editTool else { return }
         field?.finish()
+        if let leaving = headTool {
+            let heads = drawingLook ?? currentStyle()
+            toolHeads[leaving] = (heads.startHead, heads.head)
+            headTool = nil
+        }
         if tool != .edit { edit.clear() }
         drawTool?.reset()
         drawTool = nil
@@ -284,6 +369,13 @@ public final class CommentModel: ToolPanelModel {
             : !touch && [.note, .textBox, .stamp, .attach].contains(tool) ? "\(sentence) \(L10n.t("Or press Enter on the page."))" : sentence
         if touch && allowed && tool != .selectText && tool != .edit { hint += " " + L10n.t("Two fingers scroll the page.") }
         showSelected()
+        if let kept = toolHeads[tool] {
+            loading = true
+            startHead = kept.start
+            head = kept.end
+            loading = false
+            headTool = tool
+        }
     }
 
     public func setStampName(_ name: String) {
@@ -325,35 +417,76 @@ public final class CommentModel: ToolPanelModel {
         lookChanged(.font)
     }
 
-    // The sliders settle for a moment before they change the selected mark, so a drag is one undo step.
+    public func setFill(_ rgb: [Double]?) {
+        fill = rgb
+        lookChanged(.fill)
+    }
+
+    public func setDash(_ style: LineStyle) {
+        dash = style
+        lookChanged(.dash)
+    }
+
+    public func setStartHead(_ ending: LineEnding) {
+        startHead = ending
+        lookChanged(.startHead)
+    }
+
+    public func setHead(_ ending: LineEnding) {
+        head = ending
+        lookChanged(.head)
+    }
+
+    public func setIcon(_ name: String) {
+        icon = name
+        lookChanged(.icon)
+    }
+
+    // The sliders settle for a moment before they change the selected mark, so a drag is one undo step. The mark and the look are
+    // kept as chosen, so a change that waits is still for this mark when it is written.
     private func lookChanged(_ part: LookPart) {
-        if loading || editTool?.current == nil { return }
+        guard !loading, let mark = editTool?.current else { return }
+        if pendingMark == nil { pendingMark = mark }
+        var look = currentStyle()
+        if look.family.isEmpty { look.family = Marker.textOf(mark).family }
+        pendingLook = look
         unsettled.insert(part)
         settling?.cancel()
         settling = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 350_000_000)
             if Task.isCancelled { return }
-            self?.settle()
+            self?.flushLook()
         }
     }
 
-    /// Writes the look changes waiting for the slider to settle into the selected mark.
-    func settle() {
+    /// Writes the look changes that wait for the sliders to settle, at once, into the mark they were made on.
+    func flushLook() {
         settling?.cancel()
         settling = nil
         let pending = unsettled
         unsettled = []
-        guard let mark = editTool?.current, tab != nil else { return }
-        var look = currentStyle()
-        if look.family.isEmpty { look.family = Marker.textOf(mark).family }
+        let (target, look) = (pendingMark, pendingLook)
+        pendingMark = nil
+        pendingLook = nil
+        guard let target, let number = target.reference?.number, let look, !pending.isEmpty, let tab else { return }
+        guard let mark = makeMarker(tab).find(target.pageIndex, number) else { return }
         _ = change(L10n.t("Change look")) { m in
             var current = mark
             if pending.contains(.colour), let rgb = look.color { current = try m.recolor(current, rgb) }
             if pending.contains(.font), current.type == .freeText, Self.differs(Marker.textOf(current), look) { current = try m.restyle(current, look) }
+            if pending.contains(.fill), Marker.takesFill(current) { current = try m.setFill(current, look.fill) }
             if pending.contains(.width) { current = try m.setWidth(current, look.width) }
+            if pending.contains(.dash), Marker.takesLine(current) { current = try m.setDash(current, look.dash) }
+            if pending.contains(.startHead) || pending.contains(.head), Self.hasHead(current) {
+                current = try m.setEnding(current, pending.contains(.startHead) ? look.startHead : current.startEnding,
+                                          pending.contains(.head) ? look.head : current.endEnding)
+            }
+            if pending.contains(.icon), current.type == .text { current = try m.setIcon(current, look.icon) }
             if pending.contains(.opacity) { _ = try m.setOpacity(current, look.opacity) }
         }
     }
+
+    private static func hasHead(_ a: PdfAnnotation) -> Bool { a.type == .line && !Marker.isFixed(a) }
 
     private static func differs(_ text: FreeTextStyle, _ look: MarkStyle) -> Bool {
         text.family != look.family || text.size != look.size || text.font != look.font
@@ -385,6 +518,11 @@ public final class CommentModel: ToolPanelModel {
                 width = back.width
                 opacity = back.opacity * 100
                 color = back.color
+                fill = back.fill
+                dash = back.dash
+                startHead = back.startHead
+                head = back.head
+                icon = back.icon
                 family = back.family
                 fontSize = back.size
                 bold = back.font.contains(.bold)
@@ -397,7 +535,10 @@ public final class CommentModel: ToolPanelModel {
         if drawingLook == nil { drawingLook = currentStyle() }
         let text = mark.type == .freeText ? Marker.textOf(mark) : nil
         selected = SelectedMark(title: L10n.t("Selected: {0}", AnnotationText.kindName(mark.type)),
-                                canEditText: mark.type == .text || mark.type == .freeText || !(mark.contents ?? "").isEmpty)
+                                canEditText: mark.type == .text || mark.type == .freeText || !(mark.contents ?? "").isEmpty,
+                                canHead: Self.hasHead(mark), canFill: Marker.takesFill(mark), canDash: Marker.takesLine(mark),
+                                isNote: mark.type == .text, isForeign: Marker.foreign(mark), canAddPoint: Marker.plainPolygon(mark),
+                                canRemovePoint: Marker.plainPolygon(mark) && mark.vertices.count / 2 > 3)
         loading = true
         width = min(max(mark.border.width, 0.5), 12)
         opacity = min(max((mark.opacity * 20).rounded(.toNearestOrEven) * 5, 10), 100)
@@ -409,6 +550,11 @@ public final class CommentModel: ToolPanelModel {
         }
         // The swatch that matches the mark's colour is checked, and becomes the colour the next mark takes.
         color = Marker.rgb(of: text == nil ? mark.color : (text?.textColor ?? [0]))
+        fill = Marker.rgb(of: mark.interiorColor)
+        dash = Marker.lineOf(mark)
+        startHead = mark.startEnding
+        head = mark.endEnding
+        if mark.type == .text { icon = mark.iconName ?? "Note" }
         loading = false
     }
 }

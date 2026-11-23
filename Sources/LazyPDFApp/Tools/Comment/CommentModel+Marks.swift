@@ -19,6 +19,9 @@ extension CommentModel {
             restore(tab)
             host.showProblem(Problem(L10n.t("Text not drawn"), AnnotationText.noFont))
             return false
+        } catch MarkError.badPoint {
+            restore(tab)
+            return false
         } catch is ArgumentException {
             restore(tab)
             host.showProblem(Problem(L10n.t("Nothing to draw"), L10n.t("That mark has no area. Drag farther and try again.")))
@@ -146,6 +149,39 @@ extension CommentModel {
         compose(tab, mark.pageIndex, area, mark.type == .freeText ? Marker.textOf(mark).size : 12, mark.contents ?? "") { [self] text in
             text == (mark.contents ?? "") || change(L10n.t("Edit text")) { _ = try $0.setText(mark, text) }
         }
+    }
+
+    // Delete on a picked corner takes the corner away, not the mark.
+    func removePoint(_ mark: PdfAnnotation, _ index: Int) {
+        guard let tab, canChange else { return }
+        if makeMarker(tab).canRemovePoint(mark, index) {
+            change(L10n.t("Remove point")) { _ = try $0.removePoint(mark, index) }
+        } else {
+            host?.setStatus(L10n.t("That point cannot be removed."))
+        }
+    }
+
+    /// Adds a corner to the selected polygon: in the middle of the side after the picked corner, or of the longest side when none
+    /// is picked. The new corner is picked, so it can be dragged.
+    public func addPoint() {
+        guard canChange, let tab, let edit = editTool, let mark = edit.current, Marker.plainPolygon(mark),
+              let corners = makeMarker(tab).pointsOf(mark) else { return }
+        func gap(_ i: Int) -> Double {
+            let a = corners[i], b = corners[(i + 1) % corners.count]
+            return hypot(b.x - a.x, b.y - a.y)
+        }
+        let after = edit.pickedVertex >= 0 && edit.pickedVertex < corners.count ? edit.pickedVertex : corners.indices.max { gap($0) < gap($1) } ?? 0
+        let a = corners[after], b = corners[(after + 1) % corners.count]
+        let middle = ViewPoint((a.x + b.x) / 2, (a.y + b.y) / 2)
+        if change(L10n.t("Add point"), { _ = try $0.insertPoint(mark, after: after, at: middle) }) { edit.pickAfterRefresh(after + 1) }
+    }
+
+    /// Takes the picked corner from the selected polygon; nothing happens when none is picked.
+    public func removePickedPoint() {
+        guard let edit = editTool, let mark = edit.current, edit.pickedVertex >= 0 else { return }
+        let index = edit.pickedVertex
+        edit.clearPick()
+        removePoint(mark, index)
     }
 
     public func deleteSelected() {

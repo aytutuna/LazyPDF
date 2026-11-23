@@ -428,7 +428,7 @@ final class CommentModelTests: XCTestCase {
         rig.model.setWidth(6)
         rig.model.setWidth(7)
         XCTAssertEqual(rig.tab.revision, before)
-        rig.model.settle()
+        rig.model.flushLook()
 
         XCTAssertEqual(rig.tab.revision, before + 1)
         XCTAssertEqual(marks(rig)[0].border.width, 7)
@@ -457,6 +457,368 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(marks(rig).isEmpty)
         await waitUntil { rig.model.selected == nil }
         XCTAssertEqual(rig.tab.session.undoLabel, "Delete")
+    }
+
+    private func shapeRig(_ corners: [ViewPoint]) throws -> Rig {
+        let rig = try attached()
+        try rig.f.marker.add(.polygon, 0, corners, markRed)
+        try rig.tab.commit("Polygon")
+        rig.model.pick(.edit)
+        rig.model.editTool?.select(marks(rig)[0])
+        return rig
+    }
+
+    private func keyedPress(_ rig: Rig, _ at: ViewPoint) {
+        let tool = rig.viewer.pointerTool!
+        tool.press(PagePointer(page: 0, point: at, view: at, pressed: true, clicks: 1, fromKeys: true))
+        tool.release(PagePointer(page: 0, point: at, view: at, pressed: false, clicks: 0, fromKeys: true))
+    }
+
+    private let square = [markPt(100, 100), markPt(300, 100), markPt(300, 300), markPt(100, 300)]
+
+    func test_draggingACornerIsOneMovePointStep() async throws {
+        let rig = try shapeRig(square)
+
+        click(rig, markPt(300, 300), dragTo: markPt(340, 330))
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Move point")
+        XCTAssertEqual(rig.host.statuses.last, "Point 3 moved")
+        let corners = try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))
+        XCTAssertEqual(corners[2].x, 340, accuracy: 0.5)
+        XCTAssertEqual(corners[2].y, 330, accuracy: 0.5)
+        XCTAssertEqual(corners[1].x, 300, accuracy: 0.5)
+        XCTAssertTrue(try rig.tab.undo())
+        XCTAssertEqual(try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))[2].x, 300, accuracy: 0.5)
+    }
+
+    func test_aKeyedPressOnASideAddsACornerAsOneStep() async throws {
+        let rig = try shapeRig(square)
+
+        keyedPress(rig, markPt(200, 100))
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Add point")
+        XCTAssertEqual(marks(rig)[0].vertices.count, 10)
+    }
+
+    func test_deleteOnAPickedCornerRemovesItAndOtherwiseDeletesTheMark() async throws {
+        let rig = try shapeRig(square)
+
+        keyedPress(rig, markPt(300, 300))
+        XCTAssertEqual(rig.host.statuses.last, "Point 3 picked")
+        XCTAssertTrue(rig.viewer.pointerTool!.key(.delete, modifiers: []))
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Remove point")
+        XCTAssertEqual(marks(rig)[0].vertices.count, 6)
+        XCTAssertEqual(marks(rig).count, 1)
+    }
+
+    func test_aTriangleKeepsItsCornersAndSaysSo() async throws {
+        let rig = try shapeRig([markPt(100, 100), markPt(300, 100), markPt(200, 300)])
+        let label = rig.tab.session.undoLabel
+
+        keyedPress(rig, markPt(200, 300))
+        XCTAssertTrue(rig.viewer.pointerTool!.key(.delete, modifiers: []))
+
+        XCTAssertEqual(rig.tab.session.undoLabel, label)
+        XCTAssertEqual(marks(rig)[0].vertices.count, 6)
+        XCTAssertEqual(rig.host.statuses.last, "That point cannot be removed.")
+        XCTAssertTrue(rig.host.problems.isEmpty)
+    }
+
+    func test_aPointEditRefusedForABadIndexOnlyRefreshes() async throws {
+        let rig = try shapeRig(square)
+        let mark = marks(rig)[0]
+
+        XCTAssertFalse(rig.model.change("Move point") { _ = try $0.movePoint(mark, 9, markPt(10, 10)) })
+
+        XCTAssertTrue(rig.host.problems.isEmpty)
+        XCTAssertEqual(marks(rig)[0].vertices.count, 8)
+    }
+
+    private func close(_ a: [Double]?, _ b: [Double]) -> Bool {
+        guard let a, a.count == b.count else { return false }
+        return zip(a, b).allSatisfy { abs($0 - $1) < 0.01 }
+    }
+
+    private func edited(_ add: (Marker) throws -> Void) throws -> Rig {
+        let rig = try attached()
+        try add(rig.f.marker)
+        try rig.tab.commit("Mark")
+        rig.model.pick(.edit)
+        rig.model.editTool?.select(marks(rig)[0])
+        return rig
+    }
+
+    func test_aFillAndADashPickedForAMarkSettleIntoTheFileAsOneStep() async throws {
+        let rig = try attached(marks: true)
+        rig.model.pick(.edit)
+        rig.model.editTool?.select(marks(rig)[0])
+        let before = rig.tab.revision
+
+        rig.model.setFill([0.2, 0.7, 0.3])
+        rig.model.setDash(.dashed)
+        rig.model.flushLook()
+
+        XCTAssertEqual(rig.tab.revision, before + 1)
+        XCTAssertTrue(close(marks(rig)[0].interiorColor, [0.2, 0.7, 0.3]))
+        XCTAssertEqual(Marker.lineOf(marks(rig)[0]), .dashed)
+        XCTAssertEqual(rig.tab.session.undoLabel, "Change look")
+    }
+
+    func test_aWhiteFillStaysWhiteWhenARedColourIsClicked() async throws {
+        let rig = try edited { _ = try $0.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], MarkStyle(color: [0, 0, 1], fill: [1, 1, 1])) }
+        XCTAssertTrue(close(rig.model.fill, [1, 1, 1]))
+
+        rig.model.setColor([0.9, 0.15, 0.15])
+        rig.model.flushLook()
+
+        XCTAssertTrue(close(marks(rig)[0].interiorColor, [1, 1, 1]))
+        XCTAssertTrue(close(marks(rig)[0].color, [0.9, 0.15, 0.15]))
+    }
+
+    func test_wideningADashedMarkKeepsItDashed() async throws {
+        let rig = try edited { _ = try $0.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], MarkStyle(color: [0, 0, 1], width: 2, dash: .dashed)) }
+        XCTAssertEqual(rig.model.dash, .dashed)
+
+        rig.model.setWidth(6)
+        rig.model.setDash(.dashed)
+        rig.model.flushLook()
+
+        XCTAssertEqual(marks(rig)[0].border.width, 6)
+        XCTAssertEqual(Marker.lineOf(marks(rig)[0]), .dashed)
+    }
+
+    func test_theLineAndArrowToolsEachKeepTheirOwnHeads() async throws {
+        let rig = try attached()
+
+        rig.model.pick(.arrow)
+        XCTAssertEqual(rig.model.head, .openArrow)
+        XCTAssertEqual(rig.model.startHead, .none)
+        rig.model.setHead(.circle)
+        rig.model.pick(.line)
+        XCTAssertEqual(rig.model.head, .none)
+        rig.model.setStartHead(.square)
+        rig.model.pick(.arrow)
+        XCTAssertEqual(rig.model.head, .circle)
+        XCTAssertEqual(rig.model.startHead, .none)
+        rig.model.pick(.line)
+
+        XCTAssertEqual(rig.model.startHead, .square)
+        XCTAssertEqual(rig.model.head, .none)
+    }
+
+    func test_theArrowToolDrawsAnOpenArrowAndTheLineToolAPlainLine() async throws {
+        let rig = try attached()
+
+        rig.model.pick(.arrow)
+        click(rig, markPt(50, 50), dragTo: markPt(200, 50))
+        rig.model.pick(.line)
+        click(rig, markPt(50, 100), dragTo: markPt(200, 100))
+
+        let drawn = marks(rig)
+        XCTAssertEqual(drawn.count, 2)
+        XCTAssertEqual(drawn[0].endEnding, .openArrow)
+        XCTAssertEqual(drawn[0].startEnding, .none)
+        XCTAssertEqual(drawn[1].endEnding, .none)
+    }
+
+    func test_aHeadPickedWhileDrawingIsTheToolsNextLook() async throws {
+        let rig = try attached()
+        rig.model.pick(.line)
+
+        rig.model.setStartHead(.circle)
+        rig.model.setHead(.closedArrow)
+        click(rig, markPt(50, 50), dragTo: markPt(200, 50))
+
+        XCTAssertEqual(marks(rig)[0].startEnding, .circle)
+        XCTAssertEqual(marks(rig)[0].endEnding, .closedArrow)
+    }
+
+    func test_changingOnlyTheStartHeadLeavesTheEndAsItWas() async throws {
+        let rig = try edited { _ = try $0.add(.line, 0, [markPt(60, 80), markPt(260, 140)], MarkStyle(color: [0, 0, 1], head: .rClosedArrow)) }
+        XCTAssertEqual(rig.model.head, .rClosedArrow)
+
+        rig.model.setStartHead(.circle)
+        rig.model.flushLook()
+
+        XCTAssertEqual(marks(rig)[0].startEnding, .circle)
+        XCTAssertEqual(marks(rig)[0].endEnding, .rClosedArrow)
+        XCTAssertEqual(rig.tab.session.undoLabel, "Change look")
+    }
+
+    func test_aLookChangeWaitingWhenAnotherMarkIsPickedLandsOnTheFirstOnly() async throws {
+        let rig = try attached(marks: true)
+        try rig.f.marker.add(.rectangle, 0, [markPt(300, 300), markPt(400, 360)], MarkStyle(color: [0, 0.5, 0], width: 4))
+        try rig.tab.commit("Marks")
+        rig.model.pick(.edit)
+        let all = marks(rig)
+        rig.model.editTool?.select(all[0])
+        let before = rig.tab.revision
+
+        rig.model.setWidth(8)
+        rig.model.editTool?.select(all[1])
+
+        XCTAssertEqual(rig.tab.revision, before + 1)
+        XCTAssertEqual(marks(rig)[0].border.width, 8)
+        XCTAssertEqual(marks(rig)[1].border.width, 4)
+        XCTAssertEqual(rig.model.width, 4)
+        XCTAssertEqual(rig.tab.session.undoLabel, "Change look")
+        rig.model.flushLook()
+        XCTAssertEqual(rig.tab.revision, before + 1)
+    }
+
+    func test_aWaitingLookChangeIsWrittenWhenTheWindowHandsIn() async throws {
+        let rig = try attached(marks: true)
+        rig.model.pick(.edit)
+        rig.model.editTool?.select(marks(rig)[0])
+
+        rig.model.setWidth(7)
+        XCTAssertTrue(rig.model.handIn())
+
+        XCTAssertEqual(marks(rig)[0].border.width, 7)
+    }
+
+    func test_aWaitingLookChangeIsWrittenWhenTheToolLeaves() async throws {
+        let rig = try attached(marks: true)
+        rig.model.pick(.edit)
+        rig.model.editTool?.select(marks(rig)[0])
+
+        rig.model.setWidth(7)
+        rig.model.detach()
+
+        XCTAssertEqual(marks(rig)[0].border.width, 7)
+        XCTAssertEqual(rig.tab.session.undoLabel, "Change look")
+    }
+
+    func test_aSelectedMarkSaysWhichLookControlsAndPointButtonsItTakes() async throws {
+        let rect = try attached(marks: true)
+        rect.model.pick(.edit)
+        rect.model.editTool?.select(marks(rect)[0])
+        XCTAssertEqual(rect.model.selected?.canFill, true)
+        XCTAssertEqual(rect.model.selected?.canDash, true)
+        XCTAssertEqual(rect.model.selected?.canHead, false)
+        XCTAssertEqual(rect.model.selected?.canAddPoint, false)
+        XCTAssertTrue(rect.model.showsFill)
+        XCTAssertFalse(rect.model.showsHeads)
+
+        let line = try edited { _ = try $0.add(.line, 0, [markPt(60, 80), markPt(260, 140)], markRed) }
+        XCTAssertTrue(line.model.showsHeads)
+        XCTAssertFalse(line.model.looksLocked)
+
+        let poly = try shapeRig(square)
+        XCTAssertEqual(poly.model.selected?.canAddPoint, true)
+        XCTAssertEqual(poly.model.selected?.canRemovePoint, true)
+        let triangle = try shapeRig([markPt(100, 100), markPt(300, 100), markPt(200, 300)])
+        XCTAssertEqual(triangle.model.selected?.canAddPoint, true)
+        XCTAssertEqual(triangle.model.selected?.canRemovePoint, false)
+
+        let note = try edited { _ = try $0.add(.note, 0, [markPt(100, 100)], markRed, "Look") }
+        XCTAssertEqual(note.model.selected?.isNote, true)
+        XCTAssertTrue(note.model.showsIcon)
+        XCTAssertFalse(note.model.showsFill)
+    }
+
+    func test_aMarkFromAnotherAppLocksTheLookControls() async throws {
+        let rig = try attached()
+        try rig.f.marker.add(.line, 0, [markPt(60, 80), markPt(260, 140)], markRed)
+        try rig.tab.commit("Mark")
+        marks(rig)[0].dictionary["LL"] = PdfNumber(1)
+        rig.model.pick(.edit)
+
+        rig.model.editTool?.select(marks(rig)[0])
+
+        XCTAssertTrue(rig.model.looksLocked)
+        XCTAssertEqual(rig.model.selected?.canHead, false)
+    }
+
+    func test_theToolsControlsShowWhileNothingIsSelected() async throws {
+        let rig = try attached()
+
+        rig.model.pick(.line)
+        XCTAssertTrue(rig.model.showsHeads)
+        XCTAssertTrue(rig.model.showsDash)
+        XCTAssertTrue(rig.model.showsFill)
+        rig.model.pick(.pencil)
+        XCTAssertFalse(rig.model.showsFill)
+        XCTAssertTrue(rig.model.showsDash)
+        rig.model.pick(.note)
+        XCTAssertTrue(rig.model.showsIcon)
+        XCTAssertFalse(rig.model.showsDash)
+        rig.model.pick(.textBox)
+        XCTAssertFalse(rig.model.showsIcon)
+        XCTAssertFalse(rig.model.showsHeads)
+    }
+
+    func test_lookingAtAMarkRestoresTheDrawingHeads() async throws {
+        let rig = try edited { _ = try $0.add(.line, 0, [markPt(60, 80), markPt(260, 140)], MarkStyle(color: [0, 0, 1], head: .diamond)) }
+        rig.model.editTool?.select(nil)
+        rig.model.pick(.line)
+        rig.model.setStartHead(.slash)
+        rig.model.pick(.edit)
+
+        rig.model.editTool?.select(marks(rig)[0])
+        XCTAssertEqual(rig.model.head, .diamond)
+        rig.model.editTool?.select(nil)
+
+        XCTAssertEqual(rig.model.startHead, .slash)
+        XCTAssertEqual(rig.model.head, .none)
+    }
+
+    func test_addPointPutsACornerInTheMiddleOfTheLongestSideAndPicksIt() async throws {
+        let rig = try shapeRig([markPt(100, 100), markPt(400, 100), markPt(400, 150), markPt(100, 150)])
+
+        rig.model.addPoint()
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Add point")
+        let corners = try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))
+        XCTAssertEqual(corners.count, 5)
+        XCTAssertEqual(corners[1].x, 250, accuracy: 0.5)
+        XCTAssertEqual(corners[1].y, 100, accuracy: 0.5)
+        await waitUntil { rig.model.pickedPoint == 1 }
+        XCTAssertEqual(rig.model.editTool?.pickedVertex, 1)
+        XCTAssertEqual(rig.host.statuses.last, "Point 2 picked")
+    }
+
+    func test_addPointGoesAfterThePickedCorner() async throws {
+        let rig = try shapeRig(square)
+        click(rig, markPt(300, 300))
+        XCTAssertEqual(rig.model.pickedPoint, 2)
+
+        rig.model.addPoint()
+
+        let corners = try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))
+        XCTAssertEqual(corners.count, 5)
+        XCTAssertEqual(corners[3].x, 200, accuracy: 0.5)
+        XCTAssertEqual(corners[3].y, 300, accuracy: 0.5)
+    }
+
+    func test_removePointWithNoneIsPickedChangesNothing() async throws {
+        let rig = try shapeRig(square)
+
+        rig.model.removePickedPoint()
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Polygon")
+        XCTAssertEqual(marks(rig)[0].vertices.count, 8)
+    }
+
+    func test_removePointTakesThePickedCorner() async throws {
+        let rig = try shapeRig(square)
+        click(rig, markPt(300, 300))
+        rig.model.removePickedPoint()
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Remove point")
+        XCTAssertEqual(marks(rig)[0].vertices.count, 6)
+        XCTAssertEqual(rig.model.pickedPoint, -1)
+    }
+
+    func test_aPickedCornerIsLetGoOfWhenAnotherMarkIsSelected() async throws {
+        let rig = try shapeRig(square)
+        click(rig, markPt(300, 300))
+        XCTAssertEqual(rig.model.pickedPoint, 2)
+
+        rig.model.editTool?.select(nil)
+
+        XCTAssertEqual(rig.model.pickedPoint, -1)
     }
 
     func test_theViewersOwnHandButtonTakesThePointerBack() async throws {
