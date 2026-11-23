@@ -284,6 +284,17 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertEqual(value, 7)
     }
 
+    func test_duplexIsOneSidedForHalfAJobOrReverseAndShortEdgeForAnInOrderBooklet() {
+        XCTAssertEqual(PrintLayout(parity: .odd).duplex, .oneSided)
+        XCTAssertEqual(PrintLayout(parity: .even).duplex, .oneSided)
+        XCTAssertEqual(PrintLayout(reverse: true).duplex, .oneSided)
+        XCTAssertEqual(PrintLayout(booklet: true, parity: .odd).duplex, .oneSided)
+        XCTAssertEqual(PrintLayout(booklet: true, reverse: true).duplex, .oneSided)
+        XCTAssertEqual(PrintLayout(booklet: true).duplex, .shortEdge)
+        XCTAssertNil(PrintLayout().duplex)
+        XCTAssertNil(PrintLayout(perSheet: 4).duplex)
+    }
+
     func test_thePlainSummaryCountsPagesAndCallsOddAndEvenPagesNotFrontsAndBacks() {
         XCTAssertEqual(PrintLayout().summary(documentPages: 8), "8 pages.")
         XCTAssertEqual(PrintLayout().summary(documentPages: 1), "1 page.")

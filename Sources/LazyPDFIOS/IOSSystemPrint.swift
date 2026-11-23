@@ -13,16 +13,14 @@ public enum IOSSystemPrint {
         return Data(try session.document.saveRewrite(PdfSaveOptions()))
     }
 
-    /// One-sided when only some sides go or the order is reversed, so the printer does not duplex half a job or swap
-    /// fronts and backs; short edge for a booklet.
     public static func info(name: String, layout: PrintLayout = PrintLayout()) -> UIPrintInfo {
         let info = UIPrintInfo(dictionary: nil)
         info.jobName = name
         info.outputType = .general
-        if layout.parity != .all || layout.reverse {
-            info.duplex = .none
-        } else if layout.booklet {
-            info.duplex = .shortEdge
+        switch layout.duplex {
+        case .oneSided: info.duplex = .none
+        case .shortEdge: info.duplex = .shortEdge
+        case nil: break
         }
         return info
     }

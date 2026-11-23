@@ -8,6 +8,11 @@ public enum PrintParity: Int, CaseIterable, Sendable {
     case all, odd, even
 }
 
+/// How a job should be set to two-sided printing; `nil` leaves the printer's own setting.
+public enum PrintDuplex: Sendable {
+    case oneSided, shortEdge
+}
+
 /// What the print flow does to the pages before the system's paper takes them.
 public struct PrintLayout: Equatable, Sendable {
     /// 1, 2, 4, 6, 9 or 16.
@@ -50,6 +55,13 @@ public struct PrintLayout: Equatable, Sendable {
     /// What is wrong with the typed range, or nil when it is empty or fine.
     public func rangeError(count: Int) -> String? {
         range.isEmpty ? nil : PageRange.parse(range, count).error?.message
+    }
+
+    /// One-sided when only some sides go or the order is reversed, so the printer does not duplex half a job or swap fronts
+    /// and backs; short edge for a booklet printed in order.
+    public var duplex: PrintDuplex? {
+        if parity != .all || reverse { return .oneSided }
+        return booklet ? .shortEdge : nil
     }
 
     /// The pages to print: the typed range or all of them. Without a layout they are cut down to the odd or even ones by
