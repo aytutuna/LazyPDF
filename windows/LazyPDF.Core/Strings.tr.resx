@@ -2119,6 +2119,9 @@
   <data name="Even pages only" xml:space="preserve">
     <value>Yalnızca çift sayfalar</value>
   </data>
+  <data name="Even sides only" xml:space="preserve">
+    <value>Yalnızca çift yüzler</value>
+  </data>
   <data name="Every custom tag maps to a standard one." xml:space="preserve">
     <value>Her özel etiket standart bir etikete eşleniyor.</value>
   </data>
@@ -4125,6 +4128,9 @@
   </data>
   <data name="Odd pages only" xml:space="preserve">
     <value>Yalnızca tek sayfalar</value>
+  </data>
+  <data name="Odd sides only" xml:space="preserve">
+    <value>Yalnızca tek yüzler</value>
   </data>
   <data name="Office files" xml:space="preserve">
     <value>Office dosyaları</value>
@@ -6984,6 +6990,9 @@
   </data>
   <data name="The form sets /NeedAppearances to true." xml:space="preserve">
     <value>Form /NeedAppearances değerini doğru yapıyor.</value>
+  </data>
+  <data name="The gap leaves no room for the pages on this paper." xml:space="preserve">
+    <value>Boşluk bu kâğıtta sayfalara yer bırakmıyor.</value>
   </data>
   <data name="The graphics state is left open around it." xml:space="preserve">
     <value>Çevresinde grafik durumu açık bırakılmış.</value>

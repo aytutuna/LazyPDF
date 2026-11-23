@@ -8661,6 +8661,15 @@
   "Even pages only": {
     "tr": "Yalnızca çift sayfalar"
   },
+  "Odd sides only": {
+    "tr": "Yalnızca tek yüzler"
+  },
+  "Even sides only": {
+    "tr": "Yalnızca çift yüzler"
+  },
+  "The gap leaves no room for the pages on this paper.": {
+    "tr": "Boşluk bu kâğıtta sayfalara yer bırakmıyor."
+  },
   "Clear signature": {
     "tr": "İmzayı temizle"
   },

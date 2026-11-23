@@ -25,8 +25,8 @@
             <TextBlock Text="{loc:T Pages}" Style="{StaticResource BodyText}" Margin="0,12,0,4" />
             <ComboBox x:Name="ParityBox" AutomationProperties.Name="{loc:T Pages}">
                 <ComboBoxItem Content="{loc:T All pages}" />
-                <ComboBoxItem Content="{loc:T Odd pages only}" />
-                <ComboBoxItem Content="{loc:T Even pages only}" />
+                <ComboBoxItem Content="{loc:T Odd sides only}" />
+                <ComboBoxItem Content="{loc:T Even sides only}" />
             </ComboBox>
         </StackPanel>
     </DockPanel>

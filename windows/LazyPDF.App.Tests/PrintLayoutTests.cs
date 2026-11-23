@@ -21,7 +21,7 @@ public sealed class PrintLayoutTests
     public void OddAndEvenAreByPageNumber()
     {
         Assert.Equal([0, 2, 4], new PrintLayout(Parity: PrintParity.Odd).Pages(null, 5));
-        Assert.Equal([1, 3], new PrintLayout(Parity: PrintParity.Even).Pages(null, 5));
+        Assert.Equal([1, 3], new PrintLayout(Parity: PrintParity.Even).Pages(null, 4));
     }
 
     [Fact]
@@ -94,5 +94,105 @@ public sealed class PrintLayoutTests
     {
         Assert.Null(PrintLayout.DroppedNote(0));
         Assert.Equal("1 link or note without a picture was left off the sheets.", PrintLayout.DroppedNote(1));
+    }
+
+    [Fact]
+    public void ReverseAloneIsNotPlain()
+    {
+        var layout = new PrintLayout(Reverse: true);
+
+        Assert.False(layout.IsPlain);
+        Assert.Equal([3, 2, 1, 0], layout.Pages(null, 4));
+    }
+
+    [Fact]
+    public void ALayoutLeavesTheRangeToTheSides()
+    {
+        var layout = new PrintLayout(PerSheet: 2, Parity: PrintParity.Odd, Reverse: true);
+
+        Assert.Equal([2, 3, 4, 5], layout.Pages([2, 3, 4, 5], 8));
+    }
+
+    [Fact]
+    public void OddSidesOfABookletAreTheFronts()
+    {
+        var booklet = new PrintLayout(Booklet: true, Parity: PrintParity.Odd);
+
+        Assert.Equal([0, 2], booklet.SheetsToPrint(booklet.SideCount(8)));
+        Assert.Equal([1, 3], new PrintLayout(Booklet: true, Parity: PrintParity.Even).SheetsToPrint(4));
+    }
+
+    [Fact]
+    public void AnOddRunNeedsNoBlankButAnEvenRunOfAnOddCountEndsWithOne()
+    {
+        Assert.Equal([0, 2, 4], new PrintLayout(PerSheet: 2, Parity: PrintParity.Odd).SheetsToPrint(5));
+        Assert.Equal([1, 3, -1], new PrintLayout(PerSheet: 2, Parity: PrintParity.Even).SheetsToPrint(5));
+        Assert.Equal([1, 3], new PrintLayout(PerSheet: 2, Parity: PrintParity.Even).SheetsToPrint(4));
+        Assert.Equal([-1, 3, 1], new PrintLayout(PerSheet: 2, Parity: PrintParity.Even, Reverse: true).SheetsToPrint(5));
+        Assert.Equal([4, 3, 2, 1, 0], new PrintLayout(PerSheet: 2, Reverse: true).SheetsToPrint(5));
+    }
+
+    [Fact]
+    public void APlainEvenRunOfAnOddCountEndsWithABlank()
+    {
+        Assert.Equal([1, 3, -1], new PrintLayout(Parity: PrintParity.Even).Pages(null, 5));
+        Assert.Equal([-1, 3, 1], new PrintLayout(Parity: PrintParity.Even, Reverse: true).Pages(null, 5));
+        Assert.Equal([1, 3], new PrintLayout(Parity: PrintParity.Even).Pages(null, 4));
+        Assert.Empty(new PrintLayout(Parity: PrintParity.Even).Pages(null, 1));
+        Assert.Equal([0, 2, 4], new PrintLayout(Parity: PrintParity.Odd).Pages(null, 5));
+    }
+
+    [Fact]
+    public void ABookletNeverGetsABlank()
+    {
+        var booklet = new PrintLayout(Booklet: true, Parity: PrintParity.Even);
+
+        Assert.Equal([1, 3, 5], booklet.SheetsToPrint(booklet.SideCount(11)));
+    }
+
+    [Fact]
+    public void TheSideCountMatchesWhatImposeMakes()
+    {
+        var layouts = new[] { new PrintLayout(Booklet: true) }.Concat(PrintLayout.PerSheetChoices.Where(p => p > 1).Select(p => new PrintLayout(PerSheet: p)));
+        foreach (var layout in layouts)
+        {
+            Assert.Equal(0, layout.SideCount(0));
+            for (int n = 1; n <= 20; n++)
+            {
+                var result = PageOperations.Impose(PdfDocument.Open(Pdfs.Text(n)), Enumerable.Range(0, n).ToList(), layout.Options(612, 792));
+                Assert.Equal(result.Sheets, layout.SideCount(n));
+            }
+        }
+        Assert.Equal(7, new PrintLayout().SideCount(7));
+    }
+
+    [Fact]
+    public void AGapTooWideForTheSheetIsRefused()
+    {
+        Assert.Null(new PrintLayout(PerSheet: 4, Gap: 10).Validate(612, 792));
+        Assert.NotNull(new PrintLayout(PerSheet: 4, Gap: 300).Validate(612, 792));
+        Assert.NotNull(new PrintLayout(Booklet: true, Gap: 270).Validate(612, 792));
+        Assert.Null(new PrintLayout(Gap: 900).Validate(612, 792));
+    }
+
+    [Fact]
+    public void TheTicketIsOneSidedForHalfAJobAndShortEdgeForABooklet()
+    {
+        System.Printing.Duplexing[] both = [System.Printing.Duplexing.OneSided, System.Printing.Duplexing.TwoSidedShortEdge];
+
+        Assert.Equal(System.Printing.Duplexing.OneSided, new PrintLayout(Parity: PrintParity.Even).Duplex(both));
+        Assert.Equal(System.Printing.Duplexing.TwoSidedShortEdge, new PrintLayout(Booklet: true).Duplex(both));
+        Assert.Null(new PrintLayout(Booklet: true).Duplex([]));
+        Assert.Null(new PrintLayout(PerSheet: 2).Duplex(both));
+    }
+
+    [Fact]
+    public void RightToLeftGapAndBorderGoToTheEngine()
+    {
+        var options = new PrintLayout(PerSheet: 2, RightToLeft: true, Gap: 6, Border: true).Options(612, 792);
+
+        Assert.True(options.RightToLeft);
+        Assert.True(options.Border);
+        Assert.Equal(6, options.Gap);
     }
 }

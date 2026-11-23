@@ -5,7 +5,7 @@ using System.Windows.Media;
 
 namespace LazyPDF.App.Services;
 
-/// <summary>The pages of a document for the Windows print dialog, each drawn by the renderer to fit the paper.</summary>
+/// <summary>The pages of a document for the Windows print dialog, each drawn by the renderer to fit the paper. An entry of -1 in the page list is an empty page.</summary>
 internal sealed class PagePaginator(IDocumentRenderer renderer, int pageCount, IReadOnlyList<int>? pages = null, CancellationToken cancel = default, Action<int, int>? progress = null) : DocumentPaginator
 {
     // The size the printer driver does not mind drawing at; a larger page is shrunk to fit, a smaller one stays its own size.
@@ -47,6 +47,11 @@ internal sealed class PagePaginator(IDocumentRenderer renderer, int pageCount, I
         progress?.Invoke(pageNumber + 1, PageCount);
         var visual = new DrawingVisual();
         if (pages is not null) pageNumber = pages[pageNumber];
+        if (pageNumber < 0)
+        {
+            var empty = new Rect(_pageSize);
+            return new DocumentPage(visual, _pageSize, empty, empty);
+        }
         var (width, height) = renderer.PageSize(pageNumber);
         bool drawn = false;
         if (width > 0 && height > 0)
