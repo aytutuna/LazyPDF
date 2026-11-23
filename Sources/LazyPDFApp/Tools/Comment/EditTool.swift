@@ -72,10 +72,15 @@ final class EditTool: PagePointerTool {
 
     /// Finds the selected mark again after the file changed; it is let go if it is gone.
     func refresh() {
-        clearPick()
-        guard let mark = current, let reference = mark.reference else { return }
+        guard let mark = current, let reference = mark.reference else {
+            clearPick()
+            return
+        }
+        let count = points?.count
         current = marker().find(mark.pageIndex, reference.number)
         redraw()
+        // A look change that settles late must not cost the person their pick.
+        if current == nil || points?.count != count { clearPick() }
         if wanted >= 0, let points, wanted < points.count { pick(wanted) }
         wanted = -1
         if current == nil { selectionChanged?() }

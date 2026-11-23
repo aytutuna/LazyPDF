@@ -729,6 +729,23 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(moves, 1)
     }
 
+    func test_aPickSurvivesAChangeToTheLookButNotOneToThePointCount() async throws {
+        let (tool, f, _, made) = try shaped(.polygon, square)
+        tool.press(press(markPt(300, 300)))
+        tool.release(drag(markPt(300, 300)))
+        XCTAssertEqual(tool.pickedVertex, 2)
+
+        _ = try f.marker.recolor(made, [0, 0, 1])
+        try f.tab.commit("Change look")
+        tool.refresh()
+        XCTAssertEqual(tool.pickedVertex, 2)
+
+        _ = try f.marker.removePoint(f.marks()[0], 0)
+        try f.tab.commit("Remove point")
+        tool.refresh()
+        XCTAssertEqual(tool.pickedVertex, -1)
+    }
+
     func test_aMeasuredOrForeignMarkShowsOnlyAFrameAndMovesFromItsCorners() async throws {
         for key in ["Measure", "LL"] {
             let (tool, f, viewer, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
