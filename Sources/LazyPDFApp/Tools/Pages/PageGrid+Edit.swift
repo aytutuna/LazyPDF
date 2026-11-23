@@ -5,23 +5,47 @@ import LazyPDFKit
 // one step, then makes the grid again with the pages that should be chosen.
 
 extension PageGrid {
+    /// The gated edit: a restricted file refuses it, a signed one asks first. `afterwards` runs once the change is committed,
+    /// also when that happens from the notice's Go on anyway.
     @discardableResult
-    func apply(_ label: String, select: [Int]?, status: String, _ change: (PdfDocument) throws -> Void) -> Bool {
-        guard let tab, let host, PageJobs.apply(tab, host, label, change, status) else { return false }
-        rebuild(select: select)
-        onRebuild?()
+    func apply(_ label: String, select: [Int]?, status: String, afterwards: (@MainActor () -> Void)? = nil,
+               _ change: @escaping (PdfDocument) throws -> Void) -> Bool {
+        guard let tab, let host else { return false }
+        return PageJobs.gated(tab, host) { [weak self] in
+            self?.applyNow(tab, host, label, select: select, status: status, afterwards: afterwards, change) ?? false
+        }
+    }
+
+    /// The edit without the gate, for a caller that gated a larger piece of work already.
+    func applyNow(_ tab: DocumentTab, _ host: ToolHost, _ label: String, select: [Int]?, status: String,
+                  afterwards: (@MainActor () -> Void)? = nil, _ change: (PdfDocument) throws -> Void) -> Bool {
+        guard PageJobs.apply(tab, host, label, change, status) else { return false }
+        if self.tab === tab {
+            rebuild(select: select)
+            onRebuild?()
+        }
+        afterwards?()
         return true
     }
 
     @discardableResult
     func applyAsync(_ tab: DocumentTab, busy: String, label: String, select: [Int]?, status: String,
-                    _ change: @escaping @Sendable (PdfDocument) throws -> Void) async -> Bool {
-        guard let host, await PageJobs.applyAsync(tab, host, busy: busy, label: label, change, status: status) else { return false }
+                    afterwards: (@MainActor () -> Void)? = nil, _ change: @escaping @Sendable (PdfDocument) throws -> Void) async -> Bool {
+        guard let host else { return false }
+        return await PageJobs.gatedAsync(tab, host) { [weak self] in
+            await self?.applyAsyncNow(tab, host, busy: busy, label: label, select: select, status: status, afterwards: afterwards, change) ?? false
+        }
+    }
+
+    func applyAsyncNow(_ tab: DocumentTab, _ host: ToolHost, busy: String, label: String, select: [Int]?, status: String,
+                       afterwards: (@MainActor () -> Void)? = nil, _ change: @escaping @Sendable (PdfDocument) throws -> Void) async -> Bool {
+        guard await PageJobs.applyAsync(tab, host, busy: busy, label: label, change, status: status) else { return false }
         // The person may have gone to another tab while it ran; its pages are then not on show to choose.
         if self.tab === tab {
             rebuild(select: select)
             onRebuild?()
         }
+        afterwards?()
         return true
     }
 
@@ -34,13 +58,12 @@ extension PageGrid {
     }
 
     public func remove(_ pages: [Int]) {
-        guard !pages.isEmpty, !noneLeft(pages) else { return }
-        let wasTagged = tab.map(PageJobs.isTagged) ?? false
-        let done = apply(L10n.t("Delete pages"), select: nil,
-                         status: L10n.plural(pages.count, one: "{0} page deleted", other: "{0} pages deleted")) { document in
+        guard let tab, let host, !pages.isEmpty, !noneLeft(pages) else { return }
+        let wasTagged = PageJobs.isTagged(tab)
+        apply(L10n.t("Delete pages"), select: nil, status: L10n.plural(pages.count, one: "{0} page deleted", other: "{0} pages deleted"),
+              afterwards: { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }) { document in
             try PageOperations.delete(document, pages)
         }
-        if done, let tab, let host { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }
     }
 
     /// True, with the reason shown, when `pages` are every page there is.

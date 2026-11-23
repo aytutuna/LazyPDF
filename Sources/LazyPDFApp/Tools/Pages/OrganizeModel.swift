@@ -100,12 +100,16 @@ public final class OrganizeModel {
 
     public func cut() async {
         let pages = grid.selection
-        guard !pages.isEmpty, !grid.noneLeft(pages), await copyPages(pages) else { return }
-        let wasTagged = tab.map(PageJobs.isTagged) ?? false
-        let done = grid.apply(L10n.t("Cut pages"), select: nil, status: L10n.plural(pages.count, one: "{0} page cut", other: "{0} pages cut")) { document in
-            try PageOperations.delete(document, pages)
+        guard let tab, let host, !pages.isEmpty, !grid.noneLeft(pages) else { return }
+        await PageJobs.gatedAsync(tab, host) { [weak self] in
+            guard let self, await self.copyPages(pages) else { return false }
+            let wasTagged = PageJobs.isTagged(tab)
+            return self.grid.applyNow(tab, host, L10n.t("Cut pages"), select: nil,
+                                      status: L10n.plural(pages.count, one: "{0} page cut", other: "{0} pages cut"),
+                                      afterwards: { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }) { document in
+                try PageOperations.delete(document, pages)
+            }
         }
-        if done, let tab, let host { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }
     }
 
     /// True when the pages are on the clipboard.

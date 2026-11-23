@@ -17,8 +17,8 @@ extension Pdfs {
     }
 
     /// A file whose owner password is "owner" and that allows only `allowed` to anyone else.
-    static func restricted(_ allowed: PdfPermissions) throws -> [UInt8] {
-        let document = try PdfDocument.open(text())
+    static func restricted(_ allowed: PdfPermissions, pages: Int = 1) throws -> [UInt8] {
+        let document = try PdfDocument.open(text(pages))
         let security = PdfSecurity.create(userPassword: "", ownerPassword: "owner", permissions: allowed, strength: .aes256,
                                           firstId: [UInt8](repeating: 7, count: 16))
         return try document.saveRewrite(PdfSaveOptions(security: security))

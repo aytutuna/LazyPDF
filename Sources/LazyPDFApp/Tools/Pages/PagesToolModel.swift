@@ -188,10 +188,10 @@ public final class PagesToolModel: ToolPanelModel {
         let source = picked.source, pages = picked.pages
         let first = last + 1 - chosen.count
         let wasTagged = PageJobs.isTagged(tab)
-        let done = await grid.applyAsync(tab, busy: L10n.t("Replacing pages"), label: L10n.t("Replace pages"), select: Array(first..<first + pages.count),
-                                         status: L10n.t("Pages replaced.")) { document in
+        await grid.applyAsync(tab, busy: L10n.t("Replacing pages"), label: L10n.t("Replace pages"), select: Array(first..<first + pages.count),
+                              status: L10n.t("Pages replaced."),
+                              afterwards: { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }) { document in
             try PageEdits.replace(document, chosen, source, pages)
         }
-        if done { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }
     }
 }
