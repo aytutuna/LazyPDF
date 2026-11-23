@@ -21,7 +21,7 @@ public partial class PageViewer
 
     private const double ClickSlop = 4;
 
-    // View pixels past a page edge where a tool is asked about its handles; above every tool's own reach.
+    // View pixels past a page edge where a tool is asked about its handles; above every tool's own reach (the comment tool caps its reach at 24).
     private const double HandleReach = 32;
 
     private readonly Dictionary<int, IReadOnlyList<PdfLink>> _links = [];

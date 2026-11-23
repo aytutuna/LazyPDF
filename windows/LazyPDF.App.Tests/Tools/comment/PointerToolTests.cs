@@ -421,6 +421,24 @@ public sealed class PointerToolTests
     }
 
     [Fact]
+    public void AHandleReachesNoFartherThanTheViewerAsksAtHighZoom()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var viewer = ViewerStandIn.Create(out var stand);
+            stand.Zoom = 20;
+            f.Marker.Add(MarkTool.TextBox, 0, [new Point(0, 0), new Point(100, 60)], Red, "Look");
+            f.Tab.Commit("Text box");
+            var edit = new EditTool(viewer, () => f.Marker);
+            edit.Select(f.Marks(0).Single());
+
+            Assert.True(edit.HandleUnder(Press(new Point(-1, 0))));
+            Assert.False(edit.HandleUnder(Press(new Point(-1.8, 0))));
+        });
+    }
+
+    [Fact]
     public void ABodyPressOffThePageIsNotAHandleAndAskingNeverLetsGoOfTheMark()
     {
         OnSta(() =>

@@ -18,6 +18,9 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     private const double Grip = 9;
     private const double MinSize = 8;
 
+    // View pixels; the viewer asks about handles only this far past a page edge, and the 2 page points of slack grow with zoom.
+    private const double MaxReach = 24;
+
     private static readonly Brush Accent = Freeze(new SolidColorBrush(Color.FromRgb(0x00, 0x78, 0xD4)));
 
     private readonly List<UIElement> _drawn = [];
@@ -201,7 +204,8 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
 
     private int HandleAt(Point[] spots, Point at)
     {
-        double reach = Grip / 2 / Math.Max(viewer.Zoom, 0.1) + 2;
+        double zoom = Math.Max(viewer.Zoom, 0.1);
+        double reach = Math.Min(Grip / 2 / zoom + 2, MaxReach / zoom);
         for (int i = 0; i < spots.Length; i++)
         {
             if ((spots[i] - at).Length <= reach) return i;
