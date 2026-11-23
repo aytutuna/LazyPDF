@@ -376,7 +376,7 @@ public partial class CommentPanel : ToolPanel
     }
 
     // A head chosen on the start of a line is another app's; only the end is offered.
-    private static bool HasHead(PdfAnnotation a) => a.Type == AnnotationType.Line && a.StartEnding == LineEnding.None;
+    private static bool HasHead(PdfAnnotation a) => a.Type == AnnotationType.Line && a.StartEnding == LineEnding.None && !Marker.Fixed(a);
 
     private static bool Differs(FreeTextStyle text, MarkStyle look) => text.Family != look.Family || text.Size != look.Size || text.Font != look.Font;
 }

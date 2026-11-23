@@ -337,6 +337,31 @@ public sealed class CommentPanelTests
         Assert.False(bar.IsOpen);
     });
 
+    [Fact]
+    public Task AMarkWithPartsWeCannotRedrawDisablesTheLookAndOffersNoHead() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var plain = f.Marker.Add(MarkTool.Line, 0, [new Point(60, 80), new Point(260, 140)], MarkStyle.Default);
+        var other = f.Marker.Add(MarkTool.Line, 0, [new Point(60, 200), new Point(260, 260)], MarkStyle.Default);
+        other.Dictionary["LL"] = new PdfNumber(10);
+        var panel = Attached(f);
+        var edit = Get<EditTool>(panel, "_edit");
+
+        edit.Select(f.Marks().Single(m => m.Reference?.Number == plain.Reference?.Number));
+        Assert.True(Get<WrapPanel>(panel, "Swatches").IsEnabled);
+        Assert.True(Get<ComboBox>(panel, "LineStyleBox").IsEnabled);
+        Assert.Equal(Visibility.Visible, Get<StackPanel>(panel, "HeadRow").Visibility);
+
+        edit.Select(f.Marks().Single(m => m.Reference?.Number == other.Reference?.Number));
+        Assert.False(Get<WrapPanel>(panel, "Swatches").IsEnabled);
+        Assert.False(Get<Slider>(panel, "WidthSlider").IsEnabled);
+        Assert.False(Get<Slider>(panel, "OpacitySlider").IsEnabled);
+        Assert.False(Get<ComboBox>(panel, "FillBox").IsEnabled);
+        Assert.False(Get<ComboBox>(panel, "LineStyleBox").IsEnabled);
+        Assert.Equal(Visibility.Collapsed, Get<StackPanel>(panel, "HeadRow").Visibility);
+        return Task.CompletedTask;
+    });
+
     private static (IDocumentViewer Viewer, FakeViewer Stand) Selecting()
     {
         var viewer = FakeViewer.Create().Viewer;

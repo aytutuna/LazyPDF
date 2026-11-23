@@ -557,14 +557,147 @@ public sealed class MarkerTests
         Assert.Equal(100, corners[3].X, 0.5);
     }
 
+    private static readonly Point[] Square = [new(100, 100), new(300, 100), new(300, 300), new(100, 300)];
+
+    private static byte[] Strokes(CommentFixture f, PdfAnnotation a) => f.Document.Data(f.Document.Stream(f.Document.Dict(a.Dictionary, "AP"), "N")!);
+
+    private static PdfAnnotation Again(CommentFixture f, PdfAnnotation a) => f.Marks().Single(m => m.Reference!.Number == a.Reference!.Number);
+
+    private static PdfAnnotation Foreign(CommentFixture f, MarkTool tool, Point[] points, string key)
+    {
+        var made = f.Marker.Add(tool, 0, points, Red);
+        made.Dictionary[key] = new PdfNumber(1);
+        return Again(f, made);
+    }
+
     [Fact]
-    public void ACloudHasNoPointsToMove()
+    public void ACloudHasCornersThatMoveAndKeepRoomForItsBulge()
     {
         using var f = new CommentFixture();
-        var cloud = f.Marker.Add(MarkTool.Cloud, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], Red);
+        var cloud = f.Marker.Add(MarkTool.Cloud, 0, Square, Red);
 
-        Assert.Null(f.Marker.PointsOf(cloud));
-        Assert.Throws<ArgumentException>(() => f.Marker.MovePoint(cloud, 0, new Point(10, 10)));
+        var moved = f.Marker.MovePoint(cloud, 2, new Point(350, 350));
+
+        var corners = f.Marker.PointsOf(moved)!;
+        Assert.Equal(4, corners.Length);
+        Assert.Equal(350, corners[2].X, 0.5);
+        var box = f.Marker.BoxOf(moved);
+        Assert.True(box.Right >= 350 + moved.Border.Width + 1 - 0.01 && box.Bottom >= 350 + moved.Border.Width + 1 - 0.01);
+        Assert.True(moved.Cloud > 0);
+        Assert.True(moved.HasAppearance);
+    }
+
+    [Fact]
+    public void TheBoxOfAMovedPointHoldsAllPointsAndTheBorder()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red with { Width = 6 });
+
+        var moved = f.Marker.MovePoint(shape, 0, new Point(20, 40));
+
+        var box = f.Marker.BoxOf(moved);
+        Assert.True(box.Left <= 20 - 6 + 0.01 && box.Top <= 40 - 6 + 0.01);
+        Assert.True(box.Right >= 300 + 6 - 0.01 && box.Bottom >= 300 + 6 - 0.01);
+        var shrunk = f.Marker.MovePoint(moved, 0, new Point(100, 100));
+        Assert.Equal(100 - 6, f.Marker.BoxOf(shrunk).Left, 0.5);
+    }
+
+    [Theory]
+    [InlineData("LL")]
+    [InlineData("LLE")]
+    [InlineData("LLO")]
+    [InlineData("Cap")]
+    [InlineData("CO")]
+    public void ALineWithLeadersOrACaptionOnlyMoves(string key)
+    {
+        using var f = new CommentFixture();
+        var line = Foreign(f, MarkTool.Line, Drag, key);
+
+        Assert.True(Marker.Foreign(line));
+        Assert.Null(f.Marker.PointsOf(line));
+        AssertUnchanged(f, line);
+    }
+
+    [Fact]
+    public void ACloudWithoutItsBorderEffectOnlyMoves()
+    {
+        using var f = new CommentFixture();
+        var bare = f.Marker.Add(MarkTool.Cloud, 0, Square, Red);
+        bare.Dictionary.Remove("BE");
+        var calm = f.Marker.Add(MarkTool.Cloud, 0, Square, Red);
+        var effect = new PdfDictionary();
+        effect["S"] = new PdfName("C");
+        effect["I"] = new PdfNumber(0);
+        calm.Dictionary["BE"] = effect;
+
+        foreach (var mark in new[] { Again(f, bare), Again(f, calm) })
+        {
+            Assert.True(Marker.Foreign(mark));
+            Assert.Null(f.Marker.PointsOf(mark));
+            AssertUnchanged(f, mark);
+        }
+    }
+
+    private static void AssertUnchanged(CommentFixture f, PdfAnnotation mark)
+    {
+        byte[] before = Strokes(f, mark);
+
+        Assert.Same(mark, f.Marker.Recolor(mark, [0, 0, 1]));
+        Assert.Same(mark, f.Marker.SetOpacity(mark, 0.5));
+        Assert.Same(mark, f.Marker.SetWidth(mark, 6));
+        Assert.Same(mark, f.Marker.SetFill(mark, [1, 1, 0]));
+        Assert.Same(mark, f.Marker.SetDash(mark, LineStyle.Dashed));
+        Assert.Same(mark, f.Marker.SetEnding(mark, LineEnding.Diamond));
+        Assert.Throws<ArgumentException>(() => f.Marker.MovePoint(mark, 0, new Point(10, 10)));
+        Assert.Equal(before, Strokes(f, Again(f, mark)));
+    }
+
+    [Fact]
+    public void AForeignMarkStillMoves()
+    {
+        using var f = new CommentFixture();
+        var line = Foreign(f, MarkTool.Line, Drag, "LL");
+
+        var moved = f.Marker.Move(line, new Vector(30, 10));
+
+        Assert.True(Marker.Foreign(moved));
+        Assert.Equal(line.Line[0] + 30, moved.Line[0], 0.5);
+    }
+
+    [Theory]
+    [InlineData(MarkTool.Line)]
+    [InlineData(MarkTool.Polygon)]
+    public void AMeasurementKeepsItsValueWhenMovedAndTakesAColourButNoPoints(MarkTool tool)
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(tool, 0, tool == MarkTool.Line ? Drag : Square, Red);
+        f.Marker.SetText(made, "12.5 m");
+        made.Dictionary["Measure"] = new PdfDictionary();
+        var measured = Again(f, made);
+
+        Assert.True(Marker.Measured(measured));
+        Assert.False(Marker.Foreign(measured));
+        Assert.Null(f.Marker.PointsOf(measured));
+        Assert.Same(measured, f.Marker.Resize(measured, new Rect(10, 10, 50, 50)));
+        var moved = f.Marker.Move(measured, new Vector(20, 0));
+        var painted = f.Marker.Recolor(moved, [0, 0, 1]);
+
+        Assert.True(painted.Dictionary.ContainsKey("Measure"));
+        Assert.Equal("12.5 m", painted.Contents);
+        Assert.Equal([0, 0, 1], painted.Color);
+    }
+
+    [Fact]
+    public void ABadPointIndexIsRefusedNotWrittenOver()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.MovePoint(line, 2, new Point(10, 10)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.MovePoint(shape, 4, new Point(10, 10)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.MovePoint(shape, -1, new Point(10, 10)));
+        Assert.Equal(8, Again(f, shape).Vertices.Count);
     }
 
     [Fact]

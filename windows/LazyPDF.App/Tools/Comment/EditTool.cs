@@ -24,6 +24,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     private int _handle = -1;
     private int _vertex = -1;
     private Point[]? _points;
+    private bool _moveOnly;
     private bool _moving;
     private Point _from;
     private Rect _start;
@@ -66,6 +67,14 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         if (Current is not { } mark || !marker().OnPage(mark)) return;
         _frame = marker().BoxOf(mark);
         _points = marker().PointsOf(mark);
+        _moveOnly = Marker.Fixed(mark);
+        // An undo can leave fewer points than the one being dragged.
+        if (_vertex >= (_points?.Length ?? 0))
+        {
+            _vertex = -1;
+            _handle = -1;
+            _moving = false;
+        }
         Draw(mark.PageIndex, _frame);
     }
 
@@ -73,7 +82,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     public bool Holds(PagePointer pointer)
     {
         if (Current is not { } mark || mark.PageIndex != pointer.Page) return false;
-        if (HandleAt(_points ?? Spots(_frame), pointer.Point) >= 0) return true;
+        if (!_moveOnly && HandleAt(_points ?? Spots(_frame), pointer.Point) >= 0) return true;
         var hit = marker().At(pointer.Page, pointer.Point, Reach);
         return hit is not null && hit.Reference?.Number == mark.Reference?.Number;
     }
@@ -83,7 +92,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         _handle = -1;
         _vertex = -1;
         _moving = false;
-        if (Current is { } selected && selected.PageIndex == pointer.Page)
+        if (Current is { } selected && selected.PageIndex == pointer.Page && !_moveOnly)
         {
             if (_points is not null)
             {
@@ -121,8 +130,9 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     public void Move(PagePointer pointer)
     {
         if (Current is not { } mark || pointer.Page != mark.PageIndex || !pointer.Pressed || (!_moving && _handle < 0 && _vertex < 0)) return;
-        if (_vertex >= 0 && _points is not null)
+        if (_vertex >= 0)
         {
+            if (_points is null || _vertex >= _points.Length) return;
             var overlay = viewer.Overlay(mark.PageIndex);
             _points[_vertex] = new Point(Math.Clamp(pointer.Point.X, 0, overlay.Width), Math.Clamp(pointer.Point.Y, 0, overlay.Height));
             Remove();
@@ -143,8 +153,13 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         _moving = false;
         _handle = -1;
         _vertex = -1;
-        if (vertex >= 0 && _points is not null)
+        if (vertex >= 0)
         {
+            if (_points is null || vertex >= _points.Length)
+            {
+                Redraw();
+                return;
+            }
             var to = _points[vertex];
             if ((to - _from).Length < 0.5) Redraw();
             else VertexMoved?.Invoke(mark, vertex, to);
@@ -230,6 +245,7 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         Canvas.SetTop(outline, frame.Y);
         Add(overlay, outline);
         double size = Grip / zoom;
+        if (_moveOnly) return;
         foreach (var spot in _points ?? Spots(frame))
         {
             Shape handle = _points is null

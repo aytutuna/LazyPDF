@@ -32,6 +32,11 @@ public partial class CommentPanel
             host.ShowProblem(new Problem(Loc.T("Text not drawn"), AnnotationText.NoFont));
             return false;
         }
+        catch (ArgumentOutOfRangeException)
+        {
+            Restore(tab);
+            return false;
+        }
         catch (ArgumentException)
         {
             Restore(tab);
@@ -305,8 +310,10 @@ public partial class CommentPanel
     {
         var mark = _edit?.Current;
         SelectedRow.Visibility = mark is null ? Visibility.Collapsed : Visibility.Visible;
-        LineStyleBox.IsEnabled = mark is null ? Marker.TakesLine(_tool) : Marker.TakesLine(mark);
-        FillBox.IsEnabled = mark is null ? Marker.TakesFill(_tool) : Marker.TakesFill(mark);
+        bool foreign = mark is not null && Marker.Foreign(mark);
+        Swatches.IsEnabled = WidthSlider.IsEnabled = OpacitySlider.IsEnabled = !foreign;
+        LineStyleBox.IsEnabled = !foreign && (mark is null ? Marker.TakesLine(_tool) : Marker.TakesLine(mark));
+        FillBox.IsEnabled = !foreign && (mark is null ? Marker.TakesFill(_tool) : Marker.TakesFill(mark));
         HeadRow.Visibility = (mark is null ? _tool == MarkTool.Arrow : HasHead(mark)) ? Visibility.Visible : Visibility.Collapsed;
         IconRow.Visibility = (mark is null ? _tool == MarkTool.Note : mark.Type == AnnotationType.Text) ? Visibility.Visible : Visibility.Collapsed;
         if (mark is null)
