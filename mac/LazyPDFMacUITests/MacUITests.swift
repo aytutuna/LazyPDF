@@ -214,7 +214,7 @@ final class MacUITests: XCTestCase {
         wait(for: [expectation(for: gone, evaluatedWith: tab(app))], timeout: 10)
     }
 
-    // After a click on the box row the arrows move the box, whether the focus went to the row or stayed on the page.
+    // The arrows reach the selected row only if a click on it moves the keyboard focus there; the model tests cannot see that.
     func testArrowsOnTheSelectedBoxRowMoveAndResizeTheBox() throws {
         let app = try launch(opening: true)
         XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))

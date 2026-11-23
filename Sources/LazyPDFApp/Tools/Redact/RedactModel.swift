@@ -199,8 +199,7 @@ public final class RedactModel: ToolPanelModel {
         let tool = RedactDrawTool(viewer, boxDrawn: { [weak self] page, from, to in self?.boxDrawn(page, from, to) },
                                   boxEdited: { [weak self] old, rect, geometry, resized in
                                       self?.boxEdited(old, to: rect, geometry, resized: resized) ?? false
-                                  },
-                                  nudge: { [weak self] move, large in self?.nudge(move, large: large) })
+                                  })
         drawTool = tool
         return tool
     }
