@@ -24,6 +24,7 @@ final class EditTool: PagePointerTool {
     private var moveOnly = false
     private var moving = false
     private var pressedAt = ViewPoint.zero
+    private var pressPoint = ViewPoint.zero
     private var from = ViewPoint.zero
     private var start = ViewRect(0, 0, 0, 0)
     private var frame = ViewRect(0, 0, 0, 0)
@@ -181,6 +182,7 @@ final class EditTool: PagePointerTool {
                 if let grabbed = vertexAt(points, pointer.point, pointer.page, touch: pointer.touch) {
                     vertex = grabbed
                     pressedAt = points[grabbed]
+                    pressPoint = pointer.point
                     return
                 }
             } else if let grabbed = handleAt(frame, pointer.point, pointer.page) {
@@ -208,7 +210,8 @@ final class EditTool: PagePointerTool {
         if vertex >= 0 {
             guard var points, vertex < points.count else { return }
             let size = viewer.overlay(mark.pageIndex).size
-            var to = pointer.point
+            // The corner keeps its offset from the pointer, so a finger that lands near it does not make it jump.
+            var to = ViewPoint(pressedAt.x + pointer.point.x - pressPoint.x, pressedAt.y + pointer.point.y - pressPoint.y)
             if !pointer.fromKeys && pointer.modifiers.contains(.shift), let fixed = neighbour(mark, points) { to = MeasureShape.straighten(fixed, to) }
             points[vertex] = ViewPoint(min(max(to.x, 0), size.width), min(max(to.y, 0), size.height))
             self.points = points
@@ -235,7 +238,7 @@ final class EditTool: PagePointerTool {
                 return
             }
             let to = points[dragged]
-            if hypot(to.x - pressedAt.x, to.y - pressedAt.y) < 0.5 {
+            if hypot(to.x - pressedAt.x, to.y - pressedAt.y) < Self.exact / scale(mark.pageIndex) {
                 // A click on a corner picks it.
                 pick(dragged)
                 vertexPicked?(dragged)

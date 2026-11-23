@@ -639,7 +639,7 @@ final class PointerToolTests: XCTestCase {
 
         XCTAssertEqual(moves.count, 1)
         XCTAssertEqual(moves[0].0, 1)
-        XCTAssertEqual(moves[0].1, markPt(350, 260))
+        XCTAssertEqual(moves[0].1, markPt(349, 259))
     }
 
     func test_aPointIsKeptOnThePageWhileDragging() async throws {
@@ -684,6 +684,31 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(tool.pickedVertex, 1)
         XCTAssertEqual(moves, 0)
         XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
+    }
+
+    func test_aFingerThatDriftsALittleOnACornerStillPicksIt() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 100)])
+        var moves = 0
+        tool.vertexMoved = { _, _, _ in moves += 1 }
+
+        tool.press(finger(markPt(310, 104)))
+        tool.move(finger(markPt(310.3, 104.2)))
+        tool.release(finger(markPt(310.3, 104.2), pressed: false))
+
+        XCTAssertEqual(tool.pickedVertex, 1)
+        XCTAssertEqual(moves, 0)
+    }
+
+    func test_aDraggedCornerKeepsItsOffsetFromTheFinger() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 100)])
+        var to: ViewPoint?
+        tool.vertexMoved = { _, _, point in to = point }
+
+        tool.press(finger(markPt(310, 104)))
+        tool.move(finger(markPt(330, 144)))
+        tool.release(finger(markPt(330, 144), pressed: false))
+
+        XCTAssertEqual(to, markPt(320, 140))
     }
 
     func test_aShortLineGivesAPressToTheNearerEndAndTheMiddleMovesIt() async throws {
