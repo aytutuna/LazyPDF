@@ -63,11 +63,11 @@ extension ViewerModel {
         return first...last
     }
 
-    /// The character a point of the view is nearest to on a page, the caret place that a click there would take.
+    /// The character under a point of the view, or the nearest one, on a page.
     public func charIndex(page: Int, at point: ViewPoint) -> Int? {
         guard let text = source?.peek(page), let matrix = pageToView(page) else { return nil }
         let shown = matrix.inverted().transform(point)
         let (x, y) = geometry(page).toUser(shown.x, shown.y)
-        return text.caretAt(x, y)
+        return text.hitTest(x, y)?.char
     }
 }

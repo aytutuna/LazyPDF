@@ -186,6 +186,16 @@ final class ViewerAccessibilityTests: XCTestCase {
         XCTAssertNil(viewer.charIndex(page: 1, at: box.center))
     }
 
+    func test_theRightHalfOfACharacterIsStillThatCharacter() async throws {
+        let viewer = try await open()
+        let last = try XCTUnwrap(viewer.textMap(0)).page.chars.count - 1
+        let box = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(4, 5)))
+        let end = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(last, last + 1)))
+
+        XCTAssertEqual(viewer.charIndex(page: 0, at: ViewPoint(box.x + box.width * 0.9, box.center.y)), 4)
+        XCTAssertEqual(viewer.charIndex(page: 0, at: ViewPoint(end.x + end.width * 0.9, end.center.y)), last)
+    }
+
     func test_theLinesInViewAreThoseThatShow() async throws {
         let viewer = try await open()
 
