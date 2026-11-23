@@ -161,6 +161,29 @@ extension CommentModel {
         }
     }
 
+    /// Adds a corner to the selected polygon: in the middle of the side after the picked corner, or of the longest side when none
+    /// is picked. The new corner is picked, so it can be dragged.
+    public func addPoint() {
+        guard canChange, let tab, let edit = editTool, let mark = edit.current, Marker.plainPolygon(mark),
+              let corners = makeMarker(tab).pointsOf(mark) else { return }
+        func gap(_ i: Int) -> Double {
+            let a = corners[i], b = corners[(i + 1) % corners.count]
+            return hypot(b.x - a.x, b.y - a.y)
+        }
+        let after = edit.pickedVertex >= 0 && edit.pickedVertex < corners.count ? edit.pickedVertex : corners.indices.max { gap($0) < gap($1) } ?? 0
+        let a = corners[after], b = corners[(after + 1) % corners.count]
+        let middle = ViewPoint((a.x + b.x) / 2, (a.y + b.y) / 2)
+        if change(L10n.t("Add point"), { _ = try $0.insertPoint(mark, after: after, at: middle) }) { edit.pickAfterRefresh(after + 1) }
+    }
+
+    /// Takes the picked corner from the selected polygon.
+    public func removePickedPoint() {
+        guard let edit = editTool, let mark = edit.current, edit.pickedVertex >= 0 else { return }
+        let index = edit.pickedVertex
+        edit.clearPick()
+        removePoint(mark, index)
+    }
+
     public func deleteSelected() {
         if let mark = editTool?.current { change(L10n.t("Delete")) { $0.delete(mark) } }
     }

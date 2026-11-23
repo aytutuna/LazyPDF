@@ -19,6 +19,7 @@ final class EditTool: PagePointerTool {
     private var vertex = -1
     private var picked = -1
     private var crossOpen = false
+    private var wanted = -1
     private var points: [ViewPoint]?
     private var moveOnly = false
     private var moving = false
@@ -47,6 +48,9 @@ final class EditTool: PagePointerTool {
     /// A corner or end was picked, by a click on it or by Enter; the number is 0-based.
     var vertexPicked: ((Int) -> Void)?
 
+    /// The picked corner or end changed, or was let go.
+    var pickChanged: (() -> Void)?
+
     /// The corner or end that was picked and the Add and Remove buttons or the arrow keys work on; -1 when none.
     var pickedVertex: Int { picked }
 
@@ -58,6 +62,7 @@ final class EditTool: PagePointerTool {
     var cursor: PointerCursor? { nil }
 
     func select(_ mark: PdfAnnotation?) {
+        wanted = -1
         clearPick()
         current = mark
         redraw()
@@ -70,7 +75,21 @@ final class EditTool: PagePointerTool {
         guard let mark = current, let reference = mark.reference else { return }
         current = marker().find(mark.pageIndex, reference.number)
         redraw()
+        if wanted >= 0, let points, wanted < points.count { pick(wanted) }
+        wanted = -1
         if current == nil { selectionChanged?() }
+    }
+
+    /// Picks a corner once the file has changed and the tool has found its mark again, as for a corner that was just added.
+    func pickAfterRefresh(_ index: Int) {
+        wanted = index
+    }
+
+    private func pick(_ index: Int) {
+        picked = index
+        crossOpen = false
+        redraw()
+        pickChanged?()
     }
 
     func redraw() {
@@ -94,6 +113,7 @@ final class EditTool: PagePointerTool {
     func clearPick(closeCross: Bool = true) {
         guard picked >= 0 else { return }
         picked = -1
+        pickChanged?()
         guard crossOpen else { return }
         crossOpen = false
         viewer.placementEnded = nil
@@ -215,9 +235,7 @@ final class EditTool: PagePointerTool {
             let to = points[dragged]
             if hypot(to.x - pressedAt.x, to.y - pressedAt.y) < 0.5 {
                 // A click on a corner picks it.
-                picked = dragged
-                crossOpen = false
-                redraw()
+                pick(dragged)
                 vertexPicked?(dragged)
             } else {
                 vertexMoved?(mark, dragged, to)
@@ -260,6 +278,7 @@ final class EditTool: PagePointerTool {
         if let index = vertexAt(points, pointer.point, pointer.page, touch: false) {
             picked = index
             crossOpen = true
+            pickChanged?()
             viewer.placementEnded = { [weak self] in self?.placementEnded() }
             remove()
             draw(mark.pageIndex, frame)

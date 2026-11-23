@@ -764,6 +764,56 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.model.head, .none)
     }
 
+    func test_addPointPutsACornerInTheMiddleOfTheLongestSideAndPicksIt() async throws {
+        let rig = try shapeRig([markPt(100, 100), markPt(400, 100), markPt(400, 150), markPt(100, 150)])
+
+        rig.model.addPoint()
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Add point")
+        let corners = try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))
+        XCTAssertEqual(corners.count, 5)
+        XCTAssertEqual(corners[1].x, 250, accuracy: 0.5)
+        XCTAssertEqual(corners[1].y, 100, accuracy: 0.5)
+        await waitUntil { rig.model.pickedPoint == 1 }
+        XCTAssertEqual(rig.model.editTool?.pickedVertex, 1)
+    }
+
+    func test_addPointGoesAfterThePickedCorner() async throws {
+        let rig = try shapeRig(square)
+        click(rig, markPt(300, 300))
+        XCTAssertEqual(rig.model.pickedPoint, 2)
+
+        rig.model.addPoint()
+
+        let corners = try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))
+        XCTAssertEqual(corners.count, 5)
+        XCTAssertEqual(corners[3].x, 200, accuracy: 0.5)
+        XCTAssertEqual(corners[3].y, 300, accuracy: 0.5)
+    }
+
+    func test_removePointTakesThePickedCornerAndNothingWhenNoneIsPicked() async throws {
+        let rig = try shapeRig(square)
+
+        rig.model.removePickedPoint()
+        XCTAssertEqual(marks(rig)[0].vertices.count, 8)
+        click(rig, markPt(300, 300))
+        rig.model.removePickedPoint()
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Remove point")
+        XCTAssertEqual(marks(rig)[0].vertices.count, 6)
+        XCTAssertEqual(rig.model.pickedPoint, -1)
+    }
+
+    func test_aPickedCornerIsLetGoOfWhenAnotherMarkIsSelected() async throws {
+        let rig = try shapeRig(square)
+        click(rig, markPt(300, 300))
+        XCTAssertEqual(rig.model.pickedPoint, 2)
+
+        rig.model.editTool?.select(nil)
+
+        XCTAssertEqual(rig.model.pickedPoint, -1)
+    }
+
     func test_theViewersOwnHandButtonTakesThePointerBack() async throws {
         let rig = try attached()
         rig.model.pick(.rectangle)

@@ -61,6 +61,9 @@ public final class CommentModel: ToolPanelModel {
     public private(set) var head = LineEnding.none
     public private(set) var startHead = LineEnding.none
     public private(set) var icon = "Note"
+
+    /// The corner of the selected polygon that was picked, for the Remove point button; -1 when none.
+    public private(set) var pickedPoint = -1
     public private(set) var stampName = AnnotationText.stampLabel(AnnotationText.standardStamps[0])
     public private(set) var allowed = true
     public private(set) var hint = ""
@@ -139,6 +142,34 @@ public final class CommentModel: ToolPanelModel {
         ]
     }
 
+    /// The fills of the list: none, the colours without Automatic and Black, then white and black.
+    public static var fills: [(name: String, rgb: [Double]?)] {
+        [(L10n.t("None"), nil)] + Array(colours[1..<7]) + [(L10n.t("White"), [1, 1, 1]), colours[7]]
+    }
+
+    public static var heads: [(name: String, value: LineEnding)] {
+        [(L10n.t("None"), .none), (L10n.t("Open arrow"), .openArrow), (L10n.t("Closed arrow"), .closedArrow),
+         (L10n.t("Reversed open arrow"), .rOpenArrow), (L10n.t("Reversed closed arrow"), .rClosedArrow), (L10n.t("Circle"), .circle),
+         (L10n.t("Square"), .square), (L10n.t("Diamond"), .diamond), (L10n.t("Slash"), .slash), (L10n.t("Bar"), .butt)]
+    }
+
+    /// The seven names the standard gives a note's icon.
+    public static var icons: [(name: String, value: String)] {
+        [(L10n.t("Note"), "Note"), (L10n.t("Comment"), "Comment"), (L10n.t("Help"), "Help"), (L10n.t("Insert"), "Insert"),
+         (L10n.t("Key"), "Key"), (L10n.t("New paragraph"), "NewParagraph"), (L10n.t("Paragraph"), "Paragraph")]
+    }
+
+    public static var lines: [(name: String, value: LineStyle)] {
+        [(L10n.t("Solid"), .solid), (L10n.t("Dashed"), .dashed), (L10n.t("Dotted"), .dotted)]
+    }
+
+    /// Whether `rgb` is the fill the next mark takes, within the tolerance the list is matched by.
+    public func isFill(_ rgb: [Double]?) -> Bool {
+        guard let fill else { return rgb == nil }
+        guard let rgb, rgb.count == fill.count else { return false }
+        return zip(rgb, fill).allSatisfy { abs($0 - $1) < 0.03 }
+    }
+
     /// The labels of the standard stamps, the choices of the stamp text.
     public var stamps: [String] { AnnotationText.standardStamps.map(AnnotationText.stampLabel) }
 
@@ -194,6 +225,7 @@ public final class CommentModel: ToolPanelModel {
         }
         edit.vertexRemoved = { [weak self] mark, index in self?.removePoint(mark, index) }
         edit.vertexPicked = { [weak self] index in self?.host?.setStatus(L10n.t("Point {0} picked", index + 1)) }
+        edit.pickChanged = { [weak self] in self?.pickedPoint = self?.editTool?.pickedVertex ?? -1 }
         edit.editRequested = { [weak self] mark in self?.editText(of: mark) }
         edit.deleteRequested = { [weak self] in self?.deleteSelected() }
         editTool = edit
@@ -242,6 +274,7 @@ public final class CommentModel: ToolPanelModel {
         active = nil
         field = nil
         selected = nil
+        pickedPoint = -1
         marks = []
         canFinishShape = false
         shapeStarted = false

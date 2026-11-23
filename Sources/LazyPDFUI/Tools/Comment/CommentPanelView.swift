@@ -98,7 +98,11 @@ struct CommentPanelView: View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeading(L10n.t("Look"))
             colours
+            if model.showsFill { fillRow }
             slider(L10n.t("Width"), L10n.t("{0} pt", number(model.width)), model.width, 0.5...12, 0.5) { model.setWidth($0) }
+            if model.showsDash { dashRow }
+            if model.showsHeads { headRows }
+            if model.showsIcon { iconRow }
             slider(L10n.t("Opacity"), L10n.t("{0} %", number(model.opacity)), model.opacity, 10...100, 5) { model.setOpacity($0) }
             fontRow
         }
@@ -174,7 +178,90 @@ struct CommentPanelView: View {
                 .disabled(!model.canChange)
                 .help(L10n.t("Delete the selected mark."))
             }
+            if selected.canAddPoint { pointButtons(selected) }
         }
+    }
+
+    // A polygon's corners come and go with these, since touch has no modifier keys and the Mac's Control-click is the context menu.
+    private func pointButtons(_ selected: SelectedMark) -> some View {
+        HStack(spacing: 8) {
+            Button { model.addPoint() } label: {
+                Label(L10n.t("Add point"), systemImage: "plus.circle").frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+            .disabled(!model.canChange)
+            .accessibilityLabel(L10n.t("Add point"))
+            Button { model.removePickedPoint() } label: {
+                Label(L10n.t("Remove point"), systemImage: "minus.circle").frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+            .disabled(!model.canChange || !selected.canRemovePoint || model.pickedPoint < 0)
+            .accessibilityLabel(L10n.t("Remove point"))
+        }
+    }
+
+    private var fillRow: some View {
+        let fills = CommentModel.fills
+        let chosen = fills.firstIndex { model.isFill($0.rgb) }
+        return LabelledField(L10n.t("Fill")) {
+            Picker(L10n.t("Fill"), selection: Binding<Int?>(get: { chosen }, set: { if let i = $0 { model.setFill(fills[i].rgb) } })) {
+                ForEach(Array(fills.enumerated()), id: \.offset) { Text($0.element.name).tag(Optional($0.offset)) }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .frame(minHeight: 44)
+            .accessibilityLabel(L10n.t("Fill"))
+        }
+        .disabled(!model.canChange || model.looksLocked)
+    }
+
+    private var dashRow: some View {
+        LabelledField(L10n.t("Line")) {
+            Picker(L10n.t("Line"), selection: Binding(get: { model.dash }, set: { model.setDash($0) })) {
+                ForEach(CommentModel.lines, id: \.value) { Text($0.name).tag($0.value) }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .frame(minHeight: 44)
+            .accessibilityLabel(L10n.t("Line"))
+        }
+        .disabled(!model.canChange || model.looksLocked)
+    }
+
+    private var headRows: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            headPicker(L10n.t("Start head"), model.startHead) { model.setStartHead($0) }
+            headPicker(L10n.t("Arrow head"), model.head) { model.setHead($0) }
+        }
+        .disabled(!model.canChange || model.looksLocked)
+    }
+
+    private func headPicker(_ label: String, _ value: LineEnding, _ set: @escaping (LineEnding) -> Void) -> some View {
+        LabelledField(label) {
+            Picker(label, selection: Binding(get: { value }, set: set)) {
+                ForEach(CommentModel.heads, id: \.value) { Text($0.name).tag($0.value) }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .frame(minHeight: 44)
+            .accessibilityLabel(label)
+        }
+    }
+
+    // A note from another app can carry a name outside the seven; the picker then shows no choice and keeps the name.
+    private var iconRow: some View {
+        let icons = CommentModel.icons
+        let chosen = icons.contains { $0.value == model.icon } ? model.icon : nil
+        return LabelledField(L10n.t("Note icon")) {
+            Picker(L10n.t("Note icon"), selection: Binding<String?>(get: { chosen }, set: { if let name = $0 { model.setIcon(name) } })) {
+                ForEach(icons, id: \.value) { Text($0.name).tag(Optional($0.value)) }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .frame(minHeight: 44)
+            .accessibilityLabel(L10n.t("Note icon"))
+        }
+        .disabled(!model.canChange)
     }
 
     private var colours: some View {
@@ -185,7 +272,7 @@ struct CommentPanelView: View {
                 }
             }
         }
-        .disabled(!model.canChange)
+        .disabled(!model.canChange || model.looksLocked)
     }
 
     private func swatch(_ name: String, _ rgb: [Double]?) -> some View {
@@ -220,7 +307,7 @@ struct CommentPanelView: View {
                 .accessibilityValue(readout)
                 .frame(minHeight: 44)
         }
-        .disabled(!model.canChange)
+        .disabled(!model.canChange || model.looksLocked)
     }
 
     private var fontRow: some View {
