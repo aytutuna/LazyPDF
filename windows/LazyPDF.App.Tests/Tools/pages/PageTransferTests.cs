@@ -124,7 +124,7 @@ public sealed class PageTransferTests
         await PageTransfer.CopyAsync(Pick(from, 0), to, host);
 
         var problem = Assert.Single(host.Problems);
-        Assert.Equal("This file cannot be changed", problem.Title);
+        Assert.Equal("locked.pdf cannot be changed", problem.Title);
         Assert.Contains("locked.pdf", problem.Text);
         Assert.Equal(revision, to.Revision);
     });

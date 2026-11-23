@@ -9469,6 +9469,9 @@
   "{0} is signed, so changing it breaks the signatures.": {
     "tr": "{0} imzalı, bu yüzden değiştirmek imzaları bozar."
   },
+  "{0} cannot be changed": {
+    "tr": "{0} değiştirilemez"
+  },
   "Copy to tab": {
     "tr": "Sekmeye kopyala"
   },

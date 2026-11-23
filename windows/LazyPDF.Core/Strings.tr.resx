@@ -3868,6 +3868,9 @@
   <data name="No natural language is set in the catalog or on the top structure elements." xml:space="preserve">
     <value>Katalogda da üst yapı öğelerinde de doğal dil belirtilmemiş.</value>
   </data>
+  <data name="No other file is open." xml:space="preserve">
+    <value>Başka açık dosya yok.</value>
+  </data>
   <data name="No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged." xml:space="preserve">
     <value>Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez.</value>
   </data>
@@ -8772,6 +8775,9 @@
   </data>
   <data name="{0} came inside this PDF. Open it only if you trust where the PDF came from." xml:space="preserve">
     <value>{0} bu PDF'nin içinde geldi. Yalnızca PDF'nin nereden geldiğine güveniyorsanız açın.</value>
+  </data>
+  <data name="{0} cannot be changed" xml:space="preserve">
+    <value>{0} değiştirilemez</value>
   </data>
   <data name="{0} cannot be repaired. Try an earlier copy of it." xml:space="preserve">
     <value>{0} onarılamıyor. Daha eski bir kopyasını deneyin.</value>
