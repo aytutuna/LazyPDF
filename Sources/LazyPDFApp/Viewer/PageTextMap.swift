@@ -1,10 +1,11 @@
 import Foundation
 import LazyPDFKit
 
-/// The text of a page as `TextPage.text` gives it, with the place of every character in it, so a screen reader that speaks in
-/// UTF-16 offsets of that string can be answered in characters and lines of the page and the other way round. Characters the
-/// text leaves out (spaces at the edges of a line, glyphs with no text, a soft hyphen inside a line) stand where the next kept
-/// one starts; the break before a line belongs to no character.
+/// The text of a page for a screen reader, with the place of every character in it, so a reader that speaks in UTF-16 offsets
+/// of that string can be answered in characters and lines of the page and the other way round. Unlike `TextPage.text`, a line
+/// always starts after a break, also when it starts with a space, and a soft hyphen is never kept, so words from two lines are
+/// never read as one. Characters the text leaves out (spaces at the edges of a line, glyphs with no text, soft hyphens) stand
+/// where the next kept one starts; the break before a line belongs to no character.
 public final class PageTextMap {
     public let page: TextPage
     private let units: [UInt16]
@@ -41,9 +42,6 @@ public final class PageTextMap {
             if c.line != line {
                 if line >= 0 && line < lineEnds.count { lineEnds[line] = sb.count }
                 settle()
-                if line >= 0 && !sb.isEmpty && !c.isSpace {
-                    sb.append(contentsOf: Self.separator(page.lines[c.line].before))
-                }
                 line = c.line
                 atStart = true
             }
@@ -57,9 +55,12 @@ public final class PageTextMap {
                 }
                 continue
             }
-            if c.text.isEmpty || (c.text == "\u{AD}" && i + 1 < chars.count && chars[i + 1].line == line) {
+            if c.text.isEmpty || c.text == "\u{AD}" {
                 waiting.append(i)
                 continue
+            }
+            if atStart && !sb.isEmpty {
+                sb.append(contentsOf: Self.separator(page.lines[line].before))
             }
             sb.append(contentsOf: pending)
             spaces.removeAll()

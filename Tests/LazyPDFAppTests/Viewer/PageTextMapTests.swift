@@ -12,12 +12,20 @@ final class PageTextMapTests: XCTestCase {
     private let sample = "First line of text.\n   indented second line  \n\nA new paragraph here.\nAnd its last line."
 
     func test_theTextIsThePagesOwn() async throws {
-        for text in [sample, "one", "a  b   c\n d", "x\n\n\ny"] {
+        for text in ["one", "a  b   c", "x\n\n\ny", "First line.\n\nA new paragraph.\nAnd its last line."] {
             let found = try await map(text)
 
             XCTAssertEqual(found.text, found.page.text)
             XCTAssertEqual(found.length, found.page.text.utf16.count)
         }
+    }
+
+    func test_aLineThatStartsWithASpaceStillStartsAfterABreak() async throws {
+        let found = try await map("one\n   indented\n two")
+
+        XCTAssertEqual(found.text, "one\nindented\ntwo")
+        XCTAssertEqual(found.string(in: found.units(ofLine: 1)), "indented")
+        XCTAssertEqual(found.line(atOffset: found.units(ofLine: 1).lowerBound), 1)
     }
 
     func test_everyKeptCharacterIsFoundWhereTheMapSaysAndComesBack() async throws {
