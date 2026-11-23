@@ -5,6 +5,7 @@ using System.Windows.Automation.Provider;
 using System.Windows.Automation.Text;
 using System.Windows.Interop;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
@@ -32,9 +33,9 @@ public sealed class PageTextProviderTests
     private const int WmGetObject = 0x3D;
     private const int UiaRootObjectId = -25;
 
-    private static async Task<Opened> Open(byte[] pdf)
+    private static async Task<Opened> Open(byte[] pdf, IDocumentRenderer? renderer = null)
     {
-        var tab = new DocumentTab(PdfEditSession.Open(pdf), new FakeRenderer(), null, "a.pdf");
+        var tab = new DocumentTab(PdfEditSession.Open(pdf), renderer ?? new FakeRenderer(), null, "a.pdf");
         var viewer = new PageViewer(null);
         var source = new HwndSource(new HwndSourceParameters("text-test")) { RootVisual = viewer };
         SendMessage(source.Handle, WmGetObject, IntPtr.Zero, new IntPtr(UiaRootObjectId));
@@ -255,4 +256,51 @@ public sealed class PageTextProviderTests
 
         Assert.Single(range.GetChildren());
     });
+
+    [Fact]
+    public Task ARangeMadeBetweenTheChangeAndTheDrawingOfATabStaysValid() => Sta.Run(async () =>
+    {
+        var renderer = new SlowRenderer();
+        using var o = await Open(Pdfs.Text(2), renderer);
+        var before = o.Provider.DocumentRange;
+        var drawn = new TaskCompletionSource();
+        o.Tab.Drawn += (_, _) => drawn.TrySetResult();
+        renderer.Gate = new TaskCompletionSource();
+
+        o.Tab.Refresh();
+        var between = o.Provider.DocumentRange;
+
+        Assert.False(o.Host.LayoutReady);
+        Assert.Throws<ElementNotAvailableException>(() => before.GetText(-1));
+        Assert.Equal("", between.GetText(-1));
+        renderer.Gate.SetResult();
+        await drawn.Task;
+        await Sta.Until(() => o.Host.LayoutReady);
+        Assert.Equal(new DocPos(2, 0), ((PageTextRange)between).Places.End);
+        await Sta.Until(() => o.Host.Peek(1) is not null);
+        Assert.Contains("Page 2.", between.GetText(-1));
+        Assert.Throws<ElementNotAvailableException>(() => before.Clone());
+    });
+
+    // A renderer whose load waits for the gate once one is set, so a test can stand between a tab's change and its drawing.
+    private sealed class SlowRenderer : IDocumentRenderer
+    {
+        private readonly FakeRenderer _inner = new();
+
+        public TaskCompletionSource? Gate { get; set; }
+
+        public bool Load(PdfEditSession session, string? password) => _inner.Load(session, password);
+
+        public async Task<bool> LoadAsync(PdfEditSession session, string? password)
+        {
+            if (Gate is { } gate) await gate.Task;
+            return _inner.Load(session, password);
+        }
+
+        public (double Width, double Height) PageSize(int pageIndex) => _inner.PageSize(pageIndex);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi) => _inner.Render(pageIndex, dpi);
+
+        public void Dispose() => _inner.Dispose();
+    }
 }
