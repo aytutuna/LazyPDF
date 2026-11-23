@@ -14,15 +14,29 @@ extension ViewerModel {
         return made
     }
 
-    /// The selected characters of a page, if the page's text is read and some of it is selected.
+    /// The selected characters of a page, if the page's text is read and some of it is selected; the place a screen reader put
+    /// its caret at counts as an empty run, until the selection changes.
     public func selectedChars(on page: Int) -> LazyPDFKit.TextRange? {
         guard let text = source?.peek(page) else { return nil }
+        if let caret = readerCaret, caret.page == page {
+            let at = Swift.min(caret.index, text.chars.count)
+            return LazyPDFKit.TextRange(at, at)
+        }
         return selected.on(page, text.chars.count)
     }
 
-    /// Selects a run of one page's characters, as a screen reader asks to; an empty run puts the caret there.
+    /// Selects a run of one page's characters, as a screen reader asks to. An empty run only moves the reader's own caret and
+    /// leaves what the user selected alone.
     public func select(page: Int, _ range: LazyPDFKit.TextRange) {
-        selected.set(Caret(page, range.start), Caret(page, Swift.max(range.end, range.start)))
+        if range.isEmpty {
+            let caret = Caret(page, range.start)
+            guard readerCaret != caret else { return }
+            readerCaret = caret
+            onSelectionChanged?()
+            return
+        }
+        selected.set(Caret(page, range.start), Caret(page, range.end))
+        readerCaret = nil
     }
 
     /// The place of a run of characters in view space, nil when the page is not laid out or the run has no boxes.

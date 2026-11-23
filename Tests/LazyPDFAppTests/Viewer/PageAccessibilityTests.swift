@@ -109,10 +109,43 @@ final class ViewerAccessibilityTests: XCTestCase {
 
     func test_aCaretSelectsNothingButIsStillAPlace() async throws {
         let viewer = try await open()
+        var told = 0
+        viewer.onSelectionChanged = { told += 1 }
 
         viewer.select(page: 0, LazyPDFKit.TextRange(3, 3))
 
         XCTAssertFalse(viewer.hasSelection)
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(3, 3))
+        XCTAssertEqual(told, 1)
+        viewer.select(page: 0, LazyPDFKit.TextRange(3, 3))
+        XCTAssertEqual(told, 1)
+    }
+
+    func test_aCaretLeavesTheUsersSelectionAloneAndIsAnswered() async throws {
+        let viewer = try await open()
+        viewer.select(page: 0, LazyPDFKit.TextRange(2, 7))
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(5, 5))
+
+        XCTAssertTrue(viewer.hasSelection)
+        XCTAssertEqual(viewer.selected.start, Caret(0, 2))
+        XCTAssertEqual(viewer.selected.end, Caret(0, 7))
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(5, 5))
+    }
+
+    func test_theCaretGoesWhenTheSelectionChangesOrTheTextIsReset() async throws {
+        let viewer = try await open()
+        viewer.select(page: 0, LazyPDFKit.TextRange(5, 5))
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(1, 4))
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(1, 4))
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(5, 5))
+        viewer.selected.clear()
+        XCTAssertNil(viewer.selectedChars(on: 0))
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(5, 5))
+        viewer.resetText()
         XCTAssertNil(viewer.selectedChars(on: 0))
     }
 
