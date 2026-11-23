@@ -91,6 +91,31 @@ final class MeasureToolTests: XCTestCase {
         XCTAssertEqual(done.items[0].value(inches), "4 in")
     }
 
+    func test_theFirstDotTakesAPressOnlyOnceTheShapeCanBeClosed() async throws {
+        let (tool, _, _) = try await start(.area)
+
+        tool.press(at(0, 0))
+        tool.press(at(72, 0))
+        XCTAssertFalse(tool.handleUnder(at(-1, -1)))
+        tool.press(at(72, 72))
+
+        XCTAssertTrue(tool.handleUnder(at(-1, -1)))
+        XCTAssertFalse(tool.handleUnder(at(72, 0)))
+        XCTAssertFalse(tool.handleUnder(at(-1, -1, page: 1)))
+    }
+
+    func test_askingAboutTheFirstDotLeavesTheSnapMarkAlone() async throws {
+        let (tool, _, _) = try await start(.area, withText: true)
+        tool.press(at(0, 0))
+        tool.press(at(72, 0))
+        tool.press(at(72, 72))
+        let before = tool.snapped
+
+        _ = tool.handleUnder(at(-1, -1))
+
+        XCTAssertEqual(tool.snapped, before)
+    }
+
     func test_escapeDropsTheShapeAndAClickOnAnotherPageWaitsForIt() async throws {
         let (tool, done, _) = try await start(.area)
 

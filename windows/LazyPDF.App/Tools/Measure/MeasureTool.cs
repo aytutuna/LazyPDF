@@ -52,6 +52,11 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
 
     public event EventHandler? Changed;
 
+    public bool HandleUnder(PagePointer pointer) => OnFirstDot(pointer);
+
+    // The resolved point, as the Mac checks it; Resolve here has no side effect, so asking leaves Snapped alone.
+    private bool OnFirstDot(PagePointer pointer) => CanFinish && pointer.Page == Page && Near(Resolved(pointer, true).Point, _points[0], pointer.Page);
+
     public void Press(PagePointer pointer)
     {
         if (_points.Count > 0 && pointer.Page != Page) return;
@@ -63,8 +68,9 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
             return;
         }
         _ = LoadSnapsAsync(pointer.Page);
-        var at = Resolve(pointer, true);
-        if (CanFinish && Near(at, _points[0], pointer.Page))
+        var (at, snapped) = Resolved(pointer, true);
+        Snapped = snapped;
+        if (OnFirstDot(pointer))
         {
             Finish();
             return;
@@ -76,7 +82,8 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
 
     public void Move(PagePointer pointer)
     {
-        Hover = Resolve(pointer, pointer.Page == Page);
+        var (point, snapped) = Resolved(pointer, pointer.Page == Page);
+        (Hover, Snapped) = (point, snapped);
         HoverPage = pointer.Page;
         _ = LoadSnapsAsync(pointer.Page);
         Changed?.Invoke(this, EventArgs.Empty);
@@ -127,19 +134,16 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
     /// <summary>View pixels per point of the page; 0 while the page is not laid out.</summary>
     public double Scale(int page) => viewer.PageToView(page) is { } m ? Math.Sqrt(m.M11 * m.M11 + m.M12 * m.M12) : 0;
 
-    private Point Resolve(PagePointer pointer, bool sameShape)
+    private (Point Point, bool Snapped) Resolved(PagePointer pointer, bool sameShape)
     {
-        Snapped = false;
         var at = pointer.Point;
-        if (pointer.Modifiers.HasFlag(ModifierKeys.Shift) && sameShape && _points.Count > 0) return MeasureShape.Straighten(_points[^1], at);
-        if (!Snap || pointer.Modifiers.HasFlag(ModifierKeys.Alt) || !_snaps.TryGetValue(pointer.Page, out var corners)) return at;
+        if (pointer.Modifiers.HasFlag(ModifierKeys.Shift) && sameShape && _points.Count > 0) return (MeasureShape.Straighten(_points[^1], at), false);
+        if (!Snap || pointer.Modifiers.HasFlag(ModifierKeys.Alt) || !_snaps.TryGetValue(pointer.Page, out var corners)) return (at, false);
         double scale = Scale(pointer.Page);
-        if (scale <= 0) return at;
+        if (scale <= 0) return (at, false);
         double radius = SnapPixels / scale;
         var snapped = MeasureShape.Nearest(corners, at, radius) ?? MeasureShape.NearestOnLines(_lines.GetValueOrDefault(pointer.Page) ?? [], at, radius);
-        if (snapped is not { } found) return at;
-        Snapped = true;
-        return found;
+        return snapped is { } found ? (found, true) : (at, false);
     }
 
     private bool Near(Point a, Point b, int page)

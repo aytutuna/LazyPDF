@@ -14,6 +14,9 @@ public enum ViewerKey {
 extension ViewerModel {
     private static let clickSlop = 4.0
 
+    // View points past a page edge where a tool is asked about its handles; above every tool's own reach.
+    private static let handleReach = 32.0
+
     /// A finger (`touch`) is never hovering, so the tool hears no moves between its presses.
     public func pointerDown(_ at: ViewPoint, clicks: Int = 1, modifiers: PointerModifiers = [], touch: Bool = false) {
         touching = touch
@@ -30,11 +33,10 @@ extension ViewerModel {
             drag = .none
             return
         }
-        if let tool, let over = hit {
-            let press = pointer(over.page, over.point, at, clicks, true, modifiers)
+        if let tool, let press = handlePress(at: at, clicks: clicks, modifiers: modifiers, touch: touch) {
             if touch || tool.takes(press) {
                 drag = .tool
-                dragPage = over.page
+                dragPage = press.page
                 tool.press(press)
                 return
             }
@@ -92,10 +94,22 @@ extension ViewerModel {
         followLink(target)
     }
 
-    /// Whether the tool wants a finger that lands at `at`; false over no page or with no tool.
+    /// Whether the tool wants a finger that lands at `at`; false over no page (a handle just off one apart) or with no tool.
     public func toolTakes(_ at: ViewPoint) -> Bool {
-        guard let tool, let over = state.hit(at) else { return false }
-        return tool.takes(pointer(over.page, over.point, at, 1, true, [], touch: true))
+        guard let tool, let press = handlePress(at: at, clicks: 1, modifiers: [], touch: true) else { return false }
+        return tool.takes(press)
+    }
+
+    // The press a tool is given at `at`: on the page under it, or, a handle on the page edge reaching past it, on the first page
+    // within reach whose tool reports a handle there. Anything else off the pages is nobody's press.
+    private func handlePress(at: ViewPoint, clicks: Int, modifiers: PointerModifiers, touch: Bool) -> PagePointer? {
+        if let over = state.hit(at) { return pointer(over.page, over.point, at, clicks, true, modifiers, touch: touch) }
+        guard let tool else { return nil }
+        for near in state.hitsNear(at, reach: Self.handleReach) {
+            let press = pointer(near.page, near.point, at, clicks, true, modifiers, touch: touch)
+            if tool.handleUnder(press) { return press }
+        }
+        return nil
     }
 
     /// The pointer was taken away while the button was down (another window, a popup): the tool gets no release.

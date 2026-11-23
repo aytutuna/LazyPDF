@@ -37,15 +37,24 @@ internal sealed class FieldTool(FormsPanel panel) : IPagePointerTool
 
     internal bool Dragging => _drag != Drag.None;
 
+    public bool HandleUnder(PagePointer pointer) => HandleAt(pointer, out _) >= 0;
+
+    private int HandleAt(PagePointer pointer, out Rect box)
+    {
+        box = default;
+        if (panel.PickedCount != 1 || panel.SelectedBox() is not { } selected || selected.Page != pointer.Page) return -1;
+        box = selected.Box;
+        double reach = Reach / FieldFrames.Scale(panel.View);
+        return Array.FindIndex(FieldFrames.Handles(box), h => Math.Abs(h.X - pointer.Point.X) <= reach && Math.Abs(h.Y - pointer.Point.Y) <= reach);
+    }
+
     public void Press(PagePointer pointer)
     {
         _page = pointer.Page;
         _start = pointer.Point;
-        double reach = Reach / FieldFrames.Scale(panel.View);
-        if (panel.PickedCount == 1 && panel.SelectedBox() is { } selected && selected.Page == _page
-            && Array.FindIndex(FieldFrames.Handles(selected.Box), h => Math.Abs(h.X - _start.X) <= reach && Math.Abs(h.Y - _start.Y) <= reach) is var handle and >= 0)
+        if (HandleAt(pointer, out var box) is var handle and >= 0)
         {
-            Begin(Drag.Size, selected.Box);
+            Begin(Drag.Size, box);
             _handle = handle;
         }
         else if (panel.WidgetAt(_page, _start) is { } hit)

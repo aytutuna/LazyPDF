@@ -202,6 +202,63 @@ final class PageOverlayPaintTests: XCTestCase {
         XCTAssertGreaterThan(heights[0], 8)
         XCTAssertEqual(Double(heights[1]), Double(heights[0]) * 2, accuracy: Double(heights[0]) * 0.25)
     }
+
+    private func cornerMarker(_ shown: Shown) {
+        shown.viewer.overlay(0).set(OverlayItem("test.corner", .marker(center: ViewPoint(0, 0), size: 20, round: false),
+                                                style: OverlayStyle(fill: OverlayColor(red: 1, green: 0, blue: 0))))
+    }
+
+    func test_aMarkerOnThePageCornerIsPaintedPastTheEdge() throws {
+        let shown = try open()
+        cornerMarker(shown)
+        let rep = try bitmap(shown)
+        let corner = try XCTUnwrap(shown.viewer.pageToView(0)).transform(ViewPoint(0, 0))
+
+        XCTAssertTrue(isRed(pixel(rep, corner.x + 4, corner.y + 4)))
+        XCTAssertTrue(isRed(pixel(rep, corner.x - 4, corner.y - 4)))
+    }
+
+    func test_aMarkerOnThePageCornerIsPaintedPastTheEdgeOfARotatedPage() throws {
+        for rotation in [90, 270] {
+            let shown = try open()
+            cornerMarker(shown)
+            shown.viewer.rotation = rotation
+            let rep = try bitmap(shown)
+            let matrix = try XCTUnwrap(shown.viewer.pageToView(0))
+            let corner = matrix.transform(ViewPoint(0, 0))
+            let inward = matrix.transform(ViewPoint(20, 20))
+            let sx = inward.x > corner.x ? 1.0 : -1.0
+            let sy = inward.y > corner.y ? 1.0 : -1.0
+
+            XCTAssertTrue(isRed(pixel(rep, corner.x + 4 * sx, corner.y + 4 * sy)), "inside at \(rotation)")
+            XCTAssertTrue(isRed(pixel(rep, corner.x - 4 * sx, corner.y - 4 * sy)), "outside at \(rotation)")
+        }
+    }
+
+    func test_aMarkerIsFoundWhenTheDirtyStripCoversOnlyTheMarginBesideThePage() throws {
+        let shown = try open()
+        cornerMarker(shown)
+        shown.viewer.scrollTo(x: 0, y: 0)
+        let corner = try XCTUnwrap(shown.viewer.pageToView(0)).transform(ViewPoint(0, 0))
+        let strip = NSRect(x: corner.x - 8, y: corner.y, width: 6, height: 8)
+        let rep = try XCTUnwrap(shown.view.bitmapImageRepForCachingDisplay(in: strip))
+
+        shown.view.cacheDisplay(in: strip, to: rep)
+
+        XCTAssertTrue(isRed(pixel(rep, 3, 4)))
+    }
+
+    func test_aMarkerIsPaintedOverAnItemOnAHigherLayer() throws {
+        let shown = try open()
+        shown.viewer.overlay(0).set(OverlayItem("test.under", .marker(center: ViewPoint(100, 100), size: 20, round: false),
+                                                style: OverlayStyle(fill: OverlayColor(red: 1, green: 0, blue: 0)), layer: 0))
+        shown.viewer.overlay(0).set(OverlayItem("test.over", .rect(ViewRect(90, 90, 20, 20)),
+                                                style: OverlayStyle(fill: OverlayColor(red: 0, green: 0, blue: 1)), layer: 1))
+        let rep = try bitmap(shown)
+        let at = try XCTUnwrap(shown.viewer.pageToView(0)).transform(ViewPoint(100, 100))
+
+        XCTAssertTrue(isRed(pixel(rep, at.x, at.y)))
+    }
 }
 #endif
 #endif

@@ -265,7 +265,7 @@ public partial class CommentPanel : ToolPanel
                 _edit.Redraw();
                 break;
             default:
-                viewer.PointerTool = _active = new DrawTool(viewer, _tool, CurrentStyle, Drew, Grab);
+                viewer.PointerTool = _active = new DrawTool(viewer, _tool, CurrentStyle, Drew, Grab, HandleUnder);
                 break;
         }
         _choosing = false;
@@ -296,6 +296,8 @@ public partial class CommentPanel : ToolPanel
         if (!pointer.FromKeys) edit.Select(null);
         return null;
     }
+
+    private bool HandleUnder(PagePointer pointer) => _edit is { Current: not null } edit && CanGrab(_tool) && edit.HandleUnder(pointer);
 
     // Strokes of handwriting and chained lines start on the last one, so those tools never take hold of it.
     internal static bool CanGrab(MarkTool tool) => tool is not (MarkTool.Pencil or MarkTool.Line or MarkTool.Arrow);

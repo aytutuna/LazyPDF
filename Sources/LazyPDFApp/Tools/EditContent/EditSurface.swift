@@ -134,6 +134,15 @@ final class EditSurface: PagePointerTool {
         onKey?(key) ?? false
     }
 
+    func handleUnder(_ pointer: PagePointer) -> Bool { grabbedHandle(pointer) != nil }
+
+    private func grabbedHandle(_ p: PagePointer) -> (handle: Int, bounds: ViewRect)? {
+        guard mode == .select, !selected.isEmpty, p.page == page else { return nil }
+        let bounds = selectionBounds()
+        let grabbed = Self.handleIndex(at: p.point, of: bounds, scale: scale(p.page))
+        return grabbed >= 0 ? (grabbed, bounds) : nil
+    }
+
     func press(_ p: PagePointer) {
         onPressing?()
         gesturePage = p.page
@@ -151,15 +160,14 @@ final class EditSurface: PagePointerTool {
 
         let shift = p.modifiers.contains(.shift)
         extend = shift
+        if let (grabbed, bounds) = grabbedHandle(p) {
+            gesture = .resize
+            handle = grabbed
+            origin = bounds
+            return
+        }
         if !selected.isEmpty && p.page == page {
             let bounds = selectionBounds()
-            let grabbed = Self.handleIndex(at: p.point, of: bounds, scale: scale(p.page))
-            if grabbed >= 0 {
-                gesture = .resize
-                handle = grabbed
-                origin = bounds
-                return
-            }
             if !shift && bounds.contains(p.point) {
                 gesture = .move
                 pressed = hit(p.page, p.point)

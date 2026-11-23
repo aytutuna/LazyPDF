@@ -129,15 +129,13 @@ internal sealed partial class EditSurface(IDocumentViewer viewer, PageEdits edit
         if (_mode != EditMode.Select) return;
 
         bool shift = _extend = p.Modifiers.HasFlag(ModifierKeys.Shift);
+        if (HandleUnder(p, out var handle, out var bounds))
+        {
+            (_gesture, _handle, _origin) = (Gesture.Resize, handle, bounds);
+            return;
+        }
         if (_selected.Count > 0 && p.Page == Page)
         {
-            var bounds = SelectionBounds();
-            int handle = HandleAt(bounds, p.Point, ViewScale.Of(viewer, p.Page));
-            if (handle >= 0)
-            {
-                (_gesture, _handle, _origin) = (Gesture.Resize, handle, bounds);
-                return;
-            }
             if (!shift && bounds.Contains(p.Point))
             {
                 (_gesture, _pressed) = (Gesture.Move, Hit(p.Page, p.Point));
@@ -266,6 +264,18 @@ internal sealed partial class EditSurface(IDocumentViewer viewer, PageEdits edit
             if (edits.Object(Page, id) is { } o) bounds.Union(PageRect(Page, o.Bounds));
         }
         return bounds;
+    }
+
+    public bool HandleUnder(PagePointer p) => HandleUnder(p, out _, out _);
+
+    private bool HandleUnder(PagePointer p, out int handle, out Rect bounds)
+    {
+        handle = -1;
+        bounds = default;
+        if (_mode != EditMode.Select || _selected.Count == 0 || p.Page != Page) return false;
+        bounds = SelectionBounds();
+        handle = HandleAt(bounds, p.Point, ViewScale.Of(viewer, p.Page));
+        return handle >= 0;
     }
 
     // The handles run round the box from the top left: corners at 0, 2, 4, 6 and sides at 1, 3, 5, 7.

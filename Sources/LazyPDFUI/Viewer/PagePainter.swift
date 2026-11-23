@@ -6,7 +6,7 @@ import LazyPDFApp
 import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Viewer/PageSurface.Draw.cs and the Decorate half of PageViewer.Text.cs: for each page in view its
-// paper, the best pictures there are, then the search hits and the selection, then the marks of the tools. Nothing here waits for a tile; what has not come
+// paper, the best pictures there are, then the search hits and the selection, then the marks of the tools, and last the handles. Nothing here waits for a tile; what has not come
 // is drawn from a smaller one. The context is y down and in the viewer's view space, as both platforms' views set it up.
 
 /// What the painter takes from the platform's colours.
@@ -22,6 +22,9 @@ enum PagePainter {
     static let hit = CGColor(srgbRed: 1, green: 214.0 / 255, blue: 0, alpha: 110.0 / 255)
     static let currentHit = CGColor(srgbRed: 1, green: 140.0 / 255, blue: 0, alpha: 160.0 / 255)
     private static let shadow = CGColor(gray: 0, alpha: 18.0 / 255)
+
+    // How far past a page's edge a marker can reach; more than half of any marker.
+    private static let markerReach = 16.0
 
     @MainActor
     static func draw(_ viewer: ViewerModel, in context: CGContext, dirty: CGRect, colors: PageColors) {
@@ -55,9 +58,20 @@ enum PagePainter {
                 drawFailure(L10n.t("Part of this page could not be drawn sharply."), atBottom: true, in: rect.intersection(CGRect(x: 0, y: 0, width: viewer.viewport.width, height: viewer.viewport.height)), colors, context)
             }
             highlight(viewer, page, matrix, colors, context)
-            OverlayPainter.draw(viewer.overlay(page), matrix: matrix, accent: colors.mark, in: context)
+            OverlayPainter.draw(viewer.overlay(page), matrix: matrix, accent: colors.mark, markers: false, in: context)
             context.restoreGState()
         }
+        // A handle on the edge of a page reaches past it, so the markers are painted after every page, unclipped.
+        context.saveGState()
+        context.clip(to: dirty)
+        for page in viewer.pages(in: area.inflated(markerReach, markerReach)) {
+            guard let matrix = viewer.pageToView(page) else { continue }
+            let size = viewer.pageSize(page)
+            let rect = CGRect(PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height)))
+            if !rect.insetBy(dx: -markerReach, dy: -markerReach).intersects(dirty) { continue }
+            OverlayPainter.draw(viewer.overlay(page), matrix: matrix, accent: colors.mark, markers: true, in: context)
+        }
+        context.restoreGState()
         if let placement = viewer.placement, let matrix = viewer.pageToView(placement.page) {
             drawMark(at: matrix.transform(placement.point), colors, context)
         }

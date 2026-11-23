@@ -24,7 +24,17 @@ public sealed class KeyboardPlacementTests
 
         public bool Cancelled { get; private set; }
 
+        public bool Handle { get; set; }
+
+        public int Asked { get; private set; }
+
         public Cursor? Cursor => null;
+
+        public bool HandleUnder(PagePointer pointer)
+        {
+            Asked++;
+            return Handle;
+        }
 
         public void Press(PagePointer pointer) => Calls.Add(("press", pointer));
 
@@ -545,6 +555,104 @@ public sealed class KeyboardPlacementTests
 
         Press(3);
         Assert.Equal(2, tab.PageIndex);
+        return Task.CompletedTask;
+    });
+
+    // The press lands at the surface's origin; scrolling puts a page point there, so an offset past the page's end puts it in the gap.
+    // Zoomed past the view's width so the scroll can reach a column on the page; the offset is clamped to the extent otherwise.
+    private static (PageViewer Viewer, RecordingTool Tool, double PageHeight) PressBelowFirstPage(bool handle, double below, DocumentTab tab)
+    {
+        var (viewer, tool) = Open(tab);
+        tool.Handle = handle;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetZoom(3);
+        double height = viewer.PageSize(0).Height;
+        surface.GoToPage(0, new Point(100, height + below / surface.PageMatrix(0)!.Value.M22), keepX: true);
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+        return (viewer, tool, height);
+    }
+
+    [Fact]
+    public Task APressJustOffAPageReachesTheToolOnlyWhenItReportsAHandle() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (_, tool, height) = PressBelowFirstPage(true, 10, tab);
+
+        var press = Assert.Single(tool.Calls);
+        Assert.Equal("press", press.Kind);
+        Assert.Equal(0, press.Pointer.Page);
+        Assert.True(press.Pointer.Point.Y > height);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressInTheGapWithoutAHandleCreatesNothing() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (_, tool, _) = PressBelowFirstPage(false, 10, tab);
+
+        Assert.True(tool.Asked > 0);
+        Assert.Empty(tool.Calls);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressFarFromEveryPageIsNotEvenAsked() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        tool.Handle = true;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        // The page is narrower than the view and centred, so the origin is far left of it; below a page is the next one, 12 px away.
+        surface.SetZoom(1);
+        surface.GoToPage(0, new Point(100, 100));
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+
+        Assert.Equal(0, tool.Asked);
+        Assert.Empty(tool.Calls);
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(90)]
+    [InlineData(270)]
+    public Task APressJustOffTheRightEdgeOfARotatedViewStaysOnThatSideInPageSpace(int rotation) => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        tool.Handle = true;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetRotation(rotation);
+        surface.SetZoom(3);
+        var size = surface.PageSize(0);
+        // 1 pt is 4 px here, inside the 12 px gap; the other coordinate sits near the page's left in view so the scroll is not clamped.
+        var off = new Point(size.Width + 1, rotation == 90 ? size.Height - 50 : 50);
+        surface.GoToPage(0, off, keepX: true);
+
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+
+        var press = Assert.Single(tool.Calls);
+        Assert.Equal(off.X, press.Pointer.Point.X, 0.5);
+        Assert.Equal(off.Y, press.Pointer.Point.Y, 0.5);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressOnAPageIsDeliveredWithoutAsking() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetZoom(3);
+        surface.GoToPage(0, new Point(100, 100), keepX: true);
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+
+        Assert.Equal(0, tool.Asked);
+        Assert.Single(tool.Calls);
         return Task.CompletedTask;
     });
 

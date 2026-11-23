@@ -19,6 +19,9 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     private const double Grip = 9;
     private const double MinSize = 8;
 
+    // View pixels; the viewer asks about handles only this far past a page edge, and the 2 page points of slack grow with zoom.
+    private const double MaxReach = 24;
+
     private static readonly Brush Accent = Freeze(new SolidColorBrush(Color.FromRgb(0x00, 0x78, 0xD4)));
 
     private readonly List<UIElement> _drawn = [];
@@ -107,10 +110,18 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     public bool Holds(PagePointer pointer)
     {
         if (Current is not { } mark || mark.PageIndex != pointer.Page) return false;
-        if (!_moveOnly && (_points is null ? HandleAt(Spots(_frame), pointer.Point) : VertexAt(_points, pointer.Point)) >= 0) return true;
+        if (HandleIndex(pointer) >= 0) return true;
         var hit = marker().At(pointer.Page, pointer.Point, Reach);
         return hit is not null && hit.Reference?.Number == mark.Reference?.Number;
     }
+
+    /// <summary>Whether a press lands on a handle of the selected mark, on the page or just off it.</summary>
+    public bool HandleUnder(PagePointer pointer) => HandleIndex(pointer) >= 0;
+
+    private int HandleIndex(PagePointer pointer) =>
+        Current is { } mark && mark.PageIndex == pointer.Page && !_moveOnly
+            ? _points is null ? HandleAt(Spots(_frame), pointer.Point) : VertexAt(_points, pointer.Point)
+            : -1;
 
     public void Press(PagePointer pointer)
     {
@@ -124,34 +135,31 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
             Redraw();
         }
         if (pointer.FromKeys && Current is { } keyed && keyed.PageIndex == pointer.Page && _points is not null && !_moveOnly && KeyedPress(keyed, pointer)) return;
-        if (Current is { } selected && selected.PageIndex == pointer.Page && !_moveOnly)
+        if (HandleIndex(pointer) is var grip and >= 0)
         {
             if (_points is not null)
             {
-                if (VertexAt(_points, pointer.Point) is var v and >= 0)
-                {
-                    _vertex = v;
-                    _from = _points[v];
-                    return;
-                }
-                // The corner is added as the press lands, so a click adds one on the side and a drag pulls it out.
-                if (pointer.Modifiers.HasFlag(ModifierKeys.Control) && !pointer.FromKeys && marker().SegmentAt(selected, pointer.Point, Reach) is var side and >= 0)
-                {
-                    _adding = side;
-                    _vertex = side + 1;
-                    _points = [.. _points[..(side + 1)], pointer.Point, .. _points[(side + 1)..]];
-                    _from = pointer.Point;
-                    Remove();
-                    Draw(selected.PageIndex, _frame);
-                    return;
-                }
+                _vertex = grip;
+                _from = _points[grip];
             }
-            else if (HandleAt(Spots(_frame), pointer.Point) is var h and >= 0)
+            else
             {
-                _handle = h;
+                _handle = grip;
                 Begin(pointer.Point);
-                return;
             }
+            return;
+        }
+        // The corner is added as the press lands, so a click adds one on the side and a drag pulls it out.
+        if (Current is { } selected && selected.PageIndex == pointer.Page && !_moveOnly && _points is not null
+            && pointer.Modifiers.HasFlag(ModifierKeys.Control) && !pointer.FromKeys && marker().SegmentAt(selected, pointer.Point, Reach) is var side and >= 0)
+        {
+            _adding = side;
+            _vertex = side + 1;
+            _points = [.. _points[..(side + 1)], pointer.Point, .. _points[(side + 1)..]];
+            _from = pointer.Point;
+            Remove();
+            Draw(selected.PageIndex, _frame);
+            return;
         }
         var hit = marker().At(pointer.Page, pointer.Point, Reach);
         if (hit is null)
@@ -326,13 +334,15 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         }
         if (nearest < 0) return -1;
         double gap = points.Where((_, i) => i != nearest).Select(p => (p - points[nearest]).Length).DefaultIfEmpty(double.MaxValue).Min();
-        double reach = Math.Min(Grip / 2 / Math.Max(viewer.Zoom, 0.1) + 2, gap / 2);
+        double zoom = Math.Max(viewer.Zoom, 0.1);
+        double reach = Math.Min(Math.Min(Grip / 2 / zoom + 2, MaxReach / zoom), gap / 2);
         return (points[nearest] - at).Length <= reach ? nearest : -1;
     }
 
     private int HandleAt(Point[] spots, Point at)
     {
-        double reach = Grip / 2 / Math.Max(viewer.Zoom, 0.1) + 2;
+        double zoom = Math.Max(viewer.Zoom, 0.1);
+        double reach = Math.Min(Grip / 2 / zoom + 2, MaxReach / zoom);
         for (int i = 0; i < spots.Length; i++)
         {
             if ((spots[i] - at).Length <= reach) return i;
