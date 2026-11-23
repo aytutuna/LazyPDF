@@ -301,17 +301,19 @@ public sealed class PageTextProviderTests
     });
 
     // What the selection painter draws for the characters of a stretch of one page, on the screen, clipped to the view like the answer.
+    // The painter's outline runs the four corners of each quad through the page geometry, apart from the box the answer takes.
     private static List<double> Painted(Opened o, int page, int from, int to)
     {
         var text = o.Host.Peek(page)!;
         var units = PageUiaText.Of(text);
         var surface = o.Viewer.Surface;
-        var bounds = (Func<int, IEnumerable<TextQuad>, Rect>)Delegate.CreateDelegate(typeof(Func<int, IEnumerable<TextQuad>, Rect>), o.Viewer,
-            typeof(PageViewer).GetMethod("PageBounds", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!);
+        var outline = (Func<int, IEnumerable<TextQuad>, System.Windows.Media.Geometry>)Delegate.CreateDelegate(
+            typeof(Func<int, IEnumerable<TextQuad>, System.Windows.Media.Geometry>), o.Viewer,
+            typeof(PageViewer).GetMethod("Outline", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!);
         var found = new List<double>();
         foreach (var quad in text.Quads(new TextRange(units.CharStart(from), units.CharEnd(to))))
         {
-            var area = Rect.Intersect(PageSpace.Transform(surface.PageMatrix(page)!.Value, bounds(page, [quad])), new Rect(surface.Viewport));
+            var area = Rect.Intersect(PageSpace.Transform(surface.PageMatrix(page)!.Value, outline(page, [quad]).Bounds), new Rect(surface.Viewport));
             if (area.IsEmpty) continue;
             var (a, b) = (surface.PointToScreen(area.TopLeft), surface.PointToScreen(area.BottomRight));
             found.AddRange([a.X, a.Y, b.X - a.X, b.Y - a.Y]);
@@ -477,6 +479,49 @@ public sealed class PageTextProviderTests
     });
 
     [Fact]
+    public Task AnAnswerOnGeometryWaitsForTheLayoutToHaveTheSamePages() => Sta.Run(async () =>
+    {
+        var renderer = new SlowRenderer();
+        using var o = await Open(Pdfs.Text(3), renderer);
+        Assert.Equal(4, Stretch(o, 0, "Page 1").GetBoundingRectangles().Length);
+        var drawn = new TaskCompletionSource();
+        o.Tab.Drawn += (_, _) => drawn.TrySetResult();
+        renderer.Gate = new TaskCompletionSource();
+
+        PageOperations.Delete(o.Tab.Document, [2]);
+        o.Tab.Refresh();
+        await Sta.Until(() => o.Host.Peek(0) is not null);
+        // Only the page counts are left to tell the layout from the text.
+        typeof(PageViewer).GetField("_stale", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.SetValue(o.Viewer, false);
+        var range = Stretch(o, 0, "Page 1");
+
+        Assert.NotEqual(o.Viewer.Surface.PageCount, o.Host.PageCount);
+        Assert.False(o.Host.LayoutReady);
+        Assert.Empty(range.GetBoundingRectangles());
+        Assert.Empty(o.Provider.GetVisibleRanges());
+        renderer.Gate.SetResult();
+        await drawn.Task;
+    });
+
+    [Fact]
+    public Task ASearchStoppedAtAnUnloadedPageIsFollowedByATextChangeWhenItArrives() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdfs.Text(4), load: false);
+        using var _ = o;
+        await o.Viewer.Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Background);
+        var told = new List<AutomationEvents>();
+        o.Viewer.Surface.Told += told.Add;
+        var all = o.Provider.DocumentRange;
+
+        Assert.Null(all.FindText("Page 4", false, false));
+        Assert.DoesNotContain(AutomationEvents.TextPatternOnTextChanged, told);
+
+        await Sta.Until(() => told.Contains(AutomationEvents.TextPatternOnTextChanged));
+        await Sta.Until(() => all.FindText("Page 4", false, false) is not null);
+        Assert.Equal("Page 4", all.FindText("Page 4", false, false)!.GetText(-1));
+    });
+
+    [Fact]
     public Task SelectingARangeSelectsInTheViewerWithoutCaretBrowsing() => Sta.Run(async () =>
     {
         var o = await Open(Pdfs.Text(2));
@@ -498,6 +543,23 @@ public sealed class PageTextProviderTests
         Assert.Equal(1, run.Page);
         var selection = Assert.Single(o.Provider.GetSelection());
         Assert.Equal("tests", selection.GetText(-1));
+    });
+
+    [Fact]
+    public Task ASelectionADragIsStillMakingYieldsToSelect() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdfs.Text(2));
+        using var _ = o;
+        const System.Reflection.BindingFlags all = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var type = typeof(PageViewer);
+        type.GetMethod("BeginSelection", all)!.Invoke(o.Viewer, [new Point(60, 60), 1]);
+        type.GetField("_moved", all)!.SetValue(o.Viewer, true);
+        var range = Stretch(o, 1, "tests");
+
+        range.Select();
+        type.GetMethod("DragSelection", all)!.Invoke(o.Viewer, [new Point(400, 60)]);
+
+        Assert.Equal("tests", Assert.Single(o.Provider.GetSelection()).GetText(-1));
     });
 
     // Gives the pages the size they are drawn at, so the text of the file lies where the layout puts it.

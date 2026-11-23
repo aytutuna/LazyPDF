@@ -19,6 +19,7 @@ public partial class PageViewer
     private readonly ViewerSelection _selection = new();
     private PagePoint? _anchorWaiting;
     private int _press;
+    private int _dragPress;
     private bool _unitWaiting;
     private (Caret Start, Caret End, int Clicks)? _multi;
     private Brush? _selectionBrush;
@@ -136,7 +137,7 @@ public partial class PageViewer
 
     private void BeginSelection(Point at, int clicks)
     {
-        int press = ++_press;
+        int press = _dragPress = ++_press;
         _anchorWaiting = null;
         _unitWaiting = false;
         _multi = null;
@@ -186,7 +187,7 @@ public partial class PageViewer
         }
     }
 
-    // A double or triple click still waiting for its page text must not select after a later action.
+    // A drag or a double or triple click still waiting for its page text must not select after a later action.
     private void CancelPendingSelection() => _press++;
 
     private void SelectUnit((int Page, Point Point) hit, TextPage text, int clicks)
@@ -205,7 +206,7 @@ public partial class PageViewer
 
     private void DragSelection(Point at)
     {
-        if (_unitWaiting || !_moved || Surface.Hit(at, nearest: true) is not { } hit) return;
+        if (_dragPress != _press || _unitWaiting || !_moved || Surface.Hit(at, nearest: true) is not { } hit) return;
         if (LoadedText(hit.Page) is not { } text)
         {
             _ = LoadPageAsync(hit.Page);
