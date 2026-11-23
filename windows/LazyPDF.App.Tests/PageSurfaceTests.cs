@@ -524,7 +524,7 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
-    public void AnOverlayChildOutsideThePageIsInTheRenderedBounds()
+    public void AnOverlayChildOutsideThePageReachesTheScreen()
     {
         OnSta(() =>
         {
@@ -532,17 +532,21 @@ public sealed class PageSurfaceTests
             surface.SetZoom(1);
             var overlay = surface.Overlay(0);
             var size = surface.PageSize(0);
-            var mark = new System.Windows.Shapes.Rectangle { Width = 8, Height = 8, Fill = System.Windows.Media.Brushes.Black };
+            var mark = new System.Windows.Shapes.Rectangle { Width = 8, Height = 8, Fill = Brushes.Black };
             System.Windows.Controls.Canvas.SetLeft(mark, size.Width - 4);
             System.Windows.Controls.Canvas.SetTop(mark, -4);
             overlay.Children.Add(mark);
 
             surface.Measure(Window);
             surface.Arrange(new Rect(Window));
-            var bounds = System.Windows.Media.VisualTreeHelper.GetDescendantBounds(overlay);
+            surface.UpdateLayout();
+            var bitmap = new RenderTargetBitmap((int)Window.Width, (int)Window.Height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(surface);
+            var outside = surface.PageMatrix(0)!.Value.Transform(new Point(size.Width + 2, -2));
+            var pixel = new byte[4];
+            bitmap.CopyPixels(new Int32Rect((int)outside.X, (int)outside.Y, 1, 1), pixel, 4, 0);
 
-            Assert.True(bounds.Right > size.Width);
-            Assert.True(bounds.Top < 0);
+            Assert.Equal(new byte[] { 0, 0, 0, 255 }, pixel);
         });
     }
 
