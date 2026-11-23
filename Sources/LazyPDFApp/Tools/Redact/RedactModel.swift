@@ -132,12 +132,14 @@ public final class RedactModel: ToolPanelModel {
         state.revision = tab.revision
         if !moved {
             if edited, state.marks.removeValues() {
+                state.marks.forget()
                 host?.showNotice(L10n.t("Hits removed"), L10n.t("The file changed, so the hits in comments and fields no longer fit. Search again."), nil)
             }
             return
         }
         if state.marks.items.isEmpty { return }
         state.marks.clear()
+        state.marks.forget()
         host?.showNotice(L10n.t("Marks removed"), L10n.t("The pages changed, so the marks no longer fit. Mark them again."), nil)
     }
 
