@@ -18,8 +18,9 @@ public final class PrintLayoutChoice {
     /// `remembered` is what was kept from the last print; the binding always starts from the document's reading direction.
     public init(remembered: PrintLayout = PrintLayout(), rightToLeft: Bool = false, documentPages: Int = 0,
                 sheetWidth: Double = 612, sheetHeight: Double = 792) {
-        layout = remembered
+        var layout = remembered
         layout.rightToLeft = rightToLeft
+        self.layout = layout
         self.documentPages = documentPages
         self.sheetWidth = sheetWidth
         self.sheetHeight = sheetHeight
