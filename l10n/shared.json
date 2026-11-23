@@ -9363,5 +9363,58 @@
   },
   "Window {0}: {1}": {
     "tr": "Pencere {0}: {1}"
+  },
+  "{0}: {1} on {2}.": {
+    "tr": "{0}: {2} üzerinde {1}."
+  },
+  "No sides are left to print.": {
+    "tr": "Yazdırılacak yüz kalmadı."
+  },
+  "Odd sides (fronts): {0} of {1}.": {
+    "tr": "Tek yüzler (ön yüzler): {1} yüzün {0} tanesi."
+  },
+  "Even sides (backs): {0} of {1}.": {
+    "tr": "Çift yüzler (arka yüzler): {1} yüzün {0} tanesi."
+  },
+  "{0} sides: a blank is added at the start of the even run so each back meets its front.": {
+    "tr": "{0} yüz var: her arka yüz kendi ön yüzüne denk gelsin diye çift yüzlerin başına boş bir sayfa eklenir."
+  },
+  "{0} sides: a blank is added at the end of the even run so each back meets its front.": {
+    "tr": "{0} yüz var: her arka yüz kendi ön yüzüne denk gelsin diye çift yüzlerin sonuna boş bir sayfa eklenir."
+  },
+  "In reverse order.": {
+    "tr": "Ters sırada."
+  },
+  "{0} side": {
+    "other": "{0} sides",
+    "tr": "{0} yüz"
+  },
+  "{0} piece of paper": {
+    "other": "{0} pieces of paper",
+    "tr": "{0} kâğıt"
+  },
+  "Binding": {
+    "tr": "Ciltleme"
+  },
+  "Gap between pages (mm)": {
+    "tr": "Sayfalar arası boşluk (mm)"
+  },
+  "Border around each page": {
+    "tr": "Her sayfanın çevresinde çerçeve"
+  },
+  "Which sides": {
+    "tr": "Hangi yüzler"
+  },
+  "Last side first": {
+    "tr": "Son yüz önce"
+  },
+  "Type a gap from 0 to 25 mm.": {
+    "tr": "0 ile 25 mm arasında bir boşluk yazın."
+  },
+  "Two-sided printing must flip on the short edge.": {
+    "tr": "Çift taraflı yazdırma kısa kenardan çevirmeli olmalı."
+  },
+  "To print both sides by hand, print the odd sides, turn the stack over and print the even sides.": {
+    "tr": "İki yüzü elle yazdırmak için önce tek yüzleri yazdırın, destede çevirin, sonra çift yüzleri yazdırın."
   }
 }

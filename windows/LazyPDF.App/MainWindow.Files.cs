@@ -151,13 +151,11 @@ public partial class MainWindow
         if (dialog.ShowDialog() != true) return;
         var range = PagePaginator.PagesFor(dialog.PageRangeSelection, dialog.PageRange.PageFrom, dialog.PageRange.PageTo, tab.PageIndex, tab.PageCount);
         if (range is { Count: 0 }) return;
-        if (PrintLayoutWindow.Ask(this) is not { } layout) return;
         var size = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight);
-        if (layout.Validate(size.Width * 0.75, size.Height * 0.75) is { } tooTight)
-        {
-            _vm.ShowProblem(new Problem(Loc.T("Not printed"), tooTight));
-            return;
-        }
+        // The reading direction sets the binding for this job; only the layout choices are kept.
+        bool rightToLeft = ViewerSettings.Read(tab.Session.Document).RightToLeft;
+        if (PrintLayoutWindow.Ask(this, range, tab.PageCount, PrintLayout.Remembered(AppPreferencesStore.Load()), size.Width * 0.75, size.Height * 0.75, rightToLeft) is not { } layout) return;
+        AppPreferencesStore.Update(layout.Remember);
         // A print queue belongs to the thread that made it, so the worker opens its own from the names.
         string server = dialog.PrintQueue.HostingPrintServer.Name, printer = dialog.PrintQueue.Name;
         var ticket = dialog.PrintTicket;

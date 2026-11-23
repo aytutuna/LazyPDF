@@ -70,6 +70,16 @@ public sealed class AppPreferences
 
     public double CreateHeight { get; set; }
 
+    /// <summary>Pages per sheet last picked in the print layout window.</summary>
+    public int PrintPerSheet { get; set; } = 1;
+
+    public bool PrintBooklet { get; set; }
+
+    /// <summary>The gap between pages last typed in the print layout window, in points.</summary>
+    public double PrintGap { get; set; }
+
+    public bool PrintBorder { get; set; }
+
     /// <summary>Where the main window was left; null until it has been closed once.</summary>
     public WindowPlacement? Window { get; set; }
 }

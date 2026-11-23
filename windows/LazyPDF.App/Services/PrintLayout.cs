@@ -63,6 +63,46 @@ public sealed record PrintLayout(int PerSheet = 1, bool Booklet = false, PrintPa
         return kept;
     }
 
+    /// <summary>What the layout will print, for the window: the counts of pages, sides and papers, which sides go and the blank.</summary>
+    public string Summary(IReadOnlyList<int>? range, int documentPages)
+    {
+        int pages = range?.Count ?? documentPages;
+        int sides = Imposes ? SideCount(pages) : pages;
+        var sent = Imposes ? SheetsToPrint(sides) : Pages(range, documentPages);
+        int real = sent.Count(i => i >= 0);
+        string pagesText = Loc.Plural(pages, "{0} page", "{0} pages");
+        var parts = new List<string> { Imposes
+            ? Loc.T("{0}: {1} on {2}.", pagesText, Loc.Plural(sides, "{0} side", "{0} sides"), Loc.Plural((sides + 1) / 2, "{0} piece of paper", "{0} pieces of paper"))
+            : pagesText + "." };
+        if (real == 0) parts.Add(Loc.T("No sides are left to print."));
+        else
+        {
+            if (Parity == PrintParity.Odd) parts.Add(Loc.T("Odd sides (fronts): {0} of {1}.", real, sides));
+            if (Parity == PrintParity.Even) parts.Add(Loc.T("Even sides (backs): {0} of {1}.", real, sides));
+            if (sent.Contains(-1))
+                parts.Add(Reverse ? Loc.T("{0} sides: a blank is added at the start of the even run so each back meets its front.", sides)
+                    : Loc.T("{0} sides: a blank is added at the end of the even run so each back meets its front.", sides));
+            if (Reverse) parts.Add(Loc.T("In reverse order."));
+        }
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>The layout choices kept between prints: not the sides, the order or the binding, which a person picks for each job.</summary>
+    public static PrintLayout Remembered(AppPreferences preferences) => new(
+        PerSheetChoices.Contains(preferences.PrintPerSheet) ? preferences.PrintPerSheet : 1, preferences.PrintBooklet,
+        Gap: Math.Clamp(preferences.PrintGap, 0, MaxGap), Border: preferences.PrintBorder);
+
+    public void Remember(AppPreferences preferences)
+    {
+        preferences.PrintPerSheet = PerSheet;
+        preferences.PrintBooklet = Booklet;
+        preferences.PrintGap = Gap;
+        preferences.PrintBorder = Border;
+    }
+
+    /// <summary>The widest gap the window offers, in points (25 mm).</summary>
+    public const double MaxGap = 72;
+
     /// <summary>The note for annotations the sheets could not take, or null when none was left off.</summary>
     public static string? DroppedNote(int dropped) => dropped == 0 ? null
         : Loc.Plural(dropped, "{0} link or note without a picture was left off the sheets.", "{0} links and notes without a picture were left off the sheets.");

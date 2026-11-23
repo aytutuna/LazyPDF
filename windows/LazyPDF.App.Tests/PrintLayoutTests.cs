@@ -187,6 +187,59 @@ public sealed class PrintLayoutTests
     }
 
     [Fact]
+    public void OnlyThePerSheetBookletGapAndBorderAreRemembered()
+    {
+        using var dir = new TempDir();
+        var chosen = new PrintLayout(PerSheet: 4, Booklet: true, Parity: PrintParity.Even, Reverse: true, RightToLeft: true, Gap: 14.2, Border: true);
+        AppPreferencesStore.Update(chosen.Remember, dir.Path);
+
+        var back = PrintLayout.Remembered(AppPreferencesStore.Load(dir.Path));
+
+        Assert.Equal(new PrintLayout(PerSheet: 4, Booklet: true, Gap: 14.2, Border: true), back);
+    }
+
+    [Fact]
+    public void ARememberedValueOutOfRangeFallsBack()
+    {
+        var back = PrintLayout.Remembered(new AppPreferences { PrintPerSheet = 5, PrintGap = 500 });
+
+        Assert.Equal(1, back.PerSheet);
+        Assert.Equal(PrintLayout.MaxGap, back.Gap);
+    }
+
+    [Fact]
+    public void ThePlainSummaryCountsPages()
+    {
+        Assert.Equal("8 pages.", new PrintLayout().Summary(null, 8));
+        Assert.Equal("1 page.", new PrintLayout().Summary(null, 1));
+        Assert.Equal("3 pages. In reverse order.", new PrintLayout(Reverse: true).Summary([2, 3, 4], 8));
+    }
+
+    [Fact]
+    public void ALayoutSummaryCountsSidesAndPapers()
+    {
+        Assert.Equal("8 pages: 4 sides on 2 pieces of paper.", new PrintLayout(Booklet: true).Summary(null, 8));
+        Assert.Equal("1 page: 1 side on 1 piece of paper.", new PrintLayout(PerSheet: 2).Summary(null, 1));
+        Assert.Equal("8 pages: 4 sides on 2 pieces of paper. Odd sides (fronts): 2 of 4.", new PrintLayout(Booklet: true, Parity: PrintParity.Odd).Summary(null, 8));
+        Assert.Equal("6 pages: 2 sides on 1 piece of paper. Even sides (backs): 1 of 2.", new PrintLayout(PerSheet: 4, Parity: PrintParity.Even).Summary([1, 2, 3, 4, 5, 6], 20));
+    }
+
+    [Fact]
+    public void TheSummaryNamesTheBlankOfAnOddCount()
+    {
+        Assert.Equal("5 pages: 3 sides on 2 pieces of paper. Even sides (backs): 1 of 3. 3 sides: a blank is added at the end of the even run so each back meets its front.",
+            new PrintLayout(PerSheet: 2, Parity: PrintParity.Even).Summary(null, 5));
+        Assert.Contains("at the start of the even run", new PrintLayout(PerSheet: 2, Parity: PrintParity.Even, Reverse: true).Summary(null, 5));
+        Assert.DoesNotContain("blank", new PrintLayout(PerSheet: 2, Parity: PrintParity.Odd).Summary(null, 5));
+    }
+
+    [Fact]
+    public void TheSummarySaysWhenNothingIsLeft()
+    {
+        Assert.Equal("1 page. No sides are left to print.", new PrintLayout(Parity: PrintParity.Even).Summary(null, 1));
+    }
+
+    [Fact]
     public void RightToLeftGapAndBorderGoToTheEngine()
     {
         var options = new PrintLayout(PerSheet: 2, RightToLeft: true, Gap: 6, Border: true).Options(612, 792);
