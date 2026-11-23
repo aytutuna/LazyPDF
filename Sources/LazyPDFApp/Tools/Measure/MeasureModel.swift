@@ -34,6 +34,8 @@ public final class MeasureModel: ToolPanelModel {
     public private(set) var calibrating = false
     /// What the drawn line reads at the page's scale; nil until a line is drawn.
     public private(set) var calibrateDrawn: String?
+    /// Goes up for every line drawn, so a view can react to a second line that reads the same as the first.
+    public private(set) var calibrateLines = 0
     public private(set) var calibrateValue = ""
     public private(set) var calibrateUnit = LengthUnit.millimetre
     public private(set) var calibrateProblem = false
@@ -268,6 +270,7 @@ public final class MeasureModel: ToolPanelModel {
         calibratedPage = page
         calibratedLength = length
         calibrateDrawn = L10n.t("Line drawn: {0}", scaleOf(page).length(length))
+        calibrateLines += 1
         calibrateUnit = realUnit
         calibrateProblem = false
     }

@@ -8,6 +8,7 @@ import LazyPDFKit
 struct MeasurePanelView: View {
     let model: MeasureModel
     @FocusState private var lengthFocused: Bool
+    @AccessibilityFocusState private var lengthSpoken: Bool
 
     var body: some View {
         ToolForm {
@@ -76,6 +77,7 @@ struct MeasurePanelView: View {
     }
 
     // What the drawn line reads goes to the length field as its hint too, since a screen reader says it when focus lands there.
+    // VoiceOver focus does not follow keyboard focus on iOS, so it is moved as well, once for every line drawn.
     private func calibrateRow(_ drawn: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(drawn).font(.headline)
@@ -86,6 +88,7 @@ struct MeasurePanelView: View {
                         .frame(minHeight: 44)
                         .autocorrectionDisabled()
                         .focused($lengthFocused)
+                        .accessibilityFocused($lengthSpoken)
                         .accessibilityHint(drawn)
                         .onSubmit { model.applyCalibration() }
                         .onKeyPress(.escape) {
@@ -114,7 +117,10 @@ struct MeasurePanelView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .task(id: drawn) { lengthFocused = true }
+        .task(id: model.calibrateLines) {
+            lengthFocused = true
+            lengthSpoken = true
+        }
     }
 
     private var optionsSection: some View {

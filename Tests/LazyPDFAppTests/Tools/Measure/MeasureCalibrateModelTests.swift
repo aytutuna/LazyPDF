@@ -202,6 +202,18 @@ final class MeasureCalibrateModelTests: XCTestCase {
         XCTAssertTrue(allActual(model, rig.tab))
     }
 
+    func test_everyLineDrawnCountsEvenWhenItReadsTheSame() async throws {
+        let (model, _) = try attached()
+        model.startCalibrate()
+
+        try draw(model)
+        let first = model.calibrateLines
+        try draw(model)
+
+        XCTAssertEqual(model.calibrateDrawn, "Line drawn: 25.4 mm")
+        XCTAssertEqual(model.calibrateLines, first + 1)
+    }
+
     // Distances, rows, the overlay and the writer all count in the points of the page as shown, so a turned page with a
     // user unit must read the typed length back from the file.
     func test_aCalibrationOnATurnedPageWithAUserUnitReadsBackFromTheWrittenFile() async throws {
