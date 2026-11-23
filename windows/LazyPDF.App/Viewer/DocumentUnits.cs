@@ -92,9 +92,9 @@ public sealed class DocumentUnits
         if (_pages(start.Page) is { } first) from = new Caret(start.Page, first.CharStart(start.Offset));
         else if (start.Offset == 0) from = new Caret(start.Page, 0);
         else return null;
-        if (end.Page >= _count) to = new Caret(_count - 1, int.MaxValue);
+        // A stretch ending on the page break ends with its page, not on the next one with nothing selected.
+        if (end.Page >= _count || end.Offset == 0) to = new Caret(end.Page >= _count ? _count - 1 : end.Page - 1, int.MaxValue);
         else if (_pages(end.Page) is { } last) to = new Caret(end.Page, last.CharEnd(end.Offset));
-        else if (end.Offset == 0) to = new Caret(end.Page, 0);
         else return null;
         return to > from ? (from, to) : null;
     }

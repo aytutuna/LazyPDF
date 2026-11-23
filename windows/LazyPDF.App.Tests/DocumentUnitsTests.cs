@@ -64,7 +64,9 @@ public sealed class DocumentUnitsTests
         // Page 2 is "g<smiley>h": the pair is one character however its units are cut.
         Assert.Equal((new Caret(2, 1), new Caret(2, 2)), u.Selection(new DocPos(2, 2), new DocPos(2, 2 + 1)));
         Assert.Equal((new Caret(0, 0), new Caret(2, int.MaxValue)), u.Selection(u.Start, u.End));
-        Assert.Equal((new Caret(0, 5), new Caret(2, 0)), u.Selection(new DocPos(0, 6), new DocPos(2, 0)));
+        Assert.Equal((new Caret(0, 5), new Caret(1, int.MaxValue)), u.Selection(new DocPos(0, 6), new DocPos(2, 0)));
+        // The last line of page 0 takes its page break: the selection ends on page 0.
+        Assert.Equal((new Caret(0, 5), new Caret(0, int.MaxValue)), u.Selection(new DocPos(0, 6), new DocPos(1, 0)));
         Assert.Null(u.Selection(new DocPos(0, 3), new DocPos(0, 3)));
         Assert.Null(u.Selection(new DocPos(0, 5), new DocPos(0, 6)));
     }
@@ -73,7 +75,7 @@ public sealed class DocumentUnitsTests
     public void ASelectionOnAPageThatIsNotLoadedNeedsItsStartOrEnd()
     {
         var u = Large(0);
-        Assert.Equal((new Caret(0, 0), new Caret(5, 0)), u.Selection(new DocPos(0, 0), new DocPos(5, 0)));
+        Assert.Equal((new Caret(0, 0), new Caret(4, int.MaxValue)), u.Selection(new DocPos(0, 0), new DocPos(5, 0)));
         Assert.Null(u.Selection(new DocPos(0, 0), new DocPos(5, 3)));
         Assert.Null(u.Selection(new DocPos(5, 3), new DocPos(6, 0)));
     }
