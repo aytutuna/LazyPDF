@@ -12,6 +12,9 @@ final class TabDragTests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-uitestOpen", first.path, "-uitestOpenNext", second.path]
         app.launch()
+        // The copy in the page drop test leaves the second file unsaved, so the next launch asks to restore it.
+        let discard = app.buttons["Discard"].firstMatch
+        if discard.waitForExistence(timeout: 5) { discard.tap() }
         return app
     }
 
