@@ -337,6 +337,218 @@ public sealed class CommentPanelTests
         Assert.False(bar.IsOpen);
     });
 
+    private static void Pick(CommentPanel panel, MarkTool tool) => Get<Dictionary<MarkTool, RadioButton>>(panel, "_buttons")[tool].IsChecked = true;
+
+    private static void Settle(CommentPanel panel) => typeof(CommentPanel).GetMethod("Settle_Tick", Private)!.Invoke(panel, [null, EventArgs.Empty]);
+
+    private static int HeadIndex(LineEnding head) => Array.FindIndex(Get<(string Name, LineEnding Value)[]>(typeof(CommentPanel), "Heads"), h => h.Value == head);
+
+    private static T Get<T>(Type type, string field) => (T)type.GetField(field, BindingFlags.Static | Private)!.GetValue(null)!;
+
+    private static PdfAnnotation Line(CommentFixture f, double y, LineEnding start = LineEnding.None, LineEnding end = LineEnding.None)
+    {
+        var made = f.Marker.Add(MarkTool.Line, 0, [new Point(60, y), new Point(260, y + 40)], MarkStyle.Default with { StartHead = start, Head = end });
+        Assert.True(f.Tab.Commit("Line"));
+        return f.Marks().Single(m => m.Reference?.Number == made.Reference?.Number);
+    }
+
+    [Fact]
+    public Task TheLineToolDrawsAPlainLineAndTheArrowToolAnOpenArrow() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+
+        Pick(panel, MarkTool.Line);
+        Drag(Get<IPagePointerTool>(panel, "_active"), new Point(40, 50), new Point(120, 100));
+        Pick(panel, MarkTool.Arrow);
+        Drag(Get<IPagePointerTool>(panel, "_active"), new Point(40, 150), new Point(120, 200));
+
+        var marks = f.Marks();
+        Assert.Equal((LineEnding.None, LineEnding.None), (marks[0].StartEnding, marks[0].EndEnding));
+        Assert.Equal((LineEnding.None, LineEnding.OpenArrow), (marks[1].StartEnding, marks[1].EndEnding));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AHeadPickedForTheArrowToolDoesNotShowOnTheLineTool() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        var end = Get<ComboBox>(panel, "HeadBox");
+        var start = Get<ComboBox>(panel, "StartHeadBox");
+
+        Pick(panel, MarkTool.Arrow);
+        end.SelectedIndex = HeadIndex(LineEnding.ClosedArrow);
+        start.SelectedIndex = HeadIndex(LineEnding.Circle);
+        Pick(panel, MarkTool.Line);
+
+        Assert.Equal(HeadIndex(LineEnding.None), end.SelectedIndex);
+        Assert.Equal(HeadIndex(LineEnding.None), start.SelectedIndex);
+        Pick(panel, MarkTool.Arrow);
+        Assert.Equal(HeadIndex(LineEnding.ClosedArrow), end.SelectedIndex);
+        Assert.Equal(HeadIndex(LineEnding.Circle), start.SelectedIndex);
+        Assert.Equal(LineEnding.ClosedArrow, StyleOf(panel).Head);
+        Assert.Equal(LineEnding.Circle, StyleOf(panel).StartHead);
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(LineEnding.Butt)]
+    [InlineData(LineEnding.ROpenArrow)]
+    [InlineData(LineEnding.RClosedArrow)]
+    public Task ChangingOnlyTheStartHeadLeavesTheEndAsItWas(LineEnding end) => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var line = Line(f, 80, LineEnding.None, end);
+        var panel = Attached(f);
+        Get<EditTool>(panel, "_edit").Select(line);
+
+        Get<ComboBox>(panel, "StartHeadBox").SelectedIndex = HeadIndex(LineEnding.Circle);
+        Settle(panel);
+
+        var read = f.Marks().Single();
+        Assert.Equal(LineEnding.Circle, read.StartEnding);
+        Assert.Equal(end, read.EndEnding);
+        Assert.True(f.Tab.Undo());
+        Assert.Equal((LineEnding.None, end), (f.Marks().Single().StartEnding, f.Marks().Single().EndEnding));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AStartHeadChosenOnAMarkJustDrawnIsKeptForTheNextOneAndNothingElse() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        var before = StyleOf(panel);
+        Pick(panel, MarkTool.Line);
+        Drag(Get<IPagePointerTool>(panel, "_active"), new Point(40, 50), new Point(120, 100));
+
+        Get<ComboBox>(panel, "StartHeadBox").SelectedIndex = HeadIndex(LineEnding.Circle);
+        Settle(panel);
+
+        var kept = Get<MarkStyle?>(panel, "_drawing")!;
+        Assert.Equal(LineEnding.Circle, kept.StartHead);
+        Assert.Equal((before.Family, before.Size, before.Font), (kept.Family, kept.Size, kept.Font));
+        Assert.Equal(LineEnding.None, f.Marks().Single().StartEnding);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AHeadChangeThenSelectingAnotherMarkLandsOnTheFirstOnlyInOneStep() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var first = Line(f, 80);
+        var second = Line(f, 200);
+        var panel = Attached(f);
+        var edit = Get<EditTool>(panel, "_edit");
+        edit.Select(first);
+
+        Get<ComboBox>(panel, "StartHeadBox").SelectedIndex = HeadIndex(LineEnding.Diamond);
+        edit.Select(f.Marks().Single(m => m.Reference?.Number == second.Reference?.Number));
+        Settle(panel);
+
+        Assert.Equal(LineEnding.Diamond, Marked(f, first).StartEnding);
+        Assert.Equal(LineEnding.None, Marked(f, second).StartEnding);
+        Assert.True(f.Tab.Undo());
+        Assert.Equal(LineEnding.None, Marked(f, first).StartEnding);
+        return Task.CompletedTask;
+    });
+
+    private static PdfAnnotation Marked(CommentFixture f, PdfAnnotation mark) => f.Marks().Single(m => m.Reference?.Number == mark.Reference?.Number);
+
+    [Fact]
+    public Task AHeadChangeIsWrittenWhenTheDocumentIsHandedInAndNotAgainAfterAnUndo() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var line = Line(f, 80);
+        var panel = Attached(f);
+        Get<EditTool>(panel, "_edit").Select(line);
+
+        Get<ComboBox>(panel, "HeadBox").SelectedIndex = HeadIndex(LineEnding.ClosedArrow);
+        Assert.True(panel.HandIn());
+
+        Assert.Equal(LineEnding.ClosedArrow, Marked(f, line).EndEnding);
+        Assert.True(f.Tab.Undo());
+        Settle(panel);
+        Assert.Equal(LineEnding.None, Marked(f, line).EndEnding);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AHeadChangeIsWrittenWhenThePanelIsLeft() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var line = Line(f, 80);
+        var panel = Attached(f);
+        Get<EditTool>(panel, "_edit").Select(line);
+
+        Get<ComboBox>(panel, "HeadBox").SelectedIndex = HeadIndex(LineEnding.Square);
+        panel.Detach();
+
+        Assert.Equal(LineEnding.Square, Marked(f, line).EndEnding);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AStartHeadIsOfferedOnALineThatAlreadyHasOne() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var line = Line(f, 80, LineEnding.Circle, LineEnding.OpenArrow);
+        var panel = Attached(f);
+
+        Get<EditTool>(panel, "_edit").Select(line);
+
+        Assert.Equal(Visibility.Visible, Get<StackPanel>(panel, "HeadRow").Visibility);
+        Assert.Equal(HeadIndex(LineEnding.Circle), Get<ComboBox>(panel, "StartHeadBox").SelectedIndex);
+        Assert.Equal(HeadIndex(LineEnding.OpenArrow), Get<ComboBox>(panel, "HeadBox").SelectedIndex);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ACtrlClickOnASideOfASelectedPolygonAddsACornerInOneUndoStep() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], MarkStyle.Default);
+        Assert.True(f.Tab.Commit("Polygon"));
+        var panel = Attached(f);
+        var edit = Get<EditTool>(panel, "_edit");
+        edit.Select(f.Marks().Single());
+
+        edit.Press(new PagePointer(0, new Point(200, 100), new Point(200, 100), true, 1, ModifierKeys.Control));
+        edit.Move(new PagePointer(0, new Point(220, 60), new Point(220, 60), true, 0, ModifierKeys.None));
+        edit.Release(new PagePointer(0, new Point(220, 60), new Point(220, 60), false, 0, ModifierKeys.None));
+
+        Assert.Equal(10, Marked(f, made).Vertices.Count);
+        Assert.True(f.Tab.Undo());
+        Assert.Equal(8, Marked(f, made).Vertices.Count);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AMarkWithPartsWeCannotRedrawDisablesTheLookAndOffersNoHead() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var plain = f.Marker.Add(MarkTool.Line, 0, [new Point(60, 80), new Point(260, 140)], MarkStyle.Default);
+        var other = f.Marker.Add(MarkTool.Line, 0, [new Point(60, 200), new Point(260, 260)], MarkStyle.Default);
+        other.Dictionary["LL"] = new PdfNumber(10);
+        var panel = Attached(f);
+        var edit = Get<EditTool>(panel, "_edit");
+
+        edit.Select(f.Marks().Single(m => m.Reference?.Number == plain.Reference?.Number));
+        Assert.True(Get<WrapPanel>(panel, "Swatches").IsEnabled);
+        Assert.True(Get<ComboBox>(panel, "LineStyleBox").IsEnabled);
+        Assert.Equal(Visibility.Visible, Get<StackPanel>(panel, "HeadRow").Visibility);
+
+        edit.Select(f.Marks().Single(m => m.Reference?.Number == other.Reference?.Number));
+        Assert.False(Get<WrapPanel>(panel, "Swatches").IsEnabled);
+        Assert.False(Get<Slider>(panel, "WidthSlider").IsEnabled);
+        Assert.False(Get<Slider>(panel, "OpacitySlider").IsEnabled);
+        Assert.False(Get<ComboBox>(panel, "FillBox").IsEnabled);
+        Assert.False(Get<ComboBox>(panel, "LineStyleBox").IsEnabled);
+        Assert.Equal(Visibility.Collapsed, Get<StackPanel>(panel, "HeadRow").Visibility);
+        return Task.CompletedTask;
+    });
+
     private static (IDocumentViewer Viewer, FakeViewer Stand) Selecting()
     {
         var viewer = FakeViewer.Create().Viewer;
