@@ -27,6 +27,7 @@ extension ViewerModel {
 
     // The file changed or another one is shown: what was read is stale.
     func resetText() {
+        textEpoch += 1
         textTask = nil
         source = nil
         links.removeAll()
@@ -65,7 +66,9 @@ extension ViewerModel {
     }
 
     func loadPage(_ page: Int) async {
-        if await text(page) != nil { onRedraw?() }
+        guard await text(page) != nil else { return }
+        onRedraw?()
+        onPageLoaded?(page)
     }
 
     public func text(_ page: Int) async -> TextPage? {

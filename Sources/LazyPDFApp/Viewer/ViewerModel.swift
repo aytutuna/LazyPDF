@@ -79,6 +79,9 @@ public final class ViewerModel: DocumentViewer {
     /// Something drawn changed: a tile came, a highlight moved.
     @ObservationIgnored public var onRedraw: (() -> Void)?
 
+    /// The text of a page was read and can be asked for with `pageText`; the page's number comes with it.
+    @ObservationIgnored public var onPageLoaded: ((Int) -> Void)?
+
     /// False where the view moves its own pixels on a scroll and draws only the strip that comes into view.
     @ObservationIgnored public var redrawsOnScroll = true
 
@@ -92,6 +95,9 @@ public final class ViewerModel: DocumentViewer {
 
     /// Moves with every scroll, zoom, rotation or rearrangement.
     public internal(set) var viewRevision = 0
+
+    /// Moves each time the text read so far is dropped, for a new revision or another file, so what was built from it is stale.
+    public internal(set) var textEpoch = 0
 
     /// Moves with a change of page, zoom or arrangement; what the bar shows follows it.
     public internal(set) var shownRevision = 0
