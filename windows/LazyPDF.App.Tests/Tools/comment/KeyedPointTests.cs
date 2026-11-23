@@ -53,7 +53,8 @@ public sealed class KeyedPointTests
         panel.Attach(tab, viewer, host);
         Get<Dictionary<MarkTool, RadioButton>>(panel, "_buttons")[tool].IsChecked = true;
         var edit = Get<EditTool>(panel, "_edit");
-        var mark = marker.Find(0, made.Reference!.Number)!;
+        // The commit reads the file back into a new document, so the mark is found again in it.
+        var mark = new Marker(tab.Document, new FakeFonts(), "Ana", DateTimeOffset.Now).Find(0, made.Reference!.Number)!;
         edit.Select(mark);
         return new Session { Tab = tab, Viewer = viewer, Panel = panel, Host = host, Edit = edit, Mark = mark };
     }
