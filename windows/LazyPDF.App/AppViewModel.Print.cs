@@ -17,14 +17,30 @@ public sealed partial class AppViewModel
     /// <summary>A renderer for a document that is not a tab, such as the sheets made for printing.</summary>
     public IDocumentRenderer NewRenderer() => _renderers();
 
-    public void Print()
+    /// <summary>Set by the window: flushes typed text into the file and gives false while it waits for an answer, in which case nothing is printed.</summary>
+    public Func<bool> HandIn { get; set; } = () => true;
+
+    /// <summary>The system print dialog even when Lazy Print is installed and Print would hand the file over.</summary>
+    public void PrintHere()
     {
-        if (ActiveDocument is not { } tab) return;
+        if (PrintableTab() is { } tab) SystemPrintRequested?.Invoke(this, tab);
+    }
+
+    // The tab to print, or null when nothing is open, typed text is waiting or the owner forbids printing.
+    private DocumentTab? PrintableTab()
+    {
+        if (!HandIn() || ActiveDocument is not { } tab) return null;
         if (tab.Document.Security is { OpenedAsOwner: false } security && !security.Permissions.HasFlag(PdfPermissions.Print))
         {
             ShowProblem(new Problem(Loc.T("Printing is not allowed"), Loc.T("The owner of {0} did not allow it to be printed.", tab.Title)));
-            return;
+            return null;
         }
+        return tab;
+    }
+
+    public void Print()
+    {
+        if (PrintableTab() is not { } tab) return;
         string file;
         try
         {

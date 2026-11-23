@@ -59,6 +59,7 @@ public partial class MainWindow : Window
         _vm.SystemPrintRequested += ViewModel_SystemPrintRequested;
         _vm.Released += ViewModel_Released;
         _vm.DialogOwner = this;
+        _vm.HandIn = HandedIn;
         _vm.BringForward = _ => OpenFiles([]);
         WindowHub.Register(this);
         // After Window_Closing, so a close that it called off does not count; a batch window closing with its owner must not close it again.
@@ -281,6 +282,8 @@ public partial class MainWindow : Window
         SaveButton.IsEnabled = tab is not null && !_vm.IsBusy;
         SaveMenuButton.IsEnabled = tab is not null && !_vm.IsBusy;
         PrintButton.IsEnabled = tab is not null;
+        PrintMenuButton.Visibility = _vm.PrintsInLazyPrint ? Visibility.Visible : Visibility.Collapsed;
+        PrintMenuButton.IsEnabled = tab is not null;
         PrintButton.ToolTip = Loc.T(_vm.PrintsInLazyPrint ? "Lazy Print (Ctrl+P)" : "Print (Ctrl+P)");
         AutomationProperties.SetName(PrintButton, Loc.T(_vm.PrintsInLazyPrint ? "Lazy Print" : "Print"));
         UndoButton.IsEnabled = _vm.CanUndo && !_vm.IsBusy;
@@ -538,6 +541,7 @@ public partial class MainWindow : Window
                 case Key.S: SaveWithDialog(); break;
                 case Key.W when _vm.ActiveDocument is { } open: RequestClose(open); break;
                 case Key.T when shift: _ = _vm.ReopenClosedAsync(); break;
+                case Key.P when shift: _vm.PrintHere(); break;
                 case Key.P: _vm.Print(); break;
                 case Key.F when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowFind(); break;
                 case Key.G when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowGoToPage(); break;

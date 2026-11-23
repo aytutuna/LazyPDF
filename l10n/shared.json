@@ -8677,6 +8677,15 @@
   "Even pages only": {
     "tr": "Yalnızca çift sayfalar"
   },
+  "Odd sides only": {
+    "tr": "Yalnızca tek yüzler"
+  },
+  "Even sides only": {
+    "tr": "Yalnızca çift yüzler"
+  },
+  "The gap leaves no room for the pages on this paper.": {
+    "tr": "Boşluk bu kâğıtta sayfalara yer bırakmıyor."
+  },
   "Clear signature": {
     "tr": "İmzayı temizle"
   },
@@ -9370,5 +9379,79 @@
   },
   "Window {0}: {1}": {
     "tr": "Pencere {0}: {1}"
+  },
+  "{0}: {1} on {2}.": {
+    "tr": "{0}: {2} üzerinde {1}."
+  },
+  "No sides are left to print.": {
+    "tr": "Yazdırılacak yüz kalmadı."
+  },
+  "Odd sides (fronts): {0} of {1}.": {
+    "tr": "Tek yüzler (ön yüzler): {1} yüzün {0} tanesi."
+  },
+  "Even sides (backs): {0} of {1}.": {
+    "tr": "Çift yüzler (arka yüzler): {1} yüzün {0} tanesi."
+  },
+  "{0} sides: a blank is added at the start of the even run so each back meets its front.": {
+    "tr": "{0} yüz var: her arka yüz kendi ön yüzüne denk gelsin diye çift yüzlerin başına boş bir sayfa eklenir."
+  },
+  "{0} sides: a blank is added at the end of the even run so each back meets its front.": {
+    "tr": "{0} yüz var: her arka yüz kendi ön yüzüne denk gelsin diye çift yüzlerin sonuna boş bir sayfa eklenir."
+  },
+  "In reverse order.": {
+    "tr": "Ters sırada."
+  },
+  "{0} side": {
+    "other": "{0} sides",
+    "tr": "{0} yüz"
+  },
+  "{0} piece of paper": {
+    "other": "{0} pieces of paper",
+    "tr": "{0} kâğıt"
+  },
+  "Binding": {
+    "tr": "Ciltleme"
+  },
+  "Gap between pages (mm)": {
+    "tr": "Sayfalar arası boşluk (mm)"
+  },
+  "Border around each page": {
+    "tr": "Her sayfanın çevresinde çerçeve"
+  },
+  "Which sides": {
+    "tr": "Hangi yüzler"
+  },
+  "Last side first": {
+    "tr": "Son yüz önce"
+  },
+  "Type a gap from 0 to 25 mm.": {
+    "tr": "0 ile 25 mm arasında bir boşluk yazın."
+  },
+  "Two-sided printing must flip on the short edge.": {
+    "tr": "Çift taraflı yazdırma kısa kenardan çevirmeli olmalı."
+  },
+  "To print both sides by hand, print the odd sides, turn the stack over and print the even sides.": {
+    "tr": "İki yüzü elle yazdırmak için önce tek yüzleri yazdırın, destede çevirin, sonra çift yüzleri yazdırın."
+  },
+  "Odd and even count the pages you print from the first one. To print both sides by hand, print the odd pages, turn the stack over and print the even pages.": {
+    "tr": "Tek ve çift, yazdırdığınız sayfalar ilkinden başlayarak sayılır. İki yüzü elle yazdırmak için önce tek sayfaları yazdırın, destede çevirin, sonra çift sayfaları yazdırın."
+  },
+  "Odd pages: {0} of {1}.": {
+    "tr": "Tek sayfalar: {1} sayfanın {0} tanesi."
+  },
+  "Even pages: {0} of {1}.": {
+    "tr": "Çift sayfalar: {1} sayfanın {0} tanesi."
+  },
+  "The print panel's page range and odd or even pages then count the sides of the booklet.": {
+    "tr": "Yazdırma panelindeki sayfa aralığı ve tek veya çift sayfalar bundan sonra kitapçığın yüzlerini sayar."
+  },
+  "More ways to print": {
+    "tr": "Diğer yazdırma yolları"
+  },
+  "Print here": {
+    "tr": "Burada yazdır"
+  },
+  "Opens the Windows print dialog with the print layout instead of sending the file to Lazy Print.": {
+    "tr": "Dosyayı Lazy Print'e göndermek yerine Windows yazdırma penceresini yazdırma düzeniyle açar."
   }
 }

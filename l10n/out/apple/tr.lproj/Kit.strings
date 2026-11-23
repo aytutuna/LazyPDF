@@ -227,6 +227,7 @@
 "Before the number" = "Numaradan önce";
 "Before the selection" = "Seçimden önce";
 "Behind the page text" = "Sayfa metninin arkasında";
+"Binding" = "Ciltleme";
 "Black" = "Siyah";
 "Blank" = "Boş";
 "Blank page" = "Boş sayfa";
@@ -241,6 +242,7 @@
 "Bookmark" = "Yer imi";
 "Bookmark goes to another page" = "Yer imi başka bir sayfaya gidiyor";
 "Bookmarks" = "Yer imleri";
+"Border around each page" = "Her sayfanın çevresinde çerçeve";
 "Both" = "İkisi de";
 "Both sides, long edge" = "Çift yüz, uzun kenar";
 "Both sides, short edge" = "Çift yüz, kısa kenar";
@@ -580,6 +582,9 @@
 "Eraser" = "Silgi";
 "Even pages" = "Çift sayfalar";
 "Even pages only" = "Yalnızca çift sayfalar";
+"Even pages: {0} of {1}." = "Çift sayfalar: {1} sayfanın {0} tanesi.";
+"Even sides (backs): {0} of {1}." = "Çift yüzler (arka yüzler): {1} yüzün {0} tanesi.";
+"Even sides only" = "Yalnızca çift yüzler";
 "Every custom tag maps to a standard one." = "Her özel etiket standart bir etikete eşleniyor.";
 "Every figure has a description." = "Her şeklin bir açıklaması var.";
 "Every figure has alt text, or there are no figures." = "Her şeklin alternatif metni var ya da hiç şekil yok.";
@@ -753,6 +758,7 @@
 "From a file" = "Dosyadan";
 "From the keychain" = "Anahtar zincirinden";
 "Full screen" = "Tam ekran";
+"Gap between pages (mm)" = "Sayfalar arası boşluk (mm)";
 "Give the stamp a text or a picture." = "Damgaya bir metin ya da resim verin.";
 "Go" = "Git";
 "Go on anyway" = "Yine de devam et";
@@ -814,6 +820,7 @@
 "Imported {0} comment.|one" = "{0} yorum eklendi.";
 "Imported {0} comment.|other" = "{0} yorum eklendi.";
 "Importing comments" = "Yorumlar içe aktarılıyor";
+"In reverse order." = "Ters sırada.";
 "Include pictures" = "Resimleri ekle";
 "Indent" = "İçeri al";
 "Indent tag" = "Etiketi içeri al";
@@ -872,6 +879,7 @@
 "Language {0}" = "Dil: {0}";
 "Larger" = "Büyüt";
 "Last page" = "Son sayfa";
+"Last side first" = "Son yüz önce";
 "Layer" = "Katman";
 "Layers" = "Katmanlar";
 "Layout" = "Düzen";
@@ -1073,6 +1081,7 @@
 "No results folder" = "Sonuç klasörü yok";
 "No results for {0}" = "{0} için sonuç yok";
 "No saved signatures yet. Make a new one below." = "Henüz kayıtlı imza yok. Aşağıdan yeni bir tane yapın.";
+"No sides are left to print." = "Yazdırılacak yüz kalmadı.";
 "No steps" = "Adım yok";
 "No text found" = "Metin bulunamadı";
 "No text found on {0} page. Check the language.|one" = "{0} sayfada metin bulunamadı. Dili denetleyin.";
@@ -1149,8 +1158,12 @@
 "Number pages" = "Sayfaları numaralandır";
 "Numbering" = "Numaralandırma";
 "Object {0}" = "Nesne {0}";
+"Odd and even count the pages you print from the first one. To print both sides by hand, print the odd pages, turn the stack over and print the even pages." = "Tek ve çift, yazdırdığınız sayfalar ilkinden başlayarak sayılır. İki yüzü elle yazdırmak için önce tek sayfaları yazdırın, destede çevirin, sonra çift sayfaları yazdırın.";
 "Odd pages" = "Tek sayfalar";
 "Odd pages only" = "Yalnızca tek sayfalar";
+"Odd pages: {0} of {1}." = "Tek sayfalar: {1} sayfanın {0} tanesi.";
+"Odd sides (fronts): {0} of {1}." = "Tek yüzler (ön yüzler): {1} yüzün {0} tanesi.";
+"Odd sides only" = "Yalnızca tek yüzler";
 "Old values are still in the file" = "Eski değerler hâlâ dosyada";
 "Old: {0}" = "Eski: {0}";
 "Older Office file is not supported" = "Eski Office dosyası desteklenmiyor";
@@ -1990,6 +2003,7 @@
 "The form has no font named {0}." = "Formda adı {0} olan bir yazı tipi yok.";
 "The form is a dynamic XFA form." = "Form dinamik bir XFA formu.";
 "The form sets /NeedAppearances to true." = "Form /NeedAppearances değerini doğru yapıyor.";
+"The gap leaves no room for the pages on this paper." = "Boşluk bu kâğıtta sayfalara yer bırakmıyor.";
 "The graphics state is left open around it." = "Çevresinde grafik durumu açık bırakılmış.";
 "The header line is missing." = "Üst bilgi satırı eksik.";
 "The header names version {0}; it must be 1.0 to 1.7." = "Üst bilgi {0} sürümünü belirtiyor; 1.0 ile 1.7 arasında olmalı.";
@@ -2049,6 +2063,7 @@
 "The permissions of this file do not allow filling in forms." = "Bu dosyanın izinleri form doldurmaya izin vermiyor.";
 "The presentation cannot be made into a PDF. Only .pptx files up to 100 MB with a slide to show can be; older .ppt files must be saved as .pptx first." = "Sunu PDF'ye çevrilemiyor. Yalnızca gösterilecek slaytı olan, 100 MB'a kadar .pptx dosyaları çevrilebilir; eski .ppt dosyalarını önce .pptx olarak kaydedin.";
 "The print and visibility flags of {0} annotations were corrected." = "{0} ek açıklamanın yazdırma ve görünürlük bayrakları düzeltildi.";
+"The print panel's page range and odd or even pages then count the sides of the booklet." = "Yazdırma panelindeki sayfa aralığı ve tek veya çift sayfalar bundan sonra kitapçığın yüzlerini sayar.";
 "The printer did not take {0}. Check that it is on and has no error, then try again." = "Yazıcı {0} dosyasını almadı. Açık olduğundan ve hata vermediğinden emin olup yeniden deneyin.";
 "The real number {0} is beyond 32767." = "{0} gerçel sayısı 32767'yi aşıyor.";
 "The redaction could not be finished. Mark fewer places and try again. The file was not changed." = "Karartma tamamlanamadı. Daha az yer işaretleyip yeniden deneyin. Dosya değiştirilmedi.";
@@ -2225,6 +2240,7 @@
 "Title, author and the other facts stored in the file." = "Başlık, yazar ve dosyada saklanan diğer bilgiler.";
 "To back" = "En arkaya";
 "To front" = "En öne";
+"To print both sides by hand, print the odd sides, turn the stack over and print the even sides." = "İki yüzü elle yazdırmak için önce tek yüzleri yazdırın, destede çevirin, sonra çift yüzleri yazdırın.";
 "Today" = "Bugün";
 "Too large to export" = "Dışa aktarmak için çok büyük";
 "Too many parts for tabs" = "Sekmeler için çok fazla parça";
@@ -2257,6 +2273,7 @@
 "Two pages at a time" = "Aynı anda iki sayfa";
 "Two pages at a time, cover alone" = "Aynı anda iki sayfa, kapak tek başına";
 "Two pages on each side of a landscape sheet, in the order that folds into a booklet." = "Yatay yaprağın her yüzünde iki sayfa, kitapçık olarak katlanacak sırada.";
+"Two-sided printing must flip on the short edge." = "Çift taraflı yazdırma kısa kenardan çevirmeli olmalı.";
 "Type" = "Yaz";
 "Type a Permissions password to apply the limits." = "Sınırları uygulamak için bir İzin parolası yazın.";
 "Type a length above zero." = "Sıfırdan büyük bir uzunluk yazın.";
@@ -2338,6 +2355,7 @@
 "Where the number goes" = "Numaranın yeri";
 "Where the space goes" = "Alan nereye gidiyor";
 "Whether the certificate was withdrawn." = "Sertifikanın geri çekilip çekilmediği.";
+"Which sides" = "Hangi yüzler";
 "White" = "Beyaz";
 "Who signed the file and whether it changed since." = "Dosyayı kimin imzaladığı ve o zamandan beri değişip değişmediği.";
 "Whole word" = "Tam sözcük";
@@ -2626,6 +2644,8 @@
 "{0} picture was too large and was left out.|other" = "{0} resim çok büyük olduğu için dışarıda bırakıldı.";
 "{0} picture|one" = "{0} resim";
 "{0} picture|other" = "{0} resim";
+"{0} piece of paper|one" = "{0} kâğıt";
+"{0} piece of paper|other" = "{0} kâğıt";
 "{0} pt" = "{0} pt";
 "{0} redaction mark is not applied yet.|one" = "{0} karartma işareti henüz uygulanmadı.";
 "{0} redaction mark is not applied yet.|other" = "{0} karartma işareti henüz uygulanmadı.";
@@ -2638,6 +2658,10 @@
 "{0} set by {1}" = "{0}, {1} tarafından ayarlandı";
 "{0} shape|one" = "{0} şekil";
 "{0} shape|other" = "{0} şekil";
+"{0} sides: a blank is added at the end of the even run so each back meets its front." = "{0} yüz var: her arka yüz kendi ön yüzüne denk gelsin diye çift yüzlerin sonuna boş bir sayfa eklenir.";
+"{0} sides: a blank is added at the start of the even run so each back meets its front." = "{0} yüz var: her arka yüz kendi ön yüzüne denk gelsin diye çift yüzlerin başına boş bir sayfa eklenir.";
+"{0} side|one" = "{0} yüz";
+"{0} side|other" = "{0} yüz";
 "{0} skipped as copies or for other pages. {1} without a drawing." = "{0} yorum kopya olduğu veya başka sayfalara ait olduğu için atlandı. {1} yorumun çizimi yok.";
 "{0} smaller." = "{0} küçüldü.";
 "{0} streams were recompressed without LZW." = "{0} akış LZW olmadan yeniden sıkıştırıldı.";
@@ -2668,5 +2692,6 @@
 "{0}, version {1}" = "{0}, sürüm {1}";
 "{0}, {1}" = "{0}, {1}";
 "{0}: {1}" = "{0}: {1}";
+"{0}: {1} on {2}." = "{0}: {2} üzerinde {1}.";
 "{0}°" = "{0}°";
 "{page}, {pages}, {date} and {file} fill in by themselves." = "{page}, {pages}, {date} ve {file} kendiliğinden dolar.";
