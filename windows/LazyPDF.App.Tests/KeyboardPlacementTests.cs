@@ -553,6 +553,30 @@ public sealed class KeyboardPlacementTests
         return Task.CompletedTask;
     });
 
+    [Theory]
+    [InlineData(90)]
+    [InlineData(270)]
+    public Task APressJustOffTheRightEdgeOfARotatedViewStaysOnThatSideInPageSpace(int rotation) => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        tool.Handle = true;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetRotation(rotation);
+        surface.SetZoom(3);
+        var size = surface.PageSize(0);
+        var off = new Point(size.Width + 4, size.Height / 2);
+        surface.GoToPage(0, off, keepX: true);
+
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+
+        var press = Assert.Single(tool.Calls);
+        Assert.Equal(off.X, press.Pointer.Point.X, 0.5);
+        Assert.Equal(off.Y, press.Pointer.Point.Y, 0.5);
+        return Task.CompletedTask;
+    });
+
     [Fact]
     public Task APressOnAPageIsDeliveredWithoutAsking() => Sta.Run(() =>
     {
