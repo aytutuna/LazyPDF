@@ -135,8 +135,6 @@ final class RedactBoxEditTests: XCTestCase {
 
         XCTAssertFalse(model.canNudge)
         model.nudge(.right)
-        model.selected = nil
-        model.nudge(.right)
 
         XCTAssertEqual(model.marks.map(\.id), before)
         XCTAssertEqual(rig.host.statuses.count, statuses)
@@ -186,5 +184,237 @@ final class RedactBoxEditTests: XCTestCase {
 
         XCTAssertFalse(covered.contains("example"))
         XCTAssertTrue(moved.contains("example"))
+    }
+
+    // MARK: The tool
+
+    private func frame(_ rig: SecurityRig) -> ViewRect? {
+        guard case .rect(let rect)? = rig.viewer.overlay(0).item("redact.edit.frame")?.shape else { return nil }
+        return rect
+    }
+
+    private func pointer(_ at: ViewPoint, pressed: Bool, touch: Bool = false) -> PagePointer {
+        PagePointer(page: 0, point: at, view: at, pressed: pressed, clicks: pressed ? 1 : 0, touch: touch)
+    }
+
+    private func drag(_ tool: PagePointerTool, from: ViewPoint, to: ViewPoint) {
+        tool.press(pointer(from, pressed: true))
+        tool.move(pointer(to, pressed: true))
+        tool.release(pointer(to, pressed: false))
+    }
+
+    func test_aSelectedBoxGetsTheToolAndLettingItGoTakesItAway() async throws {
+        let (model, rig) = try attached()
+        let original = try selectedBox(model, rig)
+        XCTAssertNotNil(rig.viewer.pointerTool)
+        model.jump(original)
+        XCTAssertNil(rig.viewer.pointerTool)
+        model.jump(original)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        XCTAssertFalse(model.drawing)
+        XCTAssertEqual(frame(rig), ViewRect(50, 60, 100, 30))
+        XCTAssertNotNil(rig.viewer.overlay(0).item("redact.edit.grip.7"))
+        model.jump(original)
+
+        XCTAssertNil(model.selected)
+        XCTAssertNil(rig.viewer.pointerTool)
+        XCTAssertNil(frame(rig))
+        model.jump(original)
+        XCTAssertTrue(rig.viewer.pointerTool === tool)
+    }
+
+    func test_theToolStaysWhileBoxesAreBeingDrawnAndGoesWhenBothEnd() async throws {
+        let (model, rig) = try attached()
+        let box = try selectedBox(model, rig)
+        model.setDrawing(true)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        model.jump(box)
+        XCTAssertTrue(rig.viewer.pointerTool === tool)
+        XCTAssertNil(frame(rig))
+        XCTAssertTrue(model.drawing)
+        model.setDrawing(false)
+
+        XCTAssertNil(rig.viewer.pointerTool)
+        XCTAssertFalse(model.drawing)
+    }
+
+    func test_aHandleDragIsOneReplaceAndKeepsTheSameTool() async throws {
+        let (model, rig) = try attached()
+        let original = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        tool.press(pointer(ViewPoint(150, 90), pressed: true))
+        tool.move(pointer(ViewPoint(170, 100), pressed: true))
+        XCTAssertEqual(frame(rig), ViewRect(50, 60, 120, 40))
+        XCTAssertEqual(bounds(model), [50, 702, 150, 732])
+        tool.release(pointer(ViewPoint(170, 100), pressed: false))
+
+        XCTAssertEqual(bounds(model), [50, 692, 170, 732])
+        XCTAssertEqual(model.marks.count, 1)
+        XCTAssertNotEqual(model.marks[0].id, original.id)
+        XCTAssertEqual(model.selected, model.marks[0].id)
+        XCTAssertTrue(rig.viewer.pointerTool === tool)
+        XCTAssertEqual(frame(rig), ViewRect(50, 60, 120, 40))
+        XCTAssertEqual(rig.host.statuses.last, "Box resized.")
+        model.undo()
+        XCTAssertEqual(model.marks.map(\.id), [original.id])
+        XCTAssertEqual(bounds(model), [50, 702, 150, 732])
+    }
+
+    func test_aBodyDragMovesTheBox() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        drag(tool, from: ViewPoint(100, 75), to: ViewPoint(110, 80))
+
+        XCTAssertEqual(bounds(model), [60, 697, 160, 727])
+        XCTAssertEqual(rig.host.statuses.last, "Box moved.")
+    }
+
+    func test_aDragThatEndsWhereItBeganChangesNothing() async throws {
+        let (model, rig) = try attached()
+        let original = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        drag(tool, from: ViewPoint(100, 75), to: ViewPoint(100, 75))
+
+        XCTAssertEqual(model.marks.map(\.id), [original.id])
+        XCTAssertEqual(frame(rig), ViewRect(50, 60, 100, 30))
+    }
+
+    func test_aCancelledDragLeavesTheListAndPutsTheFrameBack() async throws {
+        let (model, rig) = try attached()
+        let original = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        tool.press(pointer(ViewPoint(100, 75), pressed: true))
+        tool.move(pointer(ViewPoint(130, 95), pressed: true))
+        XCTAssertEqual(frame(rig), ViewRect(80, 80, 100, 30))
+        tool.cancel()
+        tool.release(pointer(ViewPoint(130, 95), pressed: false))
+
+        XCTAssertEqual(model.marks.map(\.id), [original.id])
+        XCTAssertEqual(frame(rig), ViewRect(50, 60, 100, 30))
+    }
+
+    func test_handInLetsADragEndWhereItIs() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        tool.press(pointer(ViewPoint(100, 75), pressed: true))
+        tool.move(pointer(ViewPoint(110, 75), pressed: true))
+
+        XCTAssertTrue(model.handIn())
+        let ids = model.marks.map(\.id)
+        tool.release(pointer(ViewPoint(140, 75), pressed: false))
+
+        XCTAssertEqual(bounds(model), [60, 702, 160, 732])
+        XCTAssertEqual(model.marks.map(\.id), ids)
+        model.undo()
+        XCTAssertEqual(bounds(model), [50, 702, 150, 732])
+    }
+
+    func test_aListChangeDuringADragDropsTheDrag() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        tool.press(pointer(ViewPoint(100, 75), pressed: true))
+        tool.move(pointer(ViewPoint(110, 75), pressed: true))
+
+        model.clearMarks()
+        tool.release(pointer(ViewPoint(140, 75), pressed: false))
+
+        XCTAssertTrue(model.marks.isEmpty)
+        XCTAssertNil(frame(rig))
+        XCTAssertNil(rig.viewer.pointerTool)
+    }
+
+    func test_aFingerIsTheToolsOnlyOverTheSelectedBoxUnlessBoxesAreBeingDrawn() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        let away = ViewPoint(400, 400)
+
+        // What the viewer loses while a box is selected on a phone is its text selection and double tap; a finger elsewhere still scrolls.
+        XCTAssertTrue(tool.takes(pointer(ViewPoint(150, 90), pressed: true, touch: true)))
+        XCTAssertTrue(tool.takes(pointer(ViewPoint(100, 75), pressed: true, touch: true)))
+        XCTAssertFalse(tool.takes(pointer(away, pressed: true, touch: true)))
+        XCTAssertFalse(tool.takes(pointer(away, pressed: true)))
+        model.setDrawing(true)
+        XCTAssertTrue(tool.takes(pointer(away, pressed: true, touch: true)))
+        XCTAssertTrue(tool.takes(pointer(away, pressed: true)))
+    }
+
+    func test_aPressAwayFromTheBoxDrawsOnlyWhileDrawingIsOn() async throws {
+        let (model, rig) = try attached()
+        let original = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        drag(tool, from: ViewPoint(300, 300), to: ViewPoint(400, 350))
+        XCTAssertEqual(model.marks.count, 1)
+        model.setDrawing(true)
+        drag(tool, from: ViewPoint(300, 300), to: ViewPoint(400, 350))
+
+        XCTAssertEqual(model.marks.count, 2)
+        XCTAssertEqual(model.selected, original.id)
+        XCTAssertNotNil(frame(rig))
+    }
+
+    func test_theToolLeavesKeysToTheViewer() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        for key in [ViewerKey.left, .right, .up, .down, .escape, .delete] {
+            XCTAssertFalse(tool.key(key, modifiers: []))
+        }
+    }
+
+    func test_theViewerTakingThePointerBackLetsTheBoxGo() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        model.setDrawing(true)
+
+        rig.viewer.pointerTool = nil
+        await waitUntil { model.selected == nil }
+
+        XCTAssertFalse(model.drawing)
+        XCTAssertNil(frame(rig))
+        XCTAssertNil(rig.viewer.pointerTool)
+    }
+
+    func test_theFrameAndLaterDragsFollowAPageThatWasTurned() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        tool.press(pointer(ViewPoint(100, 75), pressed: true))
+        tool.move(pointer(ViewPoint(110, 80), pressed: true))
+
+        rig.viewer.turned[0] = 90
+        PageOperations.rotate(rig.tab.document, [0], 90)
+        try rig.tab.commit("Rotate")
+        await waitUntil { self.frame(rig) == ViewRect(702, 50, 30, 100) }
+        tool.release(pointer(ViewPoint(110, 80), pressed: false))
+        XCTAssertEqual(bounds(model), [50, 702, 150, 732])
+
+        drag(tool, from: ViewPoint(717, 100), to: ViewPoint(727, 100))
+        XCTAssertEqual(bounds(model), [50, 712, 150, 742])
+    }
+
+    func test_nothingIsLeftOnThePageOnceThePanelIsDetached() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        tool.press(pointer(ViewPoint(100, 75), pressed: true))
+
+        model.detach()
+        rig.viewer.endToolMarks(prefix: "redact.")
+        tool.cancel()
+
+        XCTAssertNil(frame(rig))
+        XCTAssertNil(rig.viewer.overlay(0).item("redact.edit.grip.0"))
     }
 }

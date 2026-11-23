@@ -33,7 +33,7 @@ public final class RedactModel: ToolPanelModel {
     public var coverIndex = 0
     public var overlayText = ""
     public var flattenAll = false
-    public var selected: UUID?
+    public private(set) var selected: UUID?
 
     public private(set) var marks: [MarkItem] = []
     public private(set) var canUndo = false
@@ -51,6 +51,8 @@ public final class RedactModel: ToolPanelModel {
     @ObservationIgnored private var state: State?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var drawTool: RedactDrawTool?
+    @ObservationIgnored private var toolWatch: ObservationWatch?
+    private var wantsDrawing = false
     @ObservationIgnored private var drawn: [Int: [UUID]] = [:]
 
     // The copy opens as a tab of its own; the panel finds that tab by its title when it is attached there.
@@ -76,8 +78,14 @@ public final class RedactModel: ToolPanelModel {
     public var canFindWords: Bool { !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     public var drawing: Bool {
-        guard let tool = drawTool, let viewer else { return false }
+        guard wantsDrawing, let tool = drawTool, let viewer else { return false }
         return viewer.pointerTool === tool
+    }
+
+    /// Lets a drag of the selected box that is still under way end where it is, before the marks are used.
+    public func handIn() -> Bool {
+        drawTool?.finish()
+        return true
     }
 
     public func attach(_ tab: DocumentTab, _ viewer: DocumentViewer, _ host: ToolHost) {
@@ -96,6 +104,7 @@ public final class RedactModel: ToolPanelModel {
         dropMarksOfOtherPages()
         state.marks.changed = { [weak self] in self?.marksChanged() }
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.fileChanged() })
+        toolWatch = ObservationWatch(track: { _ = viewer.pointerTool }, changed: { [weak self] in self?.toolChanged() })
         marksChanged()
         result = state.result
         host.takesSelectionMarks { [weak self] in if $0 == .redact { await self?.markSelection() } }
@@ -105,9 +114,13 @@ public final class RedactModel: ToolPanelModel {
     public func detach() {
         host?.takesSelectionMarks(nil)
         watch?.stop()
+        toolWatch?.stop()
+        toolWatch = nil
         watch = nil
         state?.marks.changed = nil
+        drawTool?.show(nil, nil)
         drawTool?.cancel()
+        wantsDrawing = false
         drawTool = nil
         drawn = [:]
         marks = []
@@ -122,6 +135,7 @@ public final class RedactModel: ToolPanelModel {
     private func fileChanged() {
         dropMarksOfOtherPages()
         drawOverlays(redrawAll: true)
+        refreshTool()
     }
 
     private func dropMarksOfOtherPages() {
@@ -154,19 +168,48 @@ public final class RedactModel: ToolPanelModel {
         tab?.pendingMarks = marks.count
         if let selected, !marks.contains(where: { $0.id == selected }) { self.selected = nil }
         drawOverlays(redrawAll: false)
+        refreshTool()
     }
 
     // MARK: Marking
 
     public func setDrawing(_ on: Bool) {
+        guard viewer != nil else { return }
+        wantsDrawing = on
+        refreshTool()
+    }
+
+    // One tool does both: it is in the viewer while boxes are being drawn or a box is selected for editing, and not otherwise,
+    // so a finger scrolls and selects text as usual. It stays the same tool when the selection moves from one box to the next.
+    private func refreshTool() {
         guard let viewer else { return }
-        if on {
-            let tool = RedactDrawTool(viewer) { [weak self] page, from, to in self?.boxDrawn(page, from, to) }
-            drawTool = tool
-            viewer.pointerTool = tool
-        } else if let tool = drawTool, viewer.pointerTool === tool {
-            viewer.pointerTool = nil
+        let box = selectedBox.flatMap { $0.page < viewer.pageCount ? $0 : nil }
+        if wantsDrawing || box != nil {
+            let tool = drawTool ?? makeTool(viewer)
+            tool.drawing = wantsDrawing
+            tool.show(box, box.map { viewer.geometry($0.page) })
+            if viewer.pointerTool !== tool { viewer.pointerTool = tool }
+        } else if let tool = drawTool {
+            tool.show(nil, nil)
+            if viewer.pointerTool === tool { viewer.pointerTool = nil }
         }
+    }
+
+    private func makeTool(_ viewer: DocumentViewer) -> RedactDrawTool {
+        let tool = RedactDrawTool(viewer, boxDrawn: { [weak self] page, from, to in self?.boxDrawn(page, from, to) },
+                                  boxEdited: { [weak self] old, rect, geometry, resized in
+                                      self?.boxEdited(old, to: rect, geometry, resized: resized)
+                                  })
+        drawTool = tool
+        return tool
+    }
+
+    // The viewer's Select and Hand buttons, or another tool, took the pointer: nothing is drawn or framed any more.
+    private func toolChanged() {
+        guard let viewer, let tool = drawTool, viewer.pointerTool !== tool else { return }
+        wantsDrawing = false
+        selected = nil
+        tool.show(nil, nil)
     }
 
     private func boxDrawn(_ page: Int, _ from: ViewPoint, _ to: ViewPoint) {
@@ -240,8 +283,15 @@ public final class RedactModel: ToolPanelModel {
 
     // MARK: Looking the marks over
 
+    /// Selects `item` and brings it into view. Picking the selected box again lets it go, which takes its tool off the page.
     public func jump(_ item: MarkItem) {
+        if item.isBox && selected == item.id {
+            selected = nil
+            refreshTool()
+            return
+        }
         selected = item.id
+        refreshTool()
         guard let viewer, item.page < viewer.pageCount else { return }
         viewer.goToPage(item.page)
         viewer.reveal(item.page, MarkShapes.place(viewer.geometry(item.page), item.mark))
