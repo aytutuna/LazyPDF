@@ -14,12 +14,35 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
     let viewer: ViewerModel
     private(set) lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
     private var menuPoint = NSPoint.zero
-    private var pageElements = PageElementCache<NSAccessibilityElement>()
+    private var pageElements = PageElementCache<PageAccessibilityGroup>()
 
     init(viewer: ViewerModel) {
         self.viewer = viewer
         super.init(frame: .zero)
         setAccessibilityLabel(L10n.t("Page viewer"))
+        viewer.onPageLoaded = { [weak self] page in self?.pageElements.element(for: page)?.text.textLoaded() }
+        viewer.onSelectionChanged = { [weak self] in self?.tellSelection() }
+    }
+
+    // What VoiceOver was told of the selection, page by page, is checked in each element, which posts only for a page that changed.
+    private func tellSelection() {
+        for page in viewer.visiblePages { pageElements.element(for: page)?.text.selectionMayHaveChanged() }
+    }
+
+    /// A rectangle of view space as the screen has it.
+    func screenRect(_ area: ViewRect) -> NSRect {
+        let offset = viewer.offset
+        let local = NSRect(x: area.x + offset.x, y: area.y + offset.y, width: area.width, height: area.height)
+        guard let window else { return .zero }
+        return window.convertToScreen(convert(local, to: nil))
+    }
+
+    /// A point of the screen as view space has it.
+    func viewPoint(fromScreen point: NSPoint) -> ViewPoint {
+        guard let window else { return .zero }
+        let local = convert(window.convertPoint(fromScreen: point), from: nil)
+        let offset = viewer.offset
+        return ViewPoint(local.x - offset.x, local.y - offset.y)
     }
 
     required init?(coder: NSCoder) {
@@ -176,25 +199,13 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
 
     // The text views of open fields follow, so a person using VoiceOver can reach what is being typed.
     override func accessibilityChildren() -> [Any]? {
-        let offset = viewer.offset
         let visible = viewer.visiblePages.filter { viewer.pageToView($0) != nil }
-        let pages = pageElements.elements(for: visible, epoch: viewer.textEpoch) { page in
-            let element = NSAccessibilityElement()
-            element.setAccessibilityParent(self)
-            element.setAccessibilityRole(.group)
-            element.setAccessibilityLabel(L10n.t("Page {0} of {1}", page + 1, viewer.pageCount))
-            return element
-        }
-        // The elements stay, so what moves with the scroll and the text is set on each query.
+        let pages = pageElements.elements(for: visible, epoch: viewer.textEpoch) { PageAccessibilityGroup(page: $0, view: self) }
+        // The elements stay, so the frame that moves with the scroll is set on each query.
         for (page, element) in zip(visible, pages) {
             guard let matrix = viewer.pageToView(page) else { continue }
             let size = viewer.pageSize(page)
-            let area = PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))
-            element.setAccessibilityValue(viewer.pageText(page))
-            let local = NSRect(x: area.x + offset.x, y: area.y + offset.y, width: area.width, height: area.height)
-            if let window {
-                element.setAccessibilityFrame(window.convertToScreen(convert(local, to: nil)))
-            }
+            element.setAccessibilityFrame(screenRect(PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))))
         }
         return pages as [Any] + fields.views as [Any]
     }
