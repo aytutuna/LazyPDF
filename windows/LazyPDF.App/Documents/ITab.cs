@@ -20,6 +20,9 @@ public interface ITab : INotifyPropertyChanged
     bool IsDirty { get; }
 
     bool CanClose { get; }
+
+    /// <summary>True while a page drag is over the tab and would copy its pages here.</summary>
+    bool PageDropHot { get; }
 }
 
 /// <summary>The first tab: recent files and the jobs people come for. It stays open.</summary>
@@ -42,6 +45,8 @@ public sealed class HomeTab : ITab
     public bool IsDirty => false;
 
     public bool CanClose => false;
+
+    public bool PageDropHot => false;
 
     public event PropertyChangedEventHandler? PropertyChanged
     {

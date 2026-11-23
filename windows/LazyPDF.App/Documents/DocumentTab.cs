@@ -117,6 +117,19 @@ public sealed class DocumentTab : ITab, IDisposable
 
     public bool CanClose => true;
 
+    private bool _pageDropHot;
+
+    public bool PageDropHot
+    {
+        get => _pageDropHot;
+        set
+        {
+            if (_pageDropHot == value) return;
+            _pageDropHot = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PageDropHot)));
+        }
+    }
+
     /// <summary>Raised when the file's bytes changed.</summary>
     public event EventHandler? Changed;
 
