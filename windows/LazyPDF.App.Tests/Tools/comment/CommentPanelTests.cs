@@ -273,6 +273,29 @@ public sealed class CommentPanelTests
         return Task.CompletedTask;
     });
 
+    [Fact]
+    public Task APanelWithPencilChosenHoldsNoHandleOffThePageAndKeepsTheSelection() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.TextBox, 0, [new Point(0, 0), new Point(100, 60)], MarkStyle.Default, "Look");
+        f.Tab.Commit("Text box");
+        var panel = Attached(f);
+        var edit = Get<EditTool>(panel, "_edit");
+        edit.Select(f.Marks().Single());
+        var buttons = Get<Dictionary<MarkTool, RadioButton>>(panel, "_buttons");
+        var off = At(new Point(-3, -3));
+
+        buttons[MarkTool.Rectangle].IsChecked = true;
+        edit.Select(f.Marks().Single());
+        Assert.True(Get<IPagePointerTool>(panel, "_active").HandleUnder(off));
+
+        buttons[MarkTool.Pencil].IsChecked = true;
+        edit.Select(f.Marks().Single());
+        Assert.False(Get<IPagePointerTool>(panel, "_active").HandleUnder(off));
+        Assert.NotNull(edit.Current);
+        return Task.CompletedTask;
+    });
+
     [Theory]
     [InlineData(MarkTool.Pencil, false)]
     [InlineData(MarkTool.Line, false)]
