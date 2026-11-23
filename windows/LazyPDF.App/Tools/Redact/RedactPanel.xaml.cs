@@ -36,6 +36,8 @@ public partial class RedactPanel : ToolPanel
     private bool _restricted;
     private bool _working;
     private bool _editing;
+    private bool _showing;
+    private (MarkItem Old, MarkItem Now)? _replaced;
     private RedactBoxEditor? _editor;
 
     // The copy opens as a tab of its own; the panel finds that tab by its title when it is attached there.
@@ -111,8 +113,9 @@ public partial class RedactPanel : ToolPanel
         state.Revision = revision;
         if (!moved)
         {
-            if (edited && state.Marks.RemoveValues())
-                Host!.ShowNotice(Loc.T("Hits removed"), Loc.T("The file changed, so the hits in comments and fields no longer fit. Search again."));
+            if (!edited || !state.Marks.RemoveValues()) return;
+            state.Marks.Forget();
+            Host!.ShowNotice(Loc.T("Hits removed"), Loc.T("The file changed, so the hits in comments and fields no longer fit. Search again."));
             return;
         }
         bool any = state.Marks.Items.Count > 0;

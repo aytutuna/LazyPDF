@@ -82,17 +82,34 @@ public partial class RedactPanel
 
     private void MarkedList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        _editor?.Show(MarkedList.SelectedItem as MarkItem);
+        if (_showing) return;
+        var picked = MarkedList.SelectedItem as MarkItem;
+        _showing = true;
+        try
+        {
+            // A pending nudge goes into the list first. That rebuilds the list and drops its selection, so the pick is made again.
+            _replaced = null;
+            _editor?.Clear();
+            if (_replaced is var (old, now) && ReferenceEquals(picked, old)) picked = now;
+            if (!ReferenceEquals(MarkedList.SelectedItem, picked)) MarkedList.SelectedItem = picked;
+            _editor?.Show(picked);
+        }
+        finally
+        {
+            _showing = false;
+        }
         if (!_editing) Jump();
     }
 
     private void BoxEdited(MarkItem old, MarkItem now)
     {
+        var was = MarkedList.SelectedItem;
         _editing = true;
         try
         {
             _state!.Marks.Replace(old, now);
-            MarkedList.SelectedItem = now;
+            if (_showing) _replaced = (old, now);
+            else MarkedList.SelectedItem = ReferenceEquals(was, old) ? now : was;
         }
         finally
         {

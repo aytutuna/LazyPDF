@@ -124,6 +124,82 @@ public sealed class MarkListTests
         Assert.Equal(-20, y3 - y0, 6);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void ABoxComesBackAsTheSameRectOnACropBoxThatDoesNotStartAtTheOrigin(int rotate)
+    {
+        var geometry = new PageGeometry(new PdfRect(30, 50, 230, 350), rotate);
+        var rect = new Rect(12.5, 20.25, 61, 24.5);
+
+        var mark = MarkShapes.Box(0, geometry, rect.TopLeft, rect.BottomRight);
+        var back = MarkShapes.Where(geometry, mark);
+
+        Assert.Equal(rect.X, back.X, 2);
+        Assert.Equal(rect.Y, back.Y, 2);
+        Assert.Equal(rect.Width, back.Width, 2);
+        Assert.Equal(rect.Height, back.Height, 2);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void ABoxComesBackAsTheSameRectOnEachRotation(int rotate)
+    {
+        var geometry = new PageGeometry(new PdfRect(0, 0, 200, 300), rotate);
+        var rect = new Rect(10, 20, 50, 25);
+
+        var back = MarkShapes.Where(geometry, MarkShapes.Box(0, geometry, rect.TopLeft, rect.BottomRight));
+
+        Assert.Equal(rect.X, back.X, 2);
+        Assert.Equal(rect.Y, back.Y, 2);
+        Assert.Equal(rect.Width, back.Width, 2);
+        Assert.Equal(rect.Height, back.Height, 2);
+    }
+
+    [Fact]
+    public void AReplacedBoxKeepsItsLabelAndFlags()
+    {
+        var list = new MarkList();
+        var box = new MarkItem(RedactionMark.FromRect(0, new PdfRect(10, 100, 50, 110)), "Box", IsBox: true);
+        list.Add([box]);
+
+        list.Replace(box, box with { Mark = RedactionMark.FromRect(0, new PdfRect(15, 100, 55, 110)) });
+
+        var now = list.Items.Single();
+        Assert.Equal("Box", now.Label);
+        Assert.True(now.IsBox);
+        Assert.False(now.IsWholePage);
+    }
+
+    [Fact]
+    public void ReplacingOntoAnExistingMarkKeepsBothAndUndoRestoresTheOldRect()
+    {
+        var list = new MarkList();
+        var fixedMark = Item(0, 10, 100, "fixed");
+        var box = Item(0, 10, 300, "box");
+        list.Add([fixedMark, box]);
+
+        list.Replace(box, Item(0, 10, 100, "box"));
+
+        Assert.Equal(2, list.Items.Count);
+        Assert.Equal(0, list.Add([Item(0, 10, 100)]));
+        list.Remove(list.Items[0]);
+        Assert.Single(list.Items);
+        Assert.Equal(0, list.Add([Item(0, 10, 100)]));
+
+        list.Undo();
+        list.Undo();
+
+        Assert.Equal(2, list.Items.Count);
+        Assert.Equal(0, list.Add([Item(0, 10, 300)]));
+        Assert.Equal(1, list.Add([Item(0, 10, 100.6)]));
+    }
+
     [Fact]
     public void MarkingThousandsOfPlacesAtOnceIsQuick()
     {

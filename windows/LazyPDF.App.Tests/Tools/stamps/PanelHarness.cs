@@ -133,6 +133,7 @@ public class FakeViewer : DispatchProxy
     protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name switch
     {
         "get_VisiblePages" => new[] { 0 },
+        "get_PageCount" => 1,
         "PageSize" => new Size(200, 300),
         "Overlay" => Overlay,
         "get_Zoom" => 1.0,
