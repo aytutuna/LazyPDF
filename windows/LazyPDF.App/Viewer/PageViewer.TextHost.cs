@@ -33,7 +33,11 @@ public partial class PageViewer : ITextHost
         if (_tab is null) return false;
         // A drag or double click still under way would take the selection back.
         CancelPendingSelection();
+        // The same selection raises no change, yet the reader's caret is replaced by it all the same.
+        bool same = _selection.Anchor == anchor && _selection.Focus == focus;
+        _automationCaret = null;
         _selection.Set(anchor, focus);
+        if (same) Surface.TellSelection();
         return true;
     }
 

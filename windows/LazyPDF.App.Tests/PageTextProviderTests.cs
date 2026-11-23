@@ -161,6 +161,24 @@ public sealed class PageTextProviderTests
     });
 
     [Fact]
+    public Task SelectingWhatIsAlreadySelectedTakesBackTheReadersPlace() => Sta.Run(async () =>
+    {
+        var o = await Open(Pdfs.Text(3));
+        using var _ = o;
+        o.Viewer.SelectAll();
+        var all = o.Provider.DocumentRange;
+        var place = o.Provider.DocumentRange;
+        place.MoveEndpointByRange(TextPatternRangeEndpoint.End, place, TextPatternRangeEndpoint.Start);
+        place.Select();
+        Assert.Equal("", Assert.Single(o.Provider.GetSelection()).GetText(-1));
+
+        all.Select();
+
+        var selection = Assert.Single(o.Provider.GetSelection());
+        Assert.Equal(all.GetText(-1), selection.GetText(-1));
+    });
+
+    [Fact]
     public Task TheCaretOfCaretBrowsingIsAnEmptyRangeToo() => Sta.Run(async () =>
     {
         var o = await Open(Pdfs.Text(1));
