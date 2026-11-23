@@ -70,6 +70,14 @@ public sealed class DocumentUnits
         return (new DocPos(caret.Page, 0), caret.Index > 0 ? caret.Page : -1);
     }
 
+    /// <summary>The caret of the viewer's selection that stands for a place; the end of the document is the end of its last page.</summary>
+    public Caret ToCaret(DocPos at)
+    {
+        var pos = Normalize(at);
+        if (pos.Page >= _count) return new Caret(Math.Max(_count - 1, 0), int.MaxValue);
+        return new Caret(pos.Page, _pages(pos.Page) is { } text ? text.CharStart(pos.Offset) : 0);
+    }
+
     public Walk Move(DocPos from, TextUnit unit, int count)
     {
         var pos = Normalize(from);

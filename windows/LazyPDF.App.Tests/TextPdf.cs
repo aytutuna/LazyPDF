@@ -25,7 +25,10 @@ internal static class TextPdf
         return sb.ToString();
     }
 
-    public static byte[] Pdf(params string[] pages)
+    public static byte[] Pdf(params string[] pages) => Pdf("", pages);
+
+    // pageEntries go into every page dictionary, for a /Rotate or a /CropBox.
+    public static byte[] Pdf(string pageEntries, string[] pages)
     {
         var objects = new List<string>();
         int fontObject = 3 + pages.Length * 2;
@@ -49,7 +52,7 @@ internal static class TextPdf
         Obj($"<</Type /Pages /Kids [{kids}] /Count {pages.Length} /MediaBox [0 0 600 800]>>");
         foreach (var (content, p) in pages.Select((c, p) => (c, p)))
         {
-            Obj($"<</Type /Page /Parent 2 0 R /Contents {4 + p * 2} 0 R /Resources <</Font <</F1 {fontObject} 0 R>>>>>>");
+            Obj($"<</Type /Page /Parent 2 0 R /Contents {4 + p * 2} 0 R {pageEntries} /Resources <</Font <</F1 {fontObject} 0 R>>>>>>");
             Obj($"<</Length {content.Length}>>\nstream\n{content}\nendstream");
         }
         Obj($"<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 0 /LastChar 255 /Widths [{widths}] /ToUnicode {fontObject + 1} 0 R>>");

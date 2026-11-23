@@ -16,6 +16,7 @@ public partial class PageViewer : ITextHost
     private readonly HashSet<int> _wanted = [];
     private (int First, int Last)? _readRange;
     private bool _unreadable;
+    private Caret? _automationCaret;
 
     DocumentTab? ITextHost.Tab => _tab;
 
@@ -24,6 +25,16 @@ public partial class PageViewer : ITextHost
     int ITextHost.PageCount => _tab?.PageCount ?? 0;
 
     bool ITextHost.LayoutReady => !_stale && _tab is { } tab && Surface.PageCount == tab.PageCount;
+
+    (Caret Anchor, Caret Focus)? ITextHost.Selection => _selection.IsEmpty ? null : (_selection.Anchor, _selection.Focus);
+
+    Caret? ITextHost.BrowsingCaret => _caretMode ? _selection.Focus : null;
+
+    Caret? ITextHost.AutomationCaret
+    {
+        get => _automationCaret;
+        set => _automationCaret = value;
+    }
 
     TextPage? ITextHost.Peek(int page)
     {

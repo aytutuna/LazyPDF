@@ -11,16 +11,18 @@ namespace LazyPDF.App.Viewer;
 /// made under, nothing of the text: once the viewer shows another tab or the file changed, every call throws
 /// <see cref="ElementNotAvailableException"/> and the client asks for a new range.
 /// </summary>
-internal sealed class PageTextRange
+internal sealed class PageTextRange : ITextRangeProvider
 {
     private readonly WeakReference<ITextHost> _host;
     private readonly WeakReference<DocumentTab> _tab;
+    private readonly WeakReference<PageTextProvider>? _provider;
     private readonly int _revision;
     private DocPos _start;
     private DocPos _end;
 
-    private PageTextRange(ITextHost host, DocumentTab tab, int revision, DocPos start, DocPos end)
+    private PageTextRange(ITextHost host, PageTextProvider? provider, DocumentTab tab, int revision, DocPos start, DocPos end)
     {
+        _provider = provider is null ? null : new WeakReference<PageTextProvider>(provider);
         _host = new WeakReference<ITextHost>(host);
         _tab = new WeakReference<DocumentTab>(tab);
         _revision = revision;
@@ -28,13 +30,13 @@ internal sealed class PageTextRange
     }
 
     /// <summary>A range of the document the host shows now, or null when it shows none.</summary>
-    public static PageTextRange? Create(ITextHost host, DocPos start, DocPos end)
+    public static PageTextRange? Create(ITextHost host, DocPos start, DocPos end, PageTextProvider? provider = null)
     {
         if (host.Tab is not { } tab) return null;
         var units = Units(host);
         start = units.Normalize(start);
         end = units.Normalize(end);
-        return new PageTextRange(host, tab, host.Revision, start, end < start ? start : end);
+        return new PageTextRange(host, provider, tab, host.Revision, start, end < start ? start : end);
     }
 
     public (DocPos Start, DocPos End) Places
@@ -50,20 +52,23 @@ internal sealed class PageTextRange
     {
         var (host, _) = Checked();
         _tab.TryGetTarget(out var tab);
-        return new PageTextRange(host, tab!, _revision, _start, _end);
+        return new PageTextRange(host, Provider, tab!, _revision, _start, _end);
     }
 
-    public bool Compare(PageTextRange other)
+    ITextRangeProvider ITextRangeProvider.Clone() => Clone();
+
+    public bool Compare(ITextRangeProvider range)
     {
         var (host, _) = Checked();
+        if (range is not PageTextRange other) return false;
         var (otherHost, _) = other.Checked();
         return ReferenceEquals(host, otherHost) && _start == other._start && _end == other._end;
     }
 
-    public int CompareEndpoints(TextPatternRangeEndpoint endpoint, PageTextRange target, TextPatternRangeEndpoint targetEndpoint)
+    public int CompareEndpoints(TextPatternRangeEndpoint endpoint, ITextRangeProvider targetRange, TextPatternRangeEndpoint targetEndpoint)
     {
         Checked();
-        target.Checked();
+        var target = Same(targetRange);
         return Place(endpoint).CompareTo(target.Place(targetEndpoint));
     }
 
@@ -102,12 +107,10 @@ internal sealed class PageTextRange
         return walk.Moved;
     }
 
-    public void MoveEndpointByRange(TextPatternRangeEndpoint endpoint, PageTextRange target, TextPatternRangeEndpoint targetEndpoint)
+    public void MoveEndpointByRange(TextPatternRangeEndpoint endpoint, ITextRangeProvider targetRange, TextPatternRangeEndpoint targetEndpoint)
     {
-        var (host, _) = Checked();
-        var (targetHost, _) = target.Checked();
-        if (!ReferenceEquals(host, targetHost)) throw new ArgumentException("The range belongs to another document.", nameof(target));
-        Set(endpoint, target.Place(targetEndpoint));
+        Checked();
+        Set(endpoint, Same(targetRange).Place(targetEndpoint));
     }
 
     /// <summary>
@@ -130,6 +133,68 @@ internal sealed class PageTextRange
         }
         return text.ToString();
     }
+
+    // TODO: search, attributes and the geometry answers come with the steps after this one; until then they report nothing.
+    public ITextRangeProvider? FindText(string text, bool backward, bool ignoreCase)
+    {
+        Checked();
+        return null;
+    }
+
+    public ITextRangeProvider? FindAttribute(int attribute, object value, bool backward)
+    {
+        Checked();
+        return null;
+    }
+
+    public object GetAttributeValue(int attribute)
+    {
+        Checked();
+        return AutomationElement.NotSupported;
+    }
+
+    public double[] GetBoundingRectangles()
+    {
+        Checked();
+        return [];
+    }
+
+    public void ScrollIntoView(bool alignToTop) => Checked();
+
+    // A place only: the reader's position is kept for GetSelection and the viewer's own selection is left alone.
+    public void Select()
+    {
+        var (host, units) = Checked();
+        if (_start == _end) host.AutomationCaret = units.ToCaret(_start);
+    }
+
+    public void AddToSelection() => throw new InvalidOperationException("The text takes one selection.");
+
+    public void RemoveFromSelection() => throw new InvalidOperationException("The text takes one selection.");
+
+    public IRawElementProviderSimple GetEnclosingElement()
+    {
+        Checked();
+        return Provider?.Element ?? throw new ElementNotAvailableException();
+    }
+
+    public IRawElementProviderSimple[] GetChildren()
+    {
+        Checked();
+        return Provider?.ChildrenIn(_start, _end) ?? [];
+    }
+
+    // Another range of the same document, which has to be available too.
+    private PageTextRange Same(ITextRangeProvider range)
+    {
+        var (host, _) = Checked();
+        if (range is not PageTextRange other) throw new ArgumentException("Not a range of this document.", nameof(range));
+        var (otherHost, _) = other.Checked();
+        if (!ReferenceEquals(host, otherHost)) throw new ArgumentException("The range belongs to another document.", nameof(range));
+        return other;
+    }
+
+    private PageTextProvider? Provider => _provider is not null && _provider.TryGetTarget(out var provider) ? provider : null;
 
     private DocPos Place(TextPatternRangeEndpoint endpoint) => endpoint == TextPatternRangeEndpoint.Start ? _start : _end;
 
@@ -155,6 +220,6 @@ internal sealed class PageTextRange
         throw new ElementNotAvailableException();
     }
 
-    private static DocumentUnits Units(ITextHost host) =>
+    public static DocumentUnits Units(ITextHost host) =>
         new(host.PageCount, page => host.Peek(page) is { } text ? PageUiaText.Of(text) : null);
 }

@@ -23,4 +23,13 @@ public interface ITextHost
     /// real, empty page. Never reads or waits for a page itself.
     /// </summary>
     TextPage? Peek(int page);
+
+    /// <summary>The selected text, or null when nothing is selected.</summary>
+    (Caret Anchor, Caret Focus)? Selection { get; }
+
+    /// <summary>The caret of caret browsing, or null when it is off.</summary>
+    Caret? BrowsingCaret { get; }
+
+    /// <summary>The place a screen reader last put its cursor at; it lasts until the user changes the selection or another file is shown.</summary>
+    Caret? AutomationCaret { get; set; }
 }

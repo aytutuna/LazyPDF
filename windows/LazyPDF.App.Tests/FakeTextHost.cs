@@ -17,6 +17,12 @@ internal sealed class FakeTextHost(DocumentTab? tab, int pageCount, Func<int, Te
 
     public bool LayoutReady { get; set; } = true;
 
+    public (Caret Anchor, Caret Focus)? Selection { get; set; }
+
+    public Caret? BrowsingCaret { get; set; }
+
+    public Caret? AutomationCaret { get; set; }
+
     public HashSet<int> Requested { get; } = [];
 
     public TextPage? Peek(int page)

@@ -56,6 +56,7 @@ public partial class PageViewer
     {
         _selection.Changed += (_, _) =>
         {
+            _automationCaret = null;
             _selectionGeometry.Clear();
             Surface.InvalidateVisual();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
@@ -79,6 +80,7 @@ public partial class PageViewer
         _hitGeometry.Clear();
         CancelPendingSelection();
         _selection.Clear();
+        _automationCaret = null;
         _caretMode = false;
     }
 
