@@ -139,7 +139,8 @@ struct RedactPanelView: View {
                     .help(L10n.t("Remove this mark"))
                 }
                 .padding(.horizontal, 4)
-                .focusable()
+                // Edit as well as activate: with only the default, the Mac moves focus here only when keyboard navigation is on.
+                .focusable(interactions: [.activate, .edit])
                 .focused($focused, equals: item.row)
                 .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in nudge(press, editing: editing) }
                 .background(model.selected == item.id ? Color.accentColor.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
