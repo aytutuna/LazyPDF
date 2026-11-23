@@ -195,14 +195,18 @@ public partial class RedactPanel
 
     private void Undo_Click(object sender, RoutedEventArgs e) => _state!.Marks.Undo();
 
-    // The notice outlives the tool and later changes; it undoes only while the list is as it left it.
+    // The notice outlives the tool and later changes; it undoes only while the list is as it left it. A file change forgets
+    // the history, so there may be nothing to undo and no Undo button to point to.
     private Action UndoIfUnchanged(IReadOnlyList<MarkItem> after)
     {
         var state = _state!;
+        var pages = state.Pages;
         return () =>
         {
-            if (_state == state && ReferenceEquals(state.Marks.Items, after)) state.Marks.Undo();
-            else Host?.SetStatus(Loc.T("The marks changed since. Use Undo in the list."));
+            if (state.Pages is { } now && pages is { } was && !was.SequenceEqual(now))
+                Host?.ShowNotice(Loc.T("Marks removed"), Loc.T("The pages changed, so the marks no longer fit. Mark them again."));
+            else if (_state == state && state.Marks.CanUndo && ReferenceEquals(state.Marks.Items, after)) state.Marks.Undo();
+            else Host?.SetStatus(state.Marks.CanUndo ? Loc.T("The marks changed since. Use Undo in the list.") : Loc.T("The marks changed since."));
         };
     }
 }

@@ -22,6 +22,7 @@ public sealed class RedactPanelEditTests
     {
         public DocumentTab Tab = new(PdfEditSession.Open(Pdfs.Text(2), (string?)null), new FakeRenderer(), null, "a.pdf", null);
         public RedactPanel Panel = new();
+        public RecordingHost Host = new();
         public PageOverlay Overlay;
         public Window Window = new() { Width = 400, Height = 600, ShowActivated = false, ShowInTaskbar = false };
         public HwndSource Source = new(new HwndSourceParameters("redact-edit"));
@@ -32,7 +33,7 @@ public sealed class RedactPanelEditTests
             Overlay = overlay;
             Window.Content = Panel;
             Window.Show();
-            Panel.Attach(Tab, viewer, new RecordingHost());
+            Panel.Attach(Tab, viewer, Host);
         }
 
         public MarkList Marks
@@ -78,6 +79,9 @@ public sealed class RedactPanelEditTests
             var container = (IInputElement)List.ItemContainerGenerator.ContainerFromItem(row);
             Frame!.RaiseEvent(new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, Frame, container) { RoutedEvent = Keyboard.LostKeyboardFocusEvent });
         }
+
+        public void Remove(MarkItem item) =>
+            typeof(RedactPanel).GetMethod("RemoveOne", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(Panel, [item]);
 
         public static void Pump() => Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Background, () => { });
 
@@ -249,6 +253,36 @@ public sealed class RedactPanelEditTests
         Assert.False(stand.Marks.CanUndo);
         stand.Marks.Undo();
         Assert.Empty(stand.Marks.Items);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task PutItBackSaysSoWhenAFileChangeLeftNothingToUndo() => Sta.Run(() =>
+    {
+        using var stand = new Stand();
+        var box = stand.Show("box", 20, 30);
+
+        stand.Remove(box);
+        var back = stand.Host.Actions.Last()!;
+        stand.Tab.Refresh();
+        Assert.False(stand.Marks.CanUndo);
+        back.Run();
+
+        Assert.Empty(stand.Marks.Items);
+        Assert.Equal("The marks changed since.", stand.Host.Status);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task PutItBackStillUndoesWhileTheListIsAsTheRemovalLeftIt() => Sta.Run(() =>
+    {
+        using var stand = new Stand();
+        var box = stand.Show("box", 20, 30);
+
+        stand.Remove(box);
+        stand.Host.Actions.Last()!.Run();
+
+        Assert.Equal(["box"], stand.Marks.Items.Select(m => m.Label));
         return Task.CompletedTask;
     });
 }
