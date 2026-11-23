@@ -3607,6 +3607,9 @@
   <data name="More languages" xml:space="preserve">
     <value>Diğer diller</value>
   </data>
+  <data name="More ways to print" xml:space="preserve">
+    <value>Diğer yazdırma yolları</value>
+  </data>
   <data name="More ways to save" xml:space="preserve">
     <value>Diğer kaydetme yolları</value>
   </data>
@@ -4327,6 +4330,9 @@
   <data name="Opens in a new tab. You name it when you save." xml:space="preserve">
     <value>Yeni sekmede açılır. Adını kaydederken verirsiniz.</value>
   </data>
+  <data name="Opens the Windows print dialog with the print layout instead of sending the file to Lazy Print." xml:space="preserve">
+    <value>Dosyayı Lazy Print'e göndermek yerine Windows yazdırma penceresini yazdırma düzeniyle açar.</value>
+  </data>
   <data name="Optimize" xml:space="preserve">
     <value>İyileştir</value>
   </data>
@@ -4929,6 +4935,9 @@
   </data>
   <data name="Print at actual size" xml:space="preserve">
     <value>Gerçek boyutta yazdır</value>
+  </data>
+  <data name="Print here" xml:space="preserve">
+    <value>Burada yazdır</value>
   </data>
   <data name="Print here…" xml:space="preserve">
     <value>Burada yazdır…</value>

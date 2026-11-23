@@ -47,6 +47,79 @@ public sealed class PrintFlowTests
     }
 
     [Fact]
+    public async Task PrintHereAsksForTheSystemDialogEvenWhenLazyPrintIsThere()
+    {
+        using var f = new ViewModelFixture();
+        f.Sisters.PrintTaken = true;
+        await f.Vm.OpenAsync(f.Pdf());
+        DocumentTab? asked = null;
+        f.Vm.SystemPrintRequested += (_, t) => asked = t;
+
+        f.Vm.PrintHere();
+
+        Assert.Same(f.Vm.ActiveDocument, asked);
+        Assert.Empty(f.Sisters.Printed);
+    }
+
+    [Fact]
+    public async Task PrintHereHonoursThePrintPermission()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("nope.pdf", Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Print)));
+        DocumentTab? asked = null;
+        f.Vm.SystemPrintRequested += (_, t) => asked = t;
+
+        f.Vm.PrintHere();
+
+        Assert.Null(asked);
+        Assert.Equal("Printing is not allowed", f.Vm.Message!.Title);
+    }
+
+    [Fact]
+    public void PrintHereOnTheHomeTabDoesNothing()
+    {
+        using var f = new ViewModelFixture();
+        var asked = false;
+        f.Vm.SystemPrintRequested += (_, _) => asked = true;
+
+        f.Vm.PrintHere();
+
+        Assert.False(asked);
+    }
+
+    [Fact]
+    public async Task PrintAndPrintHereStopWhileTypedTextWaitsForAnAnswer()
+    {
+        using var f = new ViewModelFixture();
+        f.Sisters.PrintTaken = true;
+        await f.Vm.OpenAsync(f.Pdf());
+        var asked = false;
+        f.Vm.SystemPrintRequested += (_, _) => asked = true;
+        var handedIn = 0;
+        f.Vm.HandIn = () => { handedIn++; return false; };
+
+        f.Vm.Print();
+        f.Vm.PrintHere();
+
+        Assert.Equal(2, handedIn);
+        Assert.False(asked);
+        Assert.Empty(f.Sisters.Printed);
+    }
+
+    [Fact]
+    public async Task TypedTextIsHandedInBeforeTheFileIsCopiedForLazyPrint()
+    {
+        using var f = new ViewModelFixture();
+        f.Sisters.PrintTaken = true;
+        await f.Vm.OpenAsync(f.Pdf());
+        f.Vm.HandIn = () => { Assert.Empty(f.Sisters.Printed); return true; };
+
+        f.Vm.Print();
+
+        Assert.Single(f.Sisters.Printed);
+    }
+
+    [Fact]
     public async Task TheCopyForLazyPrintKeepsTheNameOfADocumentMadeFromAPicture()
     {
         using var f = new ViewModelFixture();

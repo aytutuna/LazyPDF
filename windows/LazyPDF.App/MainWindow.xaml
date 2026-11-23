@@ -170,6 +170,15 @@
                         AutomationProperties.Name="{loc:T Redo}" Click="Redo_Click" />
                 <Button x:Name="PrintButton" Style="{StaticResource IconButtonStyle}" Content="&#xE749;" ToolTip="{loc:T Print (Ctrl+P)}"
                         AutomationProperties.Name="{loc:T Print}" Click="Print_Click" />
+                <Button x:Name="PrintMenuButton" Style="{StaticResource IconButtonStyle}" Content="&#xE712;" ToolTip="{loc:T More ways to print}"
+                        AutomationProperties.Name="{loc:T More ways to print}" Click="PrintMenu_Click" Visibility="Collapsed">
+                    <Button.ContextMenu>
+                        <ContextMenu x:Name="PrintMenu">
+                            <MenuItem x:Name="PrintHereItem" Header="{loc:T Print here…}" AutomationProperties.Name="{loc:T Print here}" InputGestureText="Ctrl+Shift+P"
+                                      ToolTip="{loc:T Opens the Windows print dialog with the print layout instead of sending the file to Lazy Print.}" Click="PrintHere_Click" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
                 <Rectangle Width="1" Margin="6,8" Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
                 <Button x:Name="SettingsButton" Style="{StaticResource IconButtonStyle}" Content="&#xE713;" ToolTip="{loc:T Settings}"
                         AutomationProperties.Name="{loc:T Settings}" Click="Settings_Click" />

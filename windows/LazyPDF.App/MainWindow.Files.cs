@@ -139,6 +139,16 @@ public partial class MainWindow
 
     private void Print_Click(object sender, RoutedEventArgs e) => _vm.Print();
 
+    private void PrintMenu_Click(object sender, RoutedEventArgs e)
+    {
+        PrintHereItem.IsEnabled = _vm.ActiveDocument is not null;
+        PrintMenu.PlacementTarget = PrintMenuButton;
+        PrintMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        PrintMenu.IsOpen = true;
+    }
+
+    private void PrintHere_Click(object sender, RoutedEventArgs e) => _vm.PrintHere();
+
     private async void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
     {
         await tab.Drawing;

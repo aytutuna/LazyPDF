@@ -9416,5 +9416,14 @@
   },
   "To print both sides by hand, print the odd sides, turn the stack over and print the even sides.": {
     "tr": "İki yüzü elle yazdırmak için önce tek yüzleri yazdırın, destede çevirin, sonra çift yüzleri yazdırın."
+  },
+  "More ways to print": {
+    "tr": "Diğer yazdırma yolları"
+  },
+  "Print here": {
+    "tr": "Burada yazdır"
+  },
+  "Opens the Windows print dialog with the print layout instead of sending the file to Lazy Print.": {
+    "tr": "Dosyayı Lazy Print'e göndermek yerine Windows yazdırma penceresini yazdırma düzeniyle açar."
   }
 }
