@@ -81,34 +81,34 @@ final class PageTextElement: NSAccessibilityElement {
         viewer.select(page: page, map.chars(in: Self.units(range)))
     }
 
-    func accessibilityString(for range: NSRange) -> String? {
+    override func accessibilityString(for range: NSRange) -> String? {
         map?.string(in: Self.units(range))
     }
 
-    func accessibilityRange(forLine line: Int) -> NSRange {
+    override func accessibilityRange(forLine line: Int) -> NSRange {
         guard let map else { return NSRange(location: 0, length: 0) }
         return Self.range(map.units(ofLine: line))
     }
 
-    func accessibilityLine(for index: Int) -> Int {
+    override func accessibilityLine(for index: Int) -> Int {
         map?.line(atOffset: index) ?? 0
     }
 
-    func accessibilityRange(for index: Int) -> NSRange {
+    override func accessibilityRange(for index: Int) -> NSRange {
         guard let map, index >= 0, index < map.length else { return NSRange(location: map?.length ?? 0, length: 0) }
         let chars = map.chars(in: index..<(index + 1))
         let found = map.units(of: chars)
         return found.contains(index) ? Self.range(found) : NSRange(location: index, length: 1)
     }
 
-    func accessibilityRange(for point: NSPoint) -> NSRange {
+    override func accessibilityRange(for point: NSPoint) -> NSRange {
         guard let view, let viewer, let map, let char = viewer.charIndex(page: page, at: view.viewPoint(fromScreen: point)) else {
             return NSRange(location: 0, length: 0)
         }
         return Self.range(map.units(ofChar: char))
     }
 
-    func accessibilityFrame(for range: NSRange) -> NSRect {
+    override func accessibilityFrame(for range: NSRange) -> NSRect {
         guard let view, let viewer, let map else { return .zero }
         let chars = map.chars(in: Self.units(range))
         guard let area = viewer.textBounds(page: page, chars) else { return .zero }
