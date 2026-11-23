@@ -95,7 +95,7 @@ Panels with several jobs split into partial files (`PagesPanel.Edit.cs`, `PagesP
 - `Show`, `PageIndex`, `Zoom`, `GoToPage`, `GoToDestination`, `FollowAction`, `GoBack`, `GoForward`, `Reveal`.
 - `VisiblePages`, `PageSize`, `PageToView`, `ViewToPage`, `Geometry`. Page space is points from the top left of the page as shown, y down; `PageGeometry` converts to PDF user space.
 - `Overlay(page)` is a canvas over a page for previews and handles; it moves with the page.
-- `PointerTool` takes the left button as press, move, release (`IPagePointerTool`); without one the pointer pans or selects text. `HandleUnder(PagePointer)` (default false) says whether a handle the tool already holds is under the point; a press up to 32 view pixels off a page is delivered, with the page-space point of the nearest page that lies within reach, only when it is true.
+- `PointerTool` takes the left button as press, move, release (`IPagePointerTool`); without one the pointer pans or selects text. `HandleUnder(PagePointer)` (default false) says whether a handle the tool already holds is under the point; a press up to 32 view pixels off a page is delivered, with the page-space point of the first page, in layout order, that lies within reach and whose tool reports a handle there, only when it is true.
 - `GetTextAsync`, `GetSelectionAsync`, `SelectAll`, `ClearSelection` for text; `SetLayerVisible` for layers.
 - Events: `StateChanged`, `ViewChanged`, `PageChanged`, `ModeChanged`, `SelectionChanged`, `LayersChanged`.
 
