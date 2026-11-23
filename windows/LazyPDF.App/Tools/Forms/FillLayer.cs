@@ -149,7 +149,7 @@ internal sealed partial class FillLayer
             slot.Frame.Width = slot.Box.Width;
             slot.Frame.Height = slot.Box.Height;
             Decorate(slot);
-            slot.Frame.IsKeyboardFocusWithinChanged += (_, e) => Focused(page, host, slots, slot, (bool)e.NewValue);
+            slot.Frame.IsKeyboardFocusWithinChanged += (_, e) => Focused(page, host, slot, (bool)e.NewValue);
             if (slot.Turns)
             {
                 // The text box's own menu takes the keyboard into its popup; the field stays turned until the menu is gone.
@@ -159,7 +159,7 @@ internal sealed partial class FillLayer
                     slot.MenuOpen = false;
                     slot.Frame.Dispatcher.InvokeAsync(() =>
                     {
-                        if (slot.Turned && !slot.Frame.IsKeyboardFocusWithin) Release(page, host, slots, slot);
+                        if (slot.Turned && !slot.Frame.IsKeyboardFocusWithin) Release(page, host, slot);
                     }, DispatcherPriority.ApplicationIdle);
                 };
                 // The turn happens when the keyboard arrives, so the press that would have clicked the sideways
@@ -185,12 +185,12 @@ internal sealed partial class FillLayer
     // On a turned view the control being typed in is turned back and moved into the page, and drawn over its
     // neighbours (and over the next page's layer) while it has the keyboard. Only a transform, position and order
     // change, so nothing typed is lost and no text change is raised.
-    private void Focused(int page, Canvas host, List<Slot> slots, Slot slot, bool within)
+    private void Focused(int page, Canvas host, Slot slot, bool within)
     {
         int rotation = _viewer.Rotation;
         if (!within)
         {
-            if (slot.Turned && !slot.MenuOpen) Release(page, host, slots, slot);
+            if (slot.Turned && !slot.MenuOpen) Release(page, host, slot);
             return;
         }
         slot.MenuOpen = false;
@@ -212,15 +212,17 @@ internal sealed partial class FillLayer
         _viewer.Reveal(page, PageOverlay.UprightBounds(placed, rotation));
     }
 
-    private void Release(int page, Canvas host, List<Slot> slots, Slot slot)
+    private void Release(int page, Canvas host, Slot slot)
     {
         slot.Turned = false;
         slot.Frame.RenderTransform = null;
         Canvas.SetLeft(slot.Frame, slot.Box.X);
         Canvas.SetTop(slot.Frame, slot.Box.Y);
         slot.Frame.ClearValue(Panel.ZIndexProperty);
-        // The host and the layer are shared by the page's slots, so they drop back only once none of them has the keyboard.
-        if (slots.Any(s => s.Control is { IsKeyboardFocusWithin: true })) return;
+        // The host and the layer are shared by the page's slots, so they drop back only once none of them has the
+        // keyboard. A host that was rebuilt since is no longer the page's; its replacement owns the layer now.
+        if (!_pages.TryGetValue(page, out var current) || current.Host != host) return;
+        if (current.Slots.Any(s => s.Control is { IsKeyboardFocusWithin: true })) return;
         var size = _viewer.PageSize(page);
         host.Clip = new RectangleGeometry(new Rect(0, 0, size.Width, size.Height));
         host.ClearValue(Panel.ZIndexProperty);

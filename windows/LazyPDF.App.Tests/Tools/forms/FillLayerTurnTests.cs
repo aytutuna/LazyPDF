@@ -399,4 +399,26 @@ public sealed class FillLayerTurnTests
         Assert.True(last.IsKeyboardFocusWithin);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task ARebuiltFormKeepsTheFocusedFieldRaisedWhateverOrderTheEventsRunIn() => Sta.Run(async () =>
+    {
+        using var rig = new Rig(90);
+        rig.Control("name").Focus();
+
+        var form = FormPdfs.Read(rig.Tab);
+        form.AddField(new FieldSpec(FieldKind.Text, "extra", 0, new PdfRect(60, 300, 200, 320)));
+        rig.Layer.Show(form, true);
+        await Task.Delay(100);
+
+        var text = rig.Control("name");
+        Assert.True(text.IsKeyboardFocusWithin);
+        Assert.IsType<RotateTransform>(Rig.Frame(text).RenderTransform);
+        Assert.Null(Rig.Host(text).Clip);
+        Assert.True(Panel.GetZIndex(Rig.Host(text)) > 0);
+        Assert.True(Panel.GetZIndex(Rig.Overlay(text)) > 0);
+
+        Keyboard.ClearFocus();
+        AssertDropped(text, rig.Box(Name));
+    });
 }
