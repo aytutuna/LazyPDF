@@ -41,7 +41,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     private var selecting = false
     private var editMenu: UIEditMenuInteraction?
     private lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
-    private var pageElements = PageElementCache<UIAccessibilityElement>()
+    private var pageElements = PageElementCache<PageReadingElement>()
     private let toolPress = UILongPressGestureRecognizer()
     private let handlePan = UIPanGestureRecognizer()
     private var handleDragging = false
@@ -97,6 +97,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
             self?.canvas.setNeedsDisplay()
             self?.fields.sync()
         }
+        viewer.onPageLoaded = { [weak self] page in self?.pageElements.element(for: page)?.textLoaded() }
         viewer.onToolChange = { [weak self] in self?.toolChanged() }
         let center = NotificationCenter.default
         center.addObserver(self, selector: #selector(keyboardMoved(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
@@ -427,18 +428,15 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     override var accessibilityElements: [Any]? {
         get {
             let visible = viewer.visiblePages.filter { viewer.pageToView($0) != nil }
-            let pages = pageElements.elements(for: visible, epoch: viewer.textEpoch) { page in
-                let element = UIAccessibilityElement(accessibilityContainer: self)
-                element.accessibilityLabel = L10n.t("Page {0} of {1}", page + 1, viewer.pageCount)
-                return element
-            }
-            // The elements stay, so what moves with the scroll and the text is set on each query.
+            let pages = pageElements.elements(for: visible, epoch: viewer.textEpoch) { PageReadingElement(page: $0, view: self) }
+            // The elements stay, so what moves with the scroll is set on each query. Only the last page in view asks for a page
+            // turn: the ones before it lead on to the next element by themselves.
             for (page, element) in zip(visible, pages) {
                 guard let matrix = viewer.pageToView(page) else { continue }
                 let size = viewer.pageSize(page)
                 let area = PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))
-                element.accessibilityValue = viewer.pageText(page)
                 element.accessibilityFrameInContainerSpace = CGRect(x: area.x, y: area.y, width: area.width, height: area.height)
+                element.turnsPage(page == visible.last)
             }
             return pages as [Any] + fields.views as [Any]
         }
