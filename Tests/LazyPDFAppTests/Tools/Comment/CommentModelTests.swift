@@ -792,16 +792,13 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(corners[3].y, 300, accuracy: 0.5)
     }
 
-    func test_removePointWithNoneIsPickedTakesTheLastCorner() async throws {
+    func test_removePointWithNoneIsPickedChangesNothing() async throws {
         let rig = try shapeRig(square)
 
         rig.model.removePickedPoint()
 
-        XCTAssertEqual(rig.tab.session.undoLabel, "Remove point")
-        let corners = try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))
-        XCTAssertEqual(corners.count, 3)
-        XCTAssertEqual(corners[2].x, 300, accuracy: 0.5)
-        XCTAssertEqual(corners[2].y, 300, accuracy: 0.5)
+        XCTAssertEqual(rig.tab.session.undoLabel, "Polygon")
+        XCTAssertEqual(marks(rig)[0].vertices.count, 8)
     }
 
     func test_removePointTakesThePickedCorner() async throws {

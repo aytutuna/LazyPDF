@@ -176,10 +176,10 @@ extension CommentModel {
         if change(L10n.t("Add point"), { _ = try $0.insertPoint(mark, after: after, at: middle) }) { edit.pickAfterRefresh(after + 1) }
     }
 
-    /// Takes the picked corner from the selected polygon, or the last one when none is picked, so the button works without a pointer.
+    /// Takes the picked corner from the selected polygon; nothing happens when none is picked.
     public func removePickedPoint() {
-        guard let tab, let edit = editTool, let mark = edit.current, let corners = makeMarker(tab).pointsOf(mark) else { return }
-        let index = edit.pickedVertex >= 0 ? edit.pickedVertex : corners.count - 1
+        guard let edit = editTool, let mark = edit.current, edit.pickedVertex >= 0 else { return }
+        let index = edit.pickedVertex
         edit.clearPick()
         removePoint(mark, index)
     }
