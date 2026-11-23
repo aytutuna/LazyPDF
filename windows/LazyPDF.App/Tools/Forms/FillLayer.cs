@@ -26,6 +26,7 @@ internal sealed partial class FillLayer
     private bool _canFill;
     private bool _highlight;
     private int _key;
+    private int _styledFor;
 
     /// <param name="enter">Takes a value typed or clicked into a field and says whether the field kept it.</param>
     /// <param name="choose">The same for the choices of a list box.</param>
@@ -63,6 +64,7 @@ internal sealed partial class FillLayer
             Drop();
             _key = key;
             Build();
+            _styledFor = _viewer.Rotation;
             if (focused is not null) Focus(focused.Name, focused.Index);
             return;
         }
@@ -75,6 +77,15 @@ internal sealed partial class FillLayer
             }
             Decorate(slot);
         }
+        _styledFor = _viewer.Rotation;
+    }
+
+    /// <summary>Restyles the controls when the view was turned; scrolling and zooming do nothing here.</summary>
+    public void Restyle()
+    {
+        if (_viewer.Rotation == _styledFor) return;
+        _styledFor = _viewer.Rotation;
+        foreach (var slot in _pages.Values.SelectMany(p => p.Slots)) Decorate(slot);
     }
 
     /// <summary>Builds the controls of pages that came into view.</summary>
@@ -192,6 +203,7 @@ internal sealed partial class FillLayer
     {
         slot.Frame.Background = _highlight ? (Brush)Application.Current.FindResource("MarqueeFillBrush") : null;
         slot.Frame.BorderBrush = slot.Missing ? Missing : null;
+        if (slot.Control is ComboBox or ListBox) slot.Control.Style = _viewer.Rotation == 0 ? null : FieldStyles.Idle(slot.Control);
     }
 
     private static bool IsMissing(FormField field) =>
