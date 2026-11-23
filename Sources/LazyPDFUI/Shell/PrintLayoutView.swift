@@ -117,6 +117,9 @@ private struct PhoneOptions: View {
         Text(choice.layout.summary(documentPages: choice.documentPages))
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityLabel(choice.layout.summary(documentPages: choice.documentPages))
+            .onChange(of: choice.layout) {
+                AccessibilityNotification.Announcement(choice.problem ?? choice.layout.summary(documentPages: choice.documentPages)).post()
+            }
     }
 
     private func hint(_ layout: PrintLayout) -> String {
