@@ -322,7 +322,7 @@ final class MacShell {
         // The alert keeps the size it is given, so it is made for the tallest state, with the booklet rows showing.
         var tallest = remembered
         tallest.booklet = true
-        let measure = PrintLayoutChoice(remembered: tallest, rightToLeft: choice.layout.rightToLeft, documentPages: choice.documentPages)
+        let measure = PrintLayoutChoice(remembered: tallest, rightToLeft: choice.layout.rightToLeft, documentPages: tab.document.pages.count)
         let height = NSHostingView(rootView: PrintLayoutView(choice: measure, onPhone: false).frame(width: 300)).fittingSize.height
         let view = NSHostingView(rootView: PrintLayoutView(choice: choice, onPhone: false).frame(width: 300, height: height, alignment: .top))
         view.frame = NSRect(x: 0, y: 0, width: 300, height: height)
