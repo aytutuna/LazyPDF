@@ -224,9 +224,12 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(draw.waitForExistence(timeout: 10))
         draw.click()
 
-        let window = app.windows.firstMatch
-        let from = window.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.4))
-        from.click(forDuration: 0.1, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)))
+        // The viewer gives each page a group with the page's own frame, so the drag lands on paper whatever the layout.
+        let page = app.groups["Page 1 of 3"].firstMatch
+        XCTAssertTrue(page.waitForExistence(timeout: 10))
+        let from = page.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.3))
+        from.press(forDuration: 0.3, thenDragTo: page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)),
+                   withVelocity: .slow, thenHoldForDuration: 0.2)
         let row = app.buttons["Box, page 1"]
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         draw.click()
