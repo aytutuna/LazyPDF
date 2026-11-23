@@ -213,4 +213,28 @@ final class MacUITests: XCTestCase {
         let gone = NSPredicate(format: "exists == false")
         wait(for: [expectation(for: gone, evaluatedWith: tab(app))], timeout: 10)
     }
+
+    // The arrows reach the selected row only if a click on it moves the keyboard focus there; the model tests cannot see that.
+    func testArrowsOnTheSelectedBoxRowMoveAndResizeTheBox() throws {
+        let app = try launch(opening: true)
+        XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
+        choose(app, menu: "Tools", item: "Security")
+        app.menuBars.menuItems["Redact"].click()
+        let draw = app.checkBoxes["Draw boxes on the page"]
+        XCTAssertTrue(draw.waitForExistence(timeout: 10))
+        draw.click()
+
+        let window = app.windows.firstMatch
+        let from = window.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.4))
+        from.click(forDuration: 0.1, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)))
+        let row = app.buttons["Box, page 1"]
+        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        draw.click()
+        row.click()
+
+        app.typeKey(.rightArrow, modifierFlags: [])
+        XCTAssertTrue(element(app, "Box moved.").waitForExistence(timeout: 10))
+        app.typeKey(.rightArrow, modifierFlags: .option)
+        XCTAssertTrue(element(app, "Box resized.").waitForExistence(timeout: 10))
+    }
 }
