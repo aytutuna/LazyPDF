@@ -33,7 +33,16 @@ internal sealed class PageTextProvider(PageSurfacePeer peer, ITextHost host) : I
             if (selection is not var (anchor, focus)) return [];
             var units = PageTextRange.Units(host);
             var (first, last) = anchor < focus ? (anchor, focus) : (focus, anchor);
-            range = PageTextRange.Create(host, units.FromCaret(first).Pos, units.FromCaret(last).Pos, this);
+            var (start, missingStart) = units.FromCaret(first);
+            var (end, missingEnd) = units.FromCaret(last);
+            // An end inside a page that is not loaded has no place yet; the page is asked for and the reader is told when it is there.
+            if (missingStart >= 0 || missingEnd >= 0)
+            {
+                if (missingStart >= 0) host.Peek(missingStart);
+                if (missingEnd >= 0) host.Peek(missingEnd);
+                return [];
+            }
+            range = PageTextRange.Create(host, start, end, this);
         }
         return range is null ? [] : [range];
     }

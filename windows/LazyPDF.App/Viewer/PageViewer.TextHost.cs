@@ -135,7 +135,10 @@ public partial class PageViewer : ITextHost
     // A page arrived from the pool, whoever asked for it.
     private void PageArrived(int page)
     {
-        Surface.TextLoaded(page, _wanted.Remove(page));
+        bool asked = _wanted.Remove(page);
+        Surface.TextLoaded(page, asked);
+        // A selection end on a page that was not loaded could not be placed in the text until now.
+        if (asked && !_selection.IsEmpty && (_selection.Anchor.Page == page || _selection.Focus.Page == page)) Surface.TellSelection();
     }
 
     // What a reader read is gone; ranges it holds stay valid while the tab and its revision do, and read the new text.

@@ -289,6 +289,24 @@ public sealed class TextHostTests
     });
 
     [Fact]
+    public Task ASelectionOnAPageThatIsNotLoadedIsToldWhenItsTextComes() => Sta.Run(async () =>
+    {
+        var (viewer, host, tab) = Open(30);
+        using var _ = tab;
+        var peer = (PageSurfacePeer)UIElementAutomationPeer.CreatePeerForElement(viewer.Surface);
+        var provider = (PageTextProvider)peer.GetPattern(PatternInterface.Text)!;
+        host.SetSelection(new Caret(25, 3), new Caret(25, 8));
+        var told = await Listen(viewer);
+
+        Assert.Empty(provider.GetSelection());
+        await Sta.Until(() => host.Peek(25) is not null);
+        await Task.Delay(200);
+
+        Assert.Contains(AutomationEvents.TextPatternOnTextSelectionChanged, told);
+        Assert.Equal("lo fr", Assert.Single(provider.GetSelection()).GetText(-1));
+    });
+
+    [Fact]
     public Task AResetTellsTextAndStructureAndForgetsTheReadersPlace() => Sta.Run(async () =>
     {
         var (viewer, host, tab) = Open(2);
