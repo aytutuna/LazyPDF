@@ -160,11 +160,14 @@ final class IOSShell {
             || path.hasPrefix(inbox.resolvingSymlinksInPath().path + "/")
     }
 
-    // A hidden launch argument for the UI tests, `-uitestOpen <path>`, honoured in the simulator only.
+    // Hidden launch arguments for the UI tests, `-uitestOpen <path>` and `-uitestOpenNext <path>` for a second tab, honoured
+    // in the simulator only.
     func openLaunchFixture() async {
         #if targetEnvironment(simulator)
-        guard let path = UserDefaults.standard.string(forKey: "uitestOpen") else { return }
-        await vm.open(URL(fileURLWithPath: path))
+        for key in ["uitestOpen", "uitestOpenNext"] {
+            guard let path = UserDefaults.standard.string(forKey: key) else { return }
+            await vm.open(URL(fileURLWithPath: path))
+        }
         #endif
     }
 
