@@ -191,6 +191,7 @@ final class IOSShell {
     }
 
     func print(_ tab: DocumentTab, _ layout: PrintLayout) {
+        AppPreferencesStore.update(vm.settings) { layout.remember(in: &$0) }
         printing = (tab, layout)
         sheet = nil
     }

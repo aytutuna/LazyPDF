@@ -13,10 +13,17 @@ public enum IOSSystemPrint {
         return Data(try session.document.saveRewrite(PdfSaveOptions()))
     }
 
-    public static func info(name: String) -> UIPrintInfo {
+    /// One-sided when only some sides go or the order is reversed, so the printer does not duplex half a job or swap
+    /// fronts and backs; short edge for a booklet.
+    public static func info(name: String, layout: PrintLayout = PrintLayout()) -> UIPrintInfo {
         let info = UIPrintInfo(dictionary: nil)
         info.jobName = name
         info.outputType = .general
+        if layout.parity != .all || layout.reverse {
+            info.duplex = .none
+        } else if layout.booklet {
+            info.duplex = .shortEdge
+        }
         return info
     }
 
@@ -47,6 +54,10 @@ public enum IOSSystemPrint {
                     problem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
                     return
                 }
+                if let wrong = layout.validate(sheetWidth: paper.width, sheetHeight: paper.height) {
+                    problem(Problem(L10n.t("Not printed"), wrong))
+                    return
+                }
                 let source = session.document
                 var made: PrintSheets?
                 var failure: Error?
@@ -73,7 +84,7 @@ public enum IOSSystemPrint {
             return
         }
         let controller = UIPrintInteractionController.shared
-        controller.printInfo = info(name: name)
+        controller.printInfo = info(name: name, layout: layout)
         controller.printingItem = data
         controller.present(animated: true) { _, printed, _ in done?(printed) }
     }
