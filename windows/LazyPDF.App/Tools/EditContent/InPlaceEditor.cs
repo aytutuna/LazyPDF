@@ -16,6 +16,9 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
     private TextBox? _box;
     private PageOverlay? _overlay;
     private bool _lineBreaks;
+    private bool _wrap;
+    private Rect _area;
+    private int _turn;
     private LazyPDF.Core.TextAlignment? _alignment;
 
     public bool IsOpen => _box is not null;
@@ -53,11 +56,9 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
             UndoLimit = 100,
         };
         var overlay = viewer.Overlay(page);
-        box.MaxWidth = Math.Max(area.Width, overlay.Width - area.X);
         if (wrap)
         {
             box.Width = area.Width;
-            box.MaxHeight = Math.Max(area.Height, overlay.Height - area.Y);
             box.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
         }
         System.Windows.Automation.AutomationProperties.SetName(box, Loc.T("Text on the page"));
@@ -67,13 +68,13 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
             box.ToolTip = hint;
             System.Windows.Automation.AutomationProperties.SetHelpText(box, hint);
         }
-        Canvas.SetLeft(box, area.X);
-        Canvas.SetTop(box, area.Y);
         Look(box, look);
         _alignment = look.Alignment;
         box.TextChanged += (_, _) => Flow(box);
         Flow(box);
-        PageOverlay.KeepUpright(box, viewer.Rotation);
+        _wrap = wrap;
+        _area = area;
+        Fit(box, overlay);
         box.PreviewKeyDown += Box_PreviewKeyDown;
         box.Loaded += (_, _) => box.Dispatcher.BeginInvoke(() =>
         {
@@ -103,7 +104,34 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
 
     public void Upright()
     {
-        if (_box is not null) PageOverlay.KeepUpright(_box, viewer.Rotation);
+        if (_box is not null && _overlay is not null && viewer.Rotation != _turn) Fit(_box, _overlay);
+    }
+
+    // At view 0 the box sits over the run, even where that crosses the page edge, so the text lines up with the page.
+    // Turned, the box is moved into the page and its room limits come from the screen's right and down.
+    private void Fit(TextBox box, PageOverlay overlay)
+    {
+        int turn = viewer.Rotation;
+        _turn = turn;
+        var page = new Size(overlay.Width, overlay.Height);
+        var area = _area;
+        if (turn == 0)
+        {
+            box.MaxWidth = Math.Max(area.Width, overlay.Width - area.X);
+            box.MaxHeight = _wrap ? Math.Max(area.Height, overlay.Height - area.Y) : double.PositiveInfinity;
+            Canvas.SetLeft(box, area.X);
+            Canvas.SetTop(box, area.Y);
+        }
+        else
+        {
+            var placed = PageOverlay.Place(area, page, turn);
+            var room = PageOverlay.Room(placed, page, turn);
+            box.MaxWidth = Math.Max(area.Width, room.Width);
+            box.MaxHeight = Math.Max(area.Height, room.Height);
+            Canvas.SetLeft(box, placed.X);
+            Canvas.SetTop(box, placed.Y);
+        }
+        PageOverlay.KeepUpright(box, turn, area.Size);
     }
 
     public void Close()

@@ -26,11 +26,14 @@ public sealed class PageOverlay : Canvas
     /// <summary>The page this layer belongs to, 0-based.</summary>
     public int Page { get; }
 
-    /// <summary>Turns a box against the viewer's rotation so its text reads upright.</summary>
-    public static void KeepUpright(FrameworkElement box, int viewRotation)
+    /// <summary>
+    /// Turns a box against the viewer's rotation so its text reads upright. It turns about the centre of its first
+    /// size, so the corner that is at the screen's top left stays there when the box grows.
+    /// </summary>
+    public static void KeepUpright(FrameworkElement box, int viewRotation, Size first)
     {
-        box.RenderTransformOrigin = new Point(0.5, 0.5);
-        box.RenderTransform = viewRotation == 0 ? null : new RotateTransform(-viewRotation);
+        box.RenderTransformOrigin = new Point(0, 0);
+        box.RenderTransform = viewRotation == 0 ? null : new RotateTransform(-viewRotation, first.Width / 2, first.Height / 2);
     }
 
     /// <summary>The page-space rectangle a box covers once it is turned upright on a view turned by <paramref name="viewRotation"/>: same centre, width and height swapped at 90 and 270.</summary>
