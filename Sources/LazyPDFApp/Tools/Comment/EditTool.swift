@@ -208,7 +208,9 @@ final class EditTool: PagePointerTool {
         if vertex >= 0 {
             guard var points, vertex < points.count else { return }
             let size = viewer.overlay(mark.pageIndex).size
-            points[vertex] = ViewPoint(min(max(pointer.point.x, 0), size.width), min(max(pointer.point.y, 0), size.height))
+            var to = pointer.point
+            if !pointer.fromKeys && pointer.modifiers.contains(.shift), let fixed = neighbour(mark, points) { to = MeasureShape.straighten(fixed, to) }
+            points[vertex] = ViewPoint(min(max(to.x, 0), size.width), min(max(to.y, 0), size.height))
             self.points = points
             remove()
             draw(mark.pageIndex, frame)
@@ -364,6 +366,13 @@ final class EditTool: PagePointerTool {
             }
         }
         return best
+    }
+
+    // Shift straightens the dragged point against the one before it; the first end of an open shape takes the next one.
+    private func neighbour(_ mark: PdfAnnotation, _ points: [ViewPoint]) -> ViewPoint? {
+        guard points.count > 1 else { return nil }
+        if vertex > 0 { return points[vertex - 1] }
+        return mark.type == .polygon ? points[points.count - 1] : points[1]
     }
 
     // The nearer corner wins within reach, and a press between two close corners belongs to neither, so a short line can still

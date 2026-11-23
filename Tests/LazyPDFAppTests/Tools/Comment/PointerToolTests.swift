@@ -829,6 +829,57 @@ final class PointerToolTests: XCTestCase {
         lineTool.press(keyed(markPt(200, 100)))
     }
 
+    private func held(_ at: ViewPoint, _ modifiers: PointerModifiers = [.shift], keys: Bool = false) -> PagePointer {
+        PagePointer(page: 0, point: at, view: at, pressed: true, clicks: 0, modifiers: modifiers, fromKeys: keys)
+    }
+
+    func test_shiftStraightensAnEndOfALineAgainstTheOtherEndWhileItIsDragged() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
+        var moves: [(Int, ViewPoint)] = []
+        tool.vertexMoved = { _, index, to in moves.append((index, to)) }
+
+        tool.press(press(markPt(300, 200)))
+        tool.move(held(markPt(340, 108)))
+        tool.release(held(markPt(340, 108)))
+
+        XCTAssertEqual(moves.count, 1)
+        XCTAssertEqual(moves[0].0, 1)
+        XCTAssertEqual(moves[0].1.y, 100, accuracy: 1e-6)
+        XCTAssertEqual(moves[0].1.x, 100 + hypot(240, 8), accuracy: 1e-6)
+    }
+
+    func test_shiftStraightensACornerAgainstThePreviousOneAndTheFirstAgainstTheLast() async throws {
+        let (tool, _, _, _) = try shaped(.polygon, square)
+        var moves: [(Int, ViewPoint)] = []
+        tool.vertexMoved = { _, index, to in moves.append((index, to)) }
+
+        tool.press(press(markPt(300, 300)))
+        tool.move(held(markPt(306, 360)))
+        tool.release(held(markPt(306, 360)))
+        tool.press(press(markPt(100, 100)))
+        tool.move(held(markPt(106, 40)))
+        tool.release(held(markPt(106, 40)))
+
+        XCTAssertEqual(moves.map(\.0), [2, 0])
+        XCTAssertEqual(moves[0].1.x, 300, accuracy: 1e-6)
+        XCTAssertEqual(moves[1].1.x, 100, accuracy: 1e-3)
+    }
+
+    func test_withoutShiftOrWithKeysAPointFollowsThePointerExactly() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
+        var moves: [ViewPoint] = []
+        tool.vertexMoved = { _, _, to in moves.append(to) }
+
+        tool.press(press(markPt(300, 200)))
+        tool.move(held(markPt(340, 108), []))
+        tool.release(held(markPt(340, 108), []))
+        tool.press(press(markPt(340, 108)))
+        tool.move(held(markPt(350, 118), [.shift], keys: true))
+        tool.release(held(markPt(350, 118), [.shift], keys: true))
+
+        XCTAssertEqual(moves, [markPt(340, 108), markPt(350, 118)])
+    }
+
     func test_aPickFromTheMouseIsNotMovedByAnEnterElsewhere() async throws {
         let (tool, _, _, _) = try shaped(.polygon, square)
         tool.vertexMoved = { _, _, _ in XCTFail("moved") }
