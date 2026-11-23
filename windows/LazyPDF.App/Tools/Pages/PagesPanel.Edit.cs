@@ -11,7 +11,7 @@ internal sealed record PickedPages(PdfDocument Source, List<int> Pages);
 
 public partial class PagesPanel
 {
-    private bool Apply(string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
+    private bool Apply(string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status, Action? after = null)
     {
         if (Tab is not { } tab || Host is not { } host) return false;
         return PageJobs.Gated(tab, host, () =>
@@ -19,7 +19,9 @@ public partial class PagesPanel
             _reselect = reselect;
             try
             {
-                return PageJobs.Apply(tab, host, label, change, status);
+                bool done = PageJobs.Apply(tab, host, label, change, status);
+                if (done) after?.Invoke();
+                return done;
             }
             finally
             {
@@ -28,14 +30,16 @@ public partial class PagesPanel
         });
     }
 
-    private async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
+    private async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status, Action? after = null)
     {
         return await PageJobs.GatedAsync(tab, host, async () =>
         {
             _reselect = reselect;
             try
             {
-                return await PageJobs.ApplyAsync(tab, host, busy, label, change, status);
+                bool done = await PageJobs.ApplyAsync(tab, host, busy, label, change, status);
+                if (done) after?.Invoke();
+                return done;
             }
             finally
             {
@@ -131,9 +135,8 @@ public partial class PagesPanel
         if (await PickPagesAsync(host, Taken.Text) is not { } picked) return;
         var (source, taken) = picked;
         bool tagged = PageJobs.IsTagged(tab);
-        if (await ApplyAsync(tab, host, Loc.T("Replacing pages"), Loc.T("Replace pages"), d => PageEdits.Replace(d, selection, source, taken),
-                             Enumerable.Range(selection.Max() + 1 - selection.Count, taken.Count), Loc.T("Pages replaced.")))
-            PageJobs.NoticeIfUntagged(tab, host, tagged);
+        await ApplyAsync(tab, host, Loc.T("Replacing pages"), Loc.T("Replace pages"), d => PageEdits.Replace(d, selection, source, taken),
+                         Enumerable.Range(selection.Max() + 1 - selection.Count, taken.Count), Loc.T("Pages replaced."), () => PageJobs.NoticeIfUntagged(tab, host, tagged));
     }
 
     // A PDF chosen by the person, opened off the UI thread, with the pages the box asks for. Null when there is none to use.

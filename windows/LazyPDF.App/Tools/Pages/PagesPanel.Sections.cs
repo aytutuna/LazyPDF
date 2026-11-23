@@ -178,7 +178,7 @@ public partial class PagesPanel
         int left = pages.Count - targets.Count;
         string status = Loc.Plural(targets.Count, "{0} page cropped", "{0} pages cropped", targets.Count);
         if (left > 0) status += " " + Loc.Plural(left, "{0} page was left alone because the box is outside it.", "{0} pages were left alone because the box is outside them.", left);
-        if (Apply(Loc.T("Crop pages"), d => PageEdits.Crop(d, targets, box.Area), Selected(), status)) _crop.Clear();
+        Apply(Loc.T("Crop pages"), d => PageEdits.Crop(d, targets, box.Area), Selected(), status, _crop.Clear);
     }
 
     private static string MarginUnit => RegionInfo.CurrentRegion.IsMetric ? "mm" : "in";

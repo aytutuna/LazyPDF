@@ -1,9 +1,12 @@
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Pages;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
 using static LazyPDF.App.Tests.PagesKit;
@@ -33,6 +36,7 @@ public sealed class PageGateTests
         ("turn", (s, _, _) => { s.Select(1); s.Click("TurnLeft"); return Task.CompletedTask; }),
         ("remove", (s, _, _) => { s.Select(1); s.Click("Remove"); return Task.CompletedTask; }),
         ("duplicate", (s, _, _) => { s.Select(1); s.Click("Duplicate"); return Task.CompletedTask; }),
+        ("cut", (s, _, _) => { s.Select(1); s.Click("Cut"); return Task.CompletedTask; }),
         ("nudge", (s, _, _) => { s.Select(1); s.View.Press(Key.Right, ModifierKeys.Control); return Task.CompletedTask; }),
         ("blank", (s, _, _) => { s.Select(1); s.Click("Blank"); return Task.CompletedTask; }),
         ("paste", (s, _, _) =>
@@ -149,6 +153,28 @@ public sealed class PageGateTests
         await Sta.Until(() => tab.Revision > revision);
         Assert.Single(host.Notices);
         Assert.Empty(host.Problems);
+        panel.Detach();
+    });
+
+    [Fact]
+    public Task TheCropBoxGoesWhenAChangeStartsAfterGoOnAnyway() => Sta.Run(async () =>
+    {
+        using var tab = Signed();
+        var host = new StageHost();
+        var panel = new PagesPanel();
+        panel.Attach(tab, FakeViewer.Create().Viewer, host);
+        ((Expander)panel.FindName("CropSection")).IsExpanded = true;
+        var tool = (CropTool)typeof(PagesPanel).GetField("_crop", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(panel)!;
+        tool.Press(new PagePointer(1, new Point(10, 10), new Point(10, 10), true, 1, ModifierKeys.None));
+        tool.Release(new PagePointer(1, new Point(100, 100), new Point(100, 100), false, 1, ModifierKeys.None));
+        int revision = tab.Revision;
+
+        typeof(PagesPanel).GetMethod("Crop", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, null);
+        Assert.NotNull(tool.Box);
+        host.Actions[0]!.Run();
+        await Sta.Until(() => tab.Revision > revision);
+
+        Assert.Null(tool.Box);
         panel.Detach();
     });
 }
