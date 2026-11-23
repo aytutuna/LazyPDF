@@ -57,13 +57,17 @@ public sealed class DocumentUnits
         return new DocPos(at.Page, offset);
     }
 
-    /// <summary>The place of a caret of the viewer's selection; an index past the characters of the page, int.MaxValue included, is its end.</summary>
-    public DocPos FromCaret(Caret caret)
+    /// <summary>
+    /// The place of a caret of the viewer's selection; an index past the characters of the page, int.MaxValue included, is its end.
+    /// On a page that is not loaded an index above 0 cannot be placed: the page starts there and is named as <c>Unloaded</c>.
+    /// </summary>
+    public (DocPos Pos, int Unloaded) FromCaret(Caret caret)
     {
-        if (caret.Page < 0) return Start;
-        if (caret.Page >= _count) return End;
-        if (_pages(caret.Page) is { } text) return Normalize(new DocPos(caret.Page, text.OffsetOf(Math.Max(caret.Index, 0))));
-        return caret.Index == int.MaxValue ? After(caret.Page) : new DocPos(caret.Page, 0);
+        if (caret.Page < 0) return (Start, -1);
+        if (caret.Page >= _count) return (End, -1);
+        if (_pages(caret.Page) is { } text) return (Normalize(new DocPos(caret.Page, text.OffsetOf(Math.Max(caret.Index, 0)))), -1);
+        if (caret.Index == int.MaxValue) return (After(caret.Page), -1);
+        return (new DocPos(caret.Page, 0), caret.Index > 0 ? caret.Page : -1);
     }
 
     public Walk Move(DocPos from, TextUnit unit, int count)
@@ -85,7 +89,12 @@ public sealed class DocumentUnits
     public UnitSpan Enclosing(DocPos at, TextUnit unit)
     {
         var pos = Normalize(at);
-        if (pos.Page >= _count) return new UnitSpan(pos, pos, -1);
+        if (pos.Page >= _count)
+        {
+            if (unit != TextUnit.Document) return new UnitSpan(pos, pos, -1);
+            var (first, missing) = ToStart(pos);
+            return new UnitSpan(first, pos, missing);
+        }
         if (_pages(pos.Page) is not { } text) return new UnitSpan(pos, pos, pos.Page);
         switch (unit)
         {

@@ -38,13 +38,36 @@ public sealed class DocumentUnitsTests
     public void ACaretAtTheEndOfAPageIsTheStartOfTheNext()
     {
         var u = Whole();
-        Assert.Equal(new DocPos(1, 0), u.FromCaret(new Caret(0, int.MaxValue)));
-        Assert.Equal(new DocPos(1, 0), u.FromCaret(new Caret(0, 8)));
-        Assert.Equal(new DocPos(0, 6), u.FromCaret(new Caret(0, 5)));
-        Assert.Equal(u.End, u.FromCaret(new Caret(2, int.MaxValue)));
+        Assert.Equal(new DocPos(1, 0), u.FromCaret(new Caret(0, int.MaxValue)).Pos);
+        Assert.Equal(new DocPos(1, 0), u.FromCaret(new Caret(0, 8)).Pos);
+        Assert.Equal(new DocPos(0, 6), u.FromCaret(new Caret(0, 5)).Pos);
+        Assert.Equal(u.End, u.FromCaret(new Caret(2, int.MaxValue)).Pos);
         var partial = new DocumentUnits(3, p => p == 0 ? Sample[0] : null);
-        Assert.Equal(new DocPos(2, 0), partial.FromCaret(new Caret(1, int.MaxValue)));
-        Assert.Equal(new DocPos(1, 0), partial.FromCaret(new Caret(1, 4)));
+        Assert.Equal(new DocPos(2, 0), partial.FromCaret(new Caret(1, int.MaxValue)).Pos);
+        Assert.Equal(new DocPos(1, 0), partial.FromCaret(new Caret(1, 4)).Pos);
+    }
+
+    [Fact]
+    public void ACaretInsideAPageThatIsNotLoadedIsNotCollapsedSilently()
+    {
+        var u = new DocumentUnits(3, p => p == 1 ? null : Sample[p]);
+        Assert.Equal((new DocPos(1, 0), -1), u.FromCaret(new Caret(1, 0)));
+        Assert.Equal((new DocPos(1, 0), 1), u.FromCaret(new Caret(1, 4)));
+        Assert.Equal((new DocPos(2, 0), -1), u.FromCaret(new Caret(1, int.MaxValue)));
+    }
+
+    [Fact]
+    public void TheDocumentAtItsEndIsTheWholeDocument()
+    {
+        var u = Whole();
+        var all = u.Enclosing(u.End, TextUnit.Document);
+        Assert.Equal((u.Start, u.End, -1), (all.Start, all.End, all.Unloaded));
+        var big = Large(1998, 1999);
+        var tail = big.Enclosing(big.End, TextUnit.Document);
+        Assert.Equal((new DocPos(1998, 0), new DocPos(2000, 0)), (tail.Start, tail.End));
+        Assert.Equal(1997, tail.Unloaded);
+        var line = u.Enclosing(u.End, TextUnit.Line);
+        Assert.Equal((u.End, u.End), (line.Start, line.End));
     }
 
     [Fact]
