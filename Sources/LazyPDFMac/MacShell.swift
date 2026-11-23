@@ -319,8 +319,13 @@ final class MacShell {
         let remembered = PrintLayout(booklet: PrintLayout.remembered(AppPreferencesStore.load(vm.settings)).booklet)
         let choice = PrintLayoutChoice(remembered: remembered, rightToLeft: ViewerSettings.read(tab.document).rightToLeft,
                                        documentPages: tab.document.pages.count)
-        let view = NSHostingView(rootView: PrintLayoutView(choice: choice, onPhone: false).frame(width: 300))
-        view.frame = NSRect(origin: .zero, size: view.fittingSize)
+        // The alert keeps the size it is given, so it is made for the tallest state, with the booklet rows showing.
+        var tallest = remembered
+        tallest.booklet = true
+        let measure = PrintLayoutChoice(remembered: tallest, rightToLeft: choice.layout.rightToLeft, documentPages: choice.documentPages)
+        let height = NSHostingView(rootView: PrintLayoutView(choice: measure, onPhone: false).frame(width: 300)).fittingSize.height
+        let view = NSHostingView(rootView: PrintLayoutView(choice: choice, onPhone: false).frame(width: 300, height: height, alignment: .top))
+        view.frame = NSRect(x: 0, y: 0, width: 300, height: height)
         let alert = NSAlert()
         alert.messageText = L10n.t("Print layout")
         alert.accessoryView = view
