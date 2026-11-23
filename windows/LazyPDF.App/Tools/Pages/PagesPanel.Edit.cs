@@ -14,28 +14,34 @@ public partial class PagesPanel
     private bool Apply(string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
     {
         if (Tab is not { } tab || Host is not { } host) return false;
-        _reselect = reselect;
-        try
+        return PageJobs.Gated(tab, host, () =>
         {
-            return PageJobs.Apply(tab, host, label, change, status);
-        }
-        finally
-        {
-            _reselect = null;
-        }
+            _reselect = reselect;
+            try
+            {
+                return PageJobs.Apply(tab, host, label, change, status);
+            }
+            finally
+            {
+                _reselect = null;
+            }
+        });
     }
 
     private async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
     {
-        _reselect = reselect;
-        try
+        return await PageJobs.GatedAsync(tab, host, async () =>
         {
-            return await PageJobs.ApplyAsync(tab, host, busy, label, change, status);
-        }
-        finally
-        {
-            _reselect = null;
-        }
+            _reselect = reselect;
+            try
+            {
+                return await PageJobs.ApplyAsync(tab, host, busy, label, change, status);
+            }
+            finally
+            {
+                _reselect = null;
+            }
+        });
     }
 
     private void TurnLeft_Click(object sender, RoutedEventArgs e) => Turn(-90);
@@ -64,7 +70,12 @@ public partial class PagesPanel
             Host!.ShowProblem(new Problem(Loc.T("Cannot delete every page"), Loc.T("A file needs at least one page. Leave one page out of the selection.")));
             return;
         }
-        PageJobs.Delete(Tab!, Host!, Loc.T("Delete pages"), pages, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+        var (tab, host) = (Tab!, Host!);
+        PageJobs.Gated(tab, host, () =>
+        {
+            PageJobs.Delete(tab, host, Loc.T("Delete pages"), pages, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+            return true;
+        });
     }
 
     private void Earlier_Click(object sender, RoutedEventArgs e) => Nudge(-1);

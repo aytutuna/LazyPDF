@@ -1,4 +1,6 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Comment;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Pages;
@@ -6,6 +8,29 @@ namespace LazyPDF.App.Tools.Pages;
 /// <summary>What the Pages inspector and the organize view both do with a tab: one change to the document as one undo step, and pages copied out.</summary>
 internal static class PageJobs
 {
+    /// <summary>Runs <paramref name="change"/> unless the file's permissions forbid it, with the reason shown. A signed file asks first, and Go on anyway runs the change from the notice. False when it did not run now.</summary>
+    public static bool Gated(DocumentTab tab, IToolHost host, Func<bool> change)
+    {
+        if (ChangeGate.Refusal(tab.Document) is { } problem)
+        {
+            host.ShowProblem(problem);
+            return false;
+        }
+        if (MarkWork.Cautioned(tab, host, () => change())) return false;
+        return change();
+    }
+
+    public static async Task<bool> GatedAsync(DocumentTab tab, IToolHost host, Func<Task<bool>> change)
+    {
+        if (ChangeGate.Refusal(tab.Document) is { } problem)
+        {
+            host.ShowProblem(problem);
+            return false;
+        }
+        if (MarkWork.Cautioned(tab, host, () => _ = change())) return false;
+        return await change();
+    }
+
     public static bool Apply(DocumentTab tab, IToolHost host, string label, Action<PdfDocument> change, string status)
     {
         try

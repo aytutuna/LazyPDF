@@ -373,6 +373,11 @@ public partial class PagesPanel
     {
         var pages = BlankList.Items.Cast<CheckBox>().Where(c => c.IsChecked == true).Select(c => (int)c.Tag).ToList();
         if (pages.Count == 0 || pages.Count == Cells.Count) return;
-        PageJobs.Delete(Tab!, Host!, Loc.T("Delete blank pages"), pages, Loc.Plural(pages.Count, "{0} blank page deleted", "{0} blank pages deleted", pages.Count));
+        var (tab, host) = (Tab!, Host!);
+        PageJobs.Gated(tab, host, () =>
+        {
+            PageJobs.Delete(tab, host, Loc.T("Delete blank pages"), pages, Loc.Plural(pages.Count, "{0} blank page deleted", "{0} blank pages deleted", pages.Count));
+            return true;
+        });
     }
 }
