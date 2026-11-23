@@ -207,6 +207,8 @@ public final class RedactModel: ToolPanelModel {
     // The viewer's Select and Hand buttons, or another tool, took the pointer: nothing is drawn or framed any more.
     private func toolChanged() {
         guard let viewer, let tool = drawTool, viewer.pointerTool !== tool else { return }
+        // The model took its own tool off when it wanted none: the selection (a hit row, say) is not the viewer's to clear.
+        guard wantsDrawing || selectedBox != nil else { return }
         wantsDrawing = false
         selected = nil
         tool.show(nil, nil)

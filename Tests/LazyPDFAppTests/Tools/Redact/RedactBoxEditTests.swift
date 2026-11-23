@@ -407,6 +407,23 @@ final class RedactBoxEditTests: XCTestCase {
         }
     }
 
+    func test_aHitRowStaysSelectedWhenTheModelTakesItsOwnToolOff() async throws {
+        let state = TabToolState()
+        let rig = try SecurityRig(Pdfs.text(2, Self.line))
+        let model = RedactModel(fonts: FakeFonts(), images: FakeCodec(), state: state)
+        rig.attach(model)
+        _ = try selectedBox(model, rig)
+        let marks = try XCTUnwrap(state.redact[rig.tab]).marks
+        marks.add([MarkItem(RedactionMark.fromRect(0, PdfRect(400, 100, 420, 120)), "hit", value: RedactionValueMatch(0, 2, .comment, 0, 3, "abc", .word))])
+        let hit = try XCTUnwrap(model.marks.first { $0.value != nil })
+
+        model.jump(hit)
+        XCTAssertNil(rig.viewer.pointerTool)
+        for _ in 0..<10 { await Task.yield() }
+
+        XCTAssertEqual(model.selected, hit.id)
+    }
+
     func test_theViewerTakingThePointerBackLetsTheBoxGo() async throws {
         let (model, rig) = try attached()
         _ = try selectedBox(model, rig)
