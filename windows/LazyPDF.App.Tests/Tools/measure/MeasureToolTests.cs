@@ -166,6 +166,36 @@ public sealed class MeasureToolTests
     }
 
     [Fact]
+    public void AStraightenedClickNearTheFirstDotAddsACornerInsteadOfClosing()
+    {
+        var (tool, done, _) = Start(MeasureKind.Area);
+        tool.Press(At(0, 0));
+        tool.Press(At(100, 0));
+        tool.Press(At(100, 60));
+
+        var click = At(3, 2, keys: ModifierKeys.Shift);
+        Assert.False(tool.HandleUnder(click));
+        tool.Press(click);
+
+        Assert.Empty(done);
+        Assert.Equal(4, tool.Points.Count);
+    }
+
+    [Fact]
+    public void TheFirstDotTakesAPressOnlyOnceTheShapeCanBeClosed()
+    {
+        var (tool, _, _) = Start(MeasureKind.Area);
+        tool.Press(At(0, 0));
+        tool.Press(At(100, 0));
+        Assert.False(tool.HandleUnder(At(-2, -2)));
+        tool.Press(At(100, 60));
+
+        Assert.True(tool.HandleUnder(At(-2, -2)));
+        Assert.False(tool.HandleUnder(At(100, 0)));
+        Assert.False(tool.HandleUnder(At(-2, -2, page: 1)));
+    }
+
+    [Fact]
     public void ShiftKeepsTheNextPointOnAStraightLine()
     {
         var (tool, done, _) = Start(MeasureKind.Distance);
