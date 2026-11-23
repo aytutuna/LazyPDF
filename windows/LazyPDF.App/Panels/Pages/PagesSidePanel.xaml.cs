@@ -272,6 +272,9 @@ public partial class PagesSidePanel : ToolPanel
             Thumbs.SelectedItem = item.DataContext;
     }
 
+    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e) =>
+        CopyToTab.IsEnabled = Tab is { } tab && Host is { } host && Selected().Count > 0 && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
+
     private void Thumbs_PreviewKeyDown(object sender, KeyEventArgs e) => e.Handled = Press(e.Key, Keyboard.Modifiers);
 
     internal bool Press(Key key, ModifierKeys modifiers)

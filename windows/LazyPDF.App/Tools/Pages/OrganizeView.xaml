@@ -25,6 +25,12 @@
                         ToolTip="{loc:T Duplicate (Ctrl+D)}" AutomationProperties.Name="{loc:T Duplicate}" Click="Duplicate_Click" />
                 <Button x:Name="Extract" Style="{StaticResource IconButtonStyle}" Content="&#xE8A7;"
                         ToolTip="{loc:T Extract to a new file}" AutomationProperties.Name="{loc:T Extract to a new file}" Click="Extract_Click" />
+                <Button x:Name="CopyTo" Style="{StaticResource IconButtonStyle}" Content="&#xE8AB;"
+                        ToolTip="{loc:T Copy to tab}" AutomationProperties.Name="{loc:T Copy to tab}" Click="CopyTo_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu x:Name="CopyToMenu" />
+                    </Button.ContextMenu>
+                </Button>
                 <Button x:Name="Cut" Style="{StaticResource IconButtonStyle}" Content="&#xE8C6;"
                         ToolTip="{loc:T Cut (Ctrl+X)}" AutomationProperties.Name="{loc:T Cut}" Click="Cut_Click" />
                 <Button x:Name="Copy" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;"
@@ -59,7 +65,18 @@
         <ListBox x:Name="Thumbs" BorderThickness="0" Background="Transparent" SelectionMode="Extended" AllowDrop="True" Padding="8"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
                  AutomationProperties.Name="{loc:T Pages}" SelectionChanged="Thumbs_SelectionChanged" ScrollViewer.ScrollChanged="Thumbs_ScrollChanged"
-                 SizeChanged="Thumbs_SizeChanged" MouseDoubleClick="Thumbs_MouseDoubleClick" ButtonBase.Click="Thumbs_Click">
+                 SizeChanged="Thumbs_SizeChanged" MouseDoubleClick="Thumbs_MouseDoubleClick" ButtonBase.Click="Thumbs_Click"
+                 PreviewMouseRightButtonDown="Thumbs_PreviewMouseRightButtonDown" ContextMenuOpening="Thumbs_ContextMenuOpening">
+            <ListBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{loc:T Rotate left}" Click="TurnLeft_Click" />
+                    <MenuItem Header="{loc:T Rotate right}" Click="TurnRight_Click" />
+                    <MenuItem Header="{loc:T Delete}" InputGestureText="Del" Click="Remove_Click" />
+                    <MenuItem Header="{loc:T Extract to a new file}" Click="Extract_Click" />
+                    <Separator />
+                    <MenuItem x:Name="CopyToTab" Header="{loc:T Copy to tab}" />
+                </ContextMenu>
+            </ListBox.ContextMenu>
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
                     <pages:TilePanel />

@@ -1624,11 +1624,17 @@
   <data name="Copy text or a picture, then try again." xml:space="preserve">
     <value>Bir metin veya resim kopyalayın, sonra yeniden deneyin.</value>
   </data>
+  <data name="Copy to tab" xml:space="preserve">
+    <value>Sekmeye kopyala</value>
+  </data>
   <data name="Copy with protection" xml:space="preserve">
     <value>Korumalı kopya</value>
   </data>
   <data name="Copy without protection" xml:space="preserve">
     <value>Korumasız kopya</value>
+  </data>
+  <data name="Copy {0} to {1}" xml:space="preserve">
+    <value>{1} dosyasına {0} kopyala</value>
   </data>
   <data name="Copying pages" xml:space="preserve">
     <value>Sayfalar kopyalanıyor</value>

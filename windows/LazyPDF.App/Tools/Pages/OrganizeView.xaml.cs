@@ -217,6 +217,7 @@ public sealed partial class OrganizeView : ToolPanel
         int selected = Thumbs.SelectedItems.Count;
         int total = Cells.Count;
         bool any = selected > 0;
+        CopyTo.IsEnabled = any && Host?.OpenDocuments.Count > 1;
         TurnLeft.IsEnabled = TurnRight.IsEnabled = Remove.IsEnabled = Duplicate.IsEnabled = Extract.IsEnabled = Cut.IsEnabled = Copy.IsEnabled = any;
         Paste.IsEnabled = PageClipboard.Count > 0;
         SignedRow.Visibility = Tab.Document.IsSigned ? Visibility.Visible : Visibility.Collapsed;
@@ -266,6 +267,18 @@ public sealed partial class OrganizeView : ToolPanel
             || ItemsControl.ContainerFromElement(Thumbs, source) is not ListBoxItem { DataContext: PageCell cell }) return;
         Viewer?.GoToPage(cell.Index);
         Done_Click(sender, e);
+    }
+
+    private void Thumbs_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) => PageDrag.SelectUnder(Thumbs, e.OriginalSource);
+
+    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e) =>
+        CopyToTab.IsEnabled = Tab is { } tab && Host is { } host && Selected().Count > 0 && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
+
+    private void CopyTo_Click(object sender, RoutedEventArgs e)
+    {
+        if (Tab is not { } tab || Host is not { } host || !PageTransferMenu.Fill(CopyToMenu.Items, host, tab, Selected)) return;
+        CopyToMenu.PlacementTarget = CopyTo;
+        CopyToMenu.IsOpen = true;
     }
 
     private void Done_Click(object sender, RoutedEventArgs e) => Closed?.Invoke(this, EventArgs.Empty);

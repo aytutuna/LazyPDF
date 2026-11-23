@@ -36,7 +36,18 @@
             <ListBox x:Name="Thumbs" Height="340" BorderThickness="0" Background="Transparent" SelectionMode="Extended" AllowDrop="True"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
                      AutomationProperties.Name="{loc:T Pages}" SelectionChanged="Thumbs_SelectionChanged"
-                     ScrollViewer.ScrollChanged="Thumbs_ScrollChanged" SizeChanged="Thumbs_SizeChanged" KeyDown="Thumbs_KeyDown">
+                     ScrollViewer.ScrollChanged="Thumbs_ScrollChanged" SizeChanged="Thumbs_SizeChanged" KeyDown="Thumbs_KeyDown"
+                     PreviewMouseRightButtonDown="Thumbs_PreviewMouseRightButtonDown" ContextMenuOpening="Thumbs_ContextMenuOpening">
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="{loc:T Rotate left}" Click="TurnLeft_Click" />
+                        <MenuItem Header="{loc:T Rotate right}" Click="TurnRight_Click" />
+                        <MenuItem Header="{loc:T Delete}" InputGestureText="Del" Click="Remove_Click" />
+                        <MenuItem Header="{loc:T Extract to a new file}" Click="Extract_Click" />
+                        <Separator />
+                        <MenuItem x:Name="CopyToTab" Header="{loc:T Copy to tab}" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <pages:TilePanel CellWidth="{x:Static pages:PagesPanel.ColumnStep}" CellHeight="{x:Static pages:PagesPanel.RowStep}" />

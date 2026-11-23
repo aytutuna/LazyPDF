@@ -51,6 +51,13 @@ internal sealed class PageDrag
     internal static PagePayload? From(IDataObject data, DocumentTab? tab) =>
         data.GetData(Format) is PagePayload payload && ReferenceEquals(payload.Tab, tab) ? payload : null;
 
+    /// <summary>A right-click on a page that is not selected selects it, as a menu over the grid acts on the selection.</summary>
+    internal static void SelectUnder(ListBox grid, object source)
+    {
+        if (source is DependencyObject element && ItemsControl.ContainerFromElement(grid, element) is ListBoxItem { IsSelected: false } item)
+            grid.SelectedItem = item.DataContext;
+    }
+
     private PageCell? CellAt(object source) =>
         source is DependencyObject element && ItemsControl.ContainerFromElement(_grid, element) is ListBoxItem { DataContext: PageCell cell } ? cell : null;
 

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using LazyPDF.App.Services;
@@ -138,6 +139,11 @@ public partial class PagesPanel : ToolPanel
     }
 
     private List<int> Selected() => [.. Thumbs.SelectedItems.Cast<PageCell>().Select(c => c.Index).Order()];
+
+    private void Thumbs_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) => PageDrag.SelectUnder(Thumbs, e.OriginalSource);
+
+    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e) =>
+        CopyToTab.IsEnabled = Tab is { } tab && Host is { } host && Selected().Count > 0 && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
 
     // Pages a job covers: the selection, else every page.
     private List<int> SelectedOrAll()
