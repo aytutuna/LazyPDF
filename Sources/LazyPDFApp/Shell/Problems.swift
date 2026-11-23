@@ -62,8 +62,11 @@ public enum Problems {
     }
 
     /// What Core's `PdfPermissionException` means in a tool: the file's own permissions forbid the change.
-    public static func restricted() -> Problem {
-        Problem(L10n.t("This file cannot be changed"), L10n.t("Its permissions do not allow it. Open it with the owner password."))
+    public static func restricted(_ file: String? = nil) -> Problem {
+        guard let file else {
+            return Problem(L10n.t("This file cannot be changed"), L10n.t("Its permissions do not allow it. Open it with the owner password."))
+        }
+        return Problem(L10n.t("{0} cannot be changed", file), L10n.t("The permissions of {0} do not allow it. Open it with the owner password.", file))
     }
 
     public static func save(_ error: Error, _ name: String) -> Problem {
