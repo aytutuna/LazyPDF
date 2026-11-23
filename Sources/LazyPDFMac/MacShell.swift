@@ -269,7 +269,7 @@ final class MacShell {
         guard let layout = askPrintLayout() else { return }
         if layout.isPlain {
             run(tab.canDraw ? MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title) : nil, tab, dropped: 0, panelShown: false)
-        } else if layout.pages(count: tab.document.pages.count).isEmpty {
+        } else if layout.isEmpty(count: tab.document.pages.count) {
             vm.showProblem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
         } else if tab.canDraw {
             // The sheets are made for the paper picked in the panel, so the panel comes first and the operation runs without one.

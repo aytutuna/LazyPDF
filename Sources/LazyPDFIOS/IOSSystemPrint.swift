@@ -43,7 +43,7 @@ public enum IOSSystemPrint {
                     problem(Problem(L10n.t("Not printed"), wrong))
                     return
                 }
-                guard !layout.pages(count: session.document.pages.count).isEmpty else {
+                guard !layout.isEmpty(count: session.document.pages.count) else {
                     problem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
                     return
                 }
