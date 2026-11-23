@@ -227,11 +227,14 @@ internal sealed partial class FillLayer
         _viewer.Overlay(page).ClearValue(Panel.ZIndexProperty);
     }
 
-    // A page keeps its own tab order, so the last control of a page hands the keyboard to the first one of the next page that has any.
+    // Tab goes by the page's own list, not the visual order: a raised control is the last child of its layer, so WPF
+    // would skip its neighbours. The ends of a page hand the keyboard to the next page that has any.
     private bool Cross(int page, Slot slot, int step)
     {
         var own = _pages[page].Slots.Where(s => s.Control is { IsEnabled: true }).ToList();
-        if (own.Count == 0 || own[step > 0 ? ^1 : 0] != slot) return false;
+        int at = own.IndexOf(slot);
+        if (at < 0) return false;
+        if (at + step >= 0 && at + step < own.Count) return own[at + step].Control!.Focus();
         for (int next = page + step; next >= 0 && next < _viewer.PageCount; next += step)
         {
             Add(next);

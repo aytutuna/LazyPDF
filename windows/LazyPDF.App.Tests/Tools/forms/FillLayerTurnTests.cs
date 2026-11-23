@@ -332,4 +332,71 @@ public sealed class FillLayerTurnTests
 
         AssertDropped(text, rig.Box(Name));
     });
+
+    // Tab as the keyboard would raise it, on the control that has the keyboard.
+    private static void PressTab(FrameworkElement control)
+    {
+        var key = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(control), 0, Key.Tab)
+        {
+            RoutedEvent = Keyboard.PreviewKeyDownEvent,
+            Source = control,
+        };
+        control.RaiseEvent(key);
+    }
+
+    // The step Shift+Tab takes, called directly since a test cannot hold Shift down.
+    private static bool Step(FillLayer layer, FrameworkElement control, int step)
+    {
+        var pages = (System.Collections.IDictionary)typeof(FillLayer).GetField("_pages", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.GetValue(layer)!;
+        foreach (System.Collections.DictionaryEntry entry in pages)
+        {
+            var slots = (System.Collections.IEnumerable)entry.Value!.GetType().GetField("Item2")!.GetValue(entry.Value)!;
+            foreach (var slot in slots)
+            {
+                if (!ReferenceEquals(slot.GetType().GetProperty("Control")!.GetValue(slot), control)) continue;
+                return (bool)typeof(FillLayer).GetMethod("Cross", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.Invoke(layer, [entry.Key, slot, step])!;
+            }
+        }
+        throw new InvalidOperationException("no such slot");
+    }
+
+    [Fact]
+    public Task TabWalksThePagesListInsteadOfTheVisualOrderOnATurnedView() => Sta.Run(() =>
+    {
+        using var rig = new Rig(90);
+        var name = rig.Control("name");
+        var code = rig.Control("code");
+        var agree = rig.Control("agree");
+        name.Focus();
+
+        PressTab(name);
+        Assert.True(code.IsKeyboardFocusWithin);
+        PressTab(code);
+        Assert.True(agree.IsKeyboardFocusWithin);
+
+        Assert.True(Step(rig.Layer, agree, -1));
+        Assert.True(code.IsKeyboardFocusWithin);
+        Assert.True(Step(rig.Layer, code, -1));
+        Assert.True(name.IsKeyboardFocusWithin);
+        Assert.False(Step(rig.Layer, name, -1));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TabCrossesToTheNextPageFromItsLastField() => Sta.Run(() =>
+    {
+        var document = PdfDocument.Open(FormPdfs.Standard());
+        var form = PdfForm.Read(document, new FakeFonts());
+        form.AddField(new FieldSpec(FieldKind.Text, "second", 1, new PdfRect(60, 640, 300, 660)));
+        using var rig = new Rig(90, document.SaveRewrite());
+        var last = rig.Control("langs");
+        last.Focus();
+
+        PressTab(last);
+
+        Assert.True(rig.Control("second").IsKeyboardFocusWithin);
+        Assert.True(Step(rig.Layer, rig.Control("second"), -1));
+        Assert.True(last.IsKeyboardFocusWithin);
+        return Task.CompletedTask;
+    });
 }
