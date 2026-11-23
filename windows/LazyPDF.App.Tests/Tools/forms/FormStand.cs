@@ -11,7 +11,7 @@ namespace LazyPDF.App.Tests;
 /// A viewer for the fill layer in a shown, off-screen window, so its controls can take the keyboard. The overlays are
 /// stacked down a canvas, or live in a real <see cref="PageSurface"/> where the order of overlays matters.
 /// </summary>
-internal sealed class FormStand : DispatchProxy, IDisposable
+internal class FormStand : DispatchProxy, IDisposable
 {
     private DocumentTab _tab = null!;
     private Canvas? _root;
