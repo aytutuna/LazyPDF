@@ -31,6 +31,10 @@ final class MeasureCalibrateModelTests: XCTestCase {
         model.applyCalibration()
     }
 
+    private func allActual(_ model: MeasureModel, _ tab: DocumentTab) -> Bool {
+        (0..<tab.document.pages.count).allSatisfy { model.scales.scale(tab.document, $0) == .actual }
+    }
+
     func test_aLineOfKnownLengthSetsTheScaleOfItsPageOnly() async throws {
         let (model, rig) = try attached()
         rig.viewer.pageIndex = 1
@@ -158,5 +162,63 @@ final class MeasureCalibrateModelTests: XCTestCase {
 
         XCTAssertTrue(model.calibrating)
         XCTAssertTrue((0..<2).allSatisfy { model.scales.scale(rig.tab.document, $0) == .actual })
+    }
+
+    func test_anUndoBetweenTheLineAndSetScaleEndsTheFlow() async throws {
+        let (model, rig) = try attached()
+        try draw(model)
+        await model.action?.run()
+        model.startCalibrate()
+        try draw(model)
+        XCTAssertNotNil(model.calibrateDrawn)
+
+        XCTAssertTrue(try rig.tab.undo())
+        await waitUntil { !model.calibrating }
+        model.setCalibrateValue("10")
+        model.applyCalibration()
+
+        XCTAssertNil(model.calibrateDrawn)
+        XCTAssertTrue(allActual(model, rig.tab))
+    }
+
+    func test_aCompactSaveBetweenTheLineAndSetScaleEndsTheFlow() async throws {
+        let session = try PdfEditSession.open(Pdfs.text(4))
+        try PageOperations.delete(session.document, [0])
+        XCTAssertTrue(try session.commit("Delete"))
+        let (model, rig) = try attached(session.current)
+        rig.viewer.pageIndex = 1
+        await waitUntil { model.shownPage == 1 }
+        model.startCalibrate()
+        try draw(model, page: 1)
+
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try rig.tab.saveCompact(url)
+        await waitUntil { !model.calibrating }
+        model.setCalibrateValue("10")
+        model.applyCalibration()
+
+        XCTAssertNil(model.calibrateDrawn)
+        XCTAssertTrue(allActual(model, rig.tab))
+    }
+
+    // Distances, rows, the overlay and the writer all count in the points of the page as shown, so a turned page with a
+    // user unit must read the typed length back from the file.
+    func test_aCalibrationOnATurnedPageWithAUserUnitReadsBackFromTheWrittenFile() async throws {
+        let session = try PdfEditSession.open(Pdfs.text(1))
+        PageOperations.rotate(session.document, [0], 90)
+        session.document.pages[0].dictionary["UserUnit"] = PdfNumber(2)
+        XCTAssertTrue(try session.commit("Prepare"))
+        let (model, rig) = try attached(session.current)
+
+        try calibrate(model, "10")
+        XCTAssertFalse(model.calibrating)
+        try draw(model)
+        await model.action?.run()
+
+        let document = rig.tab.document
+        let made = try XCTUnwrap(PdfAnnotations.read(document, document.pages[0]).first { $0.type == .line })
+        XCTAssertEqual(made.contents, "Distance: 10 m")
+        XCTAssertEqual(MeasureScale.find(document)?.ratio, model.scales.scale(document, 0).ratio)
     }
 }
