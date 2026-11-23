@@ -80,5 +80,18 @@ final class PagesViewTests: XCTestCase {
         let answer = await job.value
         XCTAssertNil(answer)
     }
+
+    func test_theTabStripIsDrawnWithItsPageDropTargetsWhileAPageDragIsOn() async throws {
+        let f = ShellFixture(self)
+        await f.openDocuments(2)
+        PageDragSession.begin(PageDragPayload(tab: f.vm.documents[0], grid: nil, pages: [0]))
+        defer { PageDragSession.end() }
+
+        let image = try XCTUnwrap(picture(TabStrip(vm: f.vm, close: { _ in }), 600, 40))
+
+        XCTAssertGreaterThan(variety(image), 4)
+        XCTAssertTrue(PageTransfer.canDrop(onto: f.vm.documents[1]))
+        XCTAssertFalse(PageTransfer.canDrop(onto: f.vm.documents[0]))
+    }
 }
 #endif

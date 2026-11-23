@@ -156,7 +156,7 @@ private struct DoubleTap: ViewModifier {
 
 // The pages a drag carries are in PageDragSession; the item only tells our own drops from text or files from elsewhere (the
 // format "LazyPDF.Pages" of PageDrag.cs).
-private enum PageDrag {
+enum PageDrag {
     static let type = UTType(exportedAs: "com.lazypdf.lazypdf.pages", conformingTo: .data)
 }
 

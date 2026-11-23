@@ -53,6 +53,32 @@ public enum PageTransfer {
         CopyRules.noteUnprotected(tab.document, host)
     }
 
+    /// True when the drag in progress may be let go over `tab` of the strip: its pages are in another tab.
+    public static func canDrop(onto tab: DocumentTab) -> Bool {
+        guard let drag = PageDragSession.current else { return false }
+        return drag.tab !== tab
+    }
+
+    /// True when it may be let go on the empty part of the strip, which makes a new tab of the pages.
+    public static var canDropOnStrip: Bool { PageDragSession.current != nil }
+
+    /// The drag is let go over a tab: its pages are copied to the end of it. The drag is over either way.
+    public static func drop(onto tab: DocumentTab, host: ToolHost) async {
+        guard canDrop(onto: tab), let drag = PageDragSession.current else {
+            PageDragSession.end()
+            return
+        }
+        PageDragSession.end()
+        await copy(drag, to: tab, host: host)
+    }
+
+    /// The drag is let go on the empty strip: its pages become a tab of their own, without attachments.
+    public static func dropOnStrip(host: ToolHost) async {
+        guard let drag = PageDragSession.current else { return }
+        PageDragSession.end()
+        await toNewTab(drag, host, files: false)
+    }
+
     /// Makes a new tab of the pages. The Extract buttons pass `files` to take the attachments along, a drag or a menu does not.
     public static func toNewTab(_ from: PageDragPayload, _ host: ToolHost, files: Bool) async {
         guard let tab = from.tab, !tab.isDisposed else {

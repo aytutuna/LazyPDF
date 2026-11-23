@@ -44,6 +44,8 @@ struct TabStrip: View {
             }
             .padding(.horizontal, 2)
         }
+        // The empty part of the strip makes a new tab of dragged pages; a tab in front of it answers for itself.
+        .pageDropTarget(vm, .emptyStrip)
         .coordinateSpace(name: Self.space)
         .onPreferenceChange(TabFrames.self) { frames = $0 }
         .tabDragSource(dragging, frames: frames, tab: { id in vm.documents.first { $0.id == id } })
@@ -57,6 +59,7 @@ struct TabStrip: View {
         }, moves: moves(for: tab))
         .reportsTabFrame(of: document, in: Self.space)
         .tabDropTarget(dragging, index: { vm.strip.firstIndex { $0 === tab } ?? vm.strip.count - 1 }, fallback: move)
+        .pageDropTarget(vm, document.map { PageDropPlace.tab($0) } ?? .home)
         // The Mac's own drag starts from behind the strip; a String drag would also leave the app as text.
         if let document, dragging == nil {
             base.draggable(document.id.uuidString)
