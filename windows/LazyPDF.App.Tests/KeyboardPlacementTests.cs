@@ -24,7 +24,17 @@ public sealed class KeyboardPlacementTests
 
         public bool Cancelled { get; private set; }
 
+        public bool Handle { get; set; }
+
+        public int Asked { get; private set; }
+
         public Cursor? Cursor => null;
+
+        public bool HandleUnder(PagePointer pointer)
+        {
+            Asked++;
+            return Handle;
+        }
 
         public void Press(PagePointer pointer) => Calls.Add(("press", pointer));
 
@@ -492,6 +502,69 @@ public sealed class KeyboardPlacementTests
 
         Press(3);
         Assert.Equal(2, tab.PageIndex);
+        return Task.CompletedTask;
+    });
+
+    // The press lands at the surface's origin; scrolling puts a page point there, so an offset past the page's end puts it in the gap.
+    private static (PageViewer Viewer, RecordingTool Tool, double PageHeight) PressBelowFirstPage(bool handle, double below, DocumentTab tab)
+    {
+        var (viewer, tool) = Open(tab);
+        tool.Handle = handle;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        double height = viewer.PageSize(0).Height;
+        surface.GoToPage(0, new Point(100, height + below / surface.PageMatrix(0)!.Value.M22));
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+        return (viewer, tool, height);
+    }
+
+    [Fact]
+    public Task APressJustOffAPageReachesTheToolOnlyWhenItReportsAHandle() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (_, tool, height) = PressBelowFirstPage(true, 10, tab);
+
+        var press = Assert.Single(tool.Calls);
+        Assert.Equal("press", press.Kind);
+        Assert.Equal(0, press.Pointer.Page);
+        Assert.True(press.Pointer.Point.Y > height);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressInTheGapWithoutAHandleCreatesNothing() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (_, tool, _) = PressBelowFirstPage(false, 10, tab);
+
+        Assert.True(tool.Asked > 0);
+        Assert.Empty(tool.Calls);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressFarFromEveryPageIsNotEvenAsked() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (_, tool, _) = PressBelowFirstPage(true, 60, tab);
+
+        Assert.Equal(0, tool.Asked);
+        Assert.Empty(tool.Calls);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressOnAPageIsDeliveredWithoutAsking() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.GoToPage(0, new Point(100, 100));
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+
+        Assert.Equal(0, tool.Asked);
+        Assert.Single(tool.Calls);
         return Task.CompletedTask;
     });
 

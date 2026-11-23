@@ -37,7 +37,7 @@ public sealed record PagePointer(int Page, Point Point, Point View, bool Pressed
 
 /// <summary>
 /// A tool that takes the pointer. Set it as <see cref="IDocumentViewer.PointerTool"/>; the viewer then sends it the
-/// left button on the pages instead of panning or selecting. A press, then moves with <see cref="PagePointer.Pressed"/>
+/// left button on the pages instead of panning or selecting, and a press just off a page that lands on a handle the tool reports. A press, then moves with <see cref="PagePointer.Pressed"/>
 /// set to the same page, then a release; the mouse is captured meanwhile so the release always arrives. Moves with
 /// no button down arrive for the page under the pointer. The right button, the wheel and the keyboard stay with the viewer.
 /// </summary>
@@ -47,6 +47,13 @@ public interface IPagePointerTool
     Cursor? Cursor { get; }
 
     void Press(PagePointer pointer);
+
+    /// <summary>
+    /// Whether a handle the tool already holds, such as a corner of the selection, is under the point. The viewer asks
+    /// it of a press just off a page and delivers the press only when it is true. It must not change anything, and it
+    /// must agree with <see cref="Press"/>: when it is true the press takes the handle.
+    /// </summary>
+    bool HandleUnder(PagePointer pointer) => false;
 
     void Move(PagePointer pointer);
 

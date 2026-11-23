@@ -365,6 +365,14 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         return (page, PageSpace.ToPage(ContentMatrix(page)).Transform(content));
     }
 
+    /// <summary>The pages within <paramref name="reach"/> view pixels of a point of the surface, with the point in each one's space; for a press just off a page.</summary>
+    public IEnumerable<(int Page, Point Point)> HitsNear(Point surfacePoint, double reach)
+    {
+        var content = new Point(surfacePoint.X + _offsetX, surfacePoint.Y + _offsetY);
+        var area = new Rect(content.X - reach, content.Y - reach, 2 * reach, 2 * reach);
+        foreach (int page in _layout.PagesIn(area)) yield return (page, PageSpace.ToPage(ContentMatrix(page)).Transform(content));
+    }
+
     // ----- Going places
 
     /// <summary>Scrolls to a page. With <paramref name="at"/> (page space) that point comes to the top of the view, whatever the rotation; <paramref name="keepX"/> also keeps its column when the layout is wider than the view.</summary>

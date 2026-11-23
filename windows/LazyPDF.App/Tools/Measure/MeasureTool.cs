@@ -52,6 +52,11 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
 
     public event EventHandler? Changed;
 
+    public bool HandleUnder(PagePointer pointer) => OnFirstDot(pointer);
+
+    // The raw point, not the snapped one, so that asking has no side effect and Press agrees with it.
+    private bool OnFirstDot(PagePointer pointer) => CanFinish && pointer.Page == Page && Near(pointer.Point, _points[0], pointer.Page);
+
     public void Press(PagePointer pointer)
     {
         if (_points.Count > 0 && pointer.Page != Page) return;
@@ -64,7 +69,7 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         }
         _ = LoadSnapsAsync(pointer.Page);
         var at = Resolve(pointer, true);
-        if (CanFinish && Near(at, _points[0], pointer.Page))
+        if (OnFirstDot(pointer))
         {
             Finish();
             return;

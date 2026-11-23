@@ -73,33 +73,35 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
     public bool Holds(PagePointer pointer)
     {
         if (Current is not { } mark || mark.PageIndex != pointer.Page) return false;
-        if (HandleAt(_points ?? Spots(_frame), pointer.Point) >= 0) return true;
+        if (HandleIndex(pointer) >= 0) return true;
         var hit = marker().At(pointer.Page, pointer.Point, Reach);
         return hit is not null && hit.Reference?.Number == mark.Reference?.Number;
     }
+
+    /// <summary>Whether a press lands on a handle of the selected mark, on the page or just off it.</summary>
+    public bool HandleUnder(PagePointer pointer) => HandleIndex(pointer) >= 0;
+
+    private int HandleIndex(PagePointer pointer) =>
+        Current is { } mark && mark.PageIndex == pointer.Page ? HandleAt(_points ?? Spots(_frame), pointer.Point) : -1;
 
     public void Press(PagePointer pointer)
     {
         _handle = -1;
         _vertex = -1;
         _moving = false;
-        if (Current is { } selected && selected.PageIndex == pointer.Page)
+        if (HandleIndex(pointer) is var grip and >= 0)
         {
             if (_points is not null)
             {
-                if (HandleAt(_points, pointer.Point) is var v and >= 0)
-                {
-                    _vertex = v;
-                    _from = _points[v];
-                    return;
-                }
+                _vertex = grip;
+                _from = _points[grip];
             }
-            else if (HandleAt(Spots(_frame), pointer.Point) is var h and >= 0)
+            else
             {
-                _handle = h;
+                _handle = grip;
                 Begin(pointer.Point);
-                return;
             }
+            return;
         }
         var hit = marker().At(pointer.Page, pointer.Point, Reach);
         if (hit is null)

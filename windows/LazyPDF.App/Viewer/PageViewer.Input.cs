@@ -21,6 +21,9 @@ public partial class PageViewer
 
     private const double ClickSlop = 4;
 
+    // View pixels past a page edge where a tool is asked about its handles; above every tool's own reach.
+    private const double HandleReach = 32;
+
     private readonly Dictionary<int, IReadOnlyList<PdfLink>> _links = [];
     private readonly DispatcherTimer _autoScroll = new() { Interval = TimeSpan.FromMilliseconds(30) };
     private readonly System.Windows.Controls.ToolTip _linkTip = new() { Placement = System.Windows.Controls.Primitives.PlacementMode.Relative };
@@ -153,6 +156,16 @@ public partial class PageViewer
     private PagePointer Pointer(PagePoint hit, Point surfacePoint, int clicks, bool pressed) =>
         new(hit.Page, hit.Point, Surface.TranslatePoint(surfacePoint, this), pressed, clicks, Keyboard.Modifiers);
 
+    // A handle on the page edge reaches past it, so a press just off a page goes to the tool when it reports a handle there.
+    private (int Page, Point Point)? HandleNear(IPagePointerTool tool, Point at, int clicks)
+    {
+        foreach (var (page, point) in Surface.HitsNear(at, HandleReach))
+        {
+            if (tool.HandleUnder(Pointer(new PagePoint(page, point), at, clicks, true))) return (page, point);
+        }
+        return null;
+    }
+
     private void Surface_MouseDown(object sender, MouseButtonEventArgs e)
     {
         _linkTip.IsOpen = false;
@@ -194,7 +207,9 @@ public partial class PageViewer
         _downLink = hit is { } h ? LinkAt(h.Page, h.Point) : null;
         if (_tool is { } tool)
         {
-            if (_stale || hit is not { } over) return;
+            if (_stale) return;
+            if (hit is null && HandleNear(tool, at, clicks) is { } off) hit = off;
+            if (hit is not { } over) return;
             _drag = Drag.Tool;
             _dragPage = over.Page;
             Surface.CaptureMouse();
