@@ -342,6 +342,19 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
     }
 
+    func test_aHandleIsUnderAPointOnlyOnThePageOfTheSelectedMark() async throws {
+        let (tool, _, _, _) = try editing(pages: 2)
+        let corner = markPt(100, 100)
+
+        XCTAssertFalse(tool.handleUnder(press(corner)))
+        tool.press(press(markPt(150, 130)))
+        tool.release(drag(markPt(150, 130)))
+
+        XCTAssertTrue(tool.handleUnder(press(corner)))
+        XCTAssertFalse(tool.handleUnder(press(corner, page: 1)))
+        XCTAssertFalse(tool.handleUnder(press(markPt(150, 130))))
+    }
+
     func test_redrawingAfterTheMarksPageWentAwayDrawsNothing() async throws {
         let f = try CommentFixture(pages: 2)
         let viewer = PanelViewer(f.tab)
