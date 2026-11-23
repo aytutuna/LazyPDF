@@ -37,7 +37,10 @@ struct MeasurePanelView: View {
 
     private var scaleSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            FieldLabel(model.scaleHeading)
+            Text(model.scaleHeading)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .accessibilityAddTraits(.isHeader)
             LabelledField(L10n.t("On the page")) {
                 HStack {
                     number(L10n.t("Length on the page"), model.pageValue) { model.setPageValue($0) }
