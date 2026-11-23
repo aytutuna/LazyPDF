@@ -506,19 +506,19 @@ public sealed class PageTextProviderTests
     [Fact]
     public Task ASearchStoppedAtAnUnloadedPageIsFollowedByATextChangeWhenItArrives() => Sta.Run(async () =>
     {
-        var o = await Open(Pdfs.Text(4), load: false);
+        var o = await Open(Pdfs.Text(30), load: false);
         using var _ = o;
         await o.Viewer.Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Background);
         var told = new List<AutomationEvents>();
         o.Viewer.Surface.Told += told.Add;
-        var all = o.Provider.DocumentRange;
+        var far = PageTextRange.Create(o.Host, new DocPos(25, 0), new DocPos(27, 0), o.Provider)!;
 
-        Assert.Null(all.FindText("Page 4", false, false));
+        Assert.Null(far.FindText("Page 26", false, false));
         Assert.DoesNotContain(AutomationEvents.TextPatternOnTextChanged, told);
 
         await Sta.Until(() => told.Contains(AutomationEvents.TextPatternOnTextChanged));
-        await Sta.Until(() => all.FindText("Page 4", false, false) is not null);
-        Assert.Equal("Page 4", all.FindText("Page 4", false, false)!.GetText(-1));
+        await Sta.Until(() => far.FindText("Page 26", false, false) is not null);
+        Assert.Equal("Page 26", far.FindText("Page 26", false, false)!.GetText(-1));
     });
 
     [Fact]
