@@ -1077,8 +1077,8 @@
 "No results" = "Sonuç yok";
 "No results folder" = "Sonuç klasörü yok";
 "No results for {0}" = "{0} için sonuç yok";
-"No sides are left to print." = "Yazdırılacak yüz kalmadı.";
 "No saved signatures yet. Make a new one below." = "Henüz kayıtlı imza yok. Aşağıdan yeni bir tane yapın.";
+"No sides are left to print." = "Yazdırılacak yüz kalmadı.";
 "No steps" = "Adım yok";
 "No text found" = "Metin bulunamadı";
 "No text found on {0} page. Check the language.|one" = "{0} sayfada metin bulunamadı. Dili denetleyin.";
