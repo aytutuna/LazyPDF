@@ -144,10 +144,12 @@ final class PageImposeTests: XCTestCase {
     }
 
     func test_rotationAndCropBoxAreKept() throws {
-        for turn in [90, 180, 270] {
+        for (turn, mode) in [90, 180, 270].flatMap({ turn in [ImposeMode.nUp, .booklet].map { (turn, $0) } }) {
             let document = try PageTestFiles.open(1, pageExtra: { _ in "/Rotate \(turn) /CropBox [20 30 120 230]" })
-            let result = try PageOperations.impose(document, [0], ImposeOptions(mode: .nUp, sheetWidth: 400, sheetHeight: 400, perSheet: 2))
+            let result = try PageOperations.impose(document, [0], ImposeOptions(mode: mode, sheetWidth: 400, sheetHeight: 400, perSheet: 2))
             let (_, box, matrix) = try placed(result.document, 0)[0]
+            // A booklet's first side holds the blank back cover on the left and page 1 on the right.
+            if mode == .booklet { XCTAssertEqual(box.left, 200, accuracy: 1e-3) }
             let sideways = turn != 180
             XCTAssertEqual(box.width, 200, accuracy: 1e-3)
             XCTAssertEqual(box.height, sideways ? 100 : 400, accuracy: 1e-3)

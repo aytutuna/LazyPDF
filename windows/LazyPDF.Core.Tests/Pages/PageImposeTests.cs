@@ -170,14 +170,19 @@ public class PageImposeTests
     }
 
     [Theory]
-    [InlineData(90)]
-    [InlineData(180)]
-    [InlineData(270)]
-    public void RotationAndCropBoxAreKept(int turn)
+    [InlineData(90, ImposeMode.NUp)]
+    [InlineData(180, ImposeMode.NUp)]
+    [InlineData(270, ImposeMode.NUp)]
+    [InlineData(90, ImposeMode.Booklet)]
+    [InlineData(180, ImposeMode.Booklet)]
+    [InlineData(270, ImposeMode.Booklet)]
+    public void RotationAndCropBoxAreKept(int turn, ImposeMode mode)
     {
         var document = PageTestFiles.Open(1, pageExtra: _ => $"/Rotate {turn} /CropBox [20 30 120 230]");
-        var result = PageOperations.Impose(document, [0], new ImposeOptions(ImposeMode.NUp, 400, 400, 2));
+        var result = PageOperations.Impose(document, [0], new ImposeOptions(mode, 400, 400, 2));
         var (_, box, matrix) = Placed(result.Document, 0)[0];
+        // A booklet's first side holds the blank back cover on the left and page 1 on the right.
+        if (mode == ImposeMode.Booklet) Assert.Equal(200, box.Left, 3);
         bool sideways = turn != 180;
         // The crop box is 100x200, shown 200x100 when sideways; the 200x400 cell scales it by 1 or 2.
         Assert.Equal(200, box.Width, 3);
