@@ -5,10 +5,15 @@ import LazyPDFApp
 
 @MainActor
 final class PageAccessibilityTests: XCTestCase {
-    private func open(pages: Int = 3, line: String = "First line\nSecond line here") async throws -> (viewer: ViewerModel, scroll: PageScrollView) {
+    private func makeTab(pages: Int) throws -> DocumentTab {
+        let line = "First line\nSecond line here"
         let text = (0..<pages).map { "\(line) Page \($0 + 1)." }.joined(separator: "\u{0C}")
         let bytes = try PdfFromText.create(text).bytes
-        let tab = DocumentTab(session: try PdfEditSession.open(bytes), renderer: StubRenderer(), url: nil, title: "a.pdf")
+        return DocumentTab(session: try PdfEditSession.open(bytes), renderer: StubRenderer(), url: nil, title: "a.pdf")
+    }
+
+    private func open(pages: Int = 3) async throws -> (viewer: ViewerModel, scroll: PageScrollView) {
+        let tab = try makeTab(pages: pages)
         let viewer = ViewerModel(makeRenderer: { StubRenderer() }, openAddress: { _ in })
         viewer.setScreen(viewport: ViewSize(400, 800), pixelsPerDip: 1)
         viewer.show(tab)
@@ -32,7 +37,7 @@ final class PageAccessibilityTests: XCTestCase {
 
         XCTAssertFalse(first.isEmpty)
         XCTAssertTrue(zip(first, second).allSatisfy { $0 === $1 })
-        viewer.resetText()
+        viewer.show(try makeTab(pages: 3))
         XCTAssertFalse(elements(scroll).first === first.first)
     }
 

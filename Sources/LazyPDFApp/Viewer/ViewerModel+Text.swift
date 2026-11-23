@@ -36,6 +36,7 @@ extension ViewerModel {
         selectionShapes.removeAll()
         hitShapes.removeAll()
         textMaps.removeAll()
+        readerCaret = nil
         selected.clear()
     }
 
@@ -66,7 +67,7 @@ extension ViewerModel {
         }
     }
 
-    func loadPage(_ page: Int) async {
+    public func loadPage(_ page: Int) async {
         guard await text(page) != nil else { return }
         onRedraw?()
         onPageLoaded?(page)
@@ -116,6 +117,7 @@ extension ViewerModel {
     }
 
     func selectionChanged() {
+        readerCaret = nil
         selectionShapes.removeAll()
         onRedraw?()
         onSelectionChanged?()
