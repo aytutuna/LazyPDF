@@ -118,6 +118,13 @@ extension PageGrid {
         host?.openDocuments.filter { $0 !== tab && !$0.isDisposed } ?? []
     }
 
+    /// What a menu and VoiceOver call `other`: its name, with its folder after it when another open file has the same name.
+    public func copyLabel(_ other: DocumentTab) -> String {
+        let clash = host?.openDocuments.contains { $0 !== other && !$0.isDisposed && $0.title == other.title } ?? false
+        guard clash, let folder = other.url?.deletingLastPathComponent().lastPathComponent else { return other.title }
+        return L10n.t("{0} ({1})", other.title, folder)
+    }
+
     /// The "Copy to" entries of a menu and VoiceOver's actions: the pages go to the end of `other`.
     public func copy(_ pages: [Int], to other: DocumentTab) async {
         guard let tab, let host, !pages.isEmpty else { return }

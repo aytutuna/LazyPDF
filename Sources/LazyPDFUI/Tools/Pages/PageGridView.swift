@@ -97,7 +97,7 @@ struct PageTile: View {
             // Dragging needs a pointer, so VoiceOver copies to another file by an action.
             let pages = grid.target(cell.index)
             ForEach(grid.otherDocuments, id: \.id) { other in
-                Button(CopyToMenu.name(pages.count, other)) { Task { await grid.copy(pages, to: other) } }
+                Button(CopyToMenu.name(pages.count, grid.copyLabel(other))) { Task { await grid.copy(pages, to: other) } }
             }
         }
     }
@@ -146,17 +146,19 @@ struct CopyToMenu: View {
     let grid: PageGrid
     let pages: [Int]
 
-    static func name(_ pages: Int, _ other: DocumentTab) -> String {
-        L10n.t("Copy {0} to {1}", L10n.plural(pages, one: "{0} page", other: "{0} pages"), other.title)
+    static func name(_ pages: Int, _ target: String) -> String {
+        L10n.t("Copy {0} to {1}", L10n.plural(pages, one: "{0} page", other: "{0} pages"), target)
     }
 
     var body: some View {
         let others = grid.otherDocuments
         Menu {
             ForEach(others, id: \.id) { other in
-                Button(other.title) { Task { await grid.copy(pages, to: other) } }
-                    .help(others.filter { $0.title == other.title }.count > 1 ? other.url?.path ?? "" : "")
-                    .accessibilityLabel(Self.name(pages.count, other))
+                let clash = grid.copyLabel(other) != other.title
+                Button(grid.copyLabel(other)) { Task { await grid.copy(pages, to: other) } }
+                    .help(clash ? other.url?.path ?? "" : "")
+                    .accessibilityLabel(Self.name(pages.count, grid.copyLabel(other)))
+                    .accessibilityHint(clash ? other.url?.path ?? "" : "")
             }
         } label: {
             Label(L10n.t("Copy to tab"), systemImage: "rectangle.on.rectangle")

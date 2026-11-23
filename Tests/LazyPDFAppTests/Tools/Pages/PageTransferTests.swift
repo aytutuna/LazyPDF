@@ -311,6 +311,22 @@ final class PageTransferTests: XCTestCase {
         XCTAssertEqual(a.host.problems.map(\.title), ["Pages not copied"])
     }
 
+    func test_twoFilesWithTheSameNameAreToldApartByTheirFolder() throws {
+        let (a, b) = try pair()
+        let c = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(),
+                            url: URL(fileURLWithPath: "/files/Taxes/b.pdf"), title: "b.pdf")
+        let d = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(),
+                            url: URL(fileURLWithPath: "/files/Invoices/b.pdf"), title: "b.pdf")
+        a.host.openDocuments = [a.tab, b.tab, c, d]
+        let grid = PageGrid(boxWidth: 100, boxHeight: 140)
+        grid.attach(a.tab, a.host)
+
+        XCTAssertEqual(grid.copyLabel(c), "b.pdf (Taxes)")
+        XCTAssertEqual(grid.copyLabel(d), "b.pdf (Invoices)")
+        a.host.openDocuments = [a.tab, b.tab]
+        XCTAssertEqual(grid.copyLabel(b.tab), "b.pdf")
+    }
+
     func test_theMenusListTheOtherOpenFilesAndAnEntryCopiesThere() async throws {
         let (a, b) = try pair()
         let grid = PageGrid(boxWidth: 100, boxHeight: 140)
