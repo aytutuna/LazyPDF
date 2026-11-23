@@ -52,7 +52,8 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Surface.OptionsChanged += Surface_OptionsChanged;
         Surface.ViewChanged += Surface_ViewChanged;
         Surface.Decorate = Decorate;
-        Surface.PageText = page => LoadedText(page)?.Text;
+        Surface.TextHost = this;
+        Surface.PageText = page => ((ITextHost)this).Peek(page)?.Text;
         Surface.PageLabel = PageLabel;
         Surface.PageLinks = LinkTargets;
         InitInput();
@@ -206,6 +207,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         // The session bytes are already new; the search must not reuse the text read from the old ones.
         _text = null;
         _source = null;
+        ForgetRequests();
         if (Search.Query.Length > 0) _ = Search.Restart();
         RefreshBar();
         StateChanged?.Invoke(this, EventArgs.Empty);

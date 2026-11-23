@@ -72,6 +72,7 @@ public partial class PageViewer
     {
         _text = null;
         _source = null;
+        ForgetRequests();
         _links.Clear();
         _focusLink = null;
         _selectionGeometry.Clear();
@@ -107,8 +108,14 @@ public partial class PageViewer
         if (await GetTextAsync(page) is not null) Surface.InvalidateVisual();
     }
 
-    public async Task<TextPage?> GetTextAsync(int page) =>
-        await TextAsync() is { } source ? await source.GetAsync(page) : null;
+    public async Task<TextPage?> GetTextAsync(int page)
+    {
+        if (await TextAsync() is not { } source) return null;
+        bool known = source.Peek(page) is not null;
+        var text = await source.GetAsync(page);
+        if (text is not null && !known && ReferenceEquals(source, _source)) PageArrived(page);
+        return text;
+    }
 
     private TextPage? LoadedText(int page) => _source?.Peek(page);
 

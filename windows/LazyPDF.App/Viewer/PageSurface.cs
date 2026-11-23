@@ -74,6 +74,9 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     /// <summary>The links of a page for screen readers, in page space.</summary>
     public Func<int, IReadOnlyList<LinkTarget>>? PageLinks { get; set; }
 
+    /// <summary>Where screen readers read the text of the document, set by the viewer that owns the surface.</summary>
+    public ITextHost? TextHost { get; set; }
+
     public int PageCount => _sizes.Length;
 
     public double Zoom => _zoom;
@@ -493,6 +496,12 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     {
         if (AutomationPeer.ListenerExists(AutomationEvents.PropertyChanged) && UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) peer.PageChanged();
         TellLinks();
+    }
+
+    /// <summary>The text of a page arrived; if it is the page in view, its value for a screen reader changed.</summary>
+    public void TextLoaded(int page)
+    {
+        if (page == _page && AutomationPeer.ListenerExists(AutomationEvents.PropertyChanged) && UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) peer.PageChanged();
     }
 
     private void TellLinks()
