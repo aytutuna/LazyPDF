@@ -71,7 +71,7 @@ enum WritersGolden {
             return try PdfDocument.open(marked.bytes)
         case "sign":
             let draw = try PdfFontEmbedder(document, fonts).add("Script Sans", .regular, [text])!
-            _ = try SignatureAppearance.draw(document, PdfRect(0, 0, 200, 60), 0, SignatureLook(), text, draw)
+            _ = try SignatureAppearance.draw(document, SignatureAppearance.plan(PdfRect(0, 0, 200, 60), 0, SignatureLook(), text), 0, SignatureLook(), text, draw)
         case "field", "multiline", "comb", "combo":
             try field(document, fonts, op, text)
         case "plain":

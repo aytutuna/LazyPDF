@@ -32,8 +32,11 @@ extension ToolRegistry {
         case "standards": return ToolPanel(StandardsModel(fonts: SystemKit.fonts)) { StandardsPanelView(model: $0) }
         case "pdfua": return ToolPanel(PdfUaModel()) { PdfUaPanelView(model: $0) }
         case "certificates":
-            return ToolPanel(CertificatesModel(trust: SignatureTrust(directory: context.folders.settings), fonts: SystemKit.fonts,
-                                               transport: { UrlSessionTransport() }, importIdentity: { try PdfDigitalId.importPfx($0, $1) })) {
+            let codec = ImageIOCodec()
+            let saved = SavedSignatures(directory: SavedSignatures.defaultDirectory(context.folders), codec: codec)
+            return ToolPanel(CertificatesModel(trust: SignatureTrust(directory: context.folders.settings), fonts: SystemKit.fonts, store: saved,
+                                               system: SystemSignature(), codec: codec, transport: { UrlSessionTransport() },
+                                               importIdentity: { try PdfDigitalId.importPfx($0, $1) })) {
                 CertificatesPanelView(model: $0)
             }
         default: return nil

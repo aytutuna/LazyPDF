@@ -828,6 +828,7 @@
 "Issued by {0}" = "Veren: {0}";
 "Issued to {0}" = "Verilen: {0}";
 "It could not be saved. It can still be placed this time." = "Kaydedilemedi. Bu seferlik yine de yerleştirilebilir.";
+"It could not be saved. It will be used for this signing only." = "Kaydedilemedi. Yalnızca bu imzalama için kullanılacak.";
 "It is already there." = "Zaten orada.";
 "It is off the list." = "Listeden kaldırıldı.";
 "It is open in a new tab. Save it to keep it." = "Yeni bir sekmede açık. Saklamak için kaydedin.";
@@ -944,6 +945,7 @@
 "Look Up" = "Sözlükte ara";
 "Look at" = "Karşılaştırma yöntemi";
 "Look for missing certificates" = "Eksik sertifikaları ara";
+"Look of the signature" = "İmzanın görünümü";
 "Looking for fields" = "Alanlar aranıyor";
 "Looking through the file." = "Dosya taranıyor.";
 "Looks different" = "Farklı görünüyor";
@@ -1070,6 +1072,7 @@
 "No results" = "Sonuç yok";
 "No results folder" = "Sonuç klasörü yok";
 "No results for {0}" = "{0} için sonuç yok";
+"No saved signatures yet. Make a new one below." = "Henüz kayıtlı imza yok. Aşağıdan yeni bir tane yapın.";
 "No steps" = "Adım yok";
 "No text found" = "Metin bulunamadı";
 "No text found on {0} page. Check the language.|one" = "{0} sayfada metin bulunamadı. Dili denetleyin.";
@@ -1323,12 +1326,14 @@
 "Pick a picture" = "Resim seç";
 "Picture" = "Resim";
 "Picture added." = "Resim eklendi.";
+"Picture and text" = "Resim ve yazı";
 "Picture cannot be read" = "Resim okunamıyor";
 "Picture cropped." = "Resim kırpıldı.";
 "Picture fit" = "Resim sığdırma";
 "Picture moved or resized" = "Resim taşındı ya da yeniden boyutlandırıldı";
 "Picture not saved" = "Resim kaydedilmedi";
 "Picture of the figure" = "Şeklin resmi";
+"Picture only" = "Yalnızca resim";
 "Picture quality" = "Resim kalitesi";
 "Picture replaced" = "Resim değiştirildi";
 "Picture replaced." = "Resim değiştirildi.";
@@ -1655,6 +1660,7 @@
 "Signature is valid" = "İmza geçerli";
 "Signature not checked" = "İmza denetlenmedi";
 "Signature not kept" = "İmza saklanamadı";
+"Signature not read" = "İmza okunamadı";
 "Signature on the page" = "Sayfadaki imza";
 "Signature uses a weak digest" = "İmza zayıf bir özet kullanıyor";
 "Signature uses a weak key" = "İmza zayıf bir anahtar kullanıyor";
@@ -1802,6 +1808,7 @@
 "Text of the mark" = "İşaretin metni";
 "Text on the boxes (optional)" = "Kutulardaki metin (isteğe bağlı)";
 "Text on the page" = "Sayfadaki metin";
+"Text only" = "Yalnızca yazı";
 "Text outside the tables was left out." = "Tabloların dışındaki metin dışarıda kaldı.";
 "Text read earlier on those pages was removed. Undo brings it back." = "Bu sayfalarda daha önce okunan metin kaldırıldı. Geri al onu geri getirir.";
 "Text replaced." = "Metin değiştirildi.";
@@ -1825,6 +1832,7 @@
 "That mark has no area. Drag farther and try again." = "Bu işaretin bir alanı yok. Daha uzağa sürükleyip yeniden deneyin.";
 "That password is not right." = "Parola doğru değil.";
 "That picture is too large. Pick a smaller one." = "Bu resim çok büyük. Daha küçük bir resim seçin.";
+"That saved signature could not be read. Choose another." = "Kayıtlı imza okunamadı. Başka bir tane seçin.";
 "The .p12 file could not be opened. Check the password and that the file is a .p12." = ".p12 dosyası açılamadı. Parolayı ve dosyanın bir .p12 olduğunu denetleyin.";
 "The /CIDSet does not list every glyph shown or held in the font program." = "/CIDSet, yazı tipi programında gösterilen ya da tutulan her glifi listelemiyor.";
 "The /CharSet does not list every glyph shown or held in the font program." = "/CharSet, yazı tipi programında gösterilen ya da tutulan her glifi listelemiyor.";
@@ -2197,6 +2205,7 @@
 "This signature could not be checked." = "Bu imza denetlenemedi.";
 "This signature field is not signed." = "Bu imza alanı imzalı değil.";
 "This signature needs a time stamp server." = "Bu imza bir zaman damgası sunucusu gerektiriyor.";
+"This signature only" = "Yalnızca bu imza";
 "This text has replacement text." = "Bu metnin yerine geçen bir metni var.";
 "This text includes annotation text, which the page's content does not hold. Build the page without IncludeAnnotations to edit or redact it." = "Bu metin, sayfa içeriğinde bulunmayan ek açıklama metnini de içeriyor. Düzenlemek ya da karartmak için sayfayı IncludeAnnotations olmadan oluşturun.";
 "This type does not lead to a standard type through the role map." = "Bu tür, rol eşlemesi üzerinden standart bir türe ulaşmıyor.";

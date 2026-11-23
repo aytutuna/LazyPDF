@@ -11,14 +11,27 @@ import XCTest
 final class CertificatesModelTests: XCTestCase {
     private var transport: SigningTransport = DownServer()
 
+    private let picture = PdfRgbaImage(150, 50, [UInt8](repeating: 0, count: 150 * 50 * 4).enumerated().map { $0.offset % 4 == 3 ? 255 : 0 })
+
     private struct Setup {
         let model: CertificatesModel
         let rig: SecurityRig
         let ada: X509Certificate
         let choice: CertificateChoice
+        let store: SavedSignatures
+        let codec: SignaturePictureCodec
     }
 
-    private func attached(_ bytes: [UInt8]? = nil, password: String? = nil, field: String? = nil) throws -> Setup {
+    private func made(_ folder: TempDir, fonts: FontSource? = nil, store: SavedSignatures? = nil, codec: ImageCodec? = nil,
+                      transport: @escaping () -> SigningTransport = { DownServer() },
+                      importIdentity: @escaping ([UInt8], String) throws -> X509Certificate) -> CertificatesModel {
+        let codec = codec ?? SignaturePictureCodec(picture)
+        return CertificatesModel(trust: SignatureTrust(directory: folder.url), fonts: fonts,
+                                 store: store ?? SavedSignatures(directory: folder.sub("Signatures"), codec: codec),
+                                 system: StubSignatureSystem(), codec: codec, transport: transport, importIdentity: importIdentity)
+    }
+
+    private func attached(_ bytes: [UInt8]? = nil, password: String? = nil, field: String? = nil, saved: Int = 0) throws -> Setup {
         let rig = try SecurityRig(bytes, password: password)
         let ada = try CertificateKit.ada()
         let choice = CertificateChoice(ada)
@@ -27,13 +40,49 @@ final class CertificatesModelTests: XCTestCase {
         rig.host.signingField = field
         let folder = TempDir(self)
         let transport = self.transport
-        let model = CertificatesModel(trust: SignatureTrust(directory: folder.url), fonts: FakeFonts(), transport: { transport },
-                                      importIdentity: { bytes, password in
+        let codec = SignaturePictureCodec(picture)
+        let store = SavedSignatures(directory: folder.sub("Signatures"), codec: codec)
+        for _ in 0..<saved { try store.add(.signature, picture) }
+        let model = made(folder, fonts: FakeFonts(), store: store, codec: codec, transport: { transport }, importIdentity: { bytes, password in
             if password != "right" { throw SignatureCryptoException(message: "Wrong password.") }
             return ada
         })
         rig.attach(model)
-        return Setup(model: model, rig: rig, ada: ada, choice: choice)
+        return Setup(model: model, rig: rig, ada: ada, choice: choice, store: store, codec: codec)
+    }
+
+    private func drawBox(_ s: Setup) throws {
+        try drawBox(s.model, s.rig)
+    }
+
+    private func drawBox(_ model: CertificatesModel, _ rig: SecurityRig) throws {
+        model.setPlace(1)
+        model.drawBox()
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        func pointer(_ x: Double, _ y: Double, _ pressed: Bool) -> PagePointer {
+            PagePointer(page: 1, point: ViewPoint(x, y), view: ViewPoint(x, y), pressed: pressed, clicks: pressed ? 0 : 1)
+        }
+        tool.press(pointer(20, 30, true))
+        tool.move(pointer(220, 90, true))
+        tool.release(pointer(220, 90, false))
+    }
+
+    private func appearanceResources(_ s: Setup) throws -> PdfDictionary {
+        try appearanceResources(s.rig)
+    }
+
+    private func appearanceResources(_ rig: SecurityRig) throws -> PdfDictionary {
+        let document = rig.tab.document
+        let widget = try XCTUnwrap(PdfAnnotations.readAll(document).first { $0.type == .widget })
+        let form = try XCTUnwrap(document.stream(document.dict(widget.dictionary, "AP"), "N"))
+        return try XCTUnwrap(document.dict(form.dictionary, "Resources"))
+    }
+
+    private func keepOne(_ s: Setup, keep: Bool = true) {
+        s.model.makeNew()
+        s.model.maker.setName("Ada")
+        s.model.maker.keep = keep
+        s.model.useMade()
     }
 
     private func emptyFieldFile() throws -> [UInt8] {
@@ -41,6 +90,174 @@ final class CertificatesModelTests: XCTestCase {
         _ = try PdfForm.read(session.document).addField(FieldSpec(.signature, "Approval", 0, PdfRect(72, 100, 200, 150)))
         try session.commit("Field")
         return session.current
+    }
+
+    func test_aPictureLookNeedsAPictureToBePicked() async throws {
+        let s = try attached()
+        s.model.lookIndex = 1
+        XCTAssertFalse(s.model.showsLook)
+        try drawBox(s)
+        XCTAssertTrue(s.model.showsLook)
+        XCTAssertTrue(s.model.needsPicture)
+        XCTAssertFalse(s.model.action!.canRun())
+
+        keepOne(s)
+
+        XCTAssertTrue(s.model.action!.canRun())
+        s.model.lookIndex = 0
+        XCTAssertFalse(s.model.needsPicture)
+    }
+
+    func test_aPictureMadeForOneSigningOnlyIsTheFirstRowAndIsNotKept() async throws {
+        let s = try attached(saved: 1)
+        XCTAssertEqual(s.model.rows.count, 1)
+
+        keepOne(s, keep: false)
+
+        XCTAssertEqual(s.model.rows.first?.id, PictureRow.oneOffID)
+        XCTAssertEqual(s.model.rows.first?.name, "This signature only")
+        XCTAssertEqual(s.model.selected, PictureRow.oneOffID)
+        XCTAssertEqual(s.model.rows.count, 2)
+        XCTAssertEqual(s.store.list(.signature).count, 1)
+        XCTAssertFalse(s.model.showMaker)
+    }
+
+    func test_aPictureThatIsKeptIsSelectedAndListed() async throws {
+        let s = try attached(saved: 1)
+
+        keepOne(s)
+
+        XCTAssertEqual(s.store.list(.signature).count, 2)
+        XCTAssertEqual(s.model.rows.count, 2)
+        XCTAssertNil(s.model.oneOff)
+        XCTAssertEqual(s.model.selected, s.store.list(.signature)[0].url.lastPathComponent)
+    }
+
+    func test_aPictureThatCannotBeKeptIsStillUsedForTheSigning() async throws {
+        let folder = TempDir(self)
+        let blocker = folder.sub("blocked")
+        try FileManager.default.createDirectory(at: folder.url, withIntermediateDirectories: true)
+        try Data([1]).write(to: blocker)
+        let rig = try SecurityRig()
+        let ada = try CertificateKit.ada()
+        let choice = CertificateChoice(ada)
+        rig.host.identities = [choice]
+        rig.host.keys[choice.id] = ada
+        let codec = SignaturePictureCodec(picture)
+        let store = SavedSignatures(directory: blocker.appendingPathComponent("inside"), codec: codec)
+        let model = made(folder, fonts: FakeFonts(), store: store, codec: codec, importIdentity: { _, _ in ada })
+        rig.attach(model)
+        model.lookIndex = 1
+        model.makeNew()
+        model.maker.setName("Ada")
+
+        model.useMade()
+
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Signature not kept"])
+        XCTAssertEqual(rig.host.problems.first?.text, "It could not be saved. It will be used for this signing only.")
+        XCTAssertEqual(model.selected, PictureRow.oneOffID)
+        XCTAssertNotNil(model.oneOff)
+        try drawBox(model, rig)
+        XCTAssertTrue(model.canSign)
+
+        await model.action!.run()
+
+        XCTAssertTrue(rig.tab.document.isSigned)
+        XCTAssertTrue(try appearanceResources(rig).containsKey("XObject"))
+    }
+
+    func test_aPictureOnlyLookWritesNoSignerText() async throws {
+        let s = try attached(saved: 1)
+        s.model.lookIndex = 2
+        try drawBox(s)
+
+        await s.model.action!.run()
+
+        XCTAssertTrue(s.rig.tab.document.isSigned)
+        let found = try appearanceResources(s)
+        XCTAssertTrue(found.containsKey("XObject"))
+        XCTAssertFalse(found.containsKey("Font"))
+    }
+
+    func test_aPictureAndTextLookKeepsTheText() async throws {
+        let s = try attached(saved: 1)
+        s.model.lookIndex = 1
+        try drawBox(s)
+
+        await s.model.action!.run()
+
+        let found = try appearanceResources(s)
+        XCTAssertTrue(found.containsKey("XObject"))
+        XCTAssertTrue(found.containsKey("Font"))
+    }
+
+    func test_anInvisibleSignatureIgnoresTheLook() async throws {
+        let s = try attached()
+        s.model.lookIndex = 2
+        s.model.setPlace(1)
+        XCTAssertTrue(s.model.needsPicture)
+
+        s.model.setPlace(0)
+
+        XCTAssertFalse(s.model.showsLook)
+        XCTAssertFalse(s.model.needsPicture)
+        XCTAssertTrue(s.model.action!.canRun())
+        await s.model.action!.run()
+        XCTAssertTrue(s.rig.tab.document.isSigned)
+        XCTAssertTrue(s.rig.host.problems.isEmpty)
+    }
+
+    func test_aSavedPictureThatCannotBeReadSignsNothing() async throws {
+        let s = try attached(saved: 1)
+        s.model.lookIndex = 1
+        try drawBox(s)
+        s.codec.frame = nil
+
+        await s.model.action!.run()
+
+        XCTAssertEqual(s.rig.host.problems.map(\.title), ["Signature not read"])
+        XCTAssertFalse(s.rig.tab.document.isSigned)
+        XCTAssertFalse(s.rig.tab.session.canUndo)
+    }
+
+    func test_afterASigningThePictureForOneSigningIsGoneAndTheFirstRowIsSelected() async throws {
+        let s = try attached(saved: 1)
+        keepOne(s, keep: false)
+        s.model.lookIndex = 1
+        try drawBox(s)
+        XCTAssertEqual(s.model.selected, PictureRow.oneOffID)
+
+        await s.model.action!.run()
+
+        XCTAssertNil(s.model.oneOff)
+        XCTAssertEqual(s.model.rows.count, 1)
+        XCTAssertEqual(s.model.selected, s.store.list(.signature)[0].url.lastPathComponent)
+    }
+
+    func test_withNothingSavedNothingIsSelectedAfterASigning() async throws {
+        let s = try attached()
+        keepOne(s, keep: false)
+        s.model.lookIndex = 1
+        try drawBox(s)
+
+        await s.model.action!.run()
+
+        XCTAssertTrue(s.rig.tab.document.isSigned)
+        XCTAssertTrue(s.model.rows.isEmpty)
+        XCTAssertNil(s.model.selected)
+        XCTAssertFalse(s.model.canSign)
+    }
+
+    func test_attachingSelectsTheNewestSavedPictureAndLeavingForgetsTheOneForOneSigning() async throws {
+        let s = try attached(saved: 2)
+
+        XCTAssertEqual(s.model.selected, s.store.list(.signature)[0].url.lastPathComponent)
+
+        keepOne(s, keep: false)
+        s.model.detach()
+
+        XCTAssertNil(s.model.oneOff)
+        XCTAssertFalse(s.model.showMaker)
     }
 
     func test_theKeychainIdentitiesAreListedAndTheFirstIsChosen() async throws {
@@ -55,8 +272,7 @@ final class CertificatesModelTests: XCTestCase {
 
     func test_withoutAnIdentityTheNoteSaysSoAndTheButtonWaits() async throws {
         let rig = try SecurityRig()
-        let model = CertificatesModel(trust: SignatureTrust(directory: TempDir(self).url), transport: { DownServer() },
-                                      importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
+        let model = made(TempDir(self), importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
         rig.attach(model)
 
         XCTAssertEqual(model.certificateNote, "The keychain has no certificate with a private key for you. Use a .p12 file.")
@@ -188,8 +404,7 @@ final class CertificatesModelTests: XCTestCase {
         let rig = try SecurityRig()
         let folder = TempDir(self)
         SignatureTrust(directory: folder.url).setTimestampUrl("https://tsa.example/stamp")
-        let model = CertificatesModel(trust: SignatureTrust(directory: folder.url), transport: { DownServer() },
-                                      importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
+        let model = made(folder, importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
 
         rig.attach(model)
 
@@ -198,8 +413,7 @@ final class CertificatesModelTests: XCTestCase {
 
     func test_theTimeStampServerStartsWithTheSuggestedAddress() async throws {
         let rig = try SecurityRig()
-        let model = CertificatesModel(trust: SignatureTrust(directory: TempDir(self).url), transport: { DownServer() },
-                                      importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
+        let model = made(TempDir(self), importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
 
         rig.attach(model)
 

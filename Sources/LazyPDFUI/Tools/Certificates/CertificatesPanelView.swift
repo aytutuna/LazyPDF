@@ -23,6 +23,7 @@ struct CertificatesPanelView: View {
             }
             if model.useKeychain { keychain } else { file }
             placeSection
+            if model.showsLook { lookSection }
             LabelledField(L10n.t("Reason")) {
                 TextField(L10n.t("Reason"), text: $model.reason)
                     .textFieldStyle(.roundedBorder)
@@ -36,6 +37,18 @@ struct CertificatesPanelView: View {
             if model.isSigned { existing }
         }
         .disabled(model.working)
+        .sheet(isPresented: $model.showMaker) {
+            ScrollView {
+                SignatureMakerView(maker: model.maker, use: { model.useMade() }, cancel: { model.cancelMaker() },
+                                   choosePicture: { await model.chooseMakerPicture() })
+            }
+            #if os(macOS)
+            .frame(minWidth: 380, minHeight: 520)
+            #endif
+            #if os(iOS)
+            .presentationDetents([.medium, .large])
+            #endif
+        }
     }
 
     private var keychain: some View {
@@ -85,6 +98,33 @@ struct CertificatesPanelView: View {
                         .frame(minHeight: 44)
                 }
                 ReasonText(model.boxText).accessibilityAddTraits(.updatesFrequently)
+            }
+        }
+    }
+
+    private var lookSection: some View {
+        LabelledField(L10n.t("Look of the signature")) {
+            Picker(L10n.t("Look of the signature"), selection: $model.lookIndex) {
+                ForEach(Array(CertificatesModel.lookChoices.enumerated()), id: \.offset) { Text($0.element.text).tag($0.offset) }
+            }
+            .labelsHidden()
+            if model.needsPicture { pictures }
+        }
+    }
+
+    private var pictures: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if model.rows.isEmpty {
+                ReasonText(L10n.t("No saved signatures yet. Make a new one below."))
+            } else {
+                ForEach(model.rows) { row in
+                    SavedPictureRow(image: row.image, name: row.name, isSelected: model.selected == row.id) { model.select(row) }
+                }
+            }
+            Button {
+                model.makeNew()
+            } label: {
+                Label(L10n.t("Make a new one"), systemImage: "plus").frame(minHeight: 44)
             }
         }
     }
