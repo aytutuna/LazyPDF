@@ -149,6 +149,13 @@ public partial class MainWindow
 
     private void PrintHere_Click(object sender, RoutedEventArgs e) => _vm.PrintHere();
 
+    // A driver that cannot answer leaves the ticket alone; the hint still tells the person to flip on the short edge.
+    private static System.Printing.Duplexing[] OfferedDuplexing(System.Printing.PrintQueue queue, System.Printing.PrintTicket ticket)
+    {
+        try { return [.. queue.GetPrintCapabilities(ticket).DuplexingCapability]; }
+        catch (System.Printing.PrintSystemException) { return []; }
+    }
+
     private async void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
     {
         await tab.Drawing;
@@ -169,7 +176,7 @@ public partial class MainWindow
         // A print queue belongs to the thread that made it, so the worker opens its own from the names.
         string server = dialog.PrintQueue.HostingPrintServer.Name, printer = dialog.PrintQueue.Name;
         var ticket = dialog.PrintTicket;
-        if (layout.Duplex(layout.Booklet && layout.Parity == PrintParity.All && !layout.Reverse ? [.. dialog.PrintQueue.GetPrintCapabilities(ticket).DuplexingCapability] : []) is { } duplex)
+        if (layout.Duplex(layout.Booklet && layout.Parity == PrintParity.All && !layout.Reverse ? OfferedDuplexing(dialog.PrintQueue, ticket) : []) is { } duplex)
             ticket.Duplexing = duplex;
         PagePaginator? paginator = null;
         PrintJob? job = null;
