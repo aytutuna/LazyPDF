@@ -64,6 +64,22 @@ final class RedactBoxEditTests: XCTestCase {
         XCTAssertEqual(bounds(model), [51, 712, 151, 742])
     }
 
+    func test_theArrowsOnThePageMoveTheSelectedBoxButPlaceANewOneWhileDrawing() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        XCTAssertTrue(tool.key(.right, modifiers: []))
+        XCTAssertEqual(bounds(model), [51, 702, 151, 732])
+        XCTAssertTrue(tool.key(.left, modifiers: [.option, .shift]))
+        XCTAssertEqual(bounds(model), [51, 702, 141, 732])
+        XCTAssertEqual(rig.host.statuses.last, "Box resized.")
+        XCTAssertFalse(tool.key(.pageDown, modifiers: []))
+
+        model.setDrawing(true)
+        XCTAssertFalse(tool.key(.right, modifiers: []))
+    }
+
     func test_theResizingStepsMoveTheRightAndBottomEdges() async throws {
         let (model, rig) = try attached()
         _ = try selectedBox(model, rig)
@@ -446,14 +462,16 @@ final class RedactBoxEditTests: XCTestCase {
         XCTAssertNotNil(frame(rig))
     }
 
-    func test_theToolLeavesKeysToTheViewer() async throws {
+    func test_theToolLeavesOtherKeysToTheViewer() async throws {
         let (model, rig) = try attached()
         _ = try selectedBox(model, rig)
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
-        for key in [ViewerKey.left, .right, .up, .down, .escape, .delete] {
+        for key in [ViewerKey.escape, .delete, .pageUp, .space] {
             XCTAssertFalse(tool.key(key, modifiers: []))
         }
+        model.jump(try XCTUnwrap(model.marks.last))
+        XCTAssertFalse(tool.key(.right, modifiers: []))
     }
 
     func test_aHitRowStaysSelectedWhenTheModelTakesItsOwnToolOff() async throws {

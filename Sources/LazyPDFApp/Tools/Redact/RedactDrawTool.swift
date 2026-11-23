@@ -25,6 +25,7 @@ final class RedactDrawTool: PagePointerTool {
     private let viewer: DocumentViewer
     private let boxDrawn: (Int, ViewPoint, ViewPoint) -> Void
     private let boxEdited: (MarkItem, ViewRect, PageGeometry, Bool) -> Bool
+    private let nudge: (BoxMove, Bool) -> Void
     private var page = -1
     private var from = ViewPoint(0, 0)
 
@@ -42,10 +43,12 @@ final class RedactDrawTool: PagePointerTool {
     var drawing = false
 
     init(_ viewer: DocumentViewer, boxDrawn: @escaping (Int, ViewPoint, ViewPoint) -> Void,
-         boxEdited: @escaping (MarkItem, ViewRect, PageGeometry, Bool) -> Bool) {
+         boxEdited: @escaping (MarkItem, ViewRect, PageGeometry, Bool) -> Bool,
+         nudge: @escaping (BoxMove, Bool) -> Void) {
         self.viewer = viewer
         self.boxDrawn = boxDrawn
         self.boxEdited = boxEdited
+        self.nudge = nudge
     }
 
     var cursor: PointerCursor? { drawing ? .crosshair : nil }
@@ -82,6 +85,23 @@ final class RedactDrawTool: PagePointerTool {
             }
         }
         return best ?? (frame.contains(pointer.point) ? .body : nil)
+    }
+
+    // The arrows move the selected box, as they do on its frame on Windows; Option resizes and Shift takes 10 points. While
+    // boxes are being drawn they stay with the viewer, which places a new box with them.
+    func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
+        guard item != nil, !drawing, handle == nil, page < 0 else { return false }
+        let resize = modifiers.contains(.option)
+        let move: BoxMove
+        switch key {
+        case .left: move = resize ? .narrower : .left
+        case .right: move = resize ? .wider : .right
+        case .up: move = resize ? .shorter : .up
+        case .down: move = resize ? .taller : .down
+        default: return false
+        }
+        nudge(move, modifiers.contains(.shift))
+        return true
     }
 
     // A finger that lands anywhere else scrolls the page, and a click goes to the viewer, unless a new box is being drawn.
