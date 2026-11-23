@@ -36,11 +36,17 @@ final class PageTextElement: NSAccessibilityElement {
     }
 
     private var viewer: ViewerModel? { view?.viewer }
-    // A page that is asked about before its text is read is announced again when the text comes.
+    // A page that is asked about before its text is read is read now and announced again when the text comes; the preload
+    // only reaches the first eight pages in view.
     private var map: PageTextMap? {
-        let found = viewer?.textMap(page)
-        if found == nil { asked = true }
-        return found
+        guard let viewer else { return nil }
+        if let found = viewer.textMap(page) { return found }
+        if !asked {
+            asked = true
+            let page = page
+            Task { @MainActor in await viewer.loadPage(page) }
+        }
+        return nil
     }
 
     private static func units(_ range: NSRange) -> Range<Int> {

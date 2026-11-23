@@ -182,6 +182,19 @@ final class PageDocumentViewTests: XCTestCase {
         return group.text
     }
 
+    func test_aPageBeyondThePreloadIsReadWhenAScreenReaderAsksForIt() async throws {
+        let shown = try await open(pages: 12)
+        shown.viewer.zoom = 0.15
+        XCTAssertGreaterThan(shown.viewer.visiblePages.count, 8)
+        let last = try XCTUnwrap(shown.viewer.visiblePages.last)
+        let element = PageTextElement(page: last, view: shown.view)
+        XCTAssertNil(element.accessibilityValue())
+
+        await until { element.accessibilityValue() != nil }
+
+        XCTAssertEqual(element.accessibilityValue() as? String, "Hello from the tests. Page \(last + 1).")
+    }
+
     func test_aPageHoldsOneStaticTextWithItsTextInsideTheGroup() async throws {
         let shown = try await open()
 
