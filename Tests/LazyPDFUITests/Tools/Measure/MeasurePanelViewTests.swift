@@ -2,7 +2,7 @@
 import SwiftUI
 import XCTest
 import LazyPDFKit
-import LazyPDFApp
+@testable import LazyPDFApp
 @testable import LazyPDFUI
 
 // A smoke test of the Measure panel: the view is drawn at the width of the inspector after its model is attached, empty and
