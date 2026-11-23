@@ -307,4 +307,29 @@ public sealed class FillLayerTurnTests
         Assert.IsType<RotateTransform>(Rig.Frame(combo).RenderTransform);
         return Task.CompletedTask;
     });
+
+    private static void RaiseMenu(FrameworkElement control, bool opening)
+    {
+        var args = (ContextMenuEventArgs)Activator.CreateInstance(typeof(ContextMenuEventArgs), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance, null, [control, opening], null)!;
+        args.RoutedEvent = opening ? FrameworkElement.ContextMenuOpeningEvent : FrameworkElement.ContextMenuClosingEvent;
+        control.RaiseEvent(args);
+    }
+
+    [Fact]
+    public Task AFieldStaysTurnedUnderItsOwnMenuAndTurnsBackWhenTheMenuIsGone() => Sta.Run(async () =>
+    {
+        using var rig = new Rig(90);
+        var text = rig.Control("name");
+        var frame = Rig.Frame(text);
+        text.Focus();
+
+        RaiseMenu(text, opening: true);
+        Keyboard.ClearFocus();
+        Assert.IsType<RotateTransform>(frame.RenderTransform);
+
+        RaiseMenu(text, opening: false);
+        await Sta.Until(() => frame.RenderTransform is null || frame.RenderTransform.Value.IsIdentity);
+
+        AssertDropped(text, rig.Box(Name));
+    });
 }

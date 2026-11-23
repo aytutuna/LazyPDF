@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
@@ -151,6 +152,16 @@ internal sealed partial class FillLayer
             slot.Frame.IsKeyboardFocusWithinChanged += (_, e) => Focused(page, host, slots, slot, (bool)e.NewValue);
             if (slot.Turns)
             {
+                // The text box's own menu takes the keyboard into its popup; the field stays turned until the menu is gone.
+                slot.Control!.ContextMenuOpening += (_, _) => slot.MenuOpen = true;
+                slot.Control.ContextMenuClosing += (_, _) =>
+                {
+                    slot.MenuOpen = false;
+                    slot.Frame.Dispatcher.InvokeAsync(() =>
+                    {
+                        if (slot.Turned && !slot.Frame.IsKeyboardFocusWithin) Release(page, host, slots, slot);
+                    }, DispatcherPriority.ApplicationIdle);
+                };
                 // The turn happens when the keyboard arrives, so the press that would have clicked the sideways
                 // control only focuses it; the next click lands on the control as it is then drawn.
                 slot.Frame.PreviewMouseLeftButtonDown += (_, e) =>
@@ -179,9 +190,10 @@ internal sealed partial class FillLayer
         int rotation = _viewer.Rotation;
         if (!within)
         {
-            if (slot.Turned) Release(page, host, slots, slot);
+            if (slot.Turned && !slot.MenuOpen) Release(page, host, slots, slot);
             return;
         }
+        slot.MenuOpen = false;
         if (!slot.Turns || rotation == 0)
         {
             if (Mouse.LeftButton != MouseButtonState.Pressed) _viewer.Reveal(page, slot.Box);
