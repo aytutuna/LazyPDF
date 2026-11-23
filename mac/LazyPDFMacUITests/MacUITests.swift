@@ -225,7 +225,8 @@ final class MacUITests: XCTestCase {
         choose(app, menu: "Tools", item: "Organize")
         app.menuBars.menuItems["Organize pages"].click()
         // The Pages side panel is open beside the grid and has thumbnails of the same name, which do not drag.
-        let page = app.otherElements["Organize pages"].descendants(matching: .any).matching(NSPredicate(format: "label == 'Page 1'")).firstMatch
+        let grid = app.windows.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label == 'Organize pages'"))
+        let page = grid.descendants(matching: .any).matching(NSPredicate(format: "label == 'Page 1'")).firstMatch
         XCTAssertTrue(page.waitForExistence(timeout: 30))
 
         page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.5, thenDragTo: linksTab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)), withVelocity: .slow, thenHoldForDuration: 0.4)
