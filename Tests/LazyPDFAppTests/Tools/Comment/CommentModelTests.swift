@@ -776,6 +776,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(corners[1].y, 100, accuracy: 0.5)
         await waitUntil { rig.model.pickedPoint == 1 }
         XCTAssertEqual(rig.model.editTool?.pickedVertex, 1)
+        XCTAssertEqual(rig.host.statuses.last, "Point 2 picked")
     }
 
     func test_addPointGoesAfterThePickedCorner() async throws {
@@ -791,11 +792,20 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(corners[3].y, 300, accuracy: 0.5)
     }
 
-    func test_removePointTakesThePickedCornerAndNothingWhenNoneIsPicked() async throws {
+    func test_removePointWithNoneIsPickedTakesTheLastCorner() async throws {
         let rig = try shapeRig(square)
 
         rig.model.removePickedPoint()
-        XCTAssertEqual(marks(rig)[0].vertices.count, 8)
+
+        XCTAssertEqual(rig.tab.session.undoLabel, "Remove point")
+        let corners = try XCTUnwrap(rig.f.marker.pointsOf(marks(rig)[0]))
+        XCTAssertEqual(corners.count, 3)
+        XCTAssertEqual(corners[2].x, 300, accuracy: 0.5)
+        XCTAssertEqual(corners[2].y, 300, accuracy: 0.5)
+    }
+
+    func test_removePointTakesThePickedCorner() async throws {
+        let rig = try shapeRig(square)
         click(rig, markPt(300, 300))
         rig.model.removePickedPoint()
 

@@ -195,7 +195,7 @@ struct CommentPanelView: View {
                 Label(L10n.t("Remove point"), systemImage: "minus.circle").frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.bordered)
-            .disabled(!model.canChange || !selected.canRemovePoint || model.pickedPoint < 0)
+            .disabled(!model.canChange || !selected.canRemovePoint)
             .accessibilityLabel(L10n.t("Remove point"))
         }
     }

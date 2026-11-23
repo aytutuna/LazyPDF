@@ -81,7 +81,10 @@ final class EditTool: PagePointerTool {
         redraw()
         // A look change that settles late must not cost the person their pick.
         if current == nil || points?.count != count { clearPick() }
-        if wanted >= 0, let points, wanted < points.count { pick(wanted) }
+        if wanted >= 0, let points, wanted < points.count {
+            pick(wanted)
+            vertexPicked?(wanted)
+        }
         wanted = -1
         if current == nil { selectionChanged?() }
     }
