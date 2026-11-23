@@ -54,12 +54,11 @@ struct TabStrip: View {
 
     @ViewBuilder private func item(_ tab: any StripTab) -> some View {
         let document = tab as? DocumentTab
-        let base = TabItem(tab: tab, selected: vm.activeTab === tab, select: { vm.select(tab) }, close: {
+        let item = TabItem(tab: tab, selected: vm.activeTab === tab, select: { vm.select(tab) }, close: {
             if let document { close(document) }
         }, moves: moves(for: tab))
-        .reportsTabFrame(of: document, in: Self.space)
-        .tabDropTarget(dragging, index: { vm.strip.firstIndex { $0 === tab } ?? vm.strip.count - 1 }, fallback: move)
-        .pageDropTarget(vm, document.map { PageDropPlace.tab($0) } ?? .home)
+            .reportsTabFrame(of: document, in: Self.space)
+        let base = placeTab(item, tab, document)
         // The Mac's own drag starts from behind the strip; a String drag would also leave the app as text.
         if let document, dragging == nil {
             base.draggable(document.id.uuidString)
@@ -78,6 +77,18 @@ struct TabStrip: View {
                 TabMoves.Entry(id: target.id, name: target.name, move: { target.move(document) })
             }
         })
+    }
+
+    // The tab id and the page drops share one onDrop on the iPhone and iPad: a dropDestination next to it keeps the page drag from
+    // reaching its delegate (checked in an iPad Simulator).
+    private func placeTab(_ view: some View, _ tab: any StripTab, _ document: DocumentTab?) -> some View {
+        let index = { vm.strip.firstIndex { $0 === tab } ?? vm.strip.count - 1 }
+        let place = document.map { PageDropPlace.tab($0) } ?? .home
+        #if os(macOS)
+        return view.tabDropTarget(dragging, index: index, fallback: move).pageDropTarget(vm, place)
+        #else
+        return view.pageDropTarget(vm, place, moveTab: { id in move([id], to: index()) })
+        #endif
     }
 
     private func move(_ ids: [String], to index: Int) -> Bool {
