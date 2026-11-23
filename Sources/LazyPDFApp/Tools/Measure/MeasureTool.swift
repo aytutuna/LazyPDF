@@ -143,10 +143,12 @@ final class MeasureTool: PagePointerTool {
         page = -1
         added = false
         changed?()
-        if calibrate {
-            calibrated?(item.page, MeasureShape.distance(item.points[0], item.points[1]))
-        } else {
+        if !calibrate {
             finished?(item)
+        } else {
+            // Two clicks on one spot say nothing about a length; the user draws the line again.
+            let length = MeasureShape.distance(item.points[0], item.points[1])
+            if length > 0.01 { calibrated?(item.page, length) }
         }
     }
 

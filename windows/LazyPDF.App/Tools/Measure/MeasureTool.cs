@@ -111,8 +111,9 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         _points.Clear();
         Page = -1;
         Changed?.Invoke(this, EventArgs.Empty);
-        if (Calibrate) Calibrated?.Invoke(page, (item.Points[1] - item.Points[0]).Length);
-        else Finished?.Invoke(item);
+        if (!Calibrate) Finished?.Invoke(item);
+        // Two clicks on one spot say nothing about a length; the user draws the line again.
+        else if ((item.Points[1] - item.Points[0]).Length > 0.01) Calibrated?.Invoke(page, (item.Points[1] - item.Points[0]).Length);
     }
 
     /// <summary>Drops the snap points, which belong to the file as it was.</summary>

@@ -80,6 +80,22 @@ public sealed class MeasureToolTests
     }
 
     [Fact]
+    public void CalibrateModeIgnoresTwoClicksOnOneSpot()
+    {
+        var (tool, done, _) = Start(MeasureKind.Distance);
+        var reported = 0;
+        tool.Calibrated += (_, _) => reported++;
+        tool.Calibrate = true;
+
+        tool.Press(At(10, 10));
+        tool.Press(At(10, 10));
+
+        Assert.Equal(0, reported);
+        Assert.Empty(done);
+        Assert.Empty(tool.Points);
+    }
+
+    [Fact]
     public void ACalibratedLineSetsWhatLaterDistancesRead()
     {
         var scale = MeasureScale.From(72, 1, LengthUnit.Inch, LengthUnit.Inch);

@@ -329,4 +329,18 @@ final class MeasureToolTests: XCTestCase {
         XCTAssertEqual(told[0].1, 50, accuracy: 0.0001)
         XCTAssertTrue(tool.points.isEmpty)
     }
+
+    func test_inCalibrateModeTwoClicksOnOneSpotReportNothing() async throws {
+        let (tool, done, _) = try await start(.distance)
+        var told = 0
+        tool.calibrate = true
+        tool.calibrated = { _, _ in told += 1 }
+
+        tool.press(at(10, 10))
+        tool.press(at(10, 10))
+
+        XCTAssertEqual(told, 0)
+        XCTAssertTrue(done.items.isEmpty)
+        XCTAssertTrue(tool.points.isEmpty)
+    }
 }
