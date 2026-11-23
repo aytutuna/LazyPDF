@@ -220,6 +220,55 @@ final class RedactBoxEditTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "The marks changed since. Use Undo in the list.")
     }
 
+    func test_putItBackSaysSoWhenTheFileChangeLeftNothingToUndo() async throws {
+        let (model, rig) = try attached()
+        let box = try selectedBox(model, rig)
+
+        model.remove(box)
+        let back = try XCTUnwrap(rig.host.lastNoticeAction)
+        PageOperations.rotate(rig.tab.document, [0], 90)
+        try rig.tab.commit("Rotate")
+        await waitUntil { !model.canUndo }
+        back.run()
+
+        XCTAssertTrue(model.marks.isEmpty)
+        XCTAssertEqual(rig.host.statuses.last, "The marks changed since.")
+    }
+
+    func test_putItBackOnMovedPagesSaysThePagesChangedNotToUseUndo() async throws {
+        let (model, rig) = try attached()
+        let box = try selectedBox(model, rig)
+        model.nudge(.right)
+
+        model.remove(model.marks[0])
+        let back = try XCTUnwrap(rig.host.lastNoticeAction)
+        try PageOperations.reorder(rig.tab.document, [1, 0])
+        try rig.tab.commit("Move")
+        await waitUntil { !model.canUndo }
+        back.run()
+
+        XCTAssertNotEqual(model.marks.first?.id, box.id)
+        XCTAssertEqual(rig.host.notices.last?.title, "Marks removed")
+    }
+
+    func test_aHitRemovedBeforeAFileChangeIsNotBlamedOnThePages() async throws {
+        let state = TabToolState()
+        let rig = try SecurityRig(Pdfs.text(2, Self.line))
+        let model = RedactModel(fonts: FakeFonts(), images: FakeCodec(), state: state)
+        rig.attach(model)
+        let marks = try XCTUnwrap(state.redact[rig.tab]).marks
+        marks.add([MarkItem(RedactionMark.fromRect(0, PdfRect(400, 100, 420, 120)), "hit", value: RedactionValueMatch(0, 2, .comment, 0, 3, "abc", .word))])
+
+        model.remove(model.marks[0])
+        let back = try XCTUnwrap(rig.host.lastNoticeAction)
+        PageOperations.rotate(rig.tab.document, [0], 90)
+        try rig.tab.commit("Rotate")
+        back.run()
+
+        XCTAssertEqual(rig.host.notices.last?.title, "Hits removed")
+        XCTAssertTrue(model.marks.isEmpty)
+    }
+
     // MARK: The tool
 
     private func frame(_ rig: SecurityRig) -> ViewRect? {

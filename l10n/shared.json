@@ -6696,6 +6696,9 @@
   "The marks changed since. Use Undo in the list.": {
     "tr": "İşaretler o zamandan beri değişti. Listedeki Geri al düğmesini kullanın."
   },
+  "The marks changed since.": {
+    "tr": "İşaretler o zamandan beri değişti."
+  },
   "Marks removed": {
     "tr": "İşaretler kaldırıldı"
   },

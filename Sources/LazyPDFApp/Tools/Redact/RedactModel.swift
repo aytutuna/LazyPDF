@@ -379,15 +379,20 @@ public final class RedactModel: ToolPanelModel {
     // show one row twice. It only acts while the list is as the removal left it, as on Windows.
     // Marks are placed on pages, so they only fit while the page list is what it was when they were removed. Hits in comments and fields also hang on text, which any edit may have changed.
     private func putBack(_ items: [MarkItem], in state: State, pages: [Int]?, revision: Int?, after: [UUID]) {
-        if state.marks.items.map(\.id) != after {
-            host?.setStatus(L10n.t("The marks changed since. Use Undo in the list."))
+        if Self.pageNumbers(state) != pages {
+            host?.showNotice(L10n.t("Marks removed"), L10n.t("The pages changed, so the marks no longer fit. Mark them again."), nil)
+            return
+        }
+        // A file change forgets the history, so there may be nothing to undo and no Undo button to point to.
+        if state.marks.items.map(\.id) != after || !state.marks.canUndo {
+            host?.setStatus(state.marks.canUndo ? L10n.t("The marks changed since. Use Undo in the list.") : L10n.t("The marks changed since."))
             return
         }
         let fits = state.tab?.revision == revision ? items : items.filter { $0.value == nil }
-        if Self.pageNumbers(state) == pages, !fits.isEmpty {
-            state.marks.add(fits)
+        if fits.isEmpty {
+            host?.showNotice(L10n.t("Hits removed"), L10n.t("The file changed, so the hits in comments and fields no longer fit. Search again."), nil)
         } else {
-            host?.showNotice(L10n.t("Marks removed"), L10n.t("The pages changed, so the marks no longer fit. Mark them again."), nil)
+            state.marks.add(fits)
         }
     }
 

@@ -7054,6 +7054,9 @@
   <data name="The margins leave nothing of the page. Type smaller numbers." xml:space="preserve">
     <value>Paylar sayfadan hiçbir şey bırakmıyor. Daha küçük sayılar yazın.</value>
   </data>
+  <data name="The marks changed since." xml:space="preserve">
+    <value>İşaretler o zamandan beri değişti.</value>
+  </data>
   <data name="The marks changed since. Use Undo in the list." xml:space="preserve">
     <value>İşaretler o zamandan beri değişti. Listedeki Geri al düğmesini kullanın.</value>
   </data>
