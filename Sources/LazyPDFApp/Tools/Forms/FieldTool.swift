@@ -41,12 +41,17 @@ final class FieldTool: PagePointerTool {
         return true
     }
 
+    func handleUnder(_ pointer: PagePointer) -> Bool {
+        guard let model else { return false }
+        return handleAt(model, pointer.page, pointer.point) != nil
+    }
+
     func press(_ pointer: PagePointer) {
         guard let model, !model.isWorking else { return }
         model.commitCard()
         page = pointer.page
         start = pointer.point
-        if let selected = model.selectedBox(), selected.page == page, let found = handleAt(model, page, start) {
+        if let found = handleAt(model, page, start), let selected = model.selectedBox() {
             begin(.size, selected.box)
             handle = found
         } else if let hit = model.widgetAt(page, start, near: model.newKind == nil) {
@@ -107,7 +112,7 @@ final class FieldTool: PagePointerTool {
 
     // The handles of a small field would swallow the field itself, so their reach is a third of its smaller side at most.
     private func handleAt(_ model: FormsModel, _ page: Int, _ point: ViewPoint) -> Int? {
-        guard let selected = model.selectedBox(), selected.page == page else { return nil }
+        guard !model.isWorking, let selected = model.selectedBox(), selected.page == page else { return nil }
         let slop = model.slop(page)
         let reach = min(slop, max(7 / model.scale(page), min(selected.box.width, selected.box.height) / 3))
         return FieldFrames.handles(selected.box).firstIndex { abs($0.x - point.x) <= reach && abs($0.y - point.y) <= reach }

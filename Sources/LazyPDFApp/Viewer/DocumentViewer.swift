@@ -73,7 +73,7 @@ public enum PointerCursor: Sendable {
 }
 
 /// A tool that takes the pointer from the viewer: a press, moves with `pressed` set for the same page, then a release, which
-/// always arrives. Moves with nothing pressed arrive for the page under a mouse pointer; a finger gives none. Secondary
+/// always arrives, and so does a press just off a page that lands on a handle the tool reports. Moves with nothing pressed arrive for the page under a mouse pointer; a finger gives none. Secondary
 /// clicks and scrolling stay with the viewer, and so does the keyboard except for the keys `key` takes.
 @MainActor
 public protocol PagePointerTool: AnyObject {
@@ -88,6 +88,11 @@ public protocol PagePointerTool: AnyObject {
     /// A key the tool uses (Delete, Escape): true if it was taken, else the viewer gets it.
     func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool
 
+    /// Whether a handle the tool already holds, such as a corner of the selection, is under the point. The viewer asks it of a
+    /// press just off a page and delivers the press only when it is true. It must change nothing and agree with `press`: when
+    /// it is true the press takes the handle.
+    func handleUnder(_ pointer: PagePointer) -> Bool
+
     func press(_ pointer: PagePointer)
     func move(_ pointer: PagePointer)
     func release(_ pointer: PagePointer)
@@ -98,6 +103,8 @@ public protocol PagePointerTool: AnyObject {
 
 extension PagePointerTool {
     public func takes(_ pointer: PagePointer) -> Bool { true }
+
+    public func handleUnder(_ pointer: PagePointer) -> Bool { false }
 
     public func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool { false }
 }

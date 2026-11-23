@@ -68,7 +68,7 @@ final class EditTool: PagePointerTool {
     // A finger that lands anywhere else scrolls the page.
     func takes(_ pointer: PagePointer) -> Bool {
         if !pointer.touch { return true }
-        if let selected = current, selected.pageIndex == pointer.page, handleAt(frame, pointer.point, pointer.page) != nil { return true }
+        if handleGrabbed(pointer) != nil { return true }
         return markAt(pointer.page, pointer.point, touch: true) != nil
     }
 
@@ -86,10 +86,17 @@ final class EditTool: PagePointerTool {
         }
     }
 
+    func handleUnder(_ pointer: PagePointer) -> Bool { handleGrabbed(pointer) != nil }
+
+    private func handleGrabbed(_ pointer: PagePointer) -> Int? {
+        guard let selected = current, selected.pageIndex == pointer.page else { return nil }
+        return handleAt(frame, pointer.point, pointer.page)
+    }
+
     func press(_ pointer: PagePointer) {
         handle = -1
         moving = false
-        if let selected = current, selected.pageIndex == pointer.page, let grabbed = handleAt(frame, pointer.point, pointer.page) {
+        if let grabbed = handleGrabbed(pointer) {
             handle = grabbed
             begin(pointer.point)
             return
