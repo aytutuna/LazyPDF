@@ -332,6 +332,14 @@ public struct PageSurfaceState {
         return (page, PageSpace.toPage(contentMatrix(page)).transform(content))
     }
 
+    /// The pages within `reach` view points of a point of the surface, with the point in each one's space; for a press just
+    /// off a page.
+    public func hitsNear(_ surfacePoint: ViewPoint, reach: Double) -> [(page: Int, point: ViewPoint)] {
+        let content = ViewPoint(surfacePoint.x + offsetX, surfacePoint.y + offsetY)
+        let area = ViewRect(content.x - reach, content.y - reach, 2 * reach, 2 * reach)
+        return layout.pagesIn(area).map { ($0, PageSpace.toPage(contentMatrix($0)).transform(content)) }
+    }
+
 
     /// Scrolls to a page. With `at` (page space) that point comes to the top of the view, whatever the rotation.
     public mutating func goToPage(_ page: Int, at: ViewPoint? = nil) -> SurfaceChange {
