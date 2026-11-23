@@ -18,6 +18,11 @@ internal static class PageTransferMenu
             // A single underscore in a header would be taken for an access key.
             var item = new MenuItem { Header = other.Title.Replace("_", "__") };
             AutomationProperties.SetName(item, Loc.T("Copy {0} to {1}", pages, other.Title));
+            if (other.Path is { } path && host.OpenDocuments.Count(d => d.Title == other.Title) > 1)
+            {
+                AutomationProperties.SetHelpText(item, path);
+                item.ToolTip = path;
+            }
             item.Click += async (_, _) =>
             {
                 if (selected() is { Count: > 0 } picked) await PageTransfer.CopyAsync(new PagePayload(tab, [.. picked], tab.Revision), other, host);

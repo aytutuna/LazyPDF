@@ -276,10 +276,18 @@ public sealed partial class OrganizeView : ToolPanel
 
     private void CopyTo_Click(object sender, RoutedEventArgs e)
     {
-        if (Tab is not { } tab || Host is not { } host || !PageTransferMenu.Fill(CopyToMenu.Items, host, tab, Selected)) return;
+        if (Tab is not { } tab || Host is not { } host) return;
+        if (!PageTransferMenu.Fill(CopyToMenu.Items, host, tab, Selected))
+        {
+            CopyTo.IsEnabled = false;
+            host.SetStatus(Loc.T("No other file is open."));
+            return;
+        }
         CopyToMenu.PlacementTarget = CopyTo;
         CopyToMenu.IsOpen = true;
     }
+
+    private void CopyTo_ContextMenuOpening(object sender, ContextMenuEventArgs e) => e.Handled = true;
 
     private void Done_Click(object sender, RoutedEventArgs e) => Closed?.Invoke(this, EventArgs.Empty);
 }

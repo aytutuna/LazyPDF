@@ -26,7 +26,7 @@
                 <Button x:Name="Extract" Style="{StaticResource IconButtonStyle}" Content="&#xE8A7;"
                         ToolTip="{loc:T Extract to a new file}" AutomationProperties.Name="{loc:T Extract to a new file}" Click="Extract_Click" />
                 <Button x:Name="CopyTo" Style="{StaticResource IconButtonStyle}" Content="&#xE8AB;"
-                        ToolTip="{loc:T Copy to tab}" AutomationProperties.Name="{loc:T Copy to tab}" Click="CopyTo_Click">
+                        ToolTip="{loc:T Copy to tab}" AutomationProperties.Name="{loc:T Copy to tab}" Click="CopyTo_Click" ContextMenuOpening="CopyTo_ContextMenuOpening">
                     <Button.ContextMenu>
                         <ContextMenu x:Name="CopyToMenu" />
                     </Button.ContextMenu>

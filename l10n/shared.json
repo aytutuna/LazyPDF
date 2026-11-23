@@ -9472,6 +9472,9 @@
   "{0} cannot be changed": {
     "tr": "{0} değiştirilemez"
   },
+  "No other file is open.": {
+    "tr": "Başka açık dosya yok."
+  },
   "Copy to tab": {
     "tr": "Sekmeye kopyala"
   },
