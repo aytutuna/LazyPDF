@@ -405,12 +405,15 @@ final class MacShell {
 
     private func openTestFile() {
         let arguments = ProcessInfo.processInfo.arguments
+        // One call, or the files open as separate jobs in no fixed order.
+        var urls: [URL] = []
         for suffix in ["", "2"] {
             guard let name = Self.argument("-LazyPDFTestFile" + suffix, in: arguments),
                   let text = Self.argument("-LazyPDFTestData" + suffix, in: arguments), let data = Data(base64Encoded: text) else { return }
             let url = FileManager.default.temporaryDirectory.appendingPathComponent(URL(fileURLWithPath: name).lastPathComponent)
-            if (try? data.write(to: url)) != nil { open([url]) }
+            if (try? data.write(to: url)) != nil { urls.append(url) }
         }
+        if !urls.isEmpty { open(urls) }
     }
     #endif
 }

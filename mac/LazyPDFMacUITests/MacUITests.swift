@@ -20,6 +20,9 @@ final class MacUITests: XCTestCase {
             app.launchArguments += ["-LazyPDFTestFile2", "links-5.pdf", "-LazyPDFTestData2", data.base64EncodedString()]
         }
         app.launch()
+        // A run that left a file unsaved makes the next launch ask to restore it, and the window waits for the answer.
+        let discard = app.buttons["Discard"].firstMatch
+        if discard.waitForExistence(timeout: 3) { discard.click() }
         return app
     }
 
@@ -219,15 +222,23 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(linksTab(app).waitForExistence(timeout: 30))
         XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
         tab(app).click()
-        app.descendants(matching: .any)["Organize"].firstMatch.click()
-        app.menuItems["Organize pages"].firstMatch.click()
-        let page = app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Page 1'")).firstMatch
+        choose(app, menu: "Tools", item: "Organize")
+        app.menuBars.menuItems["Organize pages"].click()
+        // The Pages side panel is open beside the grid and has thumbnails of the same name, which do not drag.
+        let page = app.otherElements["Organize pages"].descendants(matching: .any).matching(NSPredicate(format: "label == 'Page 1'")).firstMatch
         XCTAssertTrue(page.waitForExistence(timeout: 30))
 
         page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.5, thenDragTo: linksTab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)), withVelocity: .slow, thenHoldForDuration: 0.4)
 
         let status = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Copied 1 page to' OR value BEGINSWITH 'Copied 1 page to'")).firstMatch
         XCTAssertTrue(status.waitForExistence(timeout: 20))
+
+        // The copy leaves the file unsaved; close it without saving so the next launch has nothing to restore.
+        let close = app.scrollViews["Open files"].buttons.matching(NSPredicate(format: "label == 'Close'")).allElementsBoundByIndex
+            .min { abs($0.frame.midX - linksTab(app).frame.maxX) < abs($1.frame.midX - linksTab(app).frame.maxX) }
+        close?.click()
+        let dontSave = app.buttons["Don't save"].firstMatch
+        if dontSave.waitForExistence(timeout: 5) { dontSave.click() }
     }
 
     // The drag of a tab is watched from behind the strip, so a plain press must still reach the tab and its close button.
