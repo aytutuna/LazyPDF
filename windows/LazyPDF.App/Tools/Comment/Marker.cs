@@ -393,7 +393,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     }
 
     /// <summary>A polygon keeps three corners at least.</summary>
-    public bool CanRemovePoint(PdfAnnotation a, int index) => PlainPolygon(a) && index >= 0 && index < a.Vertices.Count / 2 && a.Vertices.Count > 6;
+    public bool CanRemovePoint(PdfAnnotation a, int index) => PlainPolygon(a) && index >= 0 && index < a.Vertices.Count / 2 && a.Vertices.Count / 2 > 3;
 
     public PdfAnnotation RemovePoint(PdfAnnotation a, int index)
     {

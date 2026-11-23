@@ -815,6 +815,18 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void APolygonWithAStrayNumberStillKeepsThreeCorners()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300)], Red);
+        shape.Dictionary["Vertices"] = new PdfArray([.. shape.Vertices.Append(5).Select(v => (PdfObject)new PdfNumber(v))]);
+        shape = Again(f, shape);
+
+        Assert.Equal(7, shape.Vertices.Count);
+        Assert.False(f.Marker.CanRemovePoint(shape, 0));
+    }
+
+    [Fact]
     public void ASideIsFoundByAPointOnItIncludingTheClosingOne()
     {
         using var f = new CommentFixture();
