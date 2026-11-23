@@ -71,6 +71,19 @@ final class PageAccessibilityTests: XCTestCase {
         XCTAssertEqual(loaded, [1])
         XCTAssertNotNil(viewer.pageText(1))
     }
+
+    func test_aPageThatWasAlreadyReadIsNotToldAgain() async throws {
+        let (viewer, _) = try open()
+        var loaded: [Int] = []
+        viewer.onPageLoaded = { loaded.append($0) }
+
+        await viewer.loadPage(1)
+        await viewer.loadPage(1)
+        _ = await viewer.text(1)
+        await viewer.loadPage(0)
+
+        XCTAssertEqual(loaded, [1, 0])
+    }
 }
 
 @MainActor

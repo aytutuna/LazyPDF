@@ -70,11 +70,13 @@ extension ViewerModel {
     public func loadPage(_ page: Int) async {
         guard await text(page) != nil else { return }
         onRedraw?()
-        onPageLoaded?(page)
     }
 
     public func text(_ page: Int) async -> TextPage? {
-        await textSource().value?.get(page)
+        let known = source?.peek(page) != nil
+        let found = await textSource().value?.get(page)
+        if found != nil && !known { onPageLoaded?(page) }
+        return found
     }
 
     public func drawing(_ page: Int) async -> [DrawnEdge] {

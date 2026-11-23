@@ -27,6 +27,7 @@ final class PageTextElement: NSAccessibilityElement {
     private weak var view: PageDocumentView?
     private let page: Int
     private var reported = NSRange(location: NSNotFound, length: 0)
+    private var asked = false
 
     init(page: Int, view: PageDocumentView) {
         self.page = page
@@ -35,7 +36,12 @@ final class PageTextElement: NSAccessibilityElement {
     }
 
     private var viewer: ViewerModel? { view?.viewer }
-    private var map: PageTextMap? { viewer?.textMap(page) }
+    // A page that is asked about before its text is read is announced again when the text comes.
+    private var map: PageTextMap? {
+        let found = viewer?.textMap(page)
+        if found == nil { asked = true }
+        return found
+    }
 
     private static func units(_ range: NSRange) -> Range<Int> {
         guard range.location != NSNotFound, range.location >= 0 else { return 0..<0 }
@@ -65,7 +71,7 @@ final class PageTextElement: NSAccessibilityElement {
         return Self.range(from..<Swift.max(map.units(ofLine: lines.upperBound).upperBound, from))
     }
 
-    // Nothing selected on the page has no place; the caret is not kept apart from the selection.
+    // Nothing selected on the page and no caret put there by VoiceOver has no place.
     override func accessibilitySelectedTextRange() -> NSRange {
         guard let map, let chars = viewer?.selectedChars(on: page) else { return NSRange(location: NSNotFound, length: 0) }
         return Self.range(map.units(of: chars))
@@ -124,6 +130,8 @@ final class PageTextElement: NSAccessibilityElement {
     }
 
     func textLoaded() {
+        guard asked else { return }
+        asked = false
         NSAccessibility.post(element: self, notification: .valueChanged)
     }
 }
