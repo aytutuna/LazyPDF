@@ -255,8 +255,54 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertThrowsError(try PrintLayout(parity: .even, range: "1").file(source, sheetWidth: 612, sheetHeight: 792))
     }
 
+    func test_aCancelWhileTheJobRunsReturnsOnlyAfterTheJobHasEnded() async throws {
+        let token = CancelToken()
+        let ended = Flag()
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            token.cancel()
+        }
+
+        do {
+            _ = try await PrintLayout.inBackground(token: token) { () -> Int in
+                defer { Thread.sleep(forTimeInterval: 0.1); ended.set() }
+                while true {
+                    try Task.checkCancellation()
+                    Thread.sleep(forTimeInterval: 0.01)
+                }
+            }
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+
+        XCTAssertTrue(ended.isSet)
+    }
+
+    func test_aJobThatEndsBeforeTheCancelStillGivesItsResultOrTheCancel() async throws {
+        let value = try await PrintLayout.inBackground(token: CancelToken()) { 7 }
+
+        XCTAssertEqual(value, 7)
+    }
+
     func test_aNoteIsGivenOnlyForWhatWasLeftOff() {
         XCTAssertNil(PrintLayout.droppedNote(0))
         XCTAssertEqual(PrintLayout.droppedNote(1), "1 link or note without a picture was left off the sheets.")
+    }
+}
+
+private final class Flag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+
+    var isSet: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    func set() {
+        lock.lock()
+        value = true
+        lock.unlock()
     }
 }

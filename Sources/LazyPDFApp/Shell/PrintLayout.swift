@@ -154,47 +154,33 @@ public struct PrintLayout: Equatable, Sendable {
         return PrintSheets(bytes: try part.saveRewrite(), count: chosen.count, dropped: 0)
     }
 
-    /// `file` off the calling thread. A cancel of `token` ends the wait with `CancellationError` at once; the engine
-    /// cannot be stopped half way, so the job runs on and its result is dropped.
+    /// `file` off the calling thread. A cancel of `token` cancels the job, which stops between pages, and the call
+    /// returns only after the job has ended, so the busy bar does not go while the engine still reads `source`.
     public func fileInBackground(_ source: PdfDocument, sheetWidth: Double, sheetHeight: Double, token: CancelToken) async throws -> PrintSheets {
-        try token.throwIfCancelled()
         let layout = self
-        let first = FirstResult()
-        return try await withCheckedThrowingContinuation { continuation in
-            Task.detached {
-                let result = Result { try layout.file(source, sheetWidth: sheetWidth, sheetHeight: sheetHeight) }
-                if first.claim() { continuation.resume(with: result) }
+        return try await Self.inBackground(token: token) { try layout.file(source, sheetWidth: sheetWidth, sheetHeight: sheetHeight) }
+    }
+
+    static func inBackground<T: Sendable>(token: CancelToken, _ work: @escaping @Sendable () throws -> T) async throws -> T {
+        try token.throwIfCancelled()
+        let job = Task.detached { try work() }
+        let watcher = Task.detached {
+            while !token.isCancelled {
+                try? await Task.sleep(nanoseconds: 50_000_000)
+                if Task.isCancelled { return }
             }
-            Task.detached {
-                while !token.isCancelled && !first.isClaimed { try? await Task.sleep(nanoseconds: 50_000_000) }
-                if token.isCancelled && first.claim() { continuation.resume(throwing: CancellationError()) }
-            }
+            job.cancel()
         }
+        let result = await job.result
+        watcher.cancel()
+        try token.throwIfCancelled()
+        return try result.get()
     }
 
     /// The note for the annotations a layout could not place, or nil when none was left out.
     public static func droppedNote(_ dropped: Int) -> String? {
         dropped == 0 ? nil : L10n.plural(dropped, one: "{0} link or note without a picture was left off the sheets.",
                                          other: "{0} links and notes without a picture were left off the sheets.")
-    }
-}
-
-private final class FirstResult: @unchecked Sendable {
-    private let lock = NSLock()
-    private var claimed = false
-
-    var isClaimed: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return claimed
-    }
-
-    func claim() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        if claimed { return false }
-        claimed = true
-        return true
     }
 }
 
