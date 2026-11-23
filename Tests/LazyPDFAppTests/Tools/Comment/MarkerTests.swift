@@ -414,6 +414,34 @@ final class MarkerTests: XCTestCase {
         }
     }
 
+    func test_aForeignOrMeasuredMarkIsNotResizedByItsBox() async throws {
+        let f = try CommentFixture()
+        let line = try f.marker.add(.line, 0, drag, markRed)
+        line.dictionary["LL"] = PdfNumber(10)
+        let foreign = try XCTUnwrap(f.marks().first)
+        let before = try f.document.data(try XCTUnwrap(f.document.stream(f.document.dict(foreign.dictionary, "AP"), "N")))
+        let box = f.marker.box(of: foreign)
+
+        let same = try f.marker.resize(foreign, ViewRect(box.x, box.y, box.width * 2, box.height * 2))
+
+        XCTAssertEqual(same.rect, foreign.rect)
+        let after = try f.document.data(try XCTUnwrap(f.document.stream(f.document.dict(same.dictionary, "AP"), "N")))
+        XCTAssertEqual(before, after)
+
+        let g = try CommentFixture()
+        let made = try g.marker.add(.line, 0, drag, markRed)
+        made.dictionary["Measure"] = PdfDictionary()
+        made.dictionary["Contents"] = PdfString(bytes: Array("3 m".utf8), isHex: false)
+        let measured = try XCTUnwrap(g.marks().first)
+        let wide = g.marker.box(of: measured)
+
+        let kept = try g.marker.resize(measured, ViewRect(wide.x, wide.y, wide.width * 2, wide.height * 2))
+
+        XCTAssertEqual(kept.rect, measured.rect)
+        XCTAssertNotNil(kept.dictionary["Measure"])
+        XCTAssertEqual(kept.contents, "3 m")
+    }
+
     func test_aMeasurementTakesALookChangeButNoHead() async throws {
         let f = try CommentFixture()
         let line = try f.marker.add(.line, 0, drag, markRed)

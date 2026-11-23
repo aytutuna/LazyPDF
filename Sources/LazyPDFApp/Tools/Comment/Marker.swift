@@ -141,6 +141,8 @@ public final class Marker {
             return try faded(writer.addNote(target, userRect(box), info(text), icon: style.icon, color: style.color), style)
         case .textBox:
             shape.width = 0
+            shape.dash = nil
+            shape.fill = nil
             return try writer.addFreeText(target, standing(geometry, Self.box(for: tool, points)), text, font: style.toText(), style: shape, info: standingInfo)
         case .callout:
             let box = Self.box(for: tool, points)
@@ -224,6 +226,7 @@ public final class Marker {
     }
 
     public func resize(_ a: PdfAnnotation, _ box: ViewRect) throws -> PdfAnnotation {
+        if Self.isFixed(a) { return a }
         let geometry = PageGeometry(document.pages[a.pageIndex])
         let rect = stands(a, geometry) ? standing(geometry, box) : geometry.toUser(DisplayRect(box.x, box.y, box.width, box.height))
         let resized = try writer.resize(a, rect)
