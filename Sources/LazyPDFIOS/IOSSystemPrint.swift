@@ -13,10 +13,15 @@ public enum IOSSystemPrint {
         return Data(try session.document.saveRewrite(PdfSaveOptions()))
     }
 
-    public static func info(name: String) -> UIPrintInfo {
+    public static func info(name: String, layout: PrintLayout = PrintLayout()) -> UIPrintInfo {
         let info = UIPrintInfo(dictionary: nil)
         info.jobName = name
         info.outputType = .general
+        switch layout.duplex {
+        case .oneSided: info.duplex = .none
+        case .shortEdge: info.duplex = .shortEdge
+        case nil: break
+        }
         return info
     }
 
@@ -43,8 +48,12 @@ public enum IOSSystemPrint {
                     problem(Problem(L10n.t("Not printed"), wrong))
                     return
                 }
-                guard !layout.pages(count: session.document.pages.count).isEmpty else {
+                guard !layout.isEmpty(count: session.document.pages.count) else {
                     problem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
+                    return
+                }
+                if let wrong = layout.validate(sheetWidth: paper.width, sheetHeight: paper.height) {
+                    problem(Problem(L10n.t("Not printed"), wrong))
                     return
                 }
                 let source = session.document
@@ -73,7 +82,7 @@ public enum IOSSystemPrint {
             return
         }
         let controller = UIPrintInteractionController.shared
-        controller.printInfo = info(name: name)
+        controller.printInfo = info(name: name, layout: layout)
         controller.printingItem = data
         controller.present(animated: true) { _, printed, _ in done?(printed) }
     }

@@ -139,6 +139,34 @@ public partial class MainWindow
 
     private void Print_Click(object sender, RoutedEventArgs e) => _vm.Print();
 
+    private void PrintMenu_Click(object sender, RoutedEventArgs e)
+    {
+        PrintHereItem.IsEnabled = _vm.ActiveDocument is not null;
+        PrintMenu.PlacementTarget = PrintMenuButton;
+        PrintMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        PrintMenu.IsOpen = true;
+    }
+
+    private void PrintHere_Click(object sender, RoutedEventArgs e) => _vm.PrintHere();
+
+    // A driver that cannot answer leaves the ticket alone; the hint still tells the person to flip on the short edge.
+    private static System.Printing.Duplexing[] OfferedDuplexing(System.Printing.PrintQueue queue, System.Printing.PrintTicket ticket)
+    {
+        try { return [.. queue.GetPrintCapabilities(ticket).DuplexingCapability]; }
+        catch (System.Printing.PrintSystemException) { return []; }
+    }
+
+    // The part of the paper the printer reaches, for the ticket's orientation; empty when the driver cannot say.
+    private static Rect PrintableArea(System.Printing.PrintQueue queue, System.Printing.PrintTicket ticket)
+    {
+        try
+        {
+            var area = queue.GetPrintCapabilities(ticket).PageImageableArea;
+            return area is null ? Rect.Empty : new Rect(area.OriginWidth, area.OriginHeight, area.ExtentWidth, area.ExtentHeight);
+        }
+        catch (System.Printing.PrintSystemException) { return Rect.Empty; }
+    }
+
     private async void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
     {
         await tab.Drawing;
@@ -147,46 +175,32 @@ public partial class MainWindow
             _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Windows cannot draw the pages of {0}, so it would come out blank. Install Lazy Print or print it from another program.", tab.Title)));
             return;
         }
-        if (PrintLayoutWindow.Ask(this) is not { } layout) return;
         var dialog = new PrintDialog { UserPageRangeEnabled = true, CurrentPageEnabled = true, MinPage = 1, MaxPage = (uint)tab.PageCount };
         if (dialog.ShowDialog() != true) return;
-        var pages = PagePaginator.PagesFor(dialog.PageRangeSelection, dialog.PageRange.PageFrom, dialog.PageRange.PageTo, tab.PageIndex, tab.PageCount);
-        if (pages is { Count: 0 }) return;
-        if (!layout.IsPlain) pages = layout.Pages(pages, tab.PageCount);
-        if (pages is { Count: 0 })
-        {
-            _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("None of the pages you chose are left to print.")));
-            return;
-        }
+        var range = PagePaginator.PagesFor(dialog.PageRangeSelection, dialog.PageRange.PageFrom, dialog.PageRange.PageTo, tab.PageIndex, tab.PageCount);
+        if (range is { Count: 0 }) return;
+        var size = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight);
+        // The reading direction sets the binding for this job; only the layout choices are kept.
+        bool rightToLeft = ViewerSettings.Read(tab.Session.Document).RightToLeft;
+        if (PrintLayoutWindow.Ask(this, range, tab.PageCount, PrintLayout.Remembered(AppPreferencesStore.Load()), size.Width * 0.75, size.Height * 0.75, rightToLeft) is not { } layout) return;
+        AppPreferencesStore.Update(layout.Remember);
         // A print queue belongs to the thread that made it, so the worker opens its own from the names.
         string server = dialog.PrintQueue.HostingPrintServer.Name, printer = dialog.PrintQueue.Name;
         var ticket = dialog.PrintTicket;
-        var size = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight);
+        var printable = PrintableArea(dialog.PrintQueue, ticket);
+        if (layout.Duplex(layout.Booklet && layout.Parity == PrintParity.All && !layout.Reverse ? OfferedDuplexing(dialog.PrintQueue, ticket) : []) is { } duplex)
+            ticket.Duplexing = duplex;
         PagePaginator? paginator = null;
-        IDocumentRenderer? sheetRenderer = null;
-        int dropped = 0;
+        PrintJob? job = null;
         var written = false;
         try
         {
             await _vm.RunBusyAsync(Loc.T("Printing {0}…", tab.Title), async token =>
             {
-                IDocumentRenderer renderer = tab.Renderer;
-                int pageCount = tab.PageCount;
-                var sheetPages = pages;
-                if (layout.Imposes)
-                {
-                    // The sheets are made from the file as it stands and drawn by a renderer of their own; the open file is not touched.
-                    var source = tab.Session.Document;
-                    var sheets = await Task.Run(() => layout.Sheets(source, pages!, size.Width * 0.75, size.Height * 0.75, token), token);
-                    dropped = sheets.Dropped;
-                    sheetRenderer = _vm.NewRenderer();
-                    if (!sheetRenderer.Load(PdfEditSession.Open(sheets.Bytes), null)) throw new InvalidOperationException("The sheets cannot be drawn.");
-                    renderer = sheetRenderer;
-                    pageCount = sheets.Count;
-                    sheetPages = null;
-                }
+                job = await PrintJob.Prepare(layout, tab.Session.Document, tab.Renderer, tab.PageCount, range, _vm.NewRenderer, size.Width * 0.75, size.Height * 0.75, token);
+                if (job.IsEmpty) return;
                 var shown = Environment.TickCount64;
-                paginator = new PagePaginator(renderer, pageCount, sheetPages, token, (n, count) =>
+                paginator = new PagePaginator(job.Renderer, job.PageCount, job.Sides, token, (n, count) =>
                 {
                     var now = Environment.TickCount64;
                     if (now - shown < 100 && n < count) return;
@@ -195,6 +209,7 @@ public partial class MainWindow
                 })
                 {
                     PageSize = size,
+                    Content = printable,
                 };
                 var done = new TaskCompletionSource();
                 var thread = new Thread(() =>
@@ -218,15 +233,21 @@ public partial class MainWindow
                 thread.Start();
                 await done.Task;
             });
+            if (job is null) return;
+            if (job.IsEmpty)
+            {
+                _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("None of the pages you chose are left to print.")));
+                return;
+            }
             if (!written) return;
             if (paginator!.Blank > 0) _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Some pages of {0} could not be drawn and came out blank.", tab.Title)));
             else
             {
                 _vm.SetStatus(Loc.T("Sent {0} to the printer.", tab.Title));
-                if (PrintLayout.DroppedNote(dropped) is { } note) _vm.ShowNotice(Loc.T("Left off the sheets"), note);
+                if (PrintLayout.DroppedNote(job.Dropped) is { } note) _vm.ShowNotice(Loc.T("Left off the sheets"), note);
             }
         }
-        catch (InvalidOperationException) when (sheetRenderer is not null)
+        catch (InvalidOperationException) when (layout.Imposes)
         {
             _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Windows cannot draw the sheets of {0}. Print it without the layout or from another program.", tab.Title)));
         }
@@ -240,7 +261,7 @@ public partial class MainWindow
         }
         finally
         {
-            sheetRenderer?.Dispose();
+            job?.Dispose();
         }
     }
 

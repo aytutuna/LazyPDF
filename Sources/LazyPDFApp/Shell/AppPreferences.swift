@@ -50,10 +50,17 @@ public struct AppPreferences: Codable, Equatable {
     public var createWidth = 0.0
     public var createHeight = 0.0
 
+    /// The print layout kept between prints (see `PrintLayout.remembered`).
+    public var printPerSheet = 1
+    public var printBooklet = false
+    public var printGap = 0.0
+    public var printBorder = false
+
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
         case appearance, sidePanel, inspectorSections, tint, columns, cover, continuous, reopenLast, lastFiles, lastActive, createPaper, createWidth, createHeight
+        case printPerSheet, printBooklet, printGap, printBorder
     }
 
     public init(from decoder: Decoder) throws {
@@ -71,6 +78,10 @@ public struct AppPreferences: Codable, Equatable {
         createPaper = c.decodeLenient(forKey: .createPaper, default: createPaper)
         createWidth = c.decodeLenient(forKey: .createWidth, default: createWidth)
         createHeight = c.decodeLenient(forKey: .createHeight, default: createHeight)
+        printPerSheet = c.decodeLenient(forKey: .printPerSheet, default: printPerSheet)
+        printBooklet = c.decodeLenient(forKey: .printBooklet, default: printBooklet)
+        printGap = c.decodeLenient(forKey: .printGap, default: printGap)
+        printBorder = c.decodeLenient(forKey: .printBorder, default: printBorder)
     }
 }
 

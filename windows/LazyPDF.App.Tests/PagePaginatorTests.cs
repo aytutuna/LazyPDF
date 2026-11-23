@@ -45,6 +45,24 @@ public sealed class PagePaginatorTests
     }
 
     [Theory]
+    [InlineData(612, 792)]
+    [InlineData(792, 612)]
+    public void A_page_is_fitted_inside_the_printable_part_of_the_paper(double width, double height)
+    {
+        var content = new System.Windows.Rect(36, 36, 744, 984);
+        var paginator = new PagePaginator(new SizedRenderer(width, height), 1) { PageSize = new(816, 1056), Content = content };
+
+        var page = paginator.GetPage(0);
+        var bounds = ((System.Windows.Media.DrawingVisual)page.Visual).ContentBounds;
+
+        Assert.Equal(new System.Windows.Size(816, 1056), page.Size);
+        var loose = content;
+        loose.Inflate(0.01, 0.01);
+        Assert.True(loose.Contains(bounds), bounds.ToString());
+        Assert.False(bounds.IsEmpty);
+    }
+
+    [Theory]
     [InlineData(PageRangeSelection.AllPages, 1, 1, 0, 8, null)]
     [InlineData(PageRangeSelection.CurrentPage, 1, 1, 4, 8, new[] { 4 })]
     [InlineData(PageRangeSelection.UserPages, 3, 5, 0, 8, new[] { 2, 3, 4 })]
