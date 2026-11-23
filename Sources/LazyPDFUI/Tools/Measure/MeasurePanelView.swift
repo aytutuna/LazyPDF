@@ -94,10 +94,6 @@ struct MeasurePanelView: View {
                         .accessibilityFocused($lengthSpoken)
                         .accessibilityHint(drawn)
                         .onSubmit { model.applyCalibration() }
-                        .onKeyPress(.escape) {
-                            model.cancelCalibrate()
-                            return .handled
-                        }
                         #if os(iOS)
                         .keyboardType(.decimalPad)
                         #endif
@@ -109,10 +105,12 @@ struct MeasurePanelView: View {
                     Text(L10n.t("Set scale")).frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.borderedProminent)
+                // A shortcut, since on the Mac the length field's editor takes Escape before onKeyPress would see it.
                 Button { model.cancelCalibrate() } label: {
                     Text(L10n.t("Cancel")).frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
+                .keyboardShortcut(.cancelAction)
             }
             if model.calibrateProblem {
                 Label(L10n.t("Type a length above zero."), systemImage: "exclamationmark.triangle")
