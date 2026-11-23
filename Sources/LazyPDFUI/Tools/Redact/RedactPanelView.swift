@@ -128,9 +128,6 @@ struct RedactPanelView: View {
                             }
                         }
                     }
-                    .focusable(editing)
-                    .focused($focused, equals: item.row)
-                    .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in nudge(press, editing: editing) }
                     Button {
                         model.remove(item)
                     } label: {
@@ -142,6 +139,9 @@ struct RedactPanelView: View {
                     .help(L10n.t("Remove this mark"))
                 }
                 .padding(.horizontal, 4)
+                .focusable()
+                .focused($focused, equals: item.row)
+                .onKeyPress(keys: [.leftArrow, .rightArrow, .upArrow, .downArrow]) { press in nudge(press, editing: editing) }
                 .background(model.selected == item.id ? Color.accentColor.opacity(0.15) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
             }
             #if os(macOS)
