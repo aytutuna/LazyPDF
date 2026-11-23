@@ -661,6 +661,92 @@ public sealed class PointerToolTests
         });
     }
 
+    private static PagePointer Held(Point at, ModifierKeys modifiers = ModifierKeys.Shift, bool keys = false) => new(0, at, at, true, 0, modifiers, keys);
+
+    [Fact]
+    public void ShiftStraightensAnEndOfALineAgainstTheOtherEndWhileItIsDragged()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var viewer = ViewerStandIn.Create(out _);
+            f.Marker.Add(MarkTool.Line, 0, [new Point(100, 100), new Point(300, 200)], Red);
+            f.Tab.Commit("Line");
+            var tool = new EditTool(viewer, () => f.Marker);
+            tool.Select(f.Marks().Single());
+            var moves = new List<(int, Point)>();
+            tool.VertexMoved += (_, index, to) => moves.Add((index, to));
+
+            tool.Press(Press(new Point(300, 200)));
+            tool.Move(Held(new Point(340, 108)));
+            tool.Release(Held(new Point(340, 108)));
+
+            var (index, at) = Assert.Single(moves);
+            Assert.Equal(1, index);
+            Assert.Equal(100, at.Y, 6);
+            Assert.Equal(100 + new Vector(240, 8).Length, at.X, 6);
+        });
+    }
+
+    [Fact]
+    public void ShiftStraightensACornerAgainstThePreviousOneAndTheFirstAgainstTheLast()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var viewer = ViewerStandIn.Create(out _);
+            f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], Red);
+            f.Tab.Commit("Polygon");
+            var tool = new EditTool(viewer, () => f.Marker);
+            tool.Select(f.Marks().Single());
+            var moves = new List<(int, Point)>();
+            tool.VertexMoved += (_, index, to) => moves.Add((index, to));
+
+            tool.Press(Press(new Point(300, 300)));
+            tool.Move(Held(new Point(306, 360)));
+            tool.Release(Held(new Point(306, 360)));
+            tool.Press(Press(new Point(100, 100)));
+            tool.Move(Held(new Point(106, 40)));
+            tool.Release(Held(new Point(106, 40)));
+
+            Assert.Equal(300, moves[0].Item2.X, 6);
+            Assert.Equal(2, moves[0].Item1);
+            Assert.Equal(100, moves[1].Item2.X, 3);
+            Assert.Equal(0, moves[1].Item1);
+        });
+    }
+
+    [Fact]
+    public void WithoutShiftOrWithKeysAVertexFollowsThePointerExactly()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var viewer = ViewerStandIn.Create(out _);
+            f.Marker.Add(MarkTool.Line, 0, [new Point(100, 100), new Point(300, 200)], Red);
+            f.Tab.Commit("Line");
+            var tool = new EditTool(viewer, () => f.Marker);
+            tool.Select(f.Marks().Single());
+            var moves = new List<Point>();
+            tool.VertexMoved += (mark, index, to) =>
+            {
+                moves.Add(to);
+                f.Marker.MovePoint(mark, index, to);
+            };
+
+            tool.Press(Press(new Point(300, 200)));
+            tool.Move(Held(new Point(340, 108), ModifierKeys.None));
+            tool.Release(Held(new Point(340, 108), ModifierKeys.None));
+            tool.Refresh();
+            tool.Press(Press(new Point(340, 108)));
+            tool.Move(Held(new Point(350, 118), ModifierKeys.Shift, keys: true));
+            tool.Release(Held(new Point(350, 118), ModifierKeys.Shift, keys: true));
+
+            Assert.Equal(new Point(340, 108), moves[0]);
+            Assert.Equal(new Point(350, 118), moves[1]);
+        });
+    }
+
     [Fact]
     public void RedrawingAfterTheMarksPageWentAwayDrawsNothing()
     {

@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using LazyPDF.App.Tools.Measure;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
@@ -167,7 +168,9 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         {
             if (_points is null || _vertex >= _points.Length) return;
             var overlay = viewer.Overlay(mark.PageIndex);
-            _points[_vertex] = new Point(Math.Clamp(pointer.Point.X, 0, overlay.Width), Math.Clamp(pointer.Point.Y, 0, overlay.Height));
+            var to = pointer.Point;
+            if (!pointer.FromKeys && pointer.Modifiers.HasFlag(ModifierKeys.Shift) && Neighbour(mark) is { } fixedPoint) to = MeasureShape.Straighten(fixedPoint, to);
+            _points[_vertex] = new Point(Math.Clamp(to.X, 0, overlay.Width), Math.Clamp(to.Y, 0, overlay.Height));
             Remove();
             Draw(mark.PageIndex, _frame);
             return;
@@ -294,6 +297,14 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
             return inside.IsEmpty ? frame : inside;
         }
         return new Rect(Math.Clamp(frame.X, 0, Math.Max(0, bounds.Width - frame.Width)), Math.Clamp(frame.Y, 0, Math.Max(0, bounds.Height - frame.Height)), frame.Width, frame.Height);
+    }
+
+    // Shift straightens the dragged point against the one before it; the first end of an open shape takes the next one.
+    private Point? Neighbour(PdfAnnotation mark)
+    {
+        if (_points is not { Length: > 1 } points) return null;
+        if (_vertex > 0) return points[_vertex - 1];
+        return mark.Type == AnnotationType.Polygon ? points[^1] : points[1];
     }
 
     // The nearer corner wins, and a press between two close corners belongs to neither, so a short line can still be moved.
