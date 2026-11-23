@@ -90,6 +90,7 @@
                 <Button x:Name="DeleteMark" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Delete}" Margin="4,0,0,0" HorizontalAlignment="Stretch"
                         AutomationProperties.Name="{loc:T Delete}" ToolTip="{loc:T Delete the selected mark.}" Click="DeleteMark_Click" />
             </UniformGrid>
+            <TextBlock x:Name="PointHint" Style="{StaticResource ReasonText}" Margin="0,8,0,0" Visibility="Collapsed" />
         </StackPanel>
 
         <TextBlock Text="{loc:T Look}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />
@@ -106,6 +107,8 @@
         <TextBlock Text="{loc:T Line}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
         <ComboBox x:Name="LineStyleBox" AutomationProperties.Name="{loc:T Line}" SelectionChanged="Look_Changed" />
         <StackPanel x:Name="HeadRow" Visibility="Collapsed">
+            <TextBlock Text="{loc:T Start head}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+            <ComboBox x:Name="StartHeadBox" AutomationProperties.Name="{loc:T Start head}" SelectionChanged="Look_Changed" />
             <TextBlock Text="{loc:T Arrow head}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
             <ComboBox x:Name="HeadBox" AutomationProperties.Name="{loc:T Arrow head}" SelectionChanged="Look_Changed" />
         </StackPanel>

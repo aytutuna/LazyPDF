@@ -9,7 +9,7 @@ using LazyPDF.App.Viewer;
 namespace LazyPDF.App.Tools.Comment;
 
 /// <summary>Takes the pointer to draw one kind of mark on a page; what was drawn goes to <paramref name="done"/> as page points.</summary>
-public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkStyle> style, Action<MarkTool, int, IReadOnlyList<Point>> done, Func<PagePointer, IPagePointerTool?>? grab = null) : IPagePointerTool
+public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkStyle> style, Action<MarkTool, int, IReadOnlyList<Point>> done, Func<PagePointer, IPagePointerTool?>? grab = null, Func<PagePointer, bool>? handleUnder = null) : IPagePointerTool
 {
     private const double MinDrag = 3;
 
@@ -31,6 +31,9 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
     private bool ByClick => tool is MarkTool.Note or MarkTool.Stamp or MarkTool.Attach;
 
     private bool Many => tool is MarkTool.Polygon or MarkTool.Cloud;
+
+    /// <summary>A handle of the selected mark is under the point; the panel answers without letting the mark go.</summary>
+    public bool HandleUnder(PagePointer pointer) => _page < 0 && !pointer.FromKeys && handleUnder?.Invoke(pointer) == true;
 
     public void Press(PagePointer pointer)
     {
@@ -129,7 +132,7 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
 
     private Point Constrain(PagePointer pointer)
     {
-        if (!pointer.Modifiers.HasFlag(ModifierKeys.Shift) || _points.Count == 0) return pointer.Point;
+        if (pointer.FromKeys || !pointer.Modifiers.HasFlag(ModifierKeys.Shift) || _points.Count == 0) return pointer.Point;
         var first = _points[0];
         if (tool is MarkTool.Line or MarkTool.Arrow) return MeasureShape.Straighten(first, pointer.Point);
         var d = pointer.Point - first;

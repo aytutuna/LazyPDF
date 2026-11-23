@@ -59,6 +59,19 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points[1].y, 10, accuracy: 0.001)
     }
 
+    func test_aKeyedPressWithShiftHeldDoesNotSnapALineOrSquareABox() async throws {
+        for kind in [MarkTool.line, .rectangle] {
+            let (tool, _, drawn) = try drawing(kind)
+
+            tool.press(press(markPt(10, 10)))
+            tool.release(PagePointer(page: 0, point: markPt(100, 40), view: markPt(100, 40), pressed: false, clicks: 0, modifiers: [.shift], fromKeys: true))
+
+            XCTAssertEqual(drawn.marks.count, 1)
+            XCTAssertEqual(drawn.marks[0].points[1].x, 100, accuracy: 0.001)
+            XCTAssertEqual(drawn.marks[0].points[1].y, 40, accuracy: 0.001)
+        }
+    }
+
     func test_shiftSquaresABoxInsideThePage() async throws {
         let (tool, _, drawn) = try drawing(.rectangle)
 
@@ -342,6 +355,19 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
     }
 
+    func test_aHandleIsUnderAPointOnlyOnThePageOfTheSelectedMark() async throws {
+        let (tool, _, _, _) = try editing(pages: 2)
+        let corner = markPt(100, 100)
+
+        XCTAssertFalse(tool.handleUnder(press(corner)))
+        tool.press(press(markPt(150, 130)))
+        tool.release(drag(markPt(150, 130)))
+
+        XCTAssertTrue(tool.handleUnder(press(corner)))
+        XCTAssertFalse(tool.handleUnder(press(corner, page: 1)))
+        XCTAssertFalse(tool.handleUnder(press(markPt(150, 130))))
+    }
+
     func test_redrawingAfterTheMarksPageWentAwayDrawsNothing() async throws {
         let f = try CommentFixture(pages: 2)
         let viewer = PanelViewer(f.tab)
@@ -595,5 +621,357 @@ final class PointerToolTests: XCTestCase {
 
         XCTAssertNil(tool.current)
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
+    }
+
+    // Corners and ends
+
+    private func keyed(_ at: ViewPoint, pressed: Bool = true) -> PagePointer {
+        PagePointer(page: 0, point: at, view: at, pressed: pressed, clicks: pressed ? 1 : 0, fromKeys: true)
+    }
+
+    private func shaped(_ tool: MarkTool, _ points: [ViewPoint]) throws -> (tool: EditTool, f: CommentFixture, viewer: PanelViewer, made: PdfAnnotation) {
+        let f = try CommentFixture()
+        let viewer = PanelViewer(f.tab)
+        let made = try f.marker.add(tool, 0, points, markRed)
+        try f.tab.commit("Shape")
+        let edit = EditTool(viewer: viewer, marker: { f.marker })
+        edit.select(f.marks()[0])
+        return (edit, f, viewer, made)
+    }
+
+    private let square = [markPt(100, 100), markPt(300, 100), markPt(300, 300), markPt(100, 300)]
+
+    func test_aSelectedLineHasRoundHandlesOnItsEndsInsteadOfEightBoxHandles() async throws {
+        let (_, _, viewer, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
+
+        XCTAssertEqual(viewer.overlay(0).items.count, 3)
+        let item = try XCTUnwrap(viewer.overlay(0).item(EditTool.selectionPrefix + "grip.1"))
+        guard case .marker(let center, _, let round) = item.shape else { return XCTFail("not a marker") }
+        XCTAssertTrue(round)
+        XCTAssertEqual(center.x, 300, accuracy: 0.5)
+        XCTAssertNil(viewer.overlay(0).item(EditTool.selectionPrefix + "grip.2"))
+    }
+
+    func test_draggingAnEndAsksForTheNewPointOnRelease() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
+        var moves: [(Int, ViewPoint)] = []
+        tool.vertexMoved = { _, index, to in moves.append((index, to)) }
+        tool.moved = { _, _, _ in XCTFail("moved the mark") }
+
+        tool.press(press(markPt(301, 201)))
+        tool.move(drag(markPt(350, 260)))
+        XCTAssertTrue(moves.isEmpty)
+        tool.release(drag(markPt(350, 260)))
+
+        XCTAssertEqual(moves.count, 1)
+        XCTAssertEqual(moves[0].0, 1)
+        XCTAssertEqual(moves[0].1, markPt(349, 259))
+    }
+
+    func test_aPointIsKeptOnThePageWhileDragging() async throws {
+        let (tool, _, viewer, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
+        var to: ViewPoint?
+        tool.vertexMoved = { _, _, point in to = point }
+
+        tool.press(press(markPt(300, 200)))
+        tool.move(drag(markPt(5000, -40)))
+        tool.release(drag(markPt(5000, -40)))
+
+        XCTAssertEqual(to, markPt(viewer.pageSize(0).width, 0))
+    }
+
+    func test_aClickOnACornerPicksItAndAnotherPressLetsGo() async throws {
+        let (tool, _, _, _) = try shaped(.polygon, square)
+        var picks: [Int] = []
+        tool.vertexPicked = { picks.append($0) }
+        tool.vertexMoved = { _, _, _ in XCTFail("moved") }
+
+        tool.press(press(markPt(300, 300)))
+        tool.release(drag(markPt(300, 300)))
+
+        XCTAssertEqual(tool.pickedVertex, 2)
+        XCTAssertEqual(picks, [2])
+        tool.press(press(markPt(200, 200)))
+        tool.release(drag(markPt(200, 200)))
+        XCTAssertEqual(tool.pickedVertex, -1)
+    }
+
+    func test_aFingerAtTheEndOfAHorizontalLinePicksTheEndNotTheMark() async throws {
+        let (tool, _, _, made) = try shaped(.line, [markPt(100, 100), markPt(300, 100)])
+        var moves = 0
+        tool.moved = { _, _, _ in moves += 1 }
+        tool.vertexMoved = { _, _, _ in moves += 1 }
+
+        let at = markPt(310, 104)
+        XCTAssertTrue(tool.takes(finger(at)))
+        tool.press(finger(at))
+        tool.release(finger(at, pressed: false))
+
+        XCTAssertEqual(tool.pickedVertex, 1)
+        XCTAssertEqual(moves, 0)
+        XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
+    }
+
+    func test_aFingerThatDriftsALittleOnACornerStillPicksIt() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 100)])
+        var moves = 0
+        tool.vertexMoved = { _, _, _ in moves += 1 }
+
+        tool.press(finger(markPt(310, 104)))
+        tool.move(finger(markPt(310.3, 104.2)))
+        tool.release(finger(markPt(310.3, 104.2), pressed: false))
+
+        XCTAssertEqual(tool.pickedVertex, 1)
+        XCTAssertEqual(moves, 0)
+    }
+
+    func test_aDraggedCornerKeepsItsOffsetFromTheFinger() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 100)])
+        var to: ViewPoint?
+        tool.vertexMoved = { _, _, point in to = point }
+
+        tool.press(finger(markPt(310, 104)))
+        tool.move(finger(markPt(330, 144)))
+        tool.release(finger(markPt(330, 144), pressed: false))
+
+        XCTAssertEqual(to, markPt(320, 140))
+    }
+
+    func test_aShortLineGivesAPressToTheNearerEndAndTheMiddleMovesIt() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(112, 100)])
+        var picks: [Int] = []
+        var moves = 0
+        tool.vertexPicked = { picks.append($0) }
+        tool.moved = { _, _, _ in moves += 1 }
+
+        tool.press(press(markPt(102, 100)))
+        tool.release(drag(markPt(102, 100)))
+        XCTAssertEqual(picks, [0])
+        tool.press(press(markPt(106, 102)))
+        tool.move(drag(markPt(126, 140)))
+        tool.release(drag(markPt(126, 140)))
+
+        XCTAssertEqual(picks, [0])
+        XCTAssertEqual(moves, 1)
+    }
+
+    func test_aPickSurvivesAChangeToTheLookButNotOneToThePointCount() async throws {
+        let (tool, f, _, made) = try shaped(.polygon, square)
+        tool.press(press(markPt(300, 300)))
+        tool.release(drag(markPt(300, 300)))
+        XCTAssertEqual(tool.pickedVertex, 2)
+
+        _ = try f.marker.recolor(made, [0, 0, 1])
+        try f.tab.commit("Change look")
+        tool.refresh()
+        XCTAssertEqual(tool.pickedVertex, 2)
+
+        _ = try f.marker.removePoint(f.marks()[0], 0)
+        try f.tab.commit("Remove point")
+        tool.refresh()
+        XCTAssertEqual(tool.pickedVertex, -1)
+    }
+
+    func test_aMeasuredOrForeignMarkShowsOnlyAFrameAndMovesFromItsCorners() async throws {
+        for key in ["Measure", "LL"] {
+            let (tool, f, viewer, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
+            f.marks()[0].dictionary[key] = key == "LL" ? PdfNumber(1) : PdfDictionary()
+            tool.refresh()
+            var moved = 0
+            tool.moved = { _, _, _ in moved += 1 }
+            tool.resized = { _, _ in XCTFail("resized") }
+            tool.vertexMoved = { _, _, _ in XCTFail("point moved") }
+
+            XCTAssertEqual(viewer.overlay(0).items.count, 1)
+            tool.press(press(markPt(300, 200)))
+            tool.move(drag(markPt(320, 230)))
+            tool.release(drag(markPt(320, 230)))
+
+            XCTAssertEqual(moved, 1)
+        }
+    }
+
+    func test_aStalePointAfterAnUndoLeavesNothingToMoveAndThrowsNothing() async throws {
+        let (tool, f, _, made) = try shaped(.polygon, square)
+        var moves = 0
+        tool.vertexMoved = { _, _, _ in moves += 1 }
+
+        tool.press(press(markPt(100, 300)))
+        let fewer = try f.marker.removePoint(f.marks()[0], 3)
+        XCTAssertEqual(fewer.vertices.count, 6)
+        try f.tab.commit("Remove point")
+        tool.refresh()
+        tool.move(drag(markPt(90, 320)))
+        tool.release(drag(markPt(90, 320)))
+
+        XCTAssertEqual(moves, 0)
+        XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
+    }
+
+    func test_enterOnACornerPicksItAndOpensTheCrossThere() async throws {
+        let (tool, _, viewer, _) = try shaped(.polygon, square)
+        var picks: [Int] = []
+        tool.vertexPicked = { picks.append($0) }
+
+        tool.press(keyed(markPt(300, 300)))
+        tool.release(keyed(markPt(300, 300), pressed: false))
+
+        XCTAssertEqual(tool.pickedVertex, 2)
+        XCTAssertEqual(picks, [2])
+        XCTAssertEqual(viewer.placements.count, 1)
+        XCTAssertEqual(viewer.placements[0].point.x, 300, accuracy: 0.5)
+        XCTAssertEqual(viewer.placements[0].point.y, 300, accuracy: 0.5)
+    }
+
+    func test_theSecondEnterMovesThePickedCornerAndLetsGoOfIt() async throws {
+        let (tool, _, viewer, _) = try shaped(.polygon, square)
+        var moves: [(Int, ViewPoint)] = []
+        tool.vertexMoved = { _, index, to in moves.append((index, to)) }
+        tool.press(keyed(markPt(300, 300)))
+        tool.release(keyed(markPt(300, 300), pressed: false))
+
+        tool.press(keyed(markPt(340, 320)))
+        tool.release(keyed(markPt(340, 320), pressed: false))
+
+        XCTAssertEqual(moves.count, 1)
+        XCTAssertEqual(moves[0].0, 2)
+        XCTAssertEqual(moves[0].1, markPt(340, 320))
+        XCTAssertEqual(tool.pickedVertex, -1)
+        XCTAssertEqual(viewer.placementsCancelled, 0)
+    }
+
+    func test_escapeClosesTheCrossAndKeepsTheSelection() async throws {
+        let (tool, _, viewer, _) = try shaped(.polygon, square)
+        tool.press(keyed(markPt(300, 300)))
+
+        XCTAssertTrue(tool.key(.escape, modifiers: []))
+
+        XCTAssertEqual(tool.pickedVertex, -1)
+        XCTAssertNotNil(tool.current)
+        XCTAssertEqual(viewer.placementsCancelled, 1)
+    }
+
+    func test_anUndoThatMovesThePickedCornerLetsGoOfThePick() async throws {
+        let (tool, f, viewer, _) = try shaped(.polygon, square)
+        _ = try f.marker.movePoint(tool.current!, 2, markPt(340, 330))
+        try f.tab.commit("Move point")
+        tool.refresh()
+        tool.press(keyed(markPt(340, 330)))
+        XCTAssertEqual(tool.pickedVertex, 2)
+
+        XCTAssertTrue(try f.tab.undo())
+        tool.refresh()
+
+        XCTAssertEqual(tool.pickedVertex, -1)
+        XCTAssertEqual(viewer.placementsCancelled, 1)
+    }
+
+    func test_theViewerClosingTheCrossDropsThePick() async throws {
+        let (tool, _, viewer, _) = try shaped(.polygon, square)
+        tool.press(keyed(markPt(300, 300)))
+
+        viewer.placementEnded?()
+
+        XCTAssertEqual(tool.pickedVertex, -1)
+        XCTAssertNotNil(tool.current)
+        XCTAssertEqual(viewer.placementsCancelled, 0)
+    }
+
+    func test_deleteRemovesAPickedCornerAndOtherwiseTheMark() async throws {
+        let (tool, _, viewer, _) = try shaped(.polygon, square)
+        var removed: [Int] = []
+        var deleted = 0
+        tool.vertexRemoved = { _, index in removed.append(index) }
+        tool.deleteRequested = { deleted += 1 }
+
+        XCTAssertTrue(tool.key(.delete, modifiers: []))
+        XCTAssertEqual(deleted, 1)
+        tool.press(keyed(markPt(300, 300)))
+        XCTAssertTrue(tool.key(.delete, modifiers: []))
+
+        XCTAssertEqual(removed, [2])
+        XCTAssertEqual(deleted, 1)
+        XCTAssertEqual(tool.pickedVertex, -1)
+        XCTAssertEqual(viewer.placementsCancelled, 1)
+    }
+
+    func test_enterOnASideAddsACornerThereButNotOnALine() async throws {
+        let (tool, _, _, _) = try shaped(.polygon, square)
+        var added: [(Int, ViewPoint)] = []
+        tool.vertexAdded = { _, after, to in added.append((after, to)) }
+
+        tool.press(keyed(markPt(200, 100)))
+
+        XCTAssertEqual(added.count, 1)
+        XCTAssertEqual(added[0].0, 0)
+        XCTAssertEqual(added[0].1, markPt(200, 100))
+        XCTAssertEqual(tool.pickedVertex, -1)
+
+        let (lineTool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 100)])
+        lineTool.vertexAdded = { _, _, _ in XCTFail("added to a line") }
+        lineTool.press(keyed(markPt(200, 100)))
+    }
+
+    private func held(_ at: ViewPoint, _ modifiers: PointerModifiers = [.shift], keys: Bool = false) -> PagePointer {
+        PagePointer(page: 0, point: at, view: at, pressed: true, clicks: 0, modifiers: modifiers, fromKeys: keys)
+    }
+
+    func test_shiftStraightensAnEndOfALineAgainstTheOtherEndWhileItIsDragged() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
+        var moves: [(Int, ViewPoint)] = []
+        tool.vertexMoved = { _, index, to in moves.append((index, to)) }
+
+        tool.press(press(markPt(300, 200)))
+        tool.move(held(markPt(340, 108)))
+        tool.release(held(markPt(340, 108)))
+
+        XCTAssertEqual(moves.count, 1)
+        XCTAssertEqual(moves[0].0, 1)
+        XCTAssertEqual(moves[0].1.y, 100, accuracy: 1e-6)
+        XCTAssertEqual(moves[0].1.x, 100 + hypot(240, 8), accuracy: 1e-6)
+    }
+
+    func test_shiftStraightensACornerAgainstThePreviousOneAndTheFirstAgainstTheLast() async throws {
+        let (tool, _, _, _) = try shaped(.polygon, square)
+        var moves: [(Int, ViewPoint)] = []
+        tool.vertexMoved = { _, index, to in moves.append((index, to)) }
+
+        tool.press(press(markPt(300, 300)))
+        tool.move(held(markPt(306, 360)))
+        tool.release(held(markPt(306, 360)))
+        tool.press(press(markPt(100, 100)))
+        tool.move(held(markPt(106, 40)))
+        tool.release(held(markPt(106, 40)))
+
+        XCTAssertEqual(moves.map(\.0), [2, 0])
+        XCTAssertEqual(moves[0].1.x, 300, accuracy: 1e-6)
+        XCTAssertEqual(moves[1].1.x, 100, accuracy: 1e-3)
+    }
+
+    func test_withoutShiftOrWithKeysAPointFollowsThePointerExactly() async throws {
+        let (tool, _, _, _) = try shaped(.line, [markPt(100, 100), markPt(300, 200)])
+        var moves: [ViewPoint] = []
+        tool.vertexMoved = { _, _, to in moves.append(to) }
+
+        tool.press(press(markPt(300, 200)))
+        tool.move(held(markPt(340, 108), []))
+        tool.release(held(markPt(340, 108), []))
+        tool.press(press(markPt(340, 108)))
+        tool.move(held(markPt(350, 118), [.shift], keys: true))
+        tool.release(held(markPt(350, 118), [.shift], keys: true))
+
+        XCTAssertEqual(moves, [markPt(340, 108), markPt(350, 118)])
+    }
+
+    func test_aPickFromTheMouseIsNotMovedByAnEnterElsewhere() async throws {
+        let (tool, _, _, _) = try shaped(.polygon, square)
+        tool.vertexMoved = { _, _, _ in XCTFail("moved") }
+        tool.press(press(markPt(300, 300)))
+        tool.release(drag(markPt(300, 300)))
+        XCTAssertEqual(tool.pickedVertex, 2)
+
+        tool.press(keyed(markPt(20, 20)))
+
+        XCTAssertEqual(tool.pickedVertex, -1)
     }
 }

@@ -8,6 +8,10 @@ public enum MarkTool: CaseIterable {
     case selectText, edit, note, textBox, callout, line, arrow, rectangle, oval, polygon, cloud, pencil, eraser, stamp, attach
 }
 
+public enum LineStyle {
+    case solid, dashed, dotted
+}
+
 /// How a new mark looks. A nil colour takes the default of its kind.
 public struct MarkStyle: Equatable {
     public var color: [Double]?
@@ -16,21 +20,41 @@ public struct MarkStyle: Equatable {
     public var family: String
     public var size: Double
     public var font: FontStyles
+    public var fill: [Double]?
+    public var dash: LineStyle
+    public var head: LineEnding
+    public var startHead: LineEnding
+    public var icon: String
 
     public init(color: [Double]? = nil, width: Double = 2, opacity: Double = 1, family: String = "Helvetica", size: Double = 12,
-                font: FontStyles = .regular) {
+                font: FontStyles = .regular, fill: [Double]? = nil, dash: LineStyle = .solid, head: LineEnding = .none,
+                startHead: LineEnding = .none, icon: String = "Note") {
         self.color = color
         self.width = width
         self.opacity = opacity
         self.family = family
         self.size = size
         self.font = font
+        self.fill = fill
+        self.dash = dash
+        self.head = head
+        self.startHead = startHead
+        self.icon = icon
     }
 
     public static let `default` = MarkStyle()
 
     func toAnnotation() -> AnnotationStyle {
-        AnnotationStyle(color: color, width: width, opacity: opacity)
+        AnnotationStyle(color: color, width: width, dash: Self.dashes(dash, width), fill: fill, opacity: opacity)
+    }
+
+    static func dashes(_ style: LineStyle, _ width: Double) -> [Double]? {
+        let w = max(width, 1)
+        switch style {
+        case .dashed: return [3 * w, 2 * w]
+        case .dotted: return [w, w + 1]
+        case .solid: return nil
+        }
     }
 
     func toText() -> FreeTextStyle {
@@ -46,7 +70,7 @@ public final class Marker {
     public static let stampHeight = 44.0
 
     let document: PdfDocument
-    private let writer: PdfAnnotationWriter
+    let writer: PdfAnnotationWriter
     private let author: String
     private let date: DateTimeOffset
 
@@ -114,9 +138,11 @@ public final class Marker {
         switch tool {
         case .note:
             let box = ViewRect(points[0].x, points[0].y, Self.noteSize, Self.noteSize)
-            return try faded(writer.addNote(target, userRect(box), info(text), icon: "Note", color: style.color), style)
+            return try faded(writer.addNote(target, userRect(box), info(text), icon: style.icon, color: style.color), style)
         case .textBox:
             shape.width = 0
+            shape.dash = nil
+            shape.fill = nil
             return try writer.addFreeText(target, standing(geometry, Self.box(for: tool, points)), text, font: style.toText(), style: shape, info: standingInfo)
         case .callout:
             let box = Self.box(for: tool, points)
@@ -135,9 +161,11 @@ public final class Marker {
             _ = try writer.addArrow(target, user(edge), user(anchor), style: shape, info: info())
             return boxed
         case .line:
-            return try writer.addLine(target, user(points[0]), user(last), style: shape, info: info())
+            return try writer.addLine(target, user(points[0]), user(last), style: shape, info: info(), start: style.startHead, end: style.head)
         case .arrow:
-            return try writer.addArrow(target, user(points[0]), user(last), style: shape, info: info())
+            let arrow = try writer.addLine(target, user(points[0]), user(last), style: shape, info: info(), start: style.startHead, end: style.head)
+            arrow.dictionary["IT"] = PdfName("LineArrow")
+            return arrow
         case .rectangle:
             return try writer.addSquare(target, userRect(ViewRect(from: points[0], to: last)), style: shape, info: info())
         case .oval:
@@ -198,6 +226,7 @@ public final class Marker {
     }
 
     public func resize(_ a: PdfAnnotation, _ box: ViewRect) throws -> PdfAnnotation {
+        if Self.isFixed(a) { return a }
         let geometry = PageGeometry(document.pages[a.pageIndex])
         let rect = stands(a, geometry) ? standing(geometry, box) : geometry.toUser(DisplayRect(box.x, box.y, box.width, box.height))
         let resized = try writer.resize(a, rect)
@@ -212,7 +241,8 @@ public final class Marker {
 
     /// Paints the mark; a text box takes the colour for its frame and its text.
     public func recolor(_ a: PdfAnnotation, _ color: [Double]) throws -> PdfAnnotation {
-        if a.type != .freeText { return try setColor(a, color) }
+        if Self.foreign(a) { return a }
+        if a.type != .freeText { return try writer.setColor(a, color) }
         let painted = try writer.setColor(a, color)
         var text = Self.textOf(painted)
         text.textColor = color
@@ -220,18 +250,16 @@ public final class Marker {
         return try writer.setFreeTextStyle(painted, text)
     }
 
-    private func setColor(_ a: PdfAnnotation, _ color: [Double]) throws -> PdfAnnotation {
-        let filled = [AnnotationType.square, .circle, .polygon].contains(a.type) && !(a.interiorColor ?? []).isEmpty
-        return filled ? try writer.setColor(a, color, interior: color) : try writer.setColor(a, color)
-    }
-
     public func setOpacity(_ a: PdfAnnotation, _ opacity: Double) throws -> PdfAnnotation {
-        try writer.setOpacity(a, opacity)
+        try Self.foreign(a) ? a : writer.setOpacity(a, opacity)
     }
 
     public func setWidth(_ a: PdfAnnotation, _ width: Double) throws -> PdfAnnotation {
+        if Self.foreign(a) { return a }
         let border = (document.dict(a.dictionary, "BS") ?? PdfDictionary()).copy()
+        let style = Self.lineOf(a)
         border["W"] = PdfNumber(width)
+        if style != .solid, let dashes = MarkStyle.dashes(style, width) { border["D"] = PdfArray(dashes.map { PdfNumber($0) }) }
         let widened = try writer.edit(a, redraw: true) {
             a.dictionary["BS"] = border
             fitBox(a, width, a.startEnding != .none || a.endEnding != .none)
@@ -240,10 +268,77 @@ public final class Marker {
     }
 
     // The box of a drawn mark comes from its points and the room for the border and the heads, as when it was made.
-    private func fitBox(_ a: PdfAnnotation, _ width: Double, _ head: Bool) {
+    func fitBox(_ a: PdfAnnotation, _ width: Double, _ head: Bool) {
         guard let box = PdfAnnotationWriter.markBox(a, width: width, head: head) else { return }
         a.dictionary["Rect"] = box.toArray()
     }
+
+    /// Fills the mark with the colour, or takes the fill away for nil.
+    public func setFill(_ a: PdfAnnotation, _ rgb: [Double]?) throws -> PdfAnnotation {
+        if Self.foreign(a) { return a }
+        return try writer.edit(a, redraw: true) {
+            if let rgb { a.dictionary["IC"] = PdfArray(rgb.map { PdfNumber($0) }) } else { a.dictionary.remove("IC") }
+        }
+    }
+
+    public func setDash(_ a: PdfAnnotation, _ style: LineStyle) throws -> PdfAnnotation {
+        if Self.foreign(a) { return a }
+        let border = (document.dict(a.dictionary, "BS") ?? PdfDictionary()).copy()
+        let dashes = MarkStyle.dashes(style, a.border.width)
+        // A mark that only had /Border keeps its width in the new /BS.
+        border["W"] = PdfNumber(a.border.width)
+        border["S"] = PdfName(dashes == nil ? "S" : "D")
+        if let dashes { border["D"] = PdfArray(dashes.map { PdfNumber($0) }) } else { border.remove("D") }
+        return try writer.edit(a, redraw: true) { a.dictionary["BS"] = border }
+    }
+
+    /// Gives a line the heads at its two ends and room in its box to show them.
+    public func setEnding(_ a: PdfAnnotation, _ start: LineEnding, _ end: LineEnding) throws -> PdfAnnotation {
+        if Self.isFixed(a) { return a }
+        return try writer.edit(a, redraw: true) {
+            a.dictionary["LE"] = PdfArray([PdfName(start.rawValue), PdfName(end.rawValue)])
+            fitBox(a, a.border.width, start != .none || end != .none)
+        }
+    }
+
+    public func setIcon(_ a: PdfAnnotation, _ name: String) throws -> PdfAnnotation {
+        try writer.edit(a, redraw: true) { a.dictionary["Name"] = PdfName(name) }
+    }
+
+    /// How the mark's outline is drawn; a dash as long as two line widths is dashed, a shorter one dotted.
+    public static func lineOf(_ a: PdfAnnotation) -> LineStyle {
+        if a.border.style != .dashed { return .solid }
+        if let first = a.border.dash.first, first >= 2 * max(a.border.width, 1) { return .dashed }
+        return .dotted
+    }
+
+    public static func takesLine(_ tool: MarkTool) -> Bool {
+        [.callout, .line, .arrow, .rectangle, .oval, .polygon, .cloud, .pencil].contains(tool)
+    }
+
+    public static func takesFill(_ tool: MarkTool) -> Bool { tool != .pencil && takesLine(tool) }
+
+    public static func takesLine(_ a: PdfAnnotation) -> Bool {
+        switch a.type {
+        case .line, .polyLine, .polygon, .square, .circle, .ink: return true
+        case .freeText: return a.callout.count >= 4
+        default: return false
+        }
+    }
+
+    public static func takesFill(_ a: PdfAnnotation) -> Bool { a.type != .ink && takesLine(a) }
+
+    /// A mark another app drew with parts the appearance builder does not reproduce: leader lines, a caption, or a cloud edge
+    /// without /BE. Anything that redraws it loses them.
+    public static func foreign(_ a: PdfAnnotation) -> Bool {
+        ["LL", "LLE", "LLO", "Cap", "CO"].contains { a.dictionary.containsKey($0) } || (a.intent == "PolygonCloud" && a.cloud == 0)
+    }
+
+    /// One of the app's own measurements, whose text and value follow from its points.
+    public static func measured(_ a: PdfAnnotation) -> Bool { a.dictionary.containsKey("Measure") }
+
+    /// A mark that only moves: no points, no box handles, no head.
+    public static func isFixed(_ a: PdfAnnotation) -> Bool { foreign(a) || measured(a) }
 
     public func setText(_ a: PdfAnnotation, _ text: String) throws -> PdfAnnotation {
         try writer.setContents(a, text, date: date)

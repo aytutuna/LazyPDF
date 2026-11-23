@@ -28,6 +28,12 @@ public struct KeyPlacement {
     /// Where the click would land, in page space.
     public private(set) var point: ViewPoint
 
+    /// Starts at a point of a page, where a tool wants the arrow keys to take over.
+    public init(page: Int, point: ViewPoint) {
+        self.page = page
+        self.point = point
+    }
+
     /// Starts in the middle of the part of the current page that is in view; nil when there is none.
     public init?(_ surface: PageSurfaceState) {
         let page = surface.currentPage

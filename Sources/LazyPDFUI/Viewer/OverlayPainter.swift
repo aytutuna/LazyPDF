@@ -6,13 +6,14 @@ import LazyPDFApp
 import LazyPDFKit
 
 // Paints the marks of a PageOverlay (windows/LazyPDF.App/Viewer/PageSurface.Overlays.cs). The context is y down and in the
-// viewer's view space, already clipped to the page; the page matrix is applied here, so marks are in page space and turn with
-// the page. Sizes that must not grow with the zoom are divided by the matrix's scale.
+// viewer's view space; the page matrix is applied here, so marks are in page space and turn with the page. Sizes that must not
+// grow with the zoom are divided by the matrix's scale. The caller clips the pass of the other items to the page and leaves the
+// pass of the markers (handles and snap points, which sit on the edge) unclipped.
 
 enum OverlayPainter {
     @MainActor
-    static func draw(_ overlay: PageOverlay, matrix: ViewMatrix, accent: CGColor, in context: CGContext) {
-        let items = overlay.painted
+    static func draw(_ overlay: PageOverlay, matrix: ViewMatrix, accent: CGColor, markers: Bool, in context: CGContext) {
+        let items = overlay.painted.filter { isMarker($0) == markers }
         if items.isEmpty { return }
         let scale = (matrix.m11 * matrix.m11 + matrix.m12 * matrix.m12).squareRoot()
         if scale <= 0 { return }
@@ -21,6 +22,11 @@ enum OverlayPainter {
         let paint = Paint(accent: accent, scale: scale)
         for item in items { draw(item, paint, context) }
         context.restoreGState()
+    }
+
+    private static func isMarker(_ item: OverlayItem) -> Bool {
+        if case .marker = item.shape { return true }
+        return false
     }
 
     private struct Paint {

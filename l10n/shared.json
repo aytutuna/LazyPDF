@@ -305,6 +305,21 @@
   "Note icon": {
     "tr": "Not simgesi"
   },
+  "Help": {
+    "tr": "Yardım"
+  },
+  "Insert": {
+    "tr": "Ekle"
+  },
+  "Key": {
+    "tr": "Anahtar"
+  },
+  "New paragraph": {
+    "tr": "Yeni paragraf"
+  },
+  "Paragraph": {
+    "tr": "Paragraf"
+  },
   "Text box": {
     "tr": "Metin kutusu"
   },
@@ -2904,6 +2919,18 @@
   "Slash": {
     "tr": "Eğik çizgi"
   },
+  "Reversed open arrow": {
+    "tr": "Ters açık ok"
+  },
+  "Reversed closed arrow": {
+    "tr": "Ters kapalı ok"
+  },
+  "Bar": {
+    "tr": "Çubuk"
+  },
+  "Start head": {
+    "tr": "Başlangıç ucu"
+  },
   "Attach file": {
     "tr": "Dosya ekle"
   },
@@ -3080,6 +3107,30 @@
   },
   "Move point": {
     "tr": "Noktayı taşı"
+  },
+  "Add point": {
+    "tr": "Nokta ekle"
+  },
+  "Remove point": {
+    "tr": "Noktayı kaldır"
+  },
+  "Point {0} picked": {
+    "tr": "{0}. nokta seçildi"
+  },
+  "Point {0} moved": {
+    "tr": "{0}. nokta taşındı"
+  },
+  "That point cannot be removed.": {
+    "tr": "Bu nokta kaldırılamaz."
+  },
+  "Choose Move marks to move or add a point from the keyboard.": {
+    "tr": "Klavyeyle nokta taşımak ya da eklemek için İşaretleri taşı aracını seçin."
+  },
+  "Press Enter on a point to pick it, move it with the arrow keys, then press Enter again.": {
+    "tr": "Bir noktayı seçmek için üzerinde Enter'a basın, ok tuşlarıyla taşıyın, sonra yeniden Enter'a basın."
+  },
+  "Press Enter on a point to pick it, move it with the arrow keys, then press Enter again. Press Enter on a side to add a point, or Delete on a picked point to remove it.": {
+    "tr": "Bir noktayı seçmek için üzerinde Enter'a basın, ok tuşlarıyla taşıyın, sonra yeniden Enter'a basın. Nokta eklemek için bir kenarda Enter'a basın, seçili noktayı kaldırmak için Delete'e basın."
   },
   "Move marks": {
     "tr": "İşaretleri taşı"

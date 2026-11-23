@@ -3,7 +3,8 @@ import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Viewer/PageOverlay.cs. Where the Windows overlay is a Canvas of WPF elements, this one is a list
 // of plain marks the platform's page view paints, so it builds on Linux. Everything is in page space: points from the top left
-// of the page as shown, y down. The viewer scales and rotates the whole layer with the page and clips it to the page.
+// of the page as shown, y down. The viewer scales and rotates the whole layer with the page and clips it to the page, except
+// the markers, which are painted over the edge.
 
 /// A colour for a mark. `accent` is the system's accent colour, whose red, green and blue are not used.
 public struct OverlayColor: Equatable, Sendable {
@@ -150,7 +151,8 @@ public enum OverlayShape {
     case picture(OverlayPicture)
 }
 
-/// One mark. Items are painted in order of `layer`, then in the order they were added; `set` with an `id` already there
+/// One mark. Items are painted in order of `layer`, then in the order they were added, but markers after all the other items
+/// whatever their layer, and they are not clipped to the page; `set` with an `id` already there
 /// replaces that item and keeps its place. `rotation` turns it clockwise, in degrees, about `pivot` (the middle of a
 /// rectangle, ellipse or picture, the anchor of a text). `opacity` multiplies the colours.
 public struct OverlayItem {
@@ -160,6 +162,7 @@ public struct OverlayItem {
     public var opacity: Double
     public var rotation: Double
     public var pivot: ViewPoint?
+    /// The order of painting among the items that are not markers.
     public var layer: Int
 
     public init(_ id: String, _ shape: OverlayShape, style: OverlayStyle = OverlayStyle(), opacity: Double = 1, rotation: Double = 0,

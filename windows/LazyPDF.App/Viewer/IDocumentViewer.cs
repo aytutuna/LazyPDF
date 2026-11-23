@@ -37,7 +37,7 @@ public sealed record PagePointer(int Page, Point Point, Point View, bool Pressed
 
 /// <summary>
 /// A tool that takes the pointer. Set it as <see cref="IDocumentViewer.PointerTool"/>; the viewer then sends it the
-/// left button on the pages instead of panning or selecting. A press, then moves with <see cref="PagePointer.Pressed"/>
+/// left button on the pages instead of panning or selecting, and a press just off a page that lands on a handle the tool reports. A press, then moves with <see cref="PagePointer.Pressed"/>
 /// set to the same page, then a release; the mouse is captured meanwhile so the release always arrives. Moves with
 /// no button down arrive for the page under the pointer. The right button, the wheel and the keyboard stay with the viewer.
 /// </summary>
@@ -47,6 +47,13 @@ public interface IPagePointerTool
     Cursor? Cursor { get; }
 
     void Press(PagePointer pointer);
+
+    /// <summary>
+    /// Whether a handle the tool already holds, such as a corner of the selection, is under the point. The viewer asks
+    /// it of a press just off a page and delivers the press only when it is true. It must not change anything, and it
+    /// must agree with <see cref="Press"/>: when it is true the press takes the handle.
+    /// </summary>
+    bool HandleUnder(PagePointer pointer) => false;
 
     void Move(PagePointer pointer);
 
@@ -191,6 +198,15 @@ public interface IDocumentViewer
 
     /// <summary>Takes the left button on the pages from the viewer. Null gives it back; setting another cancels the one before.</summary>
     IPagePointerTool? PointerTool { get; set; }
+
+    /// <summary>Shows the key placement cross at a point of the page, as if Enter had opened it there, so the arrow keys move it from that point. Call it from a tool's press sent by Enter.</summary>
+    void BeginPlacement(int page, Point point);
+
+    /// <summary>Closes the cross; <see cref="PlacementEnded"/> is raised when one was open.</summary>
+    void CancelPlacement();
+
+    /// <summary>Raised when the cross was closed without an Enter on it: Escape, a new tool, or <see cref="CancelPlacement"/>.</summary>
+    event EventHandler? PlacementEnded;
 
     // ----- Text
 

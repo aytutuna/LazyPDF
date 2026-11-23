@@ -229,4 +229,30 @@ public class FreeTextTests
         Assert.True(note.Flags.HasFlag(AnnotationFlags.NoZoom));
         Assert.Contains("B", Operators(Appearance(document, note)));
     }
+
+    [Fact]
+    public void EveryNoteIconIsDrawnDifferentlyInsideTheRect()
+    {
+        var (document, writer, page) = Start();
+        var seen = new HashSet<string>();
+        foreach (var name in new[] { "Note", "Comment", "Help", "Insert", "Key", "NewParagraph", "Paragraph" })
+        {
+            var note = writer.AddNote(page, new PdfRect(100, 700, 120, 720), new AnnotationInfo("A", "x"), name);
+            Assert.True(seen.Add(System.Text.Encoding.Latin1.GetString(document.Data(Normal(document, note)))), name);
+            foreach (var (path, _) in Draw(document, note).Paths)
+            {
+                Assert.True(path.Bounds.Left >= -0.01 && path.Bounds.Bottom >= -0.01, name);
+                Assert.True(path.Bounds.Right <= note.Rect.Width + 0.01 && path.Bounds.Top <= note.Rect.Height + 0.01, name);
+            }
+        }
+    }
+
+    [Fact]
+    public void AnotherNoteIconNameIsKeptWhenTheLookChanges()
+    {
+        var (document, writer, page) = Start();
+        var note = writer.AddNote(page, new PdfRect(100, 700, 120, 720), new AnnotationInfo("A", "x"), "Star");
+        writer.SetColor(note, [1, 0, 0]);
+        Assert.Equal("Star", PdfAnnotations.ReadAll(Reopen(document)).Single().IconName);
+    }
 }
