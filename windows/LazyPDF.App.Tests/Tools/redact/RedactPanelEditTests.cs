@@ -178,4 +178,21 @@ public sealed class RedactPanelEditTests
         Assert.Equal(["box"], stand.Marks.Items.Select(m => m.Label));
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task AFileChangeForgetsHitsThatWereClearedBeforeIt() => Sta.Run(() =>
+    {
+        using var stand = new Stand();
+        var rect = RedactionMark.FromRect(0, new PdfRect(100, 100, 120, 120));
+        stand.Marks.Add([new MarkItem(rect, "hit", Value: new RedactionValueMatch(0, 2, RedactionValueSource.Comment, 0, 3, "abc", RedactionKind.Word))]);
+        stand.Marks.Clear();
+        Assert.True(stand.Marks.CanUndo);
+
+        stand.Tab.Refresh();
+
+        Assert.False(stand.Marks.CanUndo);
+        stand.Marks.Undo();
+        Assert.Empty(stand.Marks.Items);
+        return Task.CompletedTask;
+    });
 }

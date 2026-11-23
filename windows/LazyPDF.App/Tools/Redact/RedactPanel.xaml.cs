@@ -113,8 +113,10 @@ public partial class RedactPanel : ToolPanel
         state.Revision = revision;
         if (!moved)
         {
-            if (!edited || !state.Marks.RemoveValues()) return;
+            if (!edited) return;
+            bool removed = state.Marks.RemoveValues();
             state.Marks.Forget();
+            if (!removed) return;
             Host!.ShowNotice(Loc.T("Hits removed"), Loc.T("The file changed, so the hits in comments and fields no longer fit. Search again."));
             return;
         }

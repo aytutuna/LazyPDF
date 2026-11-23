@@ -255,6 +255,43 @@ final class RedactModelTests: XCTestCase {
         XCTAssertFalse(marks.canUndo)
     }
 
+    func test_undoForgetsClearedHitsWhenTheFileChangesWithNoHitsListed() async throws {
+        let state = TabToolState()
+        let rig = try SecurityRig(Pdfs.text(2, Self.line))
+        let model = RedactModel(fonts: FakeFonts(), images: FakeCodec(), state: state)
+        rig.attach(model)
+        let marks = try XCTUnwrap(state.redact[rig.tab]).marks
+        marks.add([MarkItem(RedactionMark.fromRect(0, PdfRect(400, 100, 420, 120)), "hit", value: RedactionValueMatch(0, 2, .comment, 0, 3, "abc", .word))])
+        marks.clear()
+        XCTAssertTrue(marks.canUndo)
+
+        PageOperations.rotate(rig.tab.document, [0], 90)
+        try rig.tab.commit("Rotate")
+        await waitUntil { !marks.canUndo }
+
+        marks.undo()
+        XCTAssertTrue(model.marks.isEmpty)
+    }
+
+    func test_undoForgetsARemovedMarkWhenTheOnlyPagesMove() async throws {
+        let state = TabToolState()
+        let rig = try SecurityRig(Pdfs.text(2, Self.line))
+        let model = RedactModel(fonts: FakeFonts(), images: FakeCodec(), state: state)
+        rig.attach(model)
+        let marks = try XCTUnwrap(state.redact[rig.tab]).marks
+        let item = MarkItem(RedactionMark.fromRect(1, PdfRect(10, 10, 50, 20)), "Box", isBox: true)
+        marks.add([item])
+        marks.remove(item)
+        XCTAssertTrue(marks.canUndo)
+
+        try PageOperations.reorder(rig.tab.document, [1, 0])
+        try rig.tab.commit("Move")
+        await waitUntil { !marks.canUndo }
+
+        marks.undo()
+        XCTAssertTrue(model.marks.isEmpty)
+    }
+
     func test_aFileThatForbidsChangesCannotBeRedacted() async throws {
         let (model, _) = try attached(try Pdfs.restricted(.print), password: "")
 
