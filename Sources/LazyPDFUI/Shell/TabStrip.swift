@@ -45,8 +45,9 @@ struct TabStrip: View {
             }
             .padding(.horizontal, 2)
         }
-        // The empty part of the strip makes a new tab of dragged pages; a tab in front of it answers for itself.
-        .pageDropTarget(vm, .emptyStrip)
+        // The empty part of the strip makes a new tab of dragged pages, and takes a tab dragged from another window (the Mac only: a
+        // plain-text type here would take a text file dropped on the window); a tab in front of it answers for itself.
+        .pageDropTarget(vm, .emptyStrip, tabs: dragging.map { _ in TabIdDrop.tabs(dragging, index: { vm.strip.count }, fallback: move) })
         .coordinateSpace(name: Self.space)
         .onPreferenceChange(TabFrames.self) { frames = $0 }
         .tabDragSource(dragging, frames: frames, tab: { id in vm.documents.first { $0.id == id } })
