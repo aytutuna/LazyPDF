@@ -451,4 +451,26 @@ public sealed class FillLayerTurnTests
         Keyboard.ClearFocus();
         AssertDropped(text, rig.Box(Name));
     });
+
+    [Theory]
+    [InlineData(90)]
+    [InlineData(270)]
+    public Task AWideFieldAtThePageCornerEndsInsideThePageAndIsRevealedThere(int rotation) => Sta.Run(() =>
+    {
+        var document = PdfDocument.Open(FormPdfs.Standard());
+        var form = PdfForm.Read(document, new FakeFonts());
+        var corner = new PdfRect(300, 20, 590, 40);
+        form.AddField(new FieldSpec(FieldKind.Text, "corner", 1, corner));
+        using var rig = new Rig(rotation, document.SaveRewrite());
+        var text = rig.Control("corner");
+        var g = new PageGeometry(rig.Tab.Document.Pages[1]);
+
+        text.Focus();
+
+        var placed = rig.Placed(corner, 1);
+        var upright = PageOverlay.UprightBounds(placed, rotation);
+        Assert.True(new Rect(0, 0, g.Width, g.Height).Contains(upright));
+        Assert.Equal((1, upright), rig.Stand.Reveals.Last());
+        return Task.CompletedTask;
+    });
 }
