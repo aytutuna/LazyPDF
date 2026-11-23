@@ -121,6 +121,20 @@ public sealed class PageTransferTests
     });
 
     [Fact]
+    public Task AnObjectThatCouldNotBeReadIsSaidToBeLeftOutOfTheCopy() => Sta.Run(async () =>
+    {
+        using var from = Tab(Pdfs.WithUnreadableObject(), "a.pdf");
+        using var to = Open(2, "b.pdf");
+        var host = Hosting(from, to);
+
+        await PageTransfer.CopyAsync(Pick(from, 0), to, host);
+
+        Assert.Equal(3, to.PageCount);
+        Assert.Equal("Objects left out", Assert.Single(host.Notices));
+        Assert.Equal(PageJobs.DroppedText(1), host.NoticeTexts[0]);
+    });
+
+    [Fact]
     public Task ASourceThatLimitsCopyingIsRefusedAndTheTargetStaysAsItWas() => Sta.Run(async () =>
     {
         using var from = Tab(Locked(PdfPermissions.Print), "locked.pdf");

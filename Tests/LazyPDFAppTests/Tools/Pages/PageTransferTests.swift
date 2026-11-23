@@ -191,6 +191,16 @@ final class PageTransferTests: XCTestCase {
         XCTAssertTrue(a.host.problems.isEmpty)
     }
 
+    func test_anObjectThatCouldNotBeReadIsSaidToBeLeftOutOfTheCopy() async throws {
+        let (a, b) = try pair(from: Pdfs.withUnreadableObject(), to: Pdfs.text(2, "To"))
+
+        await PageTransfer.copy(payload(a, [0]), to: b.tab, host: a.host)
+
+        XCTAssertEqual(b.tab.pageCount, 3)
+        XCTAssertEqual(a.host.notices.map(\.title), ["Some left out"])
+        XCTAssertEqual(a.host.notices.map(\.text), [PageJobs.leftOutText(0, 1)])
+    }
+
     func test_aSourceThatLimitsCopyingCannotBeCopiedFrom() async throws {
         let (a, b) = try pair(from: Pdfs.restricted(.print, pages: 3))
 

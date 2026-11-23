@@ -231,6 +231,16 @@ enum Pdfs {
         return [UInt8](try! Data(contentsOf: url))
     }
 
+    /// Two pages, the first naming an object that cannot be read, which a copy has to leave out.
+    static func withUnreadableObject() -> [UInt8] {
+        Array(("%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+            + "2 0 obj\n<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300] >>\nendobj\n"
+            + "3 0 obj\n<< /Type /Page /Parent 2 0 R /Thumb 5 0 R >>\nendobj\n"
+            + "4 0 obj\n<< /Type /Page /Parent 2 0 R >>\nendobj\n"
+            + "5 0 obj\n<</Broken (never closed\nendobj\n"
+            + "trailer\n<< /Root 1 0 R /Size 6 >>\n%%EOF\n").utf8)
+    }
+
     /// A file that asks for a certificate: its /Encrypt dictionary names the public-key handler.
     static func forRecipients() -> [UInt8] {
         Array(("%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"

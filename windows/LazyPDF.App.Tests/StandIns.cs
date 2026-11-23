@@ -174,6 +174,15 @@ internal static class Pdfs
         return PdfFromText.Create(text, new FakeFonts()).Bytes;
     }
 
+    /// <summary>Two pages, the first naming an object that cannot be read, which a copy has to leave out.</summary>
+    public static byte[] WithUnreadableObject() => System.Text.Encoding.Latin1.GetBytes(
+        "%PDF-1.4\n1 0 obj\n<</Type /Catalog /Pages 2 0 R>>\nendobj\n"
+        + "2 0 obj\n<</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>\nendobj\n"
+        + "3 0 obj\n<</Type /Page /Parent 2 0 R /Thumb 5 0 R>>\nendobj\n"
+        + "4 0 obj\n<</Type /Page /Parent 2 0 R>>\nendobj\n"
+        + "5 0 obj\n<</Broken (never closed\nendobj\n"
+        + "trailer\n<</Root 1 0 R /Size 6>>\n%%EOF\n");
+
     /// <summary>A file whose owner password is "owner" and that allows only <paramref name="allowed"/> to anyone else.</summary>
     public static byte[] Restricted(PdfPermissions allowed, PdfCryptStrength strength = PdfCryptStrength.Aes256)
     {

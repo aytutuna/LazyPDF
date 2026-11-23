@@ -44,9 +44,10 @@ internal static class PageTransfer
             return;
         }
         var failed = new Problem(Loc.T("Pages not copied"), Loc.T("The pages could not be copied. Try fewer pages."));
-        if (await PageJobs.CopyOutAsync(from.Tab, host, from.Pages, Loc.T("Copying pages"), failed, files: false) is not var (bytes, _, _)) return;
+        if (await PageJobs.CopyOutAsync(from.Tab, host, from.Pages, Loc.T("Copying pages"), failed, files: false) is not var (bytes, _, dropped)) return;
         if (!await PasteAsync(to, host, bytes, from.Pages.Length, null)) return;
         host.SetStatus(Loc.Plural(from.Pages.Length, "Copied {0} page to {1}. Undo it in {1}.", "Copied {0} pages to {1}. Undo it in {1}.", to.Title));
+        PageJobs.NoteSkippedAttachments(host, 0, dropped);
         CopyRules.NoteUnprotected(from.Tab.Document, host);
     }
 
