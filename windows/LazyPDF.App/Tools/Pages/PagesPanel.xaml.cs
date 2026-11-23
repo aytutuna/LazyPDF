@@ -32,7 +32,7 @@ public partial class PagesPanel : ToolPanel
     public PagesPanel()
     {
         InitializeComponent();
-        _ = new PageDrag(Thumbs, () => Cells, Selected, (pages, before) => MoveTo(pages, before));
+        _ = new PageDrag(Thumbs, () => Tab, () => Cells, Selected, (pages, before) => MoveTo(pages, before));
         foreach (var size in PaperSize.All) Paper.Items.Add(size.Name);
         Paper.Items.Add(Loc.T("Custom size"));
         Paper.SelectedIndex = 0;

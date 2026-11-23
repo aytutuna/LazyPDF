@@ -11,6 +11,7 @@ using LazyPDF.App.Tools;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
 using Xunit;
+using static LazyPDF.App.Tests.PagesKit;
 
 namespace LazyPDF.App.Tests;
 
@@ -18,101 +19,6 @@ namespace LazyPDF.App.Tests;
 [Collection("Application")]
 public sealed class OrganizeViewTests
 {
-    private static DocumentTab Open(int pages = 6) =>
-        new(PdfEditSession.Open(Pdfs.Text(pages)), new FakeRenderer(), null, "a.pdf");
-
-    private static string TextOf(DocumentTab tab, int page) =>
-        System.Text.Encoding.Latin1.GetString(tab.Document.Pages[page].Contents());
-
-    private static string Hex(string text) => Convert.ToHexString(System.Text.Encoding.Latin1.GetBytes(text));
-
-    private static List<string> Order(DocumentTab tab) => [.. Enumerable.Range(0, tab.PageCount).Select(i => TextOf(tab, i))];
-
-    private sealed class StageHost : IToolHost
-    {
-        public UIElement? Stage { get; private set; }
-        public List<Problem> Problems { get; } = [];
-        public List<string> Opened { get; } = [];
-        public string Status { get; private set; } = "";
-
-        public Task RunBusyAsync(string text, Func<CancellationToken, Task> work) => work(CancellationToken.None);
-
-        public void HoldStage(UIElement? view) => Stage = view;
-
-        public void ShowProblem(Problem problem) => Problems.Add(problem);
-
-        public List<string> Notices { get; } = [];
-
-        public void ShowNotice(string title, string text, NoticeAction? action = null) => Notices.Add(title);
-
-        public void SetStatus(string sentence) => Status = sentence;
-
-        public Task OpenAsync(string path) => Task.CompletedTask;
-
-        public Task<bool> OpenNewAsync(byte[] pdf, string title)
-        {
-            Opened.Add(title);
-            return Task.FromResult(true);
-        }
-
-        public Task ReloadAsync(DocumentTab tab) => Task.CompletedTask;
-    }
-
-    private sealed class Shown : IDisposable
-    {
-        private readonly HwndSource _source;
-
-        public Shown(DocumentTab tab, StageHost host)
-        {
-            View = new OrganizeView();
-            var (viewer, _) = FakeViewer.Create();
-            View.Attach(tab, viewer, host);
-            _source = new HwndSource(new HwndSourceParameters("organize-test") { ParentWindow = new IntPtr(-3), Width = 900, Height = 600 }) { RootVisual = View };
-            Layout();
-        }
-
-        public OrganizeView View { get; }
-
-        public ListBox Grid => (ListBox)View.FindName("Thumbs");
-
-        public Slider Slider => (Slider)View.FindName("TileSize");
-
-        public List<PageCell> Cells => (List<PageCell>)Grid.ItemsSource;
-
-        public Button Button(string name) => (Button)View.FindName(name);
-
-        public void Layout()
-        {
-            View.Measure(new Size(900, 600));
-            View.Arrange(new Rect(0, 0, 900, 600));
-            View.UpdateLayout();
-        }
-
-        public void Select(params int[] pages)
-        {
-            Grid.SelectedItems.Clear();
-            foreach (int page in pages) Grid.SelectedItems.Add(Cells[page]);
-        }
-
-        public void Click(string name) => Button(name).RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
-
-        public void Dispose()
-        {
-            View.Detach();
-            _source.Dispose();
-        }
-    }
-
-    // Drag arguments need a constructor WPF keeps to itself; the point is in the target's own space.
-    private static DragEventArgs DragArgs(RoutedEvent routed, IDataObject data, UIElement target, Point at)
-    {
-        var make = typeof(DragEventArgs).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
-        var e = (DragEventArgs)make.Invoke([data, DragDropKeyStates.None, DragDropEffects.Move | DragDropEffects.Copy, target, at]);
-        e.RoutedEvent = routed;
-        e.Source = target;
-        return e;
-    }
-
     private static Point CentreOf(Shown shown, int cell, bool rightHalf)
     {
         var tiles = PageDrag.Descendant<TilePanel>(shown.Grid)!;
@@ -358,7 +264,7 @@ public sealed class OrganizeViewTests
         using var tab = Open();
         var was = Order(tab);
         using var shown = new Shown(tab, new StageHost());
-        var data = new DataObject(PageDrag.Format, new[] { 0, 1 });
+        var data = new DataObject(PageDrag.Format, new PagePayload(tab, [0, 1], tab.Revision));
 
         var over = Over(shown, data, 4, rightHalf: false, UIElement.DragOverEvent);
         Assert.Equal(DragDropEffects.Move, over.Effects);
@@ -379,11 +285,43 @@ public sealed class OrganizeViewTests
     });
 
     [Fact]
+    public Task PagesDraggedFromTheSidePanelMoveInTheGridOfTheSameTab() => Sta.Run(() =>
+    {
+        using var tab = Open();
+        var was = Order(tab);
+        using var shown = new Shown(tab, new StageHost());
+        var data = new DataObject(PageDrag.Format, new PagePayload(tab, [4, 5], tab.Revision));
+
+        Over(shown, data, 1, rightHalf: false, UIElement.DragOverEvent);
+        Over(shown, data, 1, rightHalf: false, UIElement.DropEvent);
+
+        Assert.Equal([was[0], was[4], was[5], was[1], was[2], was[3]], Order(tab));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task PagesOfAnotherTabAreNotTakenByTheGrid() => Sta.Run(() =>
+    {
+        using var tab = Open();
+        using var other = Open(3, "b.pdf");
+        var was = Order(tab);
+        using var shown = new Shown(tab, new StageHost());
+        var data = new DataObject(PageDrag.Format, new PagePayload(other, [0], other.Revision));
+
+        var over = Over(shown, data, 1, rightHalf: false, UIElement.DragOverEvent);
+        Over(shown, data, 1, rightHalf: false, UIElement.DropEvent);
+
+        Assert.Equal(DragDropEffects.None, over.Effects);
+        Assert.Equal(was, Order(tab));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task LeavingTheGridClearsTheMark() => Sta.Run(() =>
     {
         using var tab = Open();
         using var shown = new Shown(tab, new StageHost());
-        var data = new DataObject(PageDrag.Format, new[] { 0 });
+        var data = new DataObject(PageDrag.Format, new PagePayload(tab, [0], tab.Revision));
 
         Over(shown, data, 2, rightHalf: true, UIElement.DragOverEvent);
         Over(shown, data, 2, rightHalf: true, UIElement.DragLeaveEvent);

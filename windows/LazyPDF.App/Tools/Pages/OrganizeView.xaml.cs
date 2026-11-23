@@ -29,7 +29,7 @@ public sealed partial class OrganizeView : ToolPanel
     public OrganizeView()
     {
         InitializeComponent();
-        _ = new PageDrag(Thumbs, () => Cells, Selected, (pages, before) => MoveTo(pages, before), (paths, before) => _ = InsertFilesAsync(paths, before));
+        _ = new PageDrag(Thumbs, () => Tab, () => Cells, Selected, (pages, before) => MoveTo(pages, before), (paths, before) => _ = InsertFilesAsync(paths, before));
         // The pictures are made again at the new size once the slider stops, not at every step of it.
         _sharpen = new DispatcherTimer(TimeSpan.FromMilliseconds(200), DispatcherPriority.Background, Sharpen_Tick, Dispatcher) { IsEnabled = false };
         IsEnabledChanged += View_IsEnabledChanged;

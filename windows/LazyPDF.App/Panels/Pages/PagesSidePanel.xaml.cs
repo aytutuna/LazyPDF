@@ -169,14 +169,15 @@ public partial class PagesSidePanel : ToolPanel
         _downThumb = null;
         _keptSelection = false;
         if (!Thumbs.SelectedItems.Contains(thumb)) Thumbs.SelectedItem = thumb;
-        DragDrop.DoDragDrop(Thumbs, new DataObject(PageDrag.Format, Selected()), DragDropEffects.Move);
+        if (Tab is not { } tab) return;
+        DragDrop.DoDragDrop(Thumbs, new DataObject(PageDrag.Format, new PagePayload(tab, [.. Selected()], tab.Revision)), DragDropEffects.Move | DragDropEffects.Copy);
         Unmark();
     }
 
     private void Thumbs_DragOver(object sender, DragEventArgs e)
     {
         e.Handled = true;
-        if (!e.Data.GetDataPresent(PageDrag.Format))
+        if (PageDrag.From(e.Data, Tab) is null)
         {
             e.Effects = DragDropEffects.None;
             return;
@@ -228,7 +229,7 @@ public partial class PagesSidePanel : ToolPanel
     {
         int before = _marked is null ? -1 : _after ? _marked.Index + 1 : _marked.Index;
         Unmark();
-        if (before >= 0 && e.Data.GetData(PageDrag.Format) is List<int> pages && pages.Count > 0) MovePages(pages, before);
+        if (before >= 0 && PageDrag.From(e.Data, Tab) is { Pages.Length: > 0 } payload) MovePages([.. payload.Pages], before);
         e.Handled = true;
     }
 
