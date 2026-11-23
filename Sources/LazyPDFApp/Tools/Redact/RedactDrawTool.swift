@@ -48,7 +48,7 @@ final class RedactDrawTool: PagePointerTool {
         self.boxEdited = boxEdited
     }
 
-    var cursor: PointerCursor? { .crosshair }
+    var cursor: PointerCursor? { drawing ? .crosshair : nil }
 
     /// Frames `item` when it is a box on a page of the viewer; nil takes the frame away. A drag that was under way is dropped.
     func show(_ item: MarkItem?, _ geometry: PageGeometry?) {

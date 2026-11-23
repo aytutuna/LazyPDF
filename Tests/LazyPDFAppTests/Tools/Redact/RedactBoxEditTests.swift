@@ -444,6 +444,16 @@ final class RedactBoxEditTests: XCTestCase {
         XCTAssertEqual(count, 1)
     }
 
+    func test_theCursorIsACrosshairOnlyWhileBoxesAreBeingDrawn() async throws {
+        let (model, rig) = try attached()
+        _ = try selectedBox(model, rig)
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        XCTAssertNil(tool.cursor)
+        model.setDrawing(true)
+        XCTAssertEqual(tool.cursor, .crosshair)
+    }
+
     func test_theViewerTakingThePointerBackLetsTheBoxGo() async throws {
         let (model, rig) = try attached()
         _ = try selectedBox(model, rig)
