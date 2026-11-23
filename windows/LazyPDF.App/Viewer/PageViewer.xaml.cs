@@ -53,7 +53,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Surface.ViewChanged += Surface_ViewChanged;
         Surface.Decorate = Decorate;
         Surface.TextHost = this;
-        Surface.PageText = page => ((ITextHost)this).Peek(page)?.Text;
+        Surface.PageText = page => LoadedText(page)?.Text;
         Surface.PageLabel = PageLabel;
         Surface.PageLinks = LinkTargets;
         InitInput();

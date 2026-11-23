@@ -46,6 +46,19 @@ public sealed class TextHostTests
     });
 
     [Fact]
+    public Task TheValueOfAPageRequestsNothing() => Sta.Run(() =>
+    {
+        var (viewer, _, tab) = Open(5);
+        using var _ = tab;
+
+        Assert.Null(viewer.Surface.PageText!(3));
+
+        Assert.Empty(Field<HashSet<int>>(viewer, "_wanted"));
+        Assert.Empty(Field<HashSet<int>>(viewer, "_pending"));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task APageIsRequestedOnce() => Sta.Run(async () =>
     {
         var (viewer, host, tab) = Open(3);
