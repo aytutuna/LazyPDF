@@ -169,7 +169,7 @@ public partial class MainWindow
         // A print queue belongs to the thread that made it, so the worker opens its own from the names.
         string server = dialog.PrintQueue.HostingPrintServer.Name, printer = dialog.PrintQueue.Name;
         var ticket = dialog.PrintTicket;
-        if (layout.Duplex(layout.Booklet && layout.Parity == PrintParity.All ? [.. dialog.PrintQueue.GetPrintCapabilities(ticket).DuplexingCapability] : []) is { } duplex)
+        if (layout.Duplex(layout.Booklet && layout.Parity == PrintParity.All && !layout.Reverse ? [.. dialog.PrintQueue.GetPrintCapabilities(ticket).DuplexingCapability] : []) is { } duplex)
             ticket.Duplexing = duplex;
         PagePaginator? paginator = null;
         PrintJob? job = null;

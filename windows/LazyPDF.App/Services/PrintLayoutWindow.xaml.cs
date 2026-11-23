@@ -67,7 +67,7 @@ internal sealed partial class PrintLayoutWindow : Window
         GapProblem.Text = problem;
         GapProblem.Visibility = problem is null ? Visibility.Collapsed : Visibility.Visible;
         PrintButton.IsEnabled = problem is null;
-        SidesHint.Text = current is { Layout: { Booklet: true, Parity: PrintParity.All } }
+        SidesHint.Text = current is { Layout: { Booklet: true, Parity: PrintParity.All, Reverse: false } }
             ? Loc.T("Two-sided printing must flip on the short edge.")
             : Loc.T("To print both sides by hand, print the odd sides, turn the stack over and print the even sides.");
         Summary.Text = current is { } c ? c.Layout.Summary(_range, _documentPages) : "";

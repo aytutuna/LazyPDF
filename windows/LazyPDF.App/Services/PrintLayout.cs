@@ -123,11 +123,12 @@ public sealed record PrintLayout(int PerSheet = 1, bool Booklet = false, PrintPa
 
     /// <summary>
     /// The ticket's duplex setting for this layout, or null to leave it alone: one-sided when only odd or even
-    /// sides go, so the printer does not duplex half a job, and short edge for a booklet when the printer offers it.
+    /// sides go or the order is reversed, so the printer does not duplex half a job or swap fronts and backs, and
+    /// short edge for a booklet when the printer offers it.
     /// </summary>
     public Duplexing? Duplex(IReadOnlyCollection<Duplexing> offered)
     {
-        if (Parity != PrintParity.All) return Duplexing.OneSided;
+        if (Parity != PrintParity.All || Reverse) return Duplexing.OneSided;
         return Booklet && offered.Contains(Duplexing.TwoSidedShortEdge) ? Duplexing.TwoSidedShortEdge : null;
     }
 

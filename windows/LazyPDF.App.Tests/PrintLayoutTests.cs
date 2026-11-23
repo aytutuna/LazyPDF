@@ -187,6 +187,15 @@ public sealed class PrintLayoutTests
     }
 
     [Fact]
+    public void ReversingAllSidesIsOneSidedSoNoPaperComesOutInsideOut()
+    {
+        System.Printing.Duplexing[] both = [System.Printing.Duplexing.OneSided, System.Printing.Duplexing.TwoSidedShortEdge];
+
+        Assert.Equal(System.Printing.Duplexing.OneSided, new PrintLayout(Booklet: true, Reverse: true).Duplex(both));
+        Assert.Equal(System.Printing.Duplexing.OneSided, new PrintLayout(PerSheet: 2, Reverse: true).Duplex([]));
+    }
+
+    [Fact]
     public void OnlyThePerSheetBookletGapAndBorderAreRemembered()
     {
         using var dir = new TempDir();
