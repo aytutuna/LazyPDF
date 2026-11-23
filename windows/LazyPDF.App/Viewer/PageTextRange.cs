@@ -92,8 +92,14 @@ internal sealed class PageTextRange : ITextRangeProvider
         var span = units.Enclosing(_start, unit);
         if (span.Unloaded >= 0 && span.Start == span.End) return 0;
         var moved = units.Move(span.Start, unit, count);
-        // A last unit has to be whole: one that runs into a page that is not loaded, or the end of the document, is not moved to.
-        if (moved.Moved != 0 && (moved.Pos >= units.End || units.Enclosing(moved.Pos, unit).Unloaded >= 0))
+        if (moved.Moved != 0 && moved.Pos < units.End && units.Enclosing(moved.Pos, unit).Unloaded >= 0)
+        {
+            // The walk reached a page that is not loaded: stop on its start so the next call can go on from there.
+            (_start, _end) = (moved.Pos, moved.Pos);
+            return moved.Moved;
+        }
+        // A last unit has to be whole, and one that runs to the end of the document is not moved to.
+        if (moved.Moved != 0 && moved.Pos >= units.End)
             moved = units.Move(span.Start, unit, moved.Moved - Math.Sign(moved.Moved));
         (_start, _end) = (moved.Pos, units.Enclosing(moved.Pos, unit).End);
         return moved.Moved;

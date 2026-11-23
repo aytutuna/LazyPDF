@@ -272,14 +272,20 @@ public sealed class PageTextRangeTests
     }
 
     [Fact]
-    public void ARangeThatEndsInAnUnloadedPageMovesOnlyOverWholeUnits()
+    public void ARangeMovesOnToTheStartOfAnUnloadedPage()
     {
         using var tab = FakeTextHost.NewTab();
         var host = new FakeTextHost(tab, 5, p => p < 2 ? Sample[p] : null);
         var range = Range(host, 0, 0, 0, 5);
 
-        Assert.Equal(1, range.Move(TextUnit.Page, 3));
-        Assert.Equal(new DocPos(1, 0), range.Places.Start);
+        Assert.Equal(2, range.Move(TextUnit.Page, 3));
+        Assert.Equal(new DocPos(2, 0), range.Places.Start);
         Assert.Equal(new DocPos(2, 0), range.Places.End);
+        Assert.Contains(2, host.Requested);
+
+        var last = Range(host, 1, 0, 2, 0);
+        Assert.Equal(1, last.Move(TextUnit.Line, 1));
+        Assert.Equal(new DocPos(2, 0), last.Places.Start);
+        Assert.Equal(new DocPos(2, 0), last.Places.End);
     }
 }
