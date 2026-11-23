@@ -218,6 +218,23 @@ final class PageOverlayPaintTests: XCTestCase {
         XCTAssertTrue(isRed(pixel(rep, corner.x - 4, corner.y - 4)))
     }
 
+    func test_aMarkerOnThePageCornerIsPaintedPastTheEdgeOfARotatedPage() throws {
+        for rotation in [90, 270] {
+            let shown = try open()
+            cornerMarker(shown)
+            shown.viewer.rotation = rotation
+            let rep = try bitmap(shown)
+            let matrix = try XCTUnwrap(shown.viewer.pageToView(0))
+            let corner = matrix.transform(ViewPoint(0, 0))
+            let inward = matrix.transform(ViewPoint(20, 20))
+            let sx = inward.x > corner.x ? 1.0 : -1.0
+            let sy = inward.y > corner.y ? 1.0 : -1.0
+
+            XCTAssertTrue(isRed(pixel(rep, corner.x + 4 * sx, corner.y + 4 * sy)), "inside at \(rotation)")
+            XCTAssertTrue(isRed(pixel(rep, corner.x - 4 * sx, corner.y - 4 * sy)), "outside at \(rotation)")
+        }
+    }
+
     func test_aMarkerIsFoundWhenTheDirtyStripCoversOnlyTheMarginBesideThePage() throws {
         let shown = try open()
         cornerMarker(shown)
