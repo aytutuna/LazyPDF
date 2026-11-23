@@ -628,7 +628,8 @@ public sealed class KeyboardPlacementTests
         surface.SetRotation(rotation);
         surface.SetZoom(3);
         var size = surface.PageSize(0);
-        var off = new Point(size.Width + 4, size.Height / 2);
+        // 1 pt is 4 px here, inside the 12 px gap; the other coordinate sits near the page's left in view so the scroll is not clamped.
+        var off = new Point(size.Width + 1, rotation == 90 ? size.Height - 50 : 50);
         surface.GoToPage(0, off, keepX: true);
 
         typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
