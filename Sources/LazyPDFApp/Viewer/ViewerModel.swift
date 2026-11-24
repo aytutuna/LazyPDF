@@ -56,9 +56,12 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var geometries: [Int: PageGeometry] = [:]
     @ObservationIgnored var hitShapes: [Int: (others: [[ViewPoint]], current: [[ViewPoint]])] = [:]
     @ObservationIgnored var selectionShapes: [Int: [[ViewPoint]]] = [:]
+    @ObservationIgnored var textMaps: [Int: PageTextMap] = [:]
+    @ObservationIgnored var readerCaret: (page: Int, offset: Int)?
     @ObservationIgnored var preloadTask: Task<Void, Never>?
     @ObservationIgnored var anchorWaiting: PagePoint?
     @ObservationIgnored var pressTicket = 0
+    @ObservationIgnored var dragTicket = 0
     @ObservationIgnored var multi: (start: Caret, end: Caret, clicks: Int)?
 
     // Pointer
@@ -79,6 +82,12 @@ public final class ViewerModel: DocumentViewer {
     /// Something drawn changed: a tile came, a highlight moved.
     @ObservationIgnored public var onRedraw: (() -> Void)?
 
+    /// The text of a page was read and can be asked for with `pageText`; the page's number comes with it.
+    @ObservationIgnored public var onPageLoaded: ((Int) -> Void)?
+
+    /// The selected text changed, by the pointer, the keys or `select`.
+    @ObservationIgnored public var onSelectionChanged: (() -> Void)?
+
     /// False where the view moves its own pixels on a scroll and draws only the strip that comes into view.
     @ObservationIgnored public var redrawsOnScroll = true
 
@@ -92,6 +101,9 @@ public final class ViewerModel: DocumentViewer {
 
     /// Moves with every scroll, zoom, rotation or rearrangement.
     public internal(set) var viewRevision = 0
+
+    /// Moves each time the text read so far is dropped, for a new revision or another file, so what was built from it is stale.
+    public internal(set) var textEpoch = 0
 
     /// Moves with a change of page, zoom or arrangement; what the bar shows follows it.
     public internal(set) var shownRevision = 0

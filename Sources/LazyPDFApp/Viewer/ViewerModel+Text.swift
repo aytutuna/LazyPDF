@@ -27,6 +27,7 @@ extension ViewerModel {
 
     // The file changed or another one is shown: what was read is stale.
     func resetText() {
+        textEpoch += 1
         textTask = nil
         source = nil
         links.removeAll()
@@ -34,6 +35,8 @@ extension ViewerModel {
         edgeSource = nil
         selectionShapes.removeAll()
         hitShapes.removeAll()
+        textMaps.removeAll()
+        readerCaret = nil
         selected.clear()
     }
 
@@ -64,12 +67,16 @@ extension ViewerModel {
         }
     }
 
-    func loadPage(_ page: Int) async {
-        if await text(page) != nil { onRedraw?() }
+    public func loadPage(_ page: Int) async {
+        guard await text(page) != nil else { return }
+        onRedraw?()
     }
 
     public func text(_ page: Int) async -> TextPage? {
-        await textSource().value?.get(page)
+        let known = source?.peek(page) != nil
+        let found = await textSource().value?.get(page)
+        if found != nil && !known { onPageLoaded?(page) }
+        return found
     }
 
     public func drawing(_ page: Int) async -> [DrawnEdge] {
@@ -112,13 +119,16 @@ extension ViewerModel {
     }
 
     func selectionChanged() {
+        readerCaret = nil
         selectionShapes.removeAll()
         onRedraw?()
+        onSelectionChanged?()
     }
 
     func beginSelection(_ at: ViewPoint, clicks: Int, extend wanted: Bool) {
         pressTicket += 1
         let ticket = pressTicket
+        dragTicket = ticket
         anchorWaiting = nil
         multi = nil
         guard let hit = state.hit(at, nearest: true) else { return }
@@ -163,7 +173,7 @@ extension ViewerModel {
     }
 
     func dragSelection(_ at: ViewPoint) {
-        guard moved, let hit = state.hit(at, nearest: true) else { return }
+        guard moved, dragTicket == pressTicket, let hit = state.hit(at, nearest: true) else { return }
         guard let text = source?.peek(hit.page) else {
             Task { await loadPage(hit.page) }
             return

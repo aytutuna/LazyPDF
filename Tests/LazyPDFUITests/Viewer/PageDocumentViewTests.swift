@@ -26,8 +26,8 @@ final class PageDocumentViewTests: XCTestCase {
         let view: PageDocumentView
     }
 
-    private func open(pages: Int = 2) async throws -> Shown {
-        let text = (0..<pages).map { "Hello from the tests. Page \($0 + 1)." }.joined(separator: "\u{0C}")
+    private func open(pages: Int = 2, line: String = "Hello from the tests.") async throws -> Shown {
+        let text = (0..<pages).map { "\(line) Page \($0 + 1)." }.joined(separator: "\u{0C}")
         let bytes = try PdfFromText.create(text, fonts: NoFonts()).bytes
         let tab = DocumentTab(session: try PdfEditSession.open(bytes), renderer: PdfKitRenderer(), url: nil, title: "a.pdf")
         let viewer = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { _ in })
@@ -132,6 +132,142 @@ final class PageDocumentViewTests: XCTestCase {
         let names = (shown.view.accessibilityChildren() ?? []).compactMap { ($0 as? NSAccessibilityElement)?.accessibilityLabel() }
 
         XCTAssertEqual(names.first, "Page 1 of 2")
+    }
+
+    private func pageElements(_ shown: Shown) -> [NSAccessibilityElement] {
+        (shown.view.accessibilityChildren() ?? []).compactMap { $0 as? NSAccessibilityElement }
+    }
+
+    func test_aQueryFindsTheSameElementsAsTheOneBefore() async throws {
+        let shown = try await open()
+
+        let first = pageElements(shown)
+        let second = pageElements(shown)
+
+        XCTAssertFalse(first.isEmpty)
+        XCTAssertEqual(first.count, second.count)
+        XCTAssertTrue(zip(first, second).allSatisfy { $0 === $1 })
+    }
+
+    func test_theElementsAreMadeAgainAfterTheTextIsReset() async throws {
+        let shown = try await open()
+        let before = pageElements(shown)
+
+        shown.viewer.resetText()
+        let after = pageElements(shown)
+
+        XCTAssertEqual(before.count, after.count)
+        XCTAssertFalse(before.first === after.first)
+    }
+
+    func test_theElementsAreMadeAgainAfterANewRevision() async throws {
+        let shown = try await open()
+        let before = pageElements(shown)
+        let tab = try XCTUnwrap(shown.viewer.tab)
+        var metadata = DocumentMetadata.read(tab.session.document)
+        metadata.title = "New title"
+        try metadata.write(tab.session.document)
+        let epoch = shown.viewer.textEpoch
+
+        XCTAssertTrue(try tab.commit("Properties"))
+        await until { shown.viewer.textEpoch != epoch }
+
+        XCTAssertFalse(before.first === pageElements(shown).first)
+    }
+
+    private func pageText(_ shown: Shown, in window: NSWindow? = nil) async throws -> PageTextElement {
+        await shown.viewer.loadPage(0)
+        window?.contentView = shown.view
+        let group = try XCTUnwrap(pageElements(shown).first as? PageAccessibilityGroup)
+        return group.text
+    }
+
+    func test_aPageBeyondThePreloadIsReadWhenAScreenReaderAsksForIt() async throws {
+        let shown = try await open(pages: 12)
+        // The smallest zoom still keeps a page large, so the view is made tall enough for more pages than the preload reads.
+        shown.viewer.setScreen(viewport: ViewSize(900, 4000), pixelsPerDip: 1)
+        shown.viewer.zoom = 0.15
+        XCTAssertGreaterThan(shown.viewer.visiblePages.count, 8)
+        let last = try XCTUnwrap(shown.viewer.visiblePages.last)
+        let element = PageTextElement(page: last, view: shown.view)
+        XCTAssertNil(element.accessibilityValue())
+
+        await until { element.accessibilityValue() != nil }
+
+        XCTAssertEqual(element.accessibilityValue() as? String, "Hello from the tests. Page \(last + 1).")
+    }
+
+    func test_aPageHoldsOneStaticTextWithItsTextInsideTheGroup() async throws {
+        let shown = try await open()
+
+        let element = try await pageText(shown)
+        let group = try XCTUnwrap(pageElements(shown).first as? PageAccessibilityGroup)
+
+        XCTAssertTrue(group.accessibilityChildren()?.first as? PageTextElement === element)
+        XCTAssertEqual(element.accessibilityRole(), .staticText)
+        XCTAssertEqual(element.accessibilityValue() as? String, "Hello from the tests. Page 1.")
+        XCTAssertEqual(element.accessibilityNumberOfCharacters(), 29)
+        XCTAssertEqual(group.accessibilityLabel(), "Page 1 of 2")
+    }
+
+    func test_linesAndRangesAreAnsweredInUnitsOfTheText() async throws {
+        let shown = try await open(pages: 1, line: "First line\nSecond line here")
+        let element = try await pageText(shown)
+        let value = try XCTUnwrap(element.accessibilityValue() as? String)
+
+        XCTAssertEqual(value, "First line\nSecond line here Page 1.")
+        XCTAssertEqual(element.accessibilityRange(forLine: 1), NSRange(location: 11, length: 24))
+        XCTAssertEqual(element.accessibilityLine(for: 3), 0)
+        XCTAssertEqual(element.accessibilityLine(for: 12), 1)
+        XCTAssertEqual(element.accessibilityString(for: NSRange(location: 11, length: 6)), "Second")
+        XCTAssertEqual(element.accessibilityRange(for: 13), NSRange(location: 13, length: 1))
+        XCTAssertEqual(element.accessibilityVisibleCharacterRange(), NSRange(location: 0, length: value.utf16.count))
+    }
+
+    func test_aScreenReaderSetsTheSelectionAndReadsItBack() async throws {
+        let shown = try await open(pages: 1, line: "First line\nSecond line here")
+        let element = try await pageText(shown)
+        XCTAssertEqual(element.accessibilitySelectedTextRange().location, NSNotFound)
+
+        element.setAccessibilitySelectedTextRange(NSRange(location: 11, length: 6))
+
+        XCTAssertTrue(shown.viewer.hasSelection)
+        XCTAssertEqual(element.accessibilitySelectedTextRange(), NSRange(location: 11, length: 6))
+        XCTAssertEqual(element.accessibilitySelectedText(), "Second")
+        let copied = await shown.viewer.selectedText()
+        XCTAssertEqual(copied, "Second")
+    }
+
+    func test_aCaretOnALineBreakIsReadBackAsPlaced() async throws {
+        let shown = try await open(pages: 1, line: "First line\nSecond line here")
+        let element = try await pageText(shown)
+
+        element.setAccessibilitySelectedTextRange(NSRange(location: 10, length: 0))
+
+        XCTAssertEqual(element.accessibilitySelectedTextRange(), NSRange(location: 10, length: 0))
+        XCTAssertFalse(shown.viewer.hasSelection)
+    }
+
+    func test_aSelectionFromAnotherPartOfTheViewerShowsInTheElement() async throws {
+        let shown = try await open(pages: 1)
+        let element = try await pageText(shown)
+
+        shown.viewer.selectAll()
+
+        XCTAssertEqual(element.accessibilitySelectedTextRange(), NSRange(location: 0, length: 29))
+    }
+
+    func test_aRangeHasAPlaceOnTheScreenAndThePlaceFindsTheRangeAgain() async throws {
+        let shown = try await open(pages: 1)
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 700), styleMask: [.titled], backing: .buffered, defer: false)
+        let element = try await pageText(shown, in: window)
+
+        let frame = element.accessibilityFrame(for: NSRange(location: 6, length: 4))
+
+        XCTAssertGreaterThan(frame.width, 0)
+        XCTAssertGreaterThan(element.accessibilityFrame().width, frame.width)
+        let middle = NSPoint(x: frame.midX, y: frame.midY)
+        XCTAssertGreaterThan(NSIntersectionRange(NSRange(location: 6, length: 4), element.accessibilityRange(for: middle)).length, 0)
     }
 
     func test_theMenuOffersCopyLookUpShareAndSelectAll() async throws {

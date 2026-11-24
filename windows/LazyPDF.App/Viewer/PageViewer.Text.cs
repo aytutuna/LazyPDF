@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -18,6 +19,7 @@ public partial class PageViewer
     private readonly ViewerSelection _selection = new();
     private PagePoint? _anchorWaiting;
     private int _press;
+    private int _dragPress;
     private bool _unitWaiting;
     private (Caret Start, Caret End, int Clicks)? _multi;
     private Brush? _selectionBrush;
@@ -56,9 +58,11 @@ public partial class PageViewer
     {
         _selection.Changed += (_, _) =>
         {
+            _automationCaret = null;
             _selectionGeometry.Clear();
             Surface.InvalidateVisual();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
+            Surface.TellSelection();
         };
         _preload.Tick += (_, _) =>
         {
@@ -72,6 +76,7 @@ public partial class PageViewer
     {
         _text = null;
         _source = null;
+        TextReset();
         _links.Clear();
         _focusLink = null;
         _selectionGeometry.Clear();
@@ -107,8 +112,14 @@ public partial class PageViewer
         if (await GetTextAsync(page) is not null) Surface.InvalidateVisual();
     }
 
-    public async Task<TextPage?> GetTextAsync(int page) =>
-        await TextAsync() is { } source ? await source.GetAsync(page) : null;
+    public async Task<TextPage?> GetTextAsync(int page)
+    {
+        if (await TextAsync() is not { } source) return null;
+        bool known = source.Peek(page) is not null;
+        var text = await source.GetAsync(page);
+        if (text is not null && !known && ReferenceEquals(source, _source)) PageArrived(page);
+        return text;
+    }
 
     private TextPage? LoadedText(int page) => _source?.Peek(page);
 
@@ -126,7 +137,7 @@ public partial class PageViewer
 
     private void BeginSelection(Point at, int clicks)
     {
-        int press = ++_press;
+        int press = _dragPress = ++_press;
         _anchorWaiting = null;
         _unitWaiting = false;
         _multi = null;
@@ -176,7 +187,7 @@ public partial class PageViewer
         }
     }
 
-    // A double or triple click still waiting for its page text must not select after a later action.
+    // A drag or a double or triple click still waiting for its page text must not select after a later action.
     private void CancelPendingSelection() => _press++;
 
     private void SelectUnit((int Page, Point Point) hit, TextPage text, int clicks)
@@ -195,7 +206,7 @@ public partial class PageViewer
 
     private void DragSelection(Point at)
     {
-        if (_unitWaiting || !_moved || Surface.Hit(at, nearest: true) is not { } hit) return;
+        if (_dragPress != _press || _unitWaiting || !_moved || Surface.Hit(at, nearest: true) is not { } hit) return;
         if (LoadedText(hit.Page) is not { } text)
         {
             _ = LoadPageAsync(hit.Page);
@@ -317,7 +328,8 @@ public partial class PageViewer
             if (extend) _selection.Extend(caret);
             else _selection.Set(caret, caret);
             RevealCaret(caret);
-            if (caret.Page == focus.Page) Speak(Moved(text, key, index, Math.Min(caret.Index, count)));
+            // A reader that follows the selection says the move itself.
+            if (caret.Page == focus.Page && !Surface.Listening(AutomationEvents.TextPatternOnTextSelectionChanged)) Speak(Moved(text, key, index, Math.Min(caret.Index, count)));
         }
         return true;
     }
@@ -359,15 +371,8 @@ public partial class PageViewer
     // The rectangle of page space that holds the quads (user space).
     private Rect PageBounds(int page, IEnumerable<TextQuad> quads)
     {
-        var geometry = Surface.Geometry(page);
         var area = Rect.Empty;
-        foreach (var quad in quads)
-        {
-            var box = quad.Bounds;
-            var (x1, y1) = geometry.ToDisplay(box.Left, box.Bottom);
-            var (x2, y2) = geometry.ToDisplay(box.Right, box.Top);
-            area.Union(new Rect(new Point(x1, y1), new Point(x2, y2)));
-        }
+        foreach (var quad in quads) area.Union(Surface.QuadArea(page, quad));
         return area;
     }
 

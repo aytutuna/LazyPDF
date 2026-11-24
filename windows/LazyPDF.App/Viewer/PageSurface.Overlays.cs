@@ -17,6 +17,16 @@ internal sealed partial class PageSurface
         return geometry;
     }
 
+    /// <summary>The area of page space that a text quad (user space) covers.</summary>
+    public Rect QuadArea(int page, TextQuad quad)
+    {
+        var geometry = Geometry(page);
+        var box = quad.Bounds;
+        var (x1, y1) = geometry.ToDisplay(box.Left, box.Bottom);
+        var (x2, y2) = geometry.ToDisplay(box.Right, box.Top);
+        return new Rect(new Point(x1, y1), new Point(x2, y2));
+    }
+
     public PageOverlay Overlay(int page)
     {
         if (!_overlays.TryGetValue(page, out var overlay)) _overlays[page] = overlay = new PageOverlay(page, PageSize(page));

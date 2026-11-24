@@ -364,6 +364,7 @@ Folder `Text/`, uses Content. No user-visible text. Everything is in page user s
 **`TextPage`** (`sealed partial`)
 - `static TextPage Create(PdfDocument, PdfPage, TextPageOptions? = null)` and `Create(ContentInterpreter, PdfPage, TextPageOptions? = null)` (the second reuses the caller's interpreter and its caches; it sets `WalkPatterns` off for the run and restores it). `record TextPageOptions(bool IncludeArtifacts = true, bool RemoveDuplicates = true)`.
 - `PageIndex`, `Box` (crop box), `IsTruncated` (interpreter operation limit, or more than 1,000,000 glyphs), `Chars`, `Words`, `Lines`, `Blocks` (all `IReadOnlyList`), `Text`.
+- C# only: `static TextPage Empty(int pageIndex)`, a page with no text, a Letter crop box and rotation 0, which the viewer's text source gives for a page that fails to read, so a walk goes past it. Its geometry stands for nothing: take a page's own from `PdfPage`. Swift has no twin, since `TextCache.get` has no failure to answer.
 - `string GetText(TextRange, bool joinHyphens = false)`, `IReadOnlyList<TextQuad> Quads(TextRange)`, `TextRange WordRange(int)`, `LineRange(int)`, `TextHit? HitTest(x, y, maxDistance = infinity)`, `int CaretAt(x, y)`.
 - Text rules: lines are joined by a line feed, blocks by a blank line, table cells and cells of one row by a tab; spaces at line ends are dropped. `joinHyphens` removes a `-`, U+2010, U+2011 or U+00AD that ends a line after a letter and joins the next line when it starts with a letter; before a capital the hyphen stays and only the break goes.
 
