@@ -213,4 +213,32 @@ final class MacUITests: XCTestCase {
         let gone = NSPredicate(format: "exists == false")
         wait(for: [expectation(for: gone, evaluatedWith: tab(app))], timeout: 10)
     }
+
+    // A click on the selected box gives it the arrow keys through the page view; the model tests cannot see that key path.
+    func testArrowsAfterAClickOnTheSelectedBoxMoveAndResizeIt() throws {
+        let app = try launch(opening: true)
+        XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
+        choose(app, menu: "Tools", item: "Security")
+        app.menuBars.menuItems["Redact"].click()
+        let draw = app.checkBoxes["Draw boxes on the page"]
+        XCTAssertTrue(draw.waitForExistence(timeout: 10))
+        draw.click()
+
+        // The page viewer is the largest scroll area; the first page fills the top of it whatever the zoom.
+        let areas = app.windows.firstMatch.scrollViews.allElementsBoundByIndex.filter { $0.label != "Open files" }
+        let viewer = try XCTUnwrap(areas.max { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height })
+        let from = viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.25))
+        from.press(forDuration: 0.3, thenDragTo: viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.35)),
+                   withVelocity: .slow, thenHoldForDuration: 0.2)
+        let row = app.buttons["Box, page 1"]
+        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        draw.click()
+        row.click()
+        viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.475, dy: 0.3)).click()
+
+        app.typeKey(.rightArrow, modifierFlags: [])
+        XCTAssertTrue(element(app, "Box moved.").waitForExistence(timeout: 10))
+        app.typeKey(.rightArrow, modifierFlags: .option)
+        XCTAssertTrue(element(app, "Box resized.").waitForExistence(timeout: 10))
+    }
 }

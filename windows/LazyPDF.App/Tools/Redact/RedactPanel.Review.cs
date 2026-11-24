@@ -82,17 +82,34 @@ public partial class RedactPanel
 
     private void MarkedList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        _editor?.Show(MarkedList.SelectedItem as MarkItem);
+        if (_showing) return;
+        var picked = MarkedList.SelectedItem as MarkItem;
+        _showing = true;
+        try
+        {
+            // A pending nudge goes into the list first. That rebuilds the list and drops its selection, so the pick is made again.
+            _replaced = null;
+            _editor?.Clear();
+            if (_replaced is var (old, now) && ReferenceEquals(picked, old)) picked = now;
+            if (!ReferenceEquals(MarkedList.SelectedItem, picked)) MarkedList.SelectedItem = picked;
+            _editor?.Show(picked);
+        }
+        finally
+        {
+            _showing = false;
+        }
         if (!_editing) Jump();
     }
 
     private void BoxEdited(MarkItem old, MarkItem now)
     {
+        var was = MarkedList.SelectedItem;
         _editing = true;
         try
         {
             _state!.Marks.Replace(old, now);
-            MarkedList.SelectedItem = now;
+            if (_showing) _replaced = (old, now);
+            else MarkedList.SelectedItem = ReferenceEquals(was, old) ? now : was;
         }
         finally
         {
@@ -178,14 +195,18 @@ public partial class RedactPanel
 
     private void Undo_Click(object sender, RoutedEventArgs e) => _state!.Marks.Undo();
 
-    // The notice outlives the tool and later changes; it undoes only while the list is as it left it.
+    // The notice outlives the tool and later changes; it undoes only while the list is as it left it. A file change forgets
+    // the history, so there may be nothing to undo and no Undo button to point to.
     private Action UndoIfUnchanged(IReadOnlyList<MarkItem> after)
     {
         var state = _state!;
+        var pages = state.Pages;
         return () =>
         {
-            if (_state == state && ReferenceEquals(state.Marks.Items, after)) state.Marks.Undo();
-            else Host?.SetStatus(Loc.T("The marks changed since. Use Undo in the list."));
+            if (state.Pages is { } now && pages is { } was && !was.SequenceEqual(now))
+                Host?.ShowNotice(Loc.T("Marks removed"), Loc.T("The pages changed, so the marks no longer fit. Mark them again."));
+            else if (_state == state && state.Marks.CanUndo && ReferenceEquals(state.Marks.Items, after)) state.Marks.Undo();
+            else Host?.SetStatus(state.Marks.CanUndo ? Loc.T("The marks changed since. Use Undo in the list.") : Loc.T("The marks changed since."));
         };
     }
 }

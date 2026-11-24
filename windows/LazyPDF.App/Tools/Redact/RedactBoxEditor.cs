@@ -47,6 +47,7 @@ public sealed class RedactBoxEditor
     private readonly Action<MarkItem, MarkItem> _changed;
     private readonly Action<string> _status;
     private readonly Action _leave;
+    private readonly Func<IInputElement?, bool> _inList;
     private readonly DispatcherTimer _settle = new() { Interval = TimeSpan.FromMilliseconds(400) };
     private readonly List<(Handle Handle, Thumb Thumb)> _thumbs = [];
     private MarkItem? _item;
@@ -60,12 +61,13 @@ public sealed class RedactBoxEditor
     private bool _clearing;
     private bool _resized;
 
-    public RedactBoxEditor(IDocumentViewer viewer, Action<MarkItem, MarkItem> changed, Action<string> status, Action leave)
+    public RedactBoxEditor(IDocumentViewer viewer, Action<MarkItem, MarkItem> changed, Action<string> status, Action leave, Func<IInputElement?, bool> inList)
     {
         _viewer = viewer;
         _changed = changed;
         _status = status;
         _leave = leave;
+        _inList = inList;
         _settle.Tick += (_, _) =>
         {
             Commit();
@@ -96,9 +98,18 @@ public sealed class RedactBoxEditor
         AutomationProperties.SetName(_frame, Loc.T("Box on page {0}. Arrow keys move it. Control and arrow keys resize it. Escape returns to the list.", item.Page + 1));
         _frame.KeyDown += Frame_KeyDown;
         _frame.GotKeyboardFocus += (_, _) => _frame.Line.StrokeThickness = 3;
-        _frame.LostKeyboardFocus += (_, _) =>
+        _frame.LostKeyboardFocus += (_, e) =>
         {
-            Commit();
+            // A click on a list row moves focus before it picks the row. Committing now would rebuild the list under that click, so the commit waits until the pick is in.
+            if (_inList(e.NewFocus))
+            {
+                var frame = _frame;
+                _frame.Dispatcher.BeginInvoke(DispatcherPriority.Input, () =>
+                {
+                    if (_frame == frame) Commit();
+                });
+            }
+            else Commit();
             if (_frame is not null) _frame.Line.StrokeThickness = 1.5;
         };
         _layer.Children.Add(_frame);

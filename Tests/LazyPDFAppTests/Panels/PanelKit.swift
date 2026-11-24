@@ -84,8 +84,12 @@ final class PanelViewer: DocumentViewer {
 
     func showGoToPage() {}
 
+    /// Pages shown turned, by page: the size swaps and the geometry carries the rotation.
+    @ObservationIgnored var turned: [Int: Int] = [:]
+
     func pageSize(_ page: Int) -> ViewSize {
-        ViewSize(page % 2 == 0 ? 612 : 300, page % 2 == 0 ? 792 : 600)
+        let (width, height) = (page % 2 == 0 ? 612.0 : 300.0, page % 2 == 0 ? 792.0 : 600.0)
+        return (turned[page] ?? 0) % 180 == 0 ? ViewSize(width, height) : ViewSize(height, width)
     }
 
     @ObservationIgnored private var overlays: [Int: PageOverlay] = [:]
@@ -122,7 +126,9 @@ final class PanelViewer: DocumentViewer {
     func geometry(_ page: Int) -> PageGeometry {
         geometryAsked.append(page)
         let size = pageSize(page)
-        return PageGeometry(PdfRect(0, 0, size.width, size.height), 0)
+        let rotation = turned[page] ?? 0
+        let turnedBack = rotation % 180 == 0 ? size : ViewSize(size.height, size.width)
+        return PageGeometry(PdfRect(0, 0, turnedBack.width, turnedBack.height), rotation)
     }
 
     func text(_ page: Int) async -> TextPage? { nil }

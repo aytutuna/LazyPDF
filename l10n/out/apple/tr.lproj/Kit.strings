@@ -255,7 +255,9 @@
 "Box" = "Kutu";
 "Box drawn on page {0}." = "Kutu {0}. sayfaya çizildi.";
 "Box is off the pages" = "Kutu sayfaların dışında";
+"Box moved." = "Kutu taşındı.";
 "Box of {0} by {1} mm." = "{0} x {1} mm kutu.";
+"Box resized." = "Kutu yeniden boyutlandırıldı.";
 "Bring forward" = "Bir öne getir";
 "Bring to front" = "En öne getir";
 "Browse" = "Gözat";
@@ -1022,9 +1024,11 @@
 "Move earlier" = "Öne al";
 "Move form field" = "Form alanını taşı";
 "Move later" = "Sonraya taşı";
+"Move left" = "Sola taşı";
 "Move marks" = "İşaretleri taşı";
 "Move pages" = "Sayfaları taşı";
 "Move point" = "Noktayı taşı";
+"Move right" = "Sağa taşı";
 "Move step down" = "Adımı aşağı taşı";
 "Move step up" = "Adımı yukarı taşı";
 "Move tag" = "Etiketi taşı";
@@ -1041,6 +1045,7 @@
 "Name" = "Ad";
 "Name of the set" = "Kümenin adı";
 "Narrow" = "Dar";
+"Narrower" = "Daha dar";
 "Needs a person" = "Kişi bakmalı";
 "New bookmark" = "Yeni yer imi";
 "New field" = "Yeni alan";
@@ -1628,6 +1633,7 @@
 "Security" = "Güvenlik";
 "Security allows screen readers" = "Güvenlik ekran okuyuculara izin veriyor";
 "Select" = "Seç";
+"Select a box to move or resize it." = "Taşımak veya yeniden boyutlandırmak için bir kutu seçin.";
 "Select all" = "Tümünü seç";
 "Select none" = "Seçimi kaldır";
 "Select objects" = "Nesneleri seç";
@@ -1662,6 +1668,7 @@
 "Shape changed." = "Şekil değişti.";
 "Shape {0}" = "Şekil {0}";
 "Share" = "Paylaş";
+"Shorter" = "Daha kısa";
 "Show" = "Göster";
 "Show a field" = "Alanı göster";
 "Show beside the page" = "Sayfanın yanında göster";
@@ -1822,6 +1829,7 @@
 "Take back the last corner (Backspace)" = "Son köşeyi geri al (Backspace)";
 "Take out hidden data before the file goes to someone else." = "Dosya başkasına gitmeden önce gizli verileri kaldırın.";
 "Take the recognized text off the chosen pages" = "Seçili sayfalardaki tanınan metni kaldırın";
+"Taller" = "Daha uzun";
 "Tap a field on the page to fill it in, or choose it from the list." = "Doldurmak için sayfada bir alana dokunun ya da listeden seçin.";
 "Tap a field to change it. Choose a kind below to draw a new one." = "Değiştirmek için bir alana dokunun. Yeni alan çizmek için aşağıdan bir tür seçin.";
 "Tap a picture, or pick text from the list. The list can select several." = "Bir resme dokunun ya da metni listeden seçin. Listeden birkaçı seçilebilir.";
@@ -2045,6 +2053,8 @@
 "The list is empty now." = "Liste şimdi boş.";
 "The list stops at 1000 findings." = "Liste 1000 bulguda sona eriyor.";
 "The margin leaves no room on the page. Pick a smaller margin." = "Kenar boşluğu sayfada yer bırakmıyor. Daha küçük bir boşluk seçin.";
+"The marks changed since." = "İşaretler o zamandan beri değişti.";
+"The marks changed since. Use Undo in the list." = "İşaretler o zamandan beri değişti. Listedeki Geri al düğmesini kullanın.";
 "The match runs over two lines." = "Eşleşme iki satıra taşıyor.";
 "The metadata stream has a /Filter." = "Üst veri akışında /Filter var.";
 "The named action {0} is not allowed." = "{0} adlı eyleme izin verilmiyor.";
@@ -2324,6 +2334,7 @@
 "Underline the selected text." = "Seçili metnin altını çizin.";
 "Undo" = "Geri al";
 "Undo stroke" = "Çizgiyi geri al";
+"Undo the last change to the marks" = "İşaretlerdeki son değişikliği geri alın";
 "Undo {0}" = "Geri al: {0}";
 "Unit on the page" = "Sayfadaki birim";
 "Unknown data file" = "Bilinmeyen veri dosyası";
@@ -2388,6 +2399,7 @@
 "Whole words" = "Tam sözcükler";
 "Whole words only" = "Yalnızca tam sözcükler";
 "Wide" = "Geniş";
+"Wider" = "Daha geniş";
 "Width" = "Kalınlık";
 "Width %" = "Genişlik %";
 "Width ({0})" = "Genişlik ({0})";
