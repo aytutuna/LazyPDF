@@ -35,7 +35,7 @@ private struct TabPageDrop: DropDelegate {
 
     func validateDrop(info: DropInfo) -> Bool {
         NSLog("DBG validateDrop page=%d accepts=%d", isPage(info) ? 1 : 0, accepts ? 1 : 0)
-        isPage(info) || (tabs.map { info.hasItemsConforming(to: $0.types) } ?? false)
+        return isPage(info) || (tabs.map { info.hasItemsConforming(to: $0.types) } ?? false)
     }
 
     func dropEntered(info: DropInfo) {
