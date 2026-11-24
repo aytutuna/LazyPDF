@@ -260,8 +260,11 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(status.waitForExistence(timeout: 20))
 
         // The copy leaves the file unsaved; close it without saving so the next launch has nothing to restore.
+        // The tab's label now says it has unsaved changes.
+        let edited = app.scrollViews["Open files"].buttons.matching(NSPredicate(format: "label BEGINSWITH 'links-5.pdf'")).firstMatch
+        let edge = edited.frame.maxX
         let close = app.scrollViews["Open files"].buttons.matching(NSPredicate(format: "label == 'Close'")).allElementsBoundByIndex
-            .min { abs($0.frame.midX - linksTab(app).frame.maxX) < abs($1.frame.midX - linksTab(app).frame.maxX) }
+            .min { abs($0.frame.midX - edge) < abs($1.frame.midX - edge) }
         close?.click()
         let dontSave = app.buttons["Don't save"].firstMatch
         if dontSave.waitForExistence(timeout: 5) { dontSave.click() }
