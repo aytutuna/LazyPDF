@@ -1,5 +1,6 @@
 #if canImport(SwiftUI)
 import SwiftUI
+import UniformTypeIdentifiers
 import LazyPDFApp
 
 // The Mac's drag of a tab, which can leave the window: a private pasteboard type no other app takes, so a drop on Finder or a
@@ -43,6 +44,27 @@ struct TabFrames: PreferenceKey {
     }
 }
 
+/// What a drag of a tab does when it is let go on a part of the strip, taken by the same onDrop that takes dragged pages.
+struct TabIdDrop {
+    let types: [UTType]
+    let take: @MainActor (DropInfo) -> Bool
+}
+
+extension TabIdDrop {
+    /// The String drag of a tab id on the iPhone and iPad. Its item loads asynchronously, which is fine where no session
+    /// is waiting on the result.
+    static func ids(index: @escaping @MainActor () -> Int, fallback: @escaping @MainActor ([String], Int) -> Bool) -> TabIdDrop {
+        TabIdDrop(types: [.plainText]) { info in
+            guard let provider = info.itemProviders(for: [.plainText]).first else { return false }
+            _ = provider.loadObject(ofClass: NSString.self) { id, _ in
+                guard let id = id as? String else { return }
+                Task { @MainActor in _ = fallback([id], index()) }
+            }
+            return true
+        }
+    }
+}
+
 #if os(macOS)
 import AppKit
 import UniformTypeIdentifiers
@@ -65,11 +87,6 @@ struct TabPayload: Codable, Transferable {
 }
 
 extension View {
-    func tabDropTarget(_ dragging: TabDragging?, index: @escaping @MainActor () -> Int,
-                       fallback: @escaping @MainActor ([String], Int) -> Bool) -> some View {
-        modifier(TabDropTarget(dragging: dragging, index: index, fallback: fallback))
-    }
-
     func reportsTabFrame(of tab: DocumentTab?, in space: String) -> some View {
         background {
             if let tab {
@@ -88,19 +105,16 @@ extension View {
     }
 }
 
-private struct TabDropTarget: ViewModifier {
-    let dragging: TabDragging?
-    let index: @MainActor () -> Int
-    let fallback: @MainActor ([String], Int) -> Bool
-
-    @ViewBuilder func body(content: Content) -> some View {
-        if let dragging {
-            content.dropDestination(for: TabPayload.self) { items, _ in
-                guard let id = items.first?.id else { return false }
-                return dragging.drop(id, index())
-            }
-        } else {
-            content.dropDestination(for: String.self) { ids, _ in fallback(ids, index()) }
+extension TabIdDrop {
+    /// The Mac's tab drag takes its payload from the drag pasteboard at once: the hub notes the drop while the source's session
+    /// is still running, and an asynchronous load could finish after the source has already seen the session end.
+    static func tabs(_ dragging: TabDragging?, index: @escaping @MainActor () -> Int,
+                     fallback: @escaping @MainActor ([String], Int) -> Bool) -> TabIdDrop {
+        guard let dragging else { return .ids(index: index, fallback: fallback) }
+        return TabIdDrop(types: [.lazyPdfTab]) { _ in
+            guard let data = NSPasteboard(name: .drag).data(forType: .lazyPdfTab),
+                  let payload = try? JSONDecoder().decode(TabPayload.self, from: data) else { return false }
+            return dragging.drop(payload.id, index())
         }
     }
 }
@@ -227,12 +241,14 @@ private struct TabDragSource: NSViewRepresentable {
     }
 }
 #else
-extension View {
-    func tabDropTarget(_ dragging: TabDragging?, index: @escaping @MainActor () -> Int,
-                       fallback: @escaping @MainActor ([String], Int) -> Bool) -> some View {
-        dropDestination(for: String.self) { ids, _ in fallback(ids, index()) }
+extension TabIdDrop {
+    static func tabs(_ dragging: TabDragging?, index: @escaping @MainActor () -> Int,
+                     fallback: @escaping @MainActor ([String], Int) -> Bool) -> TabIdDrop {
+        .ids(index: index, fallback: fallback)
     }
+}
 
+extension View {
     func reportsTabFrame(of tab: DocumentTab?, in space: String) -> some View { self }
 
     func tabDragSource(_ dragging: TabDragging?, frames: [UUID: CGRect], tab: @escaping @MainActor (UUID) -> DocumentTab?) -> some View { self }

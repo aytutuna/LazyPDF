@@ -9525,5 +9525,45 @@
   },
   "Opens the Windows print dialog with the print layout instead of sending the file to Lazy Print.": {
     "tr": "Dosyayı Lazy Print'e göndermek yerine Windows yazdırma penceresini yazdırma düzeniyle açar."
+  },
+  "The permissions of {0} do not allow it. Open it with the owner password.": {
+    "tr": "{0} dosyasının izinleri buna izin vermiyor. Sahip parolasıyla açın."
+  },
+  "Copy pages": {
+    "tr": "Sayfaları kopyala"
+  },
+  "One of the two files is not open any more.": {
+    "tr": "İki dosyadan biri artık açık değil."
+  },
+  "The pages changed since they were picked. Pick them again.": {
+    "tr": "Sayfalar seçildikten sonra değişti. Yeniden seçin."
+  },
+  "Wait for the running job to finish, then try again.": {
+    "tr": "Çalışan işin bitmesini bekleyin, sonra yeniden deneyin."
+  },
+  "{0} is still loading. Try again in a moment.": {
+    "tr": "{0} hâlâ yükleniyor. Biraz sonra yeniden deneyin."
+  },
+  "Copied {0} page to {1}. Undo it in {1}.": {
+    "other": "Copied {0} pages to {1}. Undo it in {1}.",
+    "tr": "{0} sayfa {1} dosyasına kopyalandı. Geri almak için {1} dosyasında Geri al'ı kullanın."
+  },
+  "{0} is certified, so changing it makes viewers report it as altered.": {
+    "tr": "{0} onaylı, bu yüzden değiştirmek görüntüleyicilerde değiştirilmiş olarak görünür."
+  },
+  "{0} is signed, so changing it breaks the signatures.": {
+    "tr": "{0} imzalı, bu yüzden değiştirmek imzaları bozar."
+  },
+  "{0} cannot be changed": {
+    "tr": "{0} değiştirilemez"
+  },
+  "No other file is open.": {
+    "tr": "Başka açık dosya yok."
+  },
+  "Copy to tab": {
+    "tr": "Sekmeye kopyala"
+  },
+  "Copy {0} to {1}": {
+    "tr": "{1} dosyasına {0} kopyala"
   }
 }

@@ -96,6 +96,8 @@ targets:
       - path: LazyPDFiOSUITests
       - path: ../Tests/Fixtures/golden/text/text-pages.pdf
         buildPhase: resources
+      - path: ../Tests/Fixtures/Pages/plain-3.pdf
+        buildPhase: resources
     dependencies:
       - target: LazyPDFiOS
     settings:

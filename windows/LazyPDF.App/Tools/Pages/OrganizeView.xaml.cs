@@ -29,7 +29,7 @@ public sealed partial class OrganizeView : ToolPanel
     public OrganizeView()
     {
         InitializeComponent();
-        _ = new PageDrag(Thumbs, () => Cells, Selected, (pages, before) => MoveTo(pages, before), (paths, before) => _ = InsertFilesAsync(paths, before));
+        _ = new PageDrag(Thumbs, () => Tab, () => Cells, Selected, (pages, before) => MoveTo(pages, before), (paths, before) => _ = InsertFilesAsync(paths, before));
         // The pictures are made again at the new size once the slider stops, not at every step of it.
         _sharpen = new DispatcherTimer(TimeSpan.FromMilliseconds(200), DispatcherPriority.Background, Sharpen_Tick, Dispatcher) { IsEnabled = false };
         IsEnabledChanged += View_IsEnabledChanged;
@@ -217,6 +217,7 @@ public sealed partial class OrganizeView : ToolPanel
         int selected = Thumbs.SelectedItems.Count;
         int total = Cells.Count;
         bool any = selected > 0;
+        CopyTo.IsEnabled = any && Host?.OpenDocuments.Count > 1;
         TurnLeft.IsEnabled = TurnRight.IsEnabled = Remove.IsEnabled = Duplicate.IsEnabled = Extract.IsEnabled = Cut.IsEnabled = Copy.IsEnabled = any;
         Paste.IsEnabled = PageClipboard.Count > 0;
         SignedRow.Visibility = Tab.Document.IsSigned ? Visibility.Visible : Visibility.Collapsed;
@@ -267,6 +268,30 @@ public sealed partial class OrganizeView : ToolPanel
         Viewer?.GoToPage(cell.Index);
         Done_Click(sender, e);
     }
+
+    private void Thumbs_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) => PageDrag.SelectUnder(Thumbs, e.OriginalSource);
+
+    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        bool any = Selected().Count > 0;
+        foreach (var item in Thumbs.ContextMenu.Items.OfType<MenuItem>()) item.IsEnabled = any;
+        CopyToTab.IsEnabled = any && Tab is { } tab && Host is { } host && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
+    }
+
+    private void CopyTo_Click(object sender, RoutedEventArgs e)
+    {
+        if (Tab is not { } tab || Host is not { } host) return;
+        if (!PageTransferMenu.Fill(CopyToMenu.Items, host, tab, Selected))
+        {
+            CopyTo.IsEnabled = false;
+            host.SetStatus(Loc.T("No other file is open."));
+            return;
+        }
+        CopyToMenu.PlacementTarget = CopyTo;
+        CopyToMenu.IsOpen = true;
+    }
+
+    private void CopyTo_ContextMenuOpening(object sender, ContextMenuEventArgs e) => e.Handled = true;
 
     private void Done_Click(object sender, RoutedEventArgs e) => Closed?.Invoke(this, EventArgs.Empty);
 }

@@ -11,7 +11,7 @@
              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True"
              VirtualizingPanel.ScrollUnit="Pixel" AutomationProperties.Name="{loc:T Page thumbnails}"
              AllowDrop="True" SelectionMode="Extended" SelectionChanged="Thumbs_SelectionChanged" PreviewKeyDown="Thumbs_PreviewKeyDown"
-             PreviewMouseRightButtonDown="Thumbs_PreviewMouseRightButtonDown"
+             PreviewMouseRightButtonDown="Thumbs_PreviewMouseRightButtonDown" ContextMenuOpening="Thumbs_ContextMenuOpening"
              PreviewMouseLeftButtonDown="Thumbs_PreviewMouseLeftButtonDown"
              PreviewMouseLeftButtonUp="Thumbs_PreviewMouseLeftButtonUp"
              PreviewMouseMove="Thumbs_PreviewMouseMove" DragOver="Thumbs_DragOver" DragLeave="Thumbs_DragLeave" Drop="Thumbs_Drop">
@@ -24,6 +24,8 @@
                 <Separator />
                 <MenuItem Header="{loc:T Insert blank page}" Click="Blank_Click" />
                 <MenuItem Header="{loc:T Pages from a file...}" Click="FromFile_Click" />
+                <Separator />
+                <MenuItem x:Name="CopyToTab" Header="{loc:T Copy to tab}" />
             </ContextMenu>
         </panel:ThumbList.ContextMenu>
         <panel:ThumbList.ItemContainerStyle>

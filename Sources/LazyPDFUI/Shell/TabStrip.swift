@@ -40,10 +40,14 @@ struct TabStrip: View {
                 // Dropping past the last tab puts the tab last.
                 Color.clear
                     .frame(width: 24, height: 28)
-                    .tabDropTarget(dragging, index: { vm.strip.count }, fallback: move)
+                    .contentShape(Rectangle())
+                    .pageDropTarget(vm, .emptyStrip, tabs: .tabs(dragging, index: { vm.strip.count }, fallback: move))
             }
             .padding(.horizontal, 2)
         }
+        // The empty part of the strip makes a new tab of dragged pages, and takes a tab dragged from another window (the Mac only: a
+        // plain-text type here would take a text file dropped on the window); a tab in front of it answers for itself.
+        .pageDropTarget(vm, .emptyStrip, tabs: dragging.map { _ in TabIdDrop.tabs(dragging, index: { vm.strip.count }, fallback: move) })
         .coordinateSpace(name: Self.space)
         .onPreferenceChange(TabFrames.self) { frames = $0 }
         .tabDragSource(dragging, frames: frames, tab: { id in vm.documents.first { $0.id == id } })
@@ -55,8 +59,10 @@ struct TabStrip: View {
         let base = TabItem(tab: tab, selected: vm.activeTab === tab, select: { vm.select(tab) }, close: {
             if let document { close(document) }
         }, moves: moves(for: tab))
-        .reportsTabFrame(of: document, in: Self.space)
-        .tabDropTarget(dragging, index: { vm.strip.firstIndex { $0 === tab } ?? vm.strip.count - 1 }, fallback: move)
+            .reportsTabFrame(of: document, in: Self.space)
+        .pageDropTarget(vm, document.map { PageDropPlace.tab($0) } ?? .home, tabs: .tabs(dragging, index: {
+            vm.strip.firstIndex { $0 === tab } ?? vm.strip.count - 1
+        }, fallback: move))
         // The Mac's own drag starts from behind the strip; a String drag would also leave the app as text.
         if let document, dragging == nil {
             base.draggable(document.id.uuidString)

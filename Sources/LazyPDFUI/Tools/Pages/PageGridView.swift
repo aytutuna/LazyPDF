@@ -79,7 +79,7 @@ struct PageTile: View {
         .modifier(DoubleTap(action: open.map { open in { open(cell.index) } }))
         .onTapGesture { tapped() }
         .onDrag {
-            grid.dragging = grid.target(cell.index)
+            grid.beginDrag(cell.index)
             return NSItemProvider(item: Data() as NSData, typeIdentifier: PageDrag.type.identifier)
         }
         .onDrop(of: [PageDrag.type, .fileURL], delegate: PageDropDelegate(grid: grid, page: cell.index, width: tileWidth, onFiles: onFiles))
@@ -93,6 +93,13 @@ struct PageTile: View {
         .accessibilityAction(named: Text(L10n.t("Rotate right"))) { grid.turn([cell.index], 90) }
         .accessibilityAction(named: Text(L10n.t("Move earlier"))) { grid.earlier(grid.target(cell.index)) }
         .accessibilityAction(named: Text(L10n.t("Move later"))) { grid.later(grid.target(cell.index)) }
+        .accessibilityActions {
+            // Dragging needs a pointer, so VoiceOver copies to another file by an action.
+            let pages = grid.target(cell.index)
+            ForEach(grid.otherDocuments, id: \.id) { other in
+                Button(CopyToMenu.name(pages.count, grid.copyLabel(other))) { Task { await grid.copy(pages, to: other) } }
+            }
+        }
     }
 
     private func tapped() {
@@ -129,7 +136,34 @@ struct PageTile: View {
         Button(L10n.t("Move later"), systemImage: "arrow.right") { grid.later(pages) }
         Button(L10n.t("Duplicate"), systemImage: "plus.square.on.square") { Task { await grid.duplicate(pages) } }
         Button(L10n.t("Extract to a new file"), systemImage: "arrow.up.doc") { Task { await grid.extract(pages) } }
+        CopyToMenu(grid: grid, pages: pages)
         Button(L10n.t("Delete"), systemImage: "trash", role: .destructive) { grid.remove(pages) }
+    }
+}
+
+/// The other open files as a submenu: the way to copy pages to one of them without dragging, and the only one on a phone.
+struct CopyToMenu: View {
+    let grid: PageGrid
+    let pages: [Int]
+
+    static func name(_ pages: Int, _ target: String) -> String {
+        L10n.t("Copy {0} to {1}", L10n.plural(pages, one: "{0} page", other: "{0} pages"), target)
+    }
+
+    var body: some View {
+        let others = grid.otherDocuments
+        Menu {
+            ForEach(others, id: \.id) { other in
+                let clash = grid.copyLabel(other) != other.title
+                Button(grid.copyLabel(other)) { Task { await grid.copy(pages, to: other) } }
+                    .help(clash ? other.url?.path ?? "" : "")
+                    .accessibilityLabel(Self.name(pages.count, grid.copyLabel(other)))
+                    .accessibilityHint(clash ? other.url?.path ?? "" : "")
+            }
+        } label: {
+            Label(L10n.t("Copy to tab"), systemImage: "rectangle.on.rectangle")
+        }
+        .disabled(pages.isEmpty || others.isEmpty)
     }
 }
 
@@ -154,9 +188,9 @@ private struct DoubleTap: ViewModifier {
     }
 }
 
-// The pages a drag carries are in the grid; the item only tells this grid's own drops from text or files from elsewhere (the
+// The pages a drag carries are in PageDragSession; the item only tells our own drops from text or files from elsewhere (the
 // format "LazyPDF.Pages" of PageDrag.cs).
-private enum PageDrag {
+enum PageDrag {
     static let type = UTType(exportedAs: "com.lazypdf.lazypdf.pages", conformingTo: .data)
 }
 
@@ -180,7 +214,7 @@ private struct PageDropDelegate: DropDelegate {
 
     func validateDrop(info: DropInfo) -> Bool {
         if info.hasItemsConforming(to: [.fileURL]) { return onFiles != nil }
-        return page != nil && !grid.dragging.isEmpty && info.hasItemsConforming(to: [PageDrag.type])
+        return page != nil && grid.acceptsDrag && info.hasItemsConforming(to: [PageDrag.type])
     }
 
     func dropEntered(info: DropInfo) {
@@ -201,7 +235,6 @@ private struct PageDropDelegate: DropDelegate {
             guard let onFiles else { return false }
             let before = page == nil ? grid.cells.count : grid.dropIndex
             grid.unmark()
-            grid.dragging = []
             let providers = info.itemProviders(for: [.fileURL])
             Task { @MainActor in
                 var files: [ToolFile] = []
@@ -212,7 +245,11 @@ private struct PageDropDelegate: DropDelegate {
             }
             return true
         }
-        guard !grid.dragging.isEmpty else { return false }
+        guard grid.acceptsDrag else {
+            grid.unmark()
+            PageDragSession.end()
+            return false
+        }
         grid.dropPages()
         return true
     }

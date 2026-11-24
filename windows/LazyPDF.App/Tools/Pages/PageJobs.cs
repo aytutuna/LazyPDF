@@ -1,4 +1,6 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Comment;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Pages;
@@ -6,6 +8,39 @@ namespace LazyPDF.App.Tools.Pages;
 /// <summary>What the Pages inspector and the organize view both do with a tab: one change to the document as one undo step, and pages copied out.</summary>
 internal static class PageJobs
 {
+    /// <summary>Runs <paramref name="change"/> unless the file's permissions forbid it, with the reason shown. A signed file asks first, and Go on anyway runs the change from the notice. False when it did not run now.</summary>
+    public static bool Gated(DocumentTab tab, IToolHost host, Func<bool> change)
+    {
+        if (ChangeGate.Refusal(tab.Document) is { } problem)
+        {
+            host.ShowProblem(problem);
+            return false;
+        }
+        int revision = tab.Revision;
+        if (MarkWork.Cautioned(tab, host, () => { if (Same(tab, host, revision)) change(); })) return false;
+        return change();
+    }
+
+    public static async Task<bool> GatedAsync(DocumentTab tab, IToolHost host, Func<Task<bool>> change)
+    {
+        if (ChangeGate.Refusal(tab.Document) is { } problem)
+        {
+            host.ShowProblem(problem);
+            return false;
+        }
+        int revision = tab.Revision;
+        if (MarkWork.Cautioned(tab, host, () => { if (Same(tab, host, revision)) _ = change(); })) return false;
+        return await change();
+    }
+
+    // The page numbers an edit holds were read before the caution; an undo or another edit while it was up moves them.
+    private static bool Same(DocumentTab tab, IToolHost host, int revision)
+    {
+        if (tab.Revision == revision) return true;
+        host.ShowProblem(new Problem(Loc.T("Pages not changed"), Loc.T("The pages changed since they were picked. Pick them again.")));
+        return false;
+    }
+
     public static bool Apply(DocumentTab tab, IToolHost host, string label, Action<PdfDocument> change, string status)
     {
         try
@@ -35,16 +70,25 @@ internal static class PageJobs
     }
 
     // For the edits that copy pages in from another file: the work runs off the UI thread and the result goes to the tab it started on,
-    // wherever the person has moved to meanwhile.
-    public static async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, string status)
+    // wherever the person has moved to meanwhile. A tab that is not the one in view passes its <paramref name="file"/> name, since the host's own
+    // refusal for a change the file's permissions forbid does not say which file it is about.
+    public static async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, string status, string? file = null)
     {
-        bool done = false;
+        bool done = false, denied = false;
         try
         {
             await host.RunBusyAsync(busy, token => Task.Run(() =>
             {
                 token.ThrowIfCancellationRequested();
-                change(tab.Document);
+                try
+                {
+                    change(tab.Document);
+                }
+                catch (PdfPermissionException) when (file is not null)
+                {
+                    denied = true;
+                    return;
+                }
                 done = !token.IsCancellationRequested;
             }, token));
         }
@@ -55,6 +99,7 @@ internal static class PageJobs
         }
         if (done) return Commit(tab, host, label, status);
         tab.Session.Discard();
+        if (denied) host.ShowProblem(Problems.Restricted(file));
         return false;
     }
 

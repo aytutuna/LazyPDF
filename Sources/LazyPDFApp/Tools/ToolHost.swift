@@ -39,6 +39,9 @@ public protocol ToolHost: AnyObject {
     /// Opens a file in a tab, or shows the tab it is already in.
     func open(_ url: URL, access: FileAccess?) async
 
+    /// The documents open in the window, in the order of the strip; empty where the host has no window of tabs.
+    var openDocuments: [DocumentTab] { get }
+
     /// Opens PDF bytes as a new document with unsaved changes and no file, so saving asks for a name: the result of
     /// Combine, Compare, Export or Create. The password or certificate of encrypted bytes is kept for the tab.
     func openNew(_ pdf: [UInt8], title: String, password: String?, certificate: CertificateChoice?) async
@@ -114,6 +117,8 @@ public protocol ToolHost: AnyObject {
 }
 
 extension ToolHost {
+    public var openDocuments: [DocumentTab] { [] }
+
     public func openTool(_ id: String) {}
 
     public func openToolReturning(_ id: String, back: String) {}
@@ -262,6 +267,8 @@ extension ToolPanelModel {
 }
 
 extension AppViewModel: ToolHost {
+    public var openDocuments: [DocumentTab] { documents }
+
     public var fontSource: FontSource? { opener.fonts }
 
     public var imageCodec: ImageCodec? { opener.codec }

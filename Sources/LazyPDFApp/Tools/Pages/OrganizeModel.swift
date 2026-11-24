@@ -100,12 +100,16 @@ public final class OrganizeModel {
 
     public func cut() async {
         let pages = grid.selection
-        guard !pages.isEmpty, !grid.noneLeft(pages), await copyPages(pages) else { return }
-        let wasTagged = tab.map(PageJobs.isTagged) ?? false
-        let done = grid.apply(L10n.t("Cut pages"), select: nil, status: L10n.plural(pages.count, one: "{0} page cut", other: "{0} pages cut")) { document in
-            try PageOperations.delete(document, pages)
+        guard let tab, let host, !pages.isEmpty, !grid.noneLeft(pages) else { return }
+        await PageJobs.gatedAsync(tab, host) { [weak self] in
+            guard let self, await self.copyPages(pages) else { return false }
+            let wasTagged = PageJobs.isTagged(tab)
+            return self.grid.applyNow(tab, host, L10n.t("Cut pages"), select: nil,
+                                      status: L10n.plural(pages.count, one: "{0} page cut", other: "{0} pages cut"),
+                                      afterwards: { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }) { document in
+                try PageOperations.delete(document, pages)
+            }
         }
-        if done, let tab, let host { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }
     }
 
     /// True when the pages are on the clipboard.
@@ -121,13 +125,13 @@ public final class OrganizeModel {
     }
 
     public func paste() async {
-        guard let tab, let pdf = PageClipboard.shared.pdf, !pdf.isEmpty else { return }
+        guard let tab, let host, let pdf = PageClipboard.shared.pdf, !pdf.isEmpty else { return }
         let at = insertIndex
         let count = PageClipboard.shared.count
-        await grid.applyAsync(tab, busy: L10n.t("Adding pages"), label: L10n.t("Paste pages"), select: Array(at..<at + count),
-                              status: L10n.plural(count, one: "{0} page pasted", other: "{0} pages pasted")) { document in
-            let source = try PdfDocument.open(pdf)
-            try Self.importAll(document, source, min(at, document.pages.count))
+        await PageJobs.gatedAsync(tab, host) { [weak self] in
+            guard await PageTransfer.paste(tab, host, pdf, count: count, at: at) else { return false }
+            self?.grid.rebuilt(tab, select: Array(at..<at + count))
+            return true
         }
     }
 

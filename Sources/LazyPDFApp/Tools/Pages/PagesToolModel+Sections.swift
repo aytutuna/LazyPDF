@@ -140,10 +140,9 @@ extension PagesToolModel {
             status += " " + L10n.plural(left, one: "{0} page was left alone because the box is outside it.",
                                         other: "{0} pages were left alone because the box is outside them.")
         }
-        let done = grid.apply(L10n.t("Crop pages"), select: chosen, status: status) { document in
+        grid.apply(L10n.t("Crop pages"), select: chosen, status: status, afterwards: { crop.clear() }) { document in
             try PageEdits.crop(document, targets, box.area)
         }
-        if done { crop.clear() }
     }
 
     public func removeCrop() {

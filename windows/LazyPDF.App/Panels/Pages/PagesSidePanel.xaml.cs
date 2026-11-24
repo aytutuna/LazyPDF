@@ -169,14 +169,15 @@ public partial class PagesSidePanel : ToolPanel
         _downThumb = null;
         _keptSelection = false;
         if (!Thumbs.SelectedItems.Contains(thumb)) Thumbs.SelectedItem = thumb;
-        DragDrop.DoDragDrop(Thumbs, new DataObject(PageDrag.Format, Selected()), DragDropEffects.Move);
+        if (Tab is not { } tab) return;
+        DragDrop.DoDragDrop(Thumbs, new DataObject(PageDrag.Format, new PagePayload(tab, [.. Selected()], tab.Revision)), DragDropEffects.Move | DragDropEffects.Copy);
         Unmark();
     }
 
     private void Thumbs_DragOver(object sender, DragEventArgs e)
     {
         e.Handled = true;
-        if (!e.Data.GetDataPresent(PageDrag.Format))
+        if (PageDrag.From(e.Data, Tab) is null)
         {
             e.Effects = DragDropEffects.None;
             return;
@@ -228,7 +229,7 @@ public partial class PagesSidePanel : ToolPanel
     {
         int before = _marked is null ? -1 : _after ? _marked.Index + 1 : _marked.Index;
         Unmark();
-        if (before >= 0 && e.Data.GetData(PageDrag.Format) is List<int> pages && pages.Count > 0) MovePages(pages, before);
+        if (before >= 0 && PageDrag.From(e.Data, Tab) is { Pages.Length: > 0 } payload) MovePages([.. payload.Pages], before);
         e.Handled = true;
     }
 
@@ -270,6 +271,9 @@ public partial class PagesSidePanel : ToolPanel
         if (ItemsControl.ContainerFromElement(Thumbs, (DependencyObject)e.OriginalSource) is ListBoxItem { IsSelected: false } item)
             Thumbs.SelectedItem = item.DataContext;
     }
+
+    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e) =>
+        CopyToTab.IsEnabled = Tab is { } tab && Host is { } host && Selected().Count > 0 && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
 
     private void Thumbs_PreviewKeyDown(object sender, KeyEventArgs e) => e.Handled = Press(e.Key, Keyboard.Modifiers);
 
@@ -340,12 +344,7 @@ public partial class PagesSidePanel : ToolPanel
     {
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
-        var failed = new Problem(Loc.T("Pages not extracted"), Loc.T("The pages could not be copied into a new file. Try fewer pages."));
-        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Extracting pages"), failed) is not var (bytes, skipped, dropped)) return;
-        if (!await host.OpenNewAsync(bytes, Loc.T("{0} extract.pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title)))) return;
-        PageJobs.NoteSkippedAttachments(host, skipped, dropped);
-        host.SetStatus(Loc.Plural(pages.Count, "{0} page extracted", "{0} pages extracted", pages.Count));
-        CopyRules.NoteUnprotected(tab.Document, host);
+        await PageTransfer.ToNewTabAsync(new PagePayload(tab, [.. pages], tab.Revision), host, files: true);
     }
 
     private void Blank_Click(object sender, RoutedEventArgs e) => InsertBlank();

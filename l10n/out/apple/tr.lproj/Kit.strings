@@ -446,15 +446,20 @@
 "Converted, checks passed" = "Dönüştürüldü, denetimler geçti";
 "Converted, rules still broken" = "Dönüştürüldü, kurallar hâlâ bozuk";
 "Converting to {0}" = "{0} biçimine dönüştürülüyor";
+"Copied {0} page to {1}. Undo it in {1}.|one" = "{0} sayfa {1} dosyasına kopyalandı. Geri almak için {1} dosyasında Geri al'ı kullanın.";
+"Copied {0} page to {1}. Undo it in {1}.|other" = "{0} sayfa {1} dosyasına kopyalandı. Geri almak için {1} dosyasında Geri al'ı kullanın.";
 "Copies" = "Kopya";
 "Copy" = "Kopyala";
 "Copy for the others" = "Diğerleri için kopya";
 "Copy is not protected" = "Kopya korumasız";
+"Copy pages" = "Sayfaları kopyala";
 "Copy text and pictures" = "Metni ve resimleri kopyala";
 "Copy text or a picture, then come back." = "Bir metin veya resim kopyalayın, sonra buraya dönün.";
 "Copy text or a picture, then try again." = "Bir metin veya resim kopyalayın, sonra yeniden deneyin.";
+"Copy to tab" = "Sekmeye kopyala";
 "Copy with protection" = "Korumalı kopya";
 "Copy without protection" = "Korumasız kopya";
+"Copy {0} to {1}" = "{1} dosyasına {0} kopyala";
 "Copying pages" = "Sayfalar kopyalanıyor";
 "Correct a word" = "Sözcüğü düzelt";
 "Correct by touching the page" = "Sayfaya dokunarak düzelt";
@@ -1192,6 +1197,7 @@
 "On this page" = "Bu sayfada";
 "One choice per line." = "Her satırda bir seçenek.";
 "One of the pictures could not be read. Close any program that has it open and try again." = "Resimlerden biri okunamadı. Dosyayı açık tutan programları kapatıp yeniden deneyin.";
+"One of the two files is not open any more." = "İki dosyadan biri artık açık değil.";
 "One page" = "Tek sayfa";
 "One page at a time" = "Aynı anda tek sayfa";
 "One side" = "Tek yüz";
@@ -2081,6 +2087,7 @@
 "The page has annotations and its tab order does not follow the structure." = "Sayfada ek açıklamalar var ve sekme sırası yapıyı izlemiyor.";
 "The page has too many marked sequences to tag more." = "Sayfada daha fazla etiketlemek için çok fazla işaretli dizi var.";
 "The page is not in the file." = "Sayfa dosyada yok.";
+"The pages changed since they were picked. Pick them again." = "Sayfalar seçildikten sonra değişti. Yeniden seçin.";
 "The pages changed, so the marks no longer fit. Mark them again." = "Sayfalar değişti, bu yüzden işaretler artık uymuyor. Yeniden işaretleyin.";
 "The pages could not be changed. Save a copy of the file and try again." = "Sayfalar değiştirilemedi. Dosyanın bir kopyasını kaydedip yeniden deneyin.";
 "The pages could not be checked." = "Sayfalar denetlenemedi.";
@@ -2097,6 +2104,7 @@
 "The pattern took too long on {0} pages, the first being page {1}; they were not searched." = "Desen {0} sayfada çok uzun sürdü, ilki {1}. sayfa; bu sayfalar aranmadı.";
 "The permissions of this file do not allow changing its fields." = "Bu dosyanın izinleri alanlarının değiştirilmesine izin vermiyor.";
 "The permissions of this file do not allow filling in forms." = "Bu dosyanın izinleri form doldurmaya izin vermiyor.";
+"The permissions of {0} do not allow it. Open it with the owner password." = "{0} dosyasının izinleri buna izin vermiyor. Sahip parolasıyla açın.";
 "The presentation cannot be made into a PDF. Only .pptx files up to 100 MB with a slide to show can be; older .ppt files must be saved as .pptx first." = "Sunu PDF'ye çevrilemiyor. Yalnızca gösterilecek slaytı olan, 100 MB'a kadar .pptx dosyaları çevrilebilir; eski .ppt dosyalarını önce .pptx olarak kaydedin.";
 "The print and visibility flags of {0} annotations were corrected." = "{0} ek açıklamanın yazdırma ve görünürlük bayrakları düzeltildi.";
 "The print panel's page range and odd or even pages then count the sides of the booklet." = "Yazdırma panelindeki sayfa aralığı ve tek veya çift sayfalar bundan sonra kitapçığın yüzlerini sayar.";
@@ -2364,6 +2372,7 @@
 "View the signer's certificate" = "İmzalayanın sertifikasını göster";
 "Wait for the job to end, or cancel it, then close." = "İşin bitmesini bekleyin ya da iptal edin, sonra kapatın.";
 "Wait for the job to end, or cancel it, then move the tab." = "İşin bitmesini bekleyin ya da iptal edin, sonra sekmeyi taşıyın.";
+"Wait for the running job to finish, then try again." = "Çalışan işin bitmesini bekleyin, sonra yeniden deneyin.";
 "Waiting to be added" = "Eklenmeyi bekleyen";
 "Was: " = "Önceki: ";
 "Watch a folder" = "Klasör izle";
@@ -2509,6 +2518,7 @@
 "{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.|other" = "{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın.";
 "{0} bytes" = "{0} bayt";
 "{0} came inside this PDF. Open it only if you trust where the PDF came from." = "{0} bu PDF'nin içinde geldi. Yalnızca PDF'nin nereden geldiğine güveniyorsanız açın.";
+"{0} cannot be changed" = "{0} değiştirilemez";
 "{0} cannot be repaired. Try an earlier copy of it." = "{0} onarılamıyor. Daha eski bir kopyasını deneyin.";
 "{0} cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key." = "{0} bir dosyayı korumak için kullanılamaz. RSA, P-256 veya P-384 anahtarlı bir sertifika seçin.";
 "{0} changed while this ran. Run it again." = "{0} bu işlem sürerken değişti. İşlemi yeniden çalıştırın.";
@@ -2585,6 +2595,7 @@
 "{0} integers beyond 32 bits were cut to the limit." = "32 bit sınırını aşan {0} tamsayı sınıra çekildi.";
 "{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder." = "{0} bir dosya değil, klasör. İçindeki dosyaları açın ya da bir klasörün tamamında çalışmak için Toplu işlem'i kullanın.";
 "{0} is being reloaded. Try again in a moment." = "{0} yeniden yükleniyor. Biraz sonra yeniden deneyin.";
+"{0} is certified, so changing it makes viewers report it as altered." = "{0} onaylı, bu yüzden değiştirmek görüntüleyicilerde değiştirilmiş olarak görünür.";
 "{0} is encrypted for the holders of certain certificates. Pick the certificate that can open it." = "{0}, belirli sertifikaların sahipleri için şifrelenmiş. Onu açabilen sertifikayı seçin.";
 "{0} is locked for certificate holders. Pick one that opens it." = "{0} sertifika sahipleri için kilitli. Dosyayı açan bir sertifika seçin.";
 "{0} is locked. Type its password." = "{0} kilitli. Parolasını yazın.";
@@ -2598,7 +2609,9 @@
 "{0} is over 50 MB. Attach a smaller file." = "{0} 50 MB'ı aşıyor. Daha küçük bir dosya ekleyin.";
 "{0} is protected. Type its password to open it." = "{0} korumalı. Açmak için parolasını yazın.";
 "{0} is read-only. You can work on it, but save your changes with Save as." = "{0} salt okunur. Üzerinde çalışabilirsiniz, ancak değişikliklerinizi Farklı kaydet ile kaydedin.";
+"{0} is signed, so changing it breaks the signatures." = "{0} imzalı, bu yüzden değiştirmek imzaları bozar.";
 "{0} is signed. Saving it compact writes it again and the signatures no longer hold. Save and Save as keep them." = "{0} imzalı. Sıkıştırılmış kaydetmek dosyayı yeniden yazar ve imzalar geçerliliğini yitirir. Kaydet ve Farklı kaydet imzaları korur.";
+"{0} is still loading. Try again in a moment." = "{0} hâlâ yükleniyor. Biraz sonra yeniden deneyin.";
 "{0} is too big for this format. Export fewer pages or pick another format." = "{0} bu biçim için çok büyük. Daha az sayfa aktarın veya başka bir biçim seçin.";
 "{0} is used and the file has no output intent or default space for it." = "{0} kullanılıyor ve dosyada bunun için çıktı amacı ya da varsayılan uzay yok.";
 "{0} kind of private data is left in.|one" = "{0} tür özel veri içeride kaldı.";

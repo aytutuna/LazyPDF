@@ -6,6 +6,37 @@ import LazyPDFKit
 
 @MainActor
 public enum PageJobs {
+    /// Runs `change` unless the file's permissions forbid it, with the reason shown. A signed file asks first, and Go on anyway
+    /// runs the change from the notice. False when it did not run now.
+    @discardableResult
+    public static func gated(_ tab: DocumentTab, _ host: ToolHost, _ change: @escaping @MainActor () -> Bool) -> Bool {
+        if let problem = ChangeGate.refusal(tab.document) {
+            host.showProblem(problem)
+            return false
+        }
+        let revision = tab.revision
+        if MarkWork.cautioned(tab, host, again: { if same(tab, host, revision) { _ = change() } }) { return false }
+        return change()
+    }
+
+    @discardableResult
+    public static func gatedAsync(_ tab: DocumentTab, _ host: ToolHost, _ change: @escaping @MainActor () async -> Bool) async -> Bool {
+        if let problem = ChangeGate.refusal(tab.document) {
+            host.showProblem(problem)
+            return false
+        }
+        let revision = tab.revision
+        if MarkWork.cautioned(tab, host, again: { if same(tab, host, revision) { Task { _ = await change() } } }) { return false }
+        return await change()
+    }
+
+    /// The page numbers an edit holds were read before the caution; an undo or another edit while it was up moves them.
+    private static func same(_ tab: DocumentTab, _ host: ToolHost, _ revision: Int) -> Bool {
+        if tab.revision == revision { return true }
+        host.showProblem(Problem(L10n.t("Pages not changed"), L10n.t("The pages changed since they were picked. Pick them again.")))
+        return false
+    }
+
     @discardableResult
     public static func apply(_ tab: DocumentTab, _ host: ToolHost, _ label: String, _ change: (PdfDocument) throws -> Void,
                              _ status: String) -> Bool {

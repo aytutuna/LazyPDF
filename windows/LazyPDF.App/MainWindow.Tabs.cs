@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Pages;
 
 namespace LazyPDF.App;
 
@@ -28,6 +29,7 @@ public partial class MainWindow
     private bool _waitingForBatch;
     private TabStripPanel? _tabPanel;
     private TabDropMarker? _dropMarker;
+    private TabPageDrop? _pageDrop;
 
     private void TabList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -345,8 +347,22 @@ public partial class MainWindow
         }
     }
 
+    // Pages dragged from a grid copy to the tab under the pointer, or become a new tab on the empty strip; none of the strip's other drops apply.
+    private bool PageDragOnStrip(object sender, DragEventArgs e, bool drop)
+    {
+        if (!e.Data.GetDataPresent(PageDrag.Format)) return false;
+        var pages = _pageDrop ??= new TabPageDrop(_vm);
+        bool overflowButton = ReferenceEquals(sender, TabOverflow);
+        var under = overflowButton ? null : TabAt(e.OriginalSource);
+        bool empty = under is null && !overflowButton && _tabPanel is not { Overflows: true };
+        e.Effects = drop ? pages.Drop(e.Data, under, empty) : pages.Over(e.Data, under, empty);
+        e.Handled = true;
+        return true;
+    }
+
     private void TabList_DragOver(object sender, DragEventArgs e)
     {
+        if (PageDragOnStrip(sender, e, drop: false)) return;
         if (!e.Data.GetDataPresent(TabIdFormat)) return;
         var tab = DraggedTab(e.Data);
         e.Effects = tab is null ? DragDropEffects.None : DragDropEffects.Move;
@@ -356,7 +372,11 @@ public partial class MainWindow
         else ShowDropMarker(ReferenceEquals(sender, TabOverflow) ? null : TabAt(e.OriginalSource));
     }
 
-    private void TabList_DragLeave(object sender, DragEventArgs e) => HideDropMarker();
+    private void TabList_DragLeave(object sender, DragEventArgs e)
+    {
+        _pageDrop?.Leave();
+        HideDropMarker();
+    }
 
     private void ShowDropMarker(ITab? before)
     {
@@ -390,6 +410,7 @@ public partial class MainWindow
     private void TabList_Drop(object sender, DragEventArgs e)
     {
         HideDropMarker();
+        if (PageDragOnStrip(sender, e, drop: true)) return;
         if (!e.Data.GetDataPresent(TabIdFormat)) return;
         e.Effects = DropTab(DraggedTab(e.Data), TabAt(e.OriginalSource));
         e.Handled = true;
@@ -398,6 +419,7 @@ public partial class MainWindow
     private void TabOverflow_Drop(object sender, DragEventArgs e)
     {
         HideDropMarker();
+        if (PageDragOnStrip(sender, e, drop: true)) return;
         if (!e.Data.GetDataPresent(TabIdFormat)) return;
         e.Effects = DropTab(DraggedTab(e.Data), null);
         e.Handled = true;

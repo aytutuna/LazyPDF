@@ -67,6 +67,7 @@ final class PagesHost: ToolHost {
     var opened: [URL] = []
     var openedNew: [(pdf: [UInt8], title: String)] = []
     var holding = false
+    var openDocuments: [DocumentTab] = []
     let picker = StubPicker()
     let exporter = PagesExporter()
 
