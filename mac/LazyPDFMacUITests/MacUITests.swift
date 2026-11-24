@@ -254,6 +254,8 @@ final class MacUITests: XCTestCase {
 
         page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.5, thenDragTo: linksTab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)), withVelocity: .slow, thenHoldForDuration: 0.4)
 
+        sleep(3)
+        dump(app, "drop-after-drag")
         let status = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Copied 1 page to' OR value BEGINSWITH 'Copied 1 page to'")).firstMatch
         XCTAssertTrue(status.waitForExistence(timeout: 20))
 
@@ -307,10 +309,14 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         draw.click()
         // The window is taller than the runner's screen, so the list can sit under the panel's button until it is scrolled.
-        let panel = app.windows.firstMatch.scrollViews.containing(NSPredicate(format: "label == 'Box, page 1'")).firstMatch
-        for delta in [-300.0, -300.0, 300.0, 300.0, 300.0, 300.0] where !row.isHittable {
+        let panel = app.scrollViews["Tools"]
+        var delta = -300.0
+        for _ in 0..<8 where row.frame.maxY > panel.frame.maxY {
+            let before = row.frame.minY
             panel.scroll(byDeltaX: 0, deltaY: delta)
+            if row.frame.minY > before { delta = -delta }
         }
+        print("DUMP row after scroll \(row.frame) panel \(panel.frame)")
         row.click()
         viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.475, dy: 0.3)).click()
         sleep(2)
