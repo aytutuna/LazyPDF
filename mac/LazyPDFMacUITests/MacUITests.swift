@@ -237,13 +237,19 @@ final class MacUITests: XCTestCase {
         tab(app).click()
         choose(app, menu: "Tools", item: "Organize")
         app.menuBars.menuItems["Organize pages"].click()
-        // The Pages side panel is open beside the grid and has thumbnails of the same name, which do not drag.
-        let grid = app.windows.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label == 'Organize pages'"))
-        let page = grid.descendants(matching: .any).matching(NSPredicate(format: "label == 'Page 1'")).firstMatch
-        _ = app.windows.firstMatch.waitForExistence(timeout: 10)
+        // The menu opens the side panel; the grid on the stage is its button. The window is wider than the runner's screen,
+        // so the press goes to the left part of the button.
+        let stage = app.buttons["Organize on the stage"]
+        XCTAssertTrue(stage.waitForExistence(timeout: 30))
+        stage.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5)).click()
+        // The Pages side panel has thumbnails of the same name, which do not drag; the grid is the one on the left.
+        let tiles = app.windows.firstMatch.buttons.matching(NSPredicate(format: "label == 'Page 1'"))
         sleep(5)
-        dump(app, "drop-after-organize")
-        print("DUMP grid count \(grid.count), page exists \(page.exists)")
+        dump(app, "drop-stage")
+        print("DUMP tiles \(tiles.allElementsBoundByIndex.map { $0.frame })")
+        let both = NSPredicate { _, _ in tiles.count >= 2 }
+        wait(for: [XCTNSPredicateExpectation(predicate: both, object: nil)], timeout: 30)
+        let page = tiles.allElementsBoundByIndex.min { $0.frame.minX < $1.frame.minX } ?? tiles.firstMatch
         XCTAssertTrue(page.waitForExistence(timeout: 30))
 
         page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.5, thenDragTo: linksTab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)), withVelocity: .slow, thenHoldForDuration: 0.4)
@@ -300,6 +306,11 @@ final class MacUITests: XCTestCase {
         let row = app.buttons["Box, page 1"]
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         draw.click()
+        // The window is taller than the runner's screen, so the list can sit under the panel's button until it is scrolled.
+        let panel = app.windows.firstMatch.scrollViews.containing(NSPredicate(format: "label == 'Box, page 1'")).firstMatch
+        for delta in [-300.0, -300.0, 300.0, 300.0, 300.0, 300.0] where !row.isHittable {
+            panel.scroll(byDeltaX: 0, deltaY: delta)
+        }
         row.click()
         viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.475, dy: 0.3)).click()
         sleep(2)
