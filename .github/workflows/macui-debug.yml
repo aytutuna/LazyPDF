@@ -1,0 +1,69 @@
+name: Mac UI debug
+
+on:
+  push:
+    branches: ['ci/merge-work-debug']
+
+permissions:
+  contents: read
+
+jobs:
+  apps:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode 16.4
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+      # XcodeGen (MIT) is downloaded here only, pinned to one release and its SHA-256, and never shipped; the projects it
+      # writes are not checked in. Source: github.com/yonaskolb/XcodeGen/releases/tag/2.46.0.
+      - name: Install XcodeGen
+        env:
+          XCODEGEN_VERSION: 2.46.0
+          XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+        run: |
+          set -euo pipefail
+          zip="$RUNNER_TEMP/xcodegen.zip"
+          curl -fsSL -o "$zip" "https://github.com/yonaskolb/XcodeGen/releases/download/$XCODEGEN_VERSION/xcodegen.zip"
+          hash=$(shasum -a 256 "$zip" | cut -d ' ' -f 1)
+          if [ "$hash" != "$XCODEGEN_SHA256" ]; then
+            echo "XcodeGen checksum mismatch: $hash"
+            exit 1
+          fi
+          unzip -q "$zip" -d "$RUNNER_TEMP/xcodegen-$XCODEGEN_VERSION"
+          echo "$RUNNER_TEMP/xcodegen-$XCODEGEN_VERSION/xcodegen/bin" >> "$GITHUB_PATH"
+      - name: Write the projects
+        run: |
+          xcodegen generate --spec mac/project.yml
+      - name: Build the Mac UI tests
+        timeout-minutes: 30
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project mac/LazyPDFMacApp.xcodeproj \
+            -scheme LazyPDFMacApp \
+            -configuration Release \
+            -destination platform=macOS \
+            -derivedDataPath "$RUNNER_TEMP/mac-ui" \
+            OTHER_SWIFT_FLAGS=-DLAZYPDF_UITESTS \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+      - name: Run the two Mac UI tests
+        timeout-minutes: 15
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building             -project mac/LazyPDFMacApp.xcodeproj             -scheme LazyPDFMacApp             -configuration Release             -destination platform=macOS             -derivedDataPath "$RUNNER_TEMP/mac-ui"             -resultBundlePath "$RUNNER_TEMP/ui.xcresult"             -only-testing:LazyPDFMacUITests/MacUITests/testArrowsAfterAClickOnTheSelectedBoxMoveAndResizeIt             -only-testing:LazyPDFMacUITests/MacUITests/testDroppingAPageOnATabCopiesIt             CODE_SIGN_IDENTITY=-             CODE_SIGNING_REQUIRED=NO             CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO 2>&1 | tee "$RUNNER_TEMP/ui.log"
+      - name: Extract the attachments
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          cp "$RUNNER_TEMP/ui.log" "$RUNNER_TEMP/out/" || true
+          xcrun xcresulttool export attachments --path "$RUNNER_TEMP/ui.xcresult" --output-path "$RUNNER_TEMP/out" || true
+          grep -a "DUMP" "$RUNNER_TEMP/ui.log" | cut -c1-600 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-debug
+          path: ${{ runner.temp }}/out

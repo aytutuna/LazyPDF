@@ -44,6 +44,19 @@ final class MacUITests: XCTestCase {
         app.scrollViews["Open files"].buttons["plain-3.pdf"]
     }
 
+    private func dump(_ app: XCUIApplication, _ name: String) {
+        let text = "DUMP \(name) " + app.debugDescription
+        print(text)
+        let note = XCTAttachment(string: text)
+        note.name = name + ".txt"
+        note.lifetime = .keepAlways
+        add(note)
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = name + ".png"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
     func testLaunchShowsHome() throws {
         let app = try launch(opening: false)
 
@@ -227,6 +240,10 @@ final class MacUITests: XCTestCase {
         // The Pages side panel is open beside the grid and has thumbnails of the same name, which do not drag.
         let grid = app.windows.firstMatch.descendants(matching: .any).matching(NSPredicate(format: "label == 'Organize pages'"))
         let page = grid.descendants(matching: .any).matching(NSPredicate(format: "label == 'Page 1'")).firstMatch
+        _ = app.windows.firstMatch.waitForExistence(timeout: 10)
+        sleep(5)
+        dump(app, "drop-after-organize")
+        print("DUMP grid count \(grid.count), page exists \(page.exists)")
         XCTAssertTrue(page.waitForExistence(timeout: 30))
 
         page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.5, thenDragTo: linksTab(app).coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)), withVelocity: .slow, thenHoldForDuration: 0.4)
@@ -285,6 +302,13 @@ final class MacUITests: XCTestCase {
         draw.click()
         row.click()
         viewer.coordinate(withNormalizedOffset: CGVector(dx: 0.475, dy: 0.3)).click()
+        sleep(2)
+        let focused = app.descendants(matching: .any).matching(NSPredicate(format: "hasKeyboardFocus == true")).allElementsBoundByIndex
+        print("DUMP viewer frame \(viewer.frame) row frame \(row.frame) draw value \(String(describing: draw.value))")
+        print("DUMP focused \(focused.map { "\($0.elementType.rawValue) \($0.identifier) \($0.label) \($0.frame)" })")
+        let boxes = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS[c] 'box'")).allElementsBoundByIndex
+        print("DUMP boxes \(boxes.map { "\($0.elementType.rawValue) \($0.label) \($0.frame)" })")
+        dump(app, "arrow-before-key")
 
         app.typeKey(.rightArrow, modifierFlags: [])
         XCTAssertTrue(element(app, "Box moved.").waitForExistence(timeout: 10))
