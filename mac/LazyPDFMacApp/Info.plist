@@ -109,6 +109,16 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.alazy.lazypdf.tab</string>
 		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Lazy PDF pages</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.lazypdf.lazypdf.pages</string>
+		</dict>
 	</array>
 </dict>
 </plist>
