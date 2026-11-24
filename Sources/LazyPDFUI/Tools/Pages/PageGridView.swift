@@ -79,6 +79,7 @@ struct PageTile: View {
         .modifier(DoubleTap(action: open.map { open in { open(cell.index) } }))
         .onTapGesture { tapped() }
         .onDrag {
+            NSLog("DBG onDrag page %d", cell.index)
             grid.beginDrag(cell.index)
             return NSItemProvider(item: Data() as NSData, typeIdentifier: PageDrag.type.identifier)
         }

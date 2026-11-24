@@ -61,6 +61,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/out"
           cp "$RUNNER_TEMP/ui.log" "$RUNNER_TEMP/out/" || true
           xcrun xcresulttool export attachments --path "$RUNNER_TEMP/ui.xcresult" --output-path "$RUNNER_TEMP/out" || true
+          log show --last 20m --style compact --predicate 'eventMessage CONTAINS "DBG"' > "$RUNNER_TEMP/out/dbg.log" || true
+          grep -a "DBG" "$RUNNER_TEMP/out/dbg.log" | cut -c1-300 || true
           grep -a "DUMP" "$RUNNER_TEMP/ui.log" | cut -c1-600 || true
       - uses: actions/upload-artifact@v4
         if: always()
