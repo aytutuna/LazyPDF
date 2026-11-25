@@ -193,7 +193,8 @@ final class FillLayer {
             let next = self.neighbour(of: slot, backwards ? -1 : 1)
             field.finish()
             if let next {
-                self.viewer.reveal(next.page, next.rect)
+                let shown = OverlayFieldFrame.uprightPageRect(next.rect, rotation: self.viewer.rotation, page: self.viewer.pageSize(next.page))
+                self.viewer.reveal(next.page, shown)
                 self.open(next, caret: .all)
             }
         }

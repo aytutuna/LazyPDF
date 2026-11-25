@@ -57,7 +57,8 @@ final class OverlayFieldViews: NSObject, UITextViewDelegate {
     /// Scrolls the field that has the keyboard into view, for when the keyboard has settled.
     func revealFocused() {
         for (page, field) in viewer.openFields {
-            if let view = shown[ObjectIdentifier(field)], view.isFirstResponder { viewer.reveal(page, field.area) }
+            guard let view = shown[ObjectIdentifier(field)], view.isFirstResponder else { continue }
+            viewer.reveal(page, OverlayFieldFrame.uprightPageRect(field.area, rotation: viewer.rotation, page: viewer.pageSize(page)))
         }
     }
 
@@ -134,7 +135,10 @@ final class OverlayFieldViews: NSObject, UITextViewDelegate {
 
         view.layoutManager.ensureLayout(for: view.textContainer)
         let used = view.layoutManager.usedRect(for: view.textContainer)
-        let frame = OverlayFieldFrame.of(field.area, matrix, used: ViewSize(used.width + 4, used.height), wraps: field.wraps)
+        let sheet = viewer.pageSize(page)
+        let bounds = PageSpace.transform(matrix, ViewRect(0, 0, sheet.width, sheet.height))
+        let frame = OverlayFieldFrame.of(field.area, matrix, used: ViewSize(used.width + 4, used.height), wraps: field.wraps,
+                                         bounds: bounds, scrollsAcross: false)
         view.frame = CGRect(x: frame.x, y: frame.y, width: frame.width, height: frame.height)
     }
 
@@ -146,8 +150,8 @@ final class OverlayFieldViews: NSObject, UITextViewDelegate {
             view.selectedRange = NSRange(location: (view.text as NSString).length, length: 0)
         case .at(let point):
             guard let matrix = viewer.pageToView(page) else { return }
-            let at = matrix.transform(point)
-            let local = CGPoint(x: at.x - view.frame.minX, y: at.y - view.frame.minY)
+            let at = OverlayFieldFrame.local(point, in: field.area, scale: ViewScale.of(matrix))
+            let local = CGPoint(x: at.x, y: at.y)
             if let position = view.closestPosition(to: local) {
                 let index = view.offset(from: view.beginningOfDocument, to: position)
                 view.selectedRange = NSRange(location: index, length: 0)

@@ -218,6 +218,31 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertNil(rig.field("code"))
     }
 
+    func test_aRowOfTheListRevealsTheUprightFootprintOfTheFieldOnATurnedView() async throws {
+        let rig = try FormsRig()
+        rig.viewer.rotation = 90
+
+        rig.model.focusRow(rig.model.rows[0])
+
+        let field = try XCTUnwrap(rig.field("name"))
+        let expected = OverlayFieldFrame.uprightPageRect(field.area, rotation: 90, page: rig.viewer.pageSize(0))
+        XCTAssertEqual(rig.viewer.revealed.last?.area, expected)
+        XCTAssertNotEqual(expected, field.area)
+    }
+
+    func test_tabOnATurnedViewRevealsTheUprightFootprintOfTheNextField() async throws {
+        let rig = try FormsRig()
+        try rig.change("Add form field") { try FormEdits.add($0, .text, 1, PdfRect(50, 400, 150, 420), nil) }
+        rig.viewer.rotation = 270
+        rig.tap(rig.centre("code"))
+
+        try XCTUnwrap(rig.field("code")).onTab?(false)
+
+        let next = try XCTUnwrap(rig.field("Text1", page: 1))
+        let expected = OverlayFieldFrame.uprightPageRect(next.area, rotation: 270, page: rig.viewer.pageSize(1))
+        XCTAssertEqual(rig.viewer.revealed.last?.area, expected)
+    }
+
     func test_tabAtTheLastFieldOfTheFileJustFinishesIt() async throws {
         let rig = try FormsRig()
         rig.tap(rig.centre("code"))

@@ -274,10 +274,12 @@ public final class FormsModel: ToolPanelModel {
         guard let viewer, let widget = field(of: row)?.widgets.first, widget.pageIndex >= 0 else { return }
         let d = viewer.geometry(widget.pageIndex).toDisplay(widget.rect)
         viewer.goToPage(widget.pageIndex)
-        viewer.reveal(widget.pageIndex, FieldFrames.box(d))
         if designing {
+            viewer.reveal(widget.pageIndex, FieldFrames.box(d))
             select(row.name, row.index, row.ordinal)
         } else {
+            let size = viewer.pageSize(widget.pageIndex)
+            viewer.reveal(widget.pageIndex, OverlayFieldFrame.uprightPageRect(FieldFrames.box(d), rotation: viewer.rotation, page: size))
             fill?.focus(row.name, row.index)
             activeRow = row.kind == .comboBox || row.kind == .listBox ? row.id : nil
         }
