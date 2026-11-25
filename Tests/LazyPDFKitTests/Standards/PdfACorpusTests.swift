@@ -34,6 +34,8 @@ final class PdfACorpusTests: XCTestCase {
         var count = 0, clean = 0, converted = 0, refused = 0, failed = 0, claiming = 0, claimingClean = 0
         var before: [String: Int] = [:]
         var after: [String: Int] = [:]
+        var claimed: [String: Int] = [:]
+        var left: [String: Int] = [:]
         var refusals: [String: Int] = [:]
         var crashes: [String] = []
         let date = DateTimeOffset(2026, 1, 1, 0, 0, 0)
@@ -46,7 +48,9 @@ final class PdfACorpusTests: XCTestCase {
                 count += 1
                 if let own = claimedLevel(document) {
                     claiming += 1
-                    if PdfAValidator.validate(document, own).isValid { claimingClean += 1 }
+                    let claim = PdfAValidator.validate(document, own)
+                    if claim.isValid { claimingClean += 1 }
+                    for clause in Set(claim.issues.map { "\(own.name()) \($0.clause)" }) { claimed[clause, default: 0] += 1 }
                 }
                 let report = PdfAValidator.validate(document, .a2b)
                 if report.isValid { clean += 1 }
@@ -61,16 +65,35 @@ final class PdfACorpusTests: XCTestCase {
                 let remaining = PdfAValidator.validate(try PdfDocument.open(output), .a2b)
                 if remaining.isValid { converted += 1 } else { failed += 1 }
                 for clause in Set(remaining.issues.map { $0.clause }) { after[clause, default: 0] += 1 }
+                for message in Set(remaining.issues.map { $0.clause + " " + $0.message }) { left[message, default: 0] += 1 }
             } catch is PdfReadException {
             } catch {
                 crashes.append("\(error)")
             }
         }
         print("\(count) files: \(clean) already clean for PDF/A-2b, \(converted) converted clean, \(failed) converted with rules left, \(refused) refused")
-        print("\(claiming) files claim a PDF/A level, \(claimingClean) of them pass it")
+        print("\(claiming) files claim a PDF/A level, \(claimingClean) of them pass it; clauses broken by those that claim: " + claimed.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ", "))
         print("files breaking each clause before: " + before.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ", "))
         print("files breaking each clause after: " + after.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: ", "))
+        print("what is left: " + left.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: "; "))
         print("refusals: " + refusals.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: "; "))
+        for level in [PdfALevel.a1b, PdfALevel.a4] { print(summary(level, &crashes)) }
         XCTAssertTrue(crashes.isEmpty, crashes.prefix(10).joined(separator: "\n"))
+    }
+
+    private func summary(_ level: PdfALevel, _ crashes: inout [String]) -> String {
+        var clean = 0, left = 0, refused = 0
+        let converter = PdfAConverter(SystemFonts())
+        let date = DateTimeOffset(2026, 1, 1, 0, 0, 0)
+        for path in files() {
+            guard let data = FileManager.default.contents(atPath: path) else { continue }
+            do {
+                let result = try converter.convert([UInt8](data), level, date)
+                if result.bytes == nil { refused += 1 } else if result.remaining.isEmpty { clean += 1 } else { left += 1 }
+            } catch {
+                crashes.append("\(error)")
+            }
+        }
+        return "\(level.name()): \(clean) converted clean, \(left) with rules left, \(refused) refused"
     }
 }

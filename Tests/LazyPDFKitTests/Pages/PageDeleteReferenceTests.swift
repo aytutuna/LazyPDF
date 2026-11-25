@@ -91,13 +91,13 @@ final class PageDeleteReferenceTests: XCTestCase {
         XCTAssertTrue(action.catalog.containsKey("OpenAction"))
     }
 
-    func test_aTaggedDocumentLosesItsStructureWhenATaggedPageGoes() throws {
+    func test_aTaggedDocumentKeepsItsStructureWhenATaggedPageGoes() throws {
         let tags = "/StructTreeRoot 40 0 R /MarkInfo <</Marked true>>"
         let document = try open(tags, pageExtra: { "/StructParents \($0)" }, add: { $0.obj(40, "<</Type /StructTreeRoot>>") })
         try PageOperations.delete(document, [1])
-        XCTAssertFalse(document.catalog.containsKey("StructTreeRoot"))
-        XCTAssertFalse(document.catalog.containsKey("MarkInfo"))
-        for page in document.pages { XCTAssertFalse(page.dictionary.containsKey("StructParents")) }
+        XCTAssertTrue(document.catalog.containsKey("StructTreeRoot"))
+        XCTAssertTrue(document.catalog.containsKey("MarkInfo"))
+        for page in document.pages { XCTAssertTrue(page.dictionary.containsKey("StructParents")) }
     }
 
     func test_theStructureStaysWhenNoTaggedPageGoes() throws {

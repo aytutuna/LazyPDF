@@ -6,8 +6,8 @@ namespace LazyPDF.App.Services;
 /// <summary>What the About screen shows: the version and copyright from the assembly, the addresses, and the notices file shipped beside the exe.</summary>
 internal static class AppInfo
 {
-    public const string Site = "https://pdf.alazy.app";
-    public const string PrivacyPage = "https://pdf.alazy.app/privacy.html";
+    public const string Site = "https://alazy.app/pdf/";
+    public const string PrivacyPage = "https://alazy.app/pdf/privacy.html";
     public const string SupportAddress = "support@alazy.app";
 
     public const string NoticesFile = "THIRD-PARTY-NOTICES.txt";

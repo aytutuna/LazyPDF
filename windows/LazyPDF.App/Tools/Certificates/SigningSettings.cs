@@ -13,8 +13,10 @@ public sealed class SigningSettings
     /// <summary>Certificates the user added by hand, DER bytes in base64.</summary>
     public List<string> TrustedCertificates { get; set; } = [];
 
-    /// <summary>The last time stamp server used.</summary>
-    public string TimestampUrl { get; set; } = "";
+    public const string SuggestedTimestampUrl = "http://timestamp.digicert.com";
+
+    /// <summary>The last time stamp server used; a file that never had one suggests DigiCert's.</summary>
+    public string TimestampUrl { get; set; } = SuggestedTimestampUrl;
 
     /// <summary>The options the verifier gets for a file; certificates that no longer parse are left out.</summary>
     public VerifyOptions Verify(string? password, X509Certificate2? certificate, DateTimeOffset now) => new()

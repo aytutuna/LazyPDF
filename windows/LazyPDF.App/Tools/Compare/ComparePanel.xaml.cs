@@ -19,10 +19,12 @@ public partial class ComparePanel : ToolPanel
     private readonly Func<IDocumentRenderer> _renderers;
     private readonly IFontSource _fonts;
     private readonly ToolAction _action;
-    private readonly ConditionalWeakTable<DocumentTab, HeldComparison> _held = [];
+    private static readonly ConditionalWeakTable<DocumentTab, HeldComparison> Held = [];
     private CompareFlow? _flow;
     private HeldComparison? _shown;
     private string? _path;
+    private DocumentTab? _other;
+    private IReadOnlyList<DocumentTab> _tabs = [];
     private IReadOnlyList<PdfVersion> _versions = [];
 
     public ComparePanel() : this(() => new WindowsPageRenderer(), new SystemFontSource())
@@ -36,8 +38,13 @@ public partial class ComparePanel : ToolPanel
         _action = new ToolAction(Loc.T("Compare"), "", CanRun, RunAsync);
         InitializeComponent();
         Changes.Picked += (_, row) => Go(row);
+        Changes.Wrapped += (_, first) => Host?.SetStatus(Loc.T(first ? "Back at the first difference." : "Back at the last difference."));
+        PreviewKeyDown += (_, e) => Changes.HandleKey(e);
         ShowHow();
     }
+
+    /// <summary>True while the comparison kept for the tab is open in a window of its own.</summary>
+    internal static bool WindowOpenFor(DocumentTab tab) => Held.TryGetValue(tab, out var held) && held.Window is not null;
 
     public override ToolAction? Action => _action;
 
@@ -47,7 +54,9 @@ public partial class ComparePanel : ToolPanel
         Tab!.Changed += Tab_Changed;
         ShowVersions(null);
         HideUnlock();
-        _held.TryGetValue(Tab, out var held);
+        _other = null;
+        ShowTabs();
+        Held.TryGetValue(Tab, out var held);
         SetPath(held?.Path);
         Show(held);
         RaiseActionChanged();
@@ -60,7 +69,7 @@ public partial class ComparePanel : ToolPanel
         _flow = null;
     }
 
-    private bool CanRun() => Tab is not null && (VersionMode.IsChecked == true ? VersionBox.SelectedIndex >= 0 : _path is not null);
+    private bool CanRun() => Tab is not null && (VersionMode.IsChecked == true ? VersionBox.SelectedIndex >= 0 : _path is not null || _other is not null);
 
     private async Task RunAsync()
     {
@@ -70,7 +79,8 @@ public partial class ComparePanel : ToolPanel
         var options = new CompareOptions(IgnoreCase.IsChecked == true, IgnoreSpace.IsChecked == true, IgnoreEdges.IsChecked == true);
         string? password = OtherPassword.Password.Length > 0 ? OtherPassword.Password : null;
         var request = new CompareRequest(version ? null : _path, version ? _versions[VersionBox.SelectedIndex] : null, !version && OlderToggle.IsChecked == true, options,
-            PixelMode.IsChecked == true, password, (OtherCertificate.SelectedItem as CertificateChoice)?.Certificate);
+            PixelMode.IsChecked == true, password, (OtherCertificate.SelectedItem as CertificateChoice)?.Certificate,
+            int.Parse((string)((ComboBoxItem)PixelDetail.SelectedItem).Tag), version ? null : _other);
         int revision = tab.Revision;
         var made = await flow.RunAsync(tab, request);
         bool here = ReferenceEquals(Tab, tab);
@@ -79,13 +89,13 @@ public partial class ComparePanel : ToolPanel
             if (here && flow.Locked is { } locked) AskToUnlock(locked, password is not null || request.Certificate is not null);
             return;
         }
-        if (_held.TryGetValue(tab, out var old))
+        if (Held.TryGetValue(tab, out var old))
         {
             old.Dispose();
-            _held.Remove(tab);
+            Held.Remove(tab);
         }
         var held = new HeldComparison(made, request.Path, !request.FileIsOlder, revision);
-        _held.Add(tab, held);
+        Held.Add(tab, held);
         if (!here) return;
         HideUnlock();
         Show(held);
@@ -96,7 +106,7 @@ public partial class ComparePanel : ToolPanel
     {
         _shown = held;
         ResultGroup.Visibility = held is null ? Visibility.Collapsed : Visibility.Visible;
-        if (held is null) Changes.Rows = [];
+        if (held is null) SetRows([]);
         else Refresh();
     }
 
@@ -110,11 +120,34 @@ public partial class ComparePanel : ToolPanel
         NoVersions.Visibility = _versions.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    private void ShowTabs()
+    {
+        _tabs = [.. Host!.OpenDocuments.Where(d => !ReferenceEquals(d, Tab))];
+        OpenTabs.ItemsSource = _tabs.Count == 0 ? null : (string[])[Loc.T("Pick an open file"), .. _tabs.Select(d => d.Title)];
+        OpenTabs.SelectedIndex = _other is null ? 0 : _tabs.ToList().IndexOf(_other) + 1;
+        OpenTabs.Visibility = _tabs.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
     private void SetPath(string? path)
     {
         _path = path;
-        ChosenText.Text = path is null ? Loc.T("No file chosen") : System.IO.Path.GetFileName(path);
+        ChosenText.Text = path is not null ? System.IO.Path.GetFileName(path) : _other?.Title ?? Loc.T("No file chosen");
         ChosenText.ToolTip = path;
+    }
+
+    private void OpenTabs_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (OpenTabs.SelectedIndex < 1) return;
+        _other = _tabs[OpenTabs.SelectedIndex - 1];
+        SetPath(null);
+        HideUnlock();
+        RaiseActionChanged();
+    }
+
+    private void ClearOther()
+    {
+        _other = null;
+        OpenTabs.SelectedIndex = 0;
     }
 
     private void AskToUnlock(PdfReadProblem problem, bool tried)
@@ -156,11 +189,21 @@ public partial class ComparePanel : ToolPanel
         return parts;
     }
 
+    private void SetRows(IReadOnlyList<ChangeRow> rows)
+    {
+        Changes.Rows = rows;
+        PreviousButton.IsEnabled = NextButton.IsEnabled = rows.Count > 0;
+    }
+
+    private void Previous_Click(object sender, RoutedEventArgs e) => Changes.Step(-1);
+
+    private void Next_Click(object sender, RoutedEventArgs e) => Changes.Step(1);
+
     private void Refresh()
     {
         if (_shown is not { } held) return;
         var rows = held.Session.Rows(CurrentParts());
-        Changes.Rows = rows;
+        SetRows(rows);
         SummaryText.Text = CompareFlow.Headline(held.Session, rows.Count);
         string? note = CompareFlow.Note(held.Session);
         NoteText.Text = note;
@@ -200,6 +243,7 @@ public partial class ComparePanel : ToolPanel
     private void Tab_Changed(object? sender, EventArgs e)
     {
         ShowVersions(VersionBox.SelectedIndex >= 0 ? _versions[VersionBox.SelectedIndex].Number : null);
+        ShowTabs();
         RaiseActionChanged();
     }
 
@@ -217,6 +261,7 @@ public partial class ComparePanel : ToolPanel
         OptionGroup.IsEnabled = !pixels;
         FilterGrid.IsEnabled = !pixels;
         ShowLabel.Opacity = pixels ? 0.5 : 1;
+        DetailGroup.Visibility = pixels ? Visibility.Visible : Visibility.Collapsed;
         ShowHow();
     }
 
@@ -226,7 +271,33 @@ public partial class ComparePanel : ToolPanel
     {
         var dialog = new OpenFileDialog { Filter = Loc.T("PDF files") + "|*.pdf" };
         if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        ClearOther();
         SetPath(dialog.FileName);
+        HideUnlock();
+        RaiseActionChanged();
+    }
+
+    private void Panel_DragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        e.Effects = DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    private void Panel_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+        e.Handled = true;
+        string? pdf = paths.FirstOrDefault(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase));
+        if (pdf is null)
+        {
+            Host?.SetStatus(Loc.T("Only PDF files can be added."));
+            return;
+        }
+        FileMode.IsChecked = true;
+        Source_Click(this, e);
+        ClearOther();
+        SetPath(pdf);
         HideUnlock();
         RaiseActionChanged();
     }
@@ -247,13 +318,44 @@ public partial class ComparePanel : ToolPanel
         window.Show();
     }
 
-    private async void Report_Click(object sender, RoutedEventArgs e)
+    private void Report_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = ReportButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        foreach (var (name, kind) in new[] { (Loc.T("PDF report"), 0), (Loc.T("Text report"), 1), (Loc.T("CSV list"), 2) })
+        {
+            var item = new MenuItem { Header = name };
+            System.Windows.Automation.AutomationProperties.SetName(item, name);
+            item.Click += async (_, _) => await WriteReport(kind);
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
+    }
+
+    private async Task WriteReport(int kind)
     {
         if (_shown is not { } held || _flow is not { } flow) return;
+        var parts = CurrentParts();
+        string? path = null;
+        if (kind != 0)
+        {
+            if (!flow.CanWriteReport(held.Session, parts)) return;
+            bool csv = kind == 2;
+            var dialog = new SaveFileDialog
+            {
+                Filter = csv ? Loc.T("CSV files") + "|*.csv" : Loc.T("Text files") + "|*.txt",
+                DefaultExt = csv ? ".csv" : ".txt",
+                AddExtension = true,
+                OverwritePrompt = true,
+                FileName = Loc.T("{0} comparison", Path.GetFileNameWithoutExtension(held.Session.New.Title)),
+            };
+            if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+            path = dialog.FileName;
+        }
         ReportButton.IsEnabled = false;
         try
         {
-            await flow.WriteReportAsync(held.Session, CurrentParts());
+            if (path is null) await flow.WriteReportAsync(held.Session, parts);
+            else await flow.SaveReportAsync(held.Session, parts, kind == 2, path);
         }
         finally
         {

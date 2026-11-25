@@ -10,6 +10,50 @@ public sealed class CompareRowTests
 {
     private static PageGeometry Page(double width, double height) => new(new PdfRect(0, 0, width, height), 0);
 
+    private static ChangeRow Row(int page) => new(null, "", "", page, page, [], []);
+
+    private static ChangeList ListOf(int count)
+    {
+        var list = new ChangeList { Rows = Enumerable.Range(0, count).Select(Row).ToList() };
+        return list;
+    }
+
+    [Fact]
+    public Task SteppingForwardWrapsAndPicksEachRow() => Sta.Run(() =>
+    {
+        var list = ListOf(3);
+        var picked = new List<int>();
+        var wraps = new List<bool>();
+        list.Picked += (_, row) => picked.Add(row.NewPage);
+        list.Wrapped += (_, first) => wraps.Add(first);
+
+        for (int i = 0; i < 4; i++) Assert.True(list.Step(1));
+
+        Assert.Equal([0, 1, 2, 0], picked);
+        Assert.Equal([true], wraps);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task SteppingBackFromNothingPicksTheLastRow() => Sta.Run(() =>
+    {
+        var list = ListOf(3);
+        var picked = new List<int>();
+        list.Picked += (_, row) => picked.Add(row.NewPage);
+
+        Assert.True(list.Step(-1));
+
+        Assert.Equal([2], picked);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task SteppingAnEmptyListDoesNothing() => Sta.Run(() =>
+    {
+        Assert.False(ListOf(0).Step(1));
+        return Task.CompletedTask;
+    });
+
     [Fact]
     public void ABiggerOldPageScalesTheBox()
     {

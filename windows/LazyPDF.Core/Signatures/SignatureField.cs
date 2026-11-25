@@ -37,7 +37,7 @@ internal static class SignatureField
     {
         if (SignatureChecker.Level(document, 0).Level == 1) return SignatureText.CertifiedClosed;
         if (target.IsNew) return null;
-        foreach (var found in SignatureScan.Find(PdfSigner.SourceBytes(document)))
+        foreach (var found in Attached(document))
         {
             foreach (var item in document.Array(found.Dictionary, "Reference")?.Items ?? [])
             {
@@ -48,6 +48,14 @@ internal static class SignatureField
             }
         }
         return null;
+    }
+
+    /// <summary>The signatures a field's /V or the catalog's /Perms /DocMDP still points to; a cleared one stays in the bytes but its locks and certification no longer apply.</summary>
+    public static List<FoundSignature> Attached(PdfDocument document)
+    {
+        var numbers = PdfForm.Read(document).Fields.Select(f => f.Dictionary["V"]).OfType<PdfReference>().Select(r => r.Number).ToHashSet();
+        if (document.Dict(document.Catalog, "Perms") is { } perms && perms["DocMDP"] is PdfReference certification) numbers.Add(certification.Number);
+        return SignatureScan.Find(PdfSigner.SourceBytes(document)).Where(f => numbers.Contains(f.Number)).ToList();
     }
 
     private static PdfPage Page(PdfDocument document, int index) =>

@@ -50,7 +50,7 @@ public sealed partial class PdfStamper
             if (texts[i].Length == 0) continue;
             double width = font.Width(texts[i], size);
             double x = i switch { 0 => marginX, 1 => (canvas.Width - width) / 2, _ => canvas.Width - marginX - width };
-            writer.TextMatrix(PdfMatrix.Translate(x, baseline)).Show(font.Encode(texts[i]));
+            writer.TextMatrix(PdfMatrix.Translate(x, baseline)).Show(font, texts[i], size);
         }
         writer.EndText();
         canvas.EndArtifact();

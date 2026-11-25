@@ -6,6 +6,7 @@ import Foundation
 
 final class CmsSignature {
     private(set) var length = 0
+    private(set) var signerCount = 0
     private(set) var certificates: [X509Certificate] = []
     private(set) var digestOid = ""
     private(set) var signedAttributes: [UInt8]?
@@ -52,6 +53,13 @@ final class CmsSignature {
             if !signers.hasData { return nil }
             var signer = try signers.readSequence()
             try result.readSigner(&signer)
+            result.signerCount = 1
+            // CmsSignature.Parse reads the first signer only and the main signature goes on with that. SignedCms.Decode
+            // fails on a tail that is no signer, which the time stamp path counts as one more signer.
+            while signers.hasData {
+                result.signerCount += 1
+                if (try? signers.readEncodedValue()) == nil { break }
+            }
             return result
         } catch {
             return nil

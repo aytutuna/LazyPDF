@@ -15,12 +15,32 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <!-- Explorer, the taskbar and Alt+Tab; the windows load the same file as a resource. -->
     <ApplicationIcon>app.ico</ApplicationIcon>
+    <!-- Program.Main starts the decode child before WPF; App.xaml would generate its own. -->
+    <StartupObject>LazyPDF.App.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
     <Resource Include="app.ico" />
     <!-- Shown in About; shipped beside the exe. -->
     <Content Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The Office fonts the converter falls back to; their licence is in THIRD-PARTY-NOTICES.txt. -->
+    <Content Include="..\..\fonts\**\*.ttf" Link="Fonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- openjp2.dll comes from scripts/build_openjpeg.ps1; without it JPEG 2000 pictures are not read. A build for one
+       runtime carries that architecture's DLL beside the exe; one without a runtime carries both, and OpenJpeg picks by the process. -->
+  <PropertyGroup>
+    <OpenJpegArch>x64</OpenJpegArch>
+    <OpenJpegArch Condition="$(RuntimeIdentifier.EndsWith('arm64'))">arm64</OpenJpegArch>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' != '' And Exists('..\native\bin\$(OpenJpegArch)\openjp2.dll')">
+    <Content Include="..\native\bin\$(OpenJpegArch)\openjp2.dll" Link="openjp2.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == ''">
+    <Content Include="..\native\bin\x64\openjp2.dll" Link="runtimes\win-x64\native\openjp2.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\native\bin\x64\openjp2.dll')" />
+    <Content Include="..\native\bin\arm64\openjp2.dll" Link="runtimes\win-arm64\native\openjp2.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\native\bin\arm64\openjp2.dll')" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +55,10 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="LazyPDF.App.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
   </ItemGroup>
 
 </Project>

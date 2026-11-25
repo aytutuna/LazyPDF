@@ -84,6 +84,8 @@ internal sealed partial class Linearizer(PdfDocument document, PdfSaveOptions op
         PdfReference reference => _index.TryGetValue(reference.Number, out int item) ? new PdfReference(_number[item], 0) : PdfNull.Instance,
         PdfArray array => new PdfArray([.. array.Items.Select(Remap)]),
         PdfDictionary dictionary => RemapDictionary(dictionary, false),
+        // A stream the flattened parameters met (/JBIG2Globals) is written as the reference it came from.
+        PdfStream stream => _index.TryGetValue(stream.Number, out int item) ? new PdfReference(_number[item], 0) : PdfNull.Instance,
         // An integer too big for 64 bits is a real as far as a strict reader is concerned.
         PdfNumber { IsInteger: true, Integer: null } number when number.Value != 0 && double.IsFinite(number.Value) => new PdfNumber(number.Text + ".0"),
         _ => value,
@@ -112,8 +114,8 @@ internal sealed partial class Linearizer(PdfDocument document, PdfSaveOptions op
             dictionary.Remove("Filter");
             return true;
         }
-        dictionary["Filter"] = filter;
-        if (parameters is not (null or PdfNull)) dictionary["DecodeParms"] = parameters;
+        dictionary["Filter"] = Remap(filter);
+        if (parameters is not (null or PdfNull)) dictionary["DecodeParms"] = Remap(parameters);
         return true;
     }
 

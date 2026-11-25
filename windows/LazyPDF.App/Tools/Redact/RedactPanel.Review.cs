@@ -12,6 +12,9 @@ public partial class RedactPanel
     private static readonly Brush MarkFill = Frozen(Color.FromArgb(0x55, 0xC4, 0x2B, 0x1C));
     private static readonly Brush MarkStroke = Frozen(Color.FromRgb(0xC4, 0x2B, 0x1C));
 
+    // Each Overlay call walks every overlay, so a whole-page mark on every page of a long file is listed but not outlined past this many pages.
+    private const int OutlinePages = 300;
+
     private sealed record Drawn(Panel Layer, IReadOnlyList<MarkItem> Items, List<UIElement> Shapes);
 
     private readonly Dictionary<int, Drawn> _drawn = [];
@@ -31,7 +34,9 @@ public partial class RedactPanel
         bool any = items.Count > 0;
         MarkedList.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
         ClearButton.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
+        UndoButton.Visibility = _state.Marks.CanUndo ? Visibility.Visible : Visibility.Collapsed;
         EmptyNote.Visibility = any ? Visibility.Collapsed : Visibility.Visible;
+        BoxHint.Visibility = MarkedList.Visibility;
         DrawOverlays(redrawAll: false);
     }
 
@@ -40,7 +45,9 @@ public partial class RedactPanel
     {
         if (redrawAll) ClearOverlays();
         if (Viewer is not { } viewer || _state is null) return;
-        var byPage = _state.Marks.Items.Where(m => m.Page < viewer.PageCount).GroupBy(m => m.Page).ToDictionary(g => g.Key, g => (IReadOnlyList<MarkItem>)g.ToList());
+        var shown = _state.Marks.Items.Where(m => m.Page < viewer.PageCount).ToList();
+        var wholePages = shown.Where(m => m.IsWholePage).Select(m => m.Page).Distinct().Order().Take(OutlinePages).ToHashSet();
+        var byPage = shown.Where(m => !m.IsWholePage || wholePages.Contains(m.Page)).GroupBy(m => m.Page).ToDictionary(g => g.Key, g => (IReadOnlyList<MarkItem>)g.ToList());
         foreach (int page in _drawn.Keys.Where(p => !byPage.ContainsKey(p)).ToList()) Erase(page);
         foreach (var (page, items) in byPage)
         {
@@ -73,7 +80,42 @@ public partial class RedactPanel
         foreach (int page in _drawn.Keys.ToList()) Erase(page);
     }
 
-    private void MarkedList_SelectionChanged(object sender, SelectionChangedEventArgs e) => Jump();
+    private void MarkedList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_showing) return;
+        var picked = MarkedList.SelectedItem as MarkItem;
+        _showing = true;
+        try
+        {
+            // A pending nudge goes into the list first. That rebuilds the list and drops its selection, so the pick is made again.
+            _replaced = null;
+            _editor?.Clear();
+            if (_replaced is var (old, now) && ReferenceEquals(picked, old)) picked = now;
+            if (!ReferenceEquals(MarkedList.SelectedItem, picked)) MarkedList.SelectedItem = picked;
+            _editor?.Show(picked);
+        }
+        finally
+        {
+            _showing = false;
+        }
+        if (!_editing) Jump();
+    }
+
+    private void BoxEdited(MarkItem old, MarkItem now)
+    {
+        var was = MarkedList.SelectedItem;
+        _editing = true;
+        try
+        {
+            _state!.Marks.Replace(old, now);
+            if (_showing) _replaced = (old, now);
+            else MarkedList.SelectedItem = ReferenceEquals(was, old) ? now : was;
+        }
+        finally
+        {
+            _editing = false;
+        }
+    }
 
     // A click on the row that is already selected raises no selection change.
     private void MarkedItem_Click(object sender, MouseButtonEventArgs e)
@@ -99,22 +141,72 @@ public partial class RedactPanel
 
     private void MarkedList_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Delete || MarkedList.SelectedItem is not MarkItem item) return;
-        _state!.Marks.Remove(item);
-        e.Handled = true;
+        if (MarkedList.SelectedItem is not MarkItem item) return;
+        if (e.Key == Key.Enter && e.OriginalSource is ListBoxItem && item.IsBox && _editor?.Focus() == true) e.Handled = true;
+        else if (e.Key == Key.Delete)
+        {
+            RemoveOne(item);
+            e.Handled = true;
+        }
+    }
+
+    private void FocusSelectedRow()
+    {
+        MarkedList.UpdateLayout();
+        (MarkedList.ItemContainerGenerator.ContainerFromItem(MarkedList.SelectedItem) as FrameworkElement)?.Focus();
     }
 
     private void RemoveMark_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.DataContext is MarkItem item) _state!.Marks.Remove(item);
+        if ((sender as FrameworkElement)?.DataContext is MarkItem item) RemoveOne(item);
+    }
+
+    private void RemoveOne(MarkItem item)
+    {
+        var marks = _state!.Marks;
+        var index = MarkedList.Items.IndexOf(item);
+        marks.Remove(item);
+        Host!.ShowNotice(Loc.T("Mark removed"), Loc.T("It is off the list."),
+                         new NoticeAction(Loc.T("Put it back"), UndoIfUnchanged(marks.Items)));
+        FocusNeighbour(index);
+    }
+
+    private void FocusNeighbour(int index)
+    {
+        if (MarkedList.Items.Count == 0)
+        {
+            DrawToggle.Focus();
+            return;
+        }
+        index = Math.Clamp(index, 0, MarkedList.Items.Count - 1);
+        MarkedList.SelectedIndex = index;
+        MarkedList.UpdateLayout();
+        (MarkedList.ItemContainerGenerator.ContainerFromIndex(index) as FrameworkElement)?.Focus();
     }
 
     private void Clear_Click(object sender, RoutedEventArgs e)
     {
         var marks = _state!.Marks;
-        var removed = marks.Items.ToList();
+        int count = marks.Items.Count;
         marks.Clear();
-        Host!.ShowNotice(Loc.Plural(removed.Count, "{0} mark removed", "{0} marks removed"), Loc.T("The list is empty now."),
-                         new NoticeAction(Loc.T("Put them back"), () => marks.Add(removed)));
+        Host!.ShowNotice(Loc.Plural(count, "{0} mark removed", "{0} marks removed"), Loc.T("The list is empty now."),
+                         new NoticeAction(Loc.T("Put them back"), UndoIfUnchanged(marks.Items)));
+    }
+
+    private void Undo_Click(object sender, RoutedEventArgs e) => _state!.Marks.Undo();
+
+    // The notice outlives the tool and later changes; it undoes only while the list is as it left it. A file change forgets
+    // the history, so there may be nothing to undo and no Undo button to point to.
+    private Action UndoIfUnchanged(IReadOnlyList<MarkItem> after)
+    {
+        var state = _state!;
+        var pages = state.Pages;
+        return () =>
+        {
+            if (state.Pages is { } now && pages is { } was && !was.SequenceEqual(now))
+                Host?.ShowNotice(Loc.T("Marks removed"), Loc.T("The pages changed, so the marks no longer fit. Mark them again."));
+            else if (_state == state && state.Marks.CanUndo && ReferenceEquals(state.Marks.Items, after)) state.Marks.Undo();
+            else Host?.SetStatus(state.Marks.CanUndo ? Loc.T("The marks changed since. Use Undo in the list.") : Loc.T("The marks changed since."));
+        };
     }
 }

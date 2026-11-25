@@ -43,7 +43,7 @@ enum PageCleanup {
         try openAction(document, dead, done)
         try PageDestinations.removeWhere(document, dead)
         for page in doomed { removeFields(document, page) }
-        structure(document, doomed)
+        try structure(document, doomed)
         try threads(document, gone)
         try PageLabels.removed(document, doomed.map { $0.index }, document.pages.count)
     }
@@ -203,13 +203,17 @@ enum PageCleanup {
         if let value = document.name(parent, "V"), let states, value != "Off", states.containsKey(value) { parent["V"] = PdfName("Off") }
     }
 
-    private static func structure(_ document: PdfDocument, _ doomed: [PdfPage]) {
+    private static func structure(_ document: PdfDocument, _ doomed: [PdfPage]) throws {
         if !document.catalog.containsKey("StructTreeRoot") { return }
         func tagged(_ page: PdfPage) -> Bool {
             if page.dictionary.containsKey("StructParents") { return true }
             return document.array(page.dictionary, "Annots")?.items.contains { (document.resolve($0) as? PdfDictionary)?.containsKey("StructParent") == true } == true
         }
         if !doomed.contains(where: tagged) { return }
+        if PageCarry.hasTags(document), try RedactionStructure.prune(document, [:], RedactionObjects.Identities(), Set(doomed.map { $0.reference.number })) {
+            try keepKeys(document, doomed)
+            return
+        }
         document.catalog.remove("StructTreeRoot")
         document.catalog.remove("MarkInfo")
         for page in document.pages {
@@ -220,6 +224,28 @@ enum PageCleanup {
                 if let annotation = document.resolve(item) as? PdfDictionary { annotation.remove("StructParent") }
             }
         }
+    }
+
+    // Only the keys of the pages and annotations that go are removed; a form or image that owns a key stays mapped.
+    private static func keepKeys(_ document: PdfDocument, _ doomed: [PdfPage]) throws {
+        guard let parents = document.dict(document.dict(document.catalog, "StructTreeRoot"), "ParentTree") else { return }
+        let gone = Set(doomed.map { $0.reference.number })
+        let used = pageKeys(document, document.pages.filter { !gone.contains($0.reference.number) })
+        let dropped = pageKeys(document, doomed).subtracting(used)
+        if dropped.isEmpty { return }
+        _ = try PdfNumberTree.write(document, parents, PdfNumberTree.read(document, parents).filter { !dropped.contains($0.key) })
+    }
+
+    private static func pageKeys(_ document: PdfDocument, _ pages: [PdfPage]) -> Set<Int> {
+        var keys = Set<Int>()
+        for page in pages {
+            if let key = document.integer(page.dictionary, "StructParents") { keys.insert(key) }
+            guard let annots = document.array(page.dictionary, "Annots") else { continue }
+            for item in annots.items {
+                if let annotation = document.resolve(item) as? PdfDictionary, let own = document.integer(annotation, "StructParent") { keys.insert(own) }
+            }
+        }
+        return keys
     }
 
     // A bead on a page that goes leaves its article; an article with no bead left goes too.

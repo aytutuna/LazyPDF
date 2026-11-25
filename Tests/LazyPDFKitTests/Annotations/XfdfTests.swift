@@ -81,6 +81,16 @@ final class XfdfTests: XCTestCase {
         XCTAssertEqual(thread.replies.first?.contents, "yanıt")
     }
 
+    func test_aTurkishStampNameSurvivesAnXfdfRoundTrip() throws {
+        let source = try AnnotationFixtures.blank(1)
+        try PdfAnnotationWriter(source, try AnnotationFixtures.ArialSource()).addStamp(source.pages[0], PdfRect(100, 600, 360, 660), "ŞİFRELİ GİZLİ")
+        let xml = try PdfXfdf.write(try PdfFdf.export(source, "doc.pdf"))
+        XCTAssertTrue(String(decoding: xml, as: UTF8.self).contains("icon=\"ŞİFRELİ GİZLİ\""))
+        let target = try AnnotationFixtures.blank(1)
+        try PdfFdf.import(target, try PdfXfdf.read(xml), try AnnotationFixtures.ArialSource())
+        XCTAssertEqual(PdfAnnotations.readAll(try AnnotationFixtures.reopen(target)).first?.iconName, "ŞİFRELİ GİZLİ")
+    }
+
     func test_readsAnXfdfAsAcrobatWritesIt() throws {
         let xml = #"""
             <?xml version="1.0" encoding="UTF-8"?>

@@ -71,6 +71,19 @@ final class PdfFromTextTests: XCTestCase {
         XCTAssertEqual([document.pages[0].mediaBox.width, document.pages[0].mediaBox.height], [792, 612])
     }
 
+    func test_namedPapersSetThePage() throws {
+        for (paper, size) in [(PdfPaper.a3, [841.89, 1190.551]), (.a5, [419.528, 595.276]), (.legal, [612, 1008])] {
+            let document = try PdfDocument.open(PdfFromText.create("x", setup: PdfPageSetup(paper: paper)).bytes)
+            XCTAssertEqual([document.pages[0].mediaBox.width, document.pages[0].mediaBox.height], size)
+        }
+    }
+
+    func test_customPaperTurnsWhenLandscape() throws {
+        let setup = PdfPageSetup(paper: .custom, orientation: .landscape, margin: 1, customWidth: 200, customHeight: 300)
+        let document = try PdfDocument.open(PdfFromText.create("x", setup: setup).bytes)
+        XCTAssertEqual([document.pages[0].mediaBox.width, document.pages[0].mediaBox.height], [300, 200])
+    }
+
     func test_turkishTextIsEmbeddedAndReadsBack() throws {
         let turkish = "AB ğİ BA À\nAB ğ İ"
         let made = try PdfFromText.create(turkish, fonts: ExportArialSource())
@@ -99,4 +112,40 @@ final class PdfFromTextTests: XCTestCase {
         XCTAssertThrowsError(try PdfFromText.create("x", setup: PdfPageSetup(margin: -5))) { XCTAssertTrue($0 is ArgumentException) }
         XCTAssertThrowsError(try PdfFromText.create("x", size: 0)) { XCTAssertTrue($0 is ArgumentException) }
     }
-}
+
+    func test_aCancelledTokenStopsTheMakingOfThePdf() async throws {
+        let task = Task { () -> TextPdf in
+            while !Task.isCancelled { await Task.yield() }
+            return try PdfFromText.create("Hello\u{0C}World")
+        }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+    }
+
+    func test_aCancelDuringTheFontLookupStopsBeforeThePages() async throws {
+        let fonts = CancellingFonts(try ExportArialSource())
+        let task = Task { try PdfFromText.create("AB ğİ\u{0C}İ ğ", fonts: fonts) }
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+        XCTAssertEqual(fonts.asked, 1)
+    }
+
+    private final class CancellingFonts: FontSource {
+        private let inner: FontSource
+        private(set) var asked = 0
+
+        init(_ inner: FontSource) { self.inner = inner }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            asked += 1
+            withUnsafeCurrentTask { $0?.cancel() }
+            return inner.find(family, style)
+        }
+    }}

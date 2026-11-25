@@ -28,6 +28,7 @@ public sealed class OutputWriterTests
         using var f = new ViewModelFixture();
         string path = f.Pdf("report.pdf", 4);
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         var tab = f.Vm.ActiveDocument!;
         byte[] replacement = Pdfs.Text(4);
 
@@ -94,6 +95,7 @@ public sealed class OutputWriterTests
         string path = f.Pdf("report.pdf", 1);
         await f.Vm.OpenAsync(path);
         var tab = f.Vm.ActiveDocument!;
+        await f.SettledAsync();
         File.WriteAllBytes(path, Pdfs.Text(3));
         File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(5));
         byte[] theirs = File.ReadAllBytes(path);
@@ -148,6 +150,7 @@ public sealed class OutputWriterTests
         using var f = new ViewModelFixture();
         string path = f.Pdf("report.pdf", 4);
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         var tab = f.Vm.ActiveDocument!;
         tab.PageIndex = 2;
         tab.Zoom = 1.5;
@@ -157,5 +160,43 @@ public sealed class OutputWriterTests
         var reloaded = f.Vm.ActiveDocument!;
         Assert.Equal(2, reloaded.PageIndex);
         Assert.Equal(1.5, reloaded.Zoom);
+    }
+
+    [Fact]
+    public async Task NothingIsAskedWhenTheResultGoesToANewFile()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("report.pdf"));
+        int ran = 0;
+
+        bool now = OutputWriter.ConfirmReplace(f.Vm, f.Vm.ActiveDocument!, replace: false, () => ran++);
+
+        Assert.True(now);
+        Assert.Equal(0, ran);
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public async Task ReplacingTheFileAsksFirstAndRunsOnlyOnAYes()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("report.pdf", 2);
+        await f.Vm.OpenAsync(path);
+        byte[] before = File.ReadAllBytes(path);
+        int ran = 0;
+
+        bool now = OutputWriter.ConfirmReplace(f.Vm, f.Vm.ActiveDocument!, replace: true, () => ran++);
+
+        Assert.False(now);
+        Assert.Equal(0, ran);
+        var message = f.Vm.Message!;
+        Assert.False(message.IsError);
+        Assert.Equal("Replace", message.Action!.Text);
+        Assert.Equal(before, File.ReadAllBytes(path));
+
+        message.Action.Run();
+
+        Assert.Equal(1, ran);
+        Assert.Equal(before, File.ReadAllBytes(path));
     }
 }

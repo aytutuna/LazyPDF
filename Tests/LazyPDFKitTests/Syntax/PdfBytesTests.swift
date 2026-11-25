@@ -63,6 +63,12 @@ final class PdfBytesTests: XCTestCase {
         XCTAssertEqual(fromArray.dataOffset, fromStream.dataOffset)
     }
 
+    func test_nonFiniteNumbersWriteZero() {
+        for value in [Double.nan, Double.infinity, -Double.infinity] {
+            XCTAssertEqual(PdfNumber(value).text, "0")
+        }
+    }
+
     func test_lexerFarOutsideTheBytesReadsTheEnd() {
         for position in [Int.max, Int.max - 1, Int.min, -5, 3, 1000] {
             let lexer = PdfLexer(PdfArrayBytes(Latin1.bytes("abc")), position: position)
@@ -71,5 +77,21 @@ final class PdfBytesTests: XCTestCase {
             XCTAssertThrowsError(try lexer.readObject(), "\(position)")
             XCTAssertThrowsError(try lexer.readObjectHeader(), "\(position)")
         }
+    }
+
+    func test_nameAboveLatin1IsWrittenAsItsUtf8Bytes() throws {
+        XCTAssertEqual(PdfName("Ş").description, "/#C5#9E")
+        XCTAssertEqual(PdfName.fromText("Ş").description, "/#C5#9E")
+        let read = try XCTUnwrap(try PdfLexer(PdfArrayBytes(Latin1.bytes("/#C5#9E"))).readObject() as? PdfName)
+        XCTAssertEqual(read.text, "Ş")
+        let latin = try XCTUnwrap(try PdfLexer(PdfArrayBytes(Latin1.bytes("/#FC"))).readObject() as? PdfName)
+        XCTAssertEqual(latin.text, latin.value)
+    }
+
+    func test_nameMixingLatin1AndAboveIsWrittenAsUtf8Throughout() throws {
+        let name = PdfName("GÖZDEN GEÇİRİLDİ")
+        XCTAssertFalse(name.description.contains("#D6"))
+        let read = try XCTUnwrap(try PdfLexer(PdfArrayBytes(Latin1.bytes(name.description))).readObject() as? PdfName)
+        XCTAssertEqual(read.text, "GÖZDEN GEÇİRİLDİ")
     }
 }

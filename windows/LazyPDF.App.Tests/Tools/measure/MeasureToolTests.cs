@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Measure;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
@@ -19,12 +20,14 @@ public sealed class MeasureToolTests
         public double Zoom { get; set; } = 2;
         public TextPage? Text { get; set; }
         public PageGeometry Geometry { get; set; } = null!;
+        public DocumentTab? Tab { get; set; }
 
         protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name switch
         {
             "PageToView" => new Matrix(Zoom, 0, 0, Zoom, 0, 0),
             "GetTextAsync" => Task.FromResult(Text),
             "Geometry" => Geometry,
+            "get_Tab" => Tab,
             _ => throw new NotSupportedException(method.Name),
         };
     }
@@ -58,6 +61,65 @@ public sealed class MeasureToolTests
         Assert.Equal(MeasureKind.Distance, item.Kind);
         Assert.Equal("1 in", item.Value(Inches));
         Assert.Empty(tool.Points);
+    }
+
+    [Fact]
+    public void CalibrateModeReportsTheLengthAndAddsNoItem()
+    {
+        var (tool, done, _) = Start(MeasureKind.Distance);
+        var reported = new List<(int Page, double Points)>();
+        tool.Calibrated += (page, points) => reported.Add((page, points));
+        tool.Calibrate = true;
+
+        tool.Press(At(0, 0));
+        tool.Press(At(72, 0));
+
+        Assert.Empty(done);
+        Assert.Equal((0, 72d), Assert.Single(reported));
+        Assert.Empty(tool.Points);
+    }
+
+    [Fact]
+    public void CalibrateModeIgnoresTwoClicksOnOneSpot()
+    {
+        var (tool, done, _) = Start(MeasureKind.Distance);
+        var reported = 0;
+        tool.Calibrated += (_, _) => reported++;
+        tool.Calibrate = true;
+
+        tool.Press(At(10, 10));
+        tool.Press(At(10, 10));
+
+        Assert.Equal(0, reported);
+        Assert.Empty(done);
+        Assert.Empty(tool.Points);
+    }
+
+    [Fact]
+    public void ACalibratedLineSetsWhatLaterDistancesRead()
+    {
+        var scale = MeasureScale.From(72, 1, LengthUnit.Inch, LengthUnit.Inch);
+        var longer = new MeasureItem(MeasureKind.Distance, 0, [new Point(0, 0), new Point(144, 0)]);
+
+        Assert.Equal("2 in", longer.Value(scale));
+        Assert.Equal("1 in = 1 in", scale.Ratio);
+    }
+
+    [Fact]
+    public void ACalibratedScaleReadsAsOneUnitOnThePage()
+    {
+        var scale = MeasureScale.From(72, 1, LengthUnit.Millimetre, LengthUnit.Metre);
+
+        Assert.Equal(1, scale.Page);
+        Assert.Equal("1 mm = 0.039370079 m", scale.Ratio);
+        Assert.Equal("1 m", scale.Length(72));
+    }
+
+    [Fact]
+    public void ACalibrationTooSmallToWriteDoesNotReadBack()
+    {
+        Assert.Null(MeasureScale.TryParse(MeasureScale.From(72, 1e-25, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
+        Assert.Null(MeasureScale.TryParse(MeasureScale.From(0, 1, LengthUnit.Millimetre, LengthUnit.Millimetre).Ratio));
     }
 
     [Fact]
@@ -138,6 +200,52 @@ public sealed class MeasureToolTests
     }
 
     [Fact]
+    public void AStraightenedClickNearTheFirstDotAddsACornerInsteadOfClosing()
+    {
+        var (tool, done, _) = Start(MeasureKind.Area);
+        tool.Press(At(0, 0));
+        tool.Press(At(100, 0));
+        tool.Press(At(100, 60));
+
+        var click = At(3, 2, keys: ModifierKeys.Shift);
+        Assert.False(tool.HandleUnder(click));
+        tool.Press(click);
+
+        Assert.Empty(done);
+        Assert.Equal(4, tool.Points.Count);
+    }
+
+    [Fact]
+    public void TheFirstDotTakesAPressOnlyOnceTheShapeCanBeClosed()
+    {
+        var (tool, _, _) = Start(MeasureKind.Area);
+        tool.Press(At(0, 0));
+        tool.Press(At(100, 0));
+        Assert.False(tool.HandleUnder(At(-2, -2)));
+        tool.Press(At(100, 60));
+
+        Assert.True(tool.HandleUnder(At(-2, -2)));
+        Assert.False(tool.HandleUnder(At(100, 0)));
+        Assert.False(tool.HandleUnder(At(-2, -2, page: 1)));
+    }
+
+    [Fact]
+    public void APressOffThePageTakesTheFirstDotAndClosesTheShapeButNoOtherPoint()
+    {
+        var (tool, done, _) = Start(MeasureKind.Area);
+        tool.Press(At(0, 0));
+        tool.Press(At(100, 0));
+        tool.Press(At(-300, 60));
+
+        Assert.False(tool.HandleUnder(At(-300, 60)));
+        Assert.True(tool.HandleUnder(At(-2, -2)));
+        tool.Press(At(-2, -2));
+
+        var item = Assert.Single(done);
+        Assert.Equal(3, item.Points.Count);
+    }
+
+    [Fact]
     public void ShiftKeepsTheNextPointOnAStraightLine()
     {
         var (tool, done, _) = Start(MeasureKind.Distance);
@@ -176,5 +284,48 @@ public sealed class MeasureToolTests
         tool.Press(At(300, 300));
 
         Assert.Equal(corner.X + 2, Assert.Single(done).Points[0].X, 6);
+    }
+
+    [Fact]
+    public void HoldingAltKeepsTheClickWhereItWas()
+    {
+        var (tool, done, viewer) = Start(MeasureKind.Distance, withText: true);
+        var word = viewer.Text!.Words[0];
+        var corner = viewer.Geometry.ToDisplay(word.Bounds.Left, word.Bounds.Top);
+
+        tool.Press(At(corner.X + 2, corner.Y - 2, keys: ModifierKeys.Alt));
+        tool.Press(At(300, 300));
+
+        Assert.Equal(corner.X + 2, Assert.Single(done).Points[0].X, 6);
+    }
+
+    [Fact]
+    public void ClicksSnapToTheEndsOfDrawnLines()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text());
+        new PageEditor(session, 0).AddLine(100, 100, 300, 100);
+        session.Commit("Line");
+        using var tab = new DocumentTab(session, new FakeRenderer(), null, "a.pdf", null);
+        var proxy = DispatchProxy.Create<IDocumentViewer, Viewer>();
+        var viewer = (Viewer)(object)proxy;
+        viewer.Tab = tab;
+        viewer.Geometry = new PageGeometry(session.Document.Pages[0]);
+        viewer.Text = TextPage.Create(session.Document, session.Document.Pages[0]);
+        var tool = new MeasureTool(proxy);
+        var end = viewer.Geometry.ToDisplay(300, 100);
+
+        tool.Move(At(0, 0));
+        // The corners are read on another thread.
+        for (int i = 0; i < 500 && !tool.Snapped; i++)
+        {
+            Thread.Sleep(10);
+            tool.Move(At(end.X + 3, end.Y - 3));
+        }
+        Assert.True(tool.Snapped);
+        Assert.Equal(end.X, tool.Hover!.Value.X, 6);
+        Assert.Equal(end.Y, tool.Hover!.Value.Y, 6);
+
+        tool.Move(At(end.X + 30, end.Y - 30));
+        Assert.False(tool.Snapped);
     }
 }

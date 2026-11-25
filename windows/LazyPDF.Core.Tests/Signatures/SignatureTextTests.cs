@@ -35,6 +35,18 @@ public class SignatureTextTests
     }
 
     [Fact]
+    public void A_signer_that_only_has_an_expired_certificate_says_so()
+    {
+        var report = Report(SignatureVerdict.ValidButUntrusted) with { Problems = [SignatureProblem.CertificateExpired] };
+        Assert.Equal("Signed by Ada Lovelace on 10 Mar 2026. The certificate has expired since.", report.Sentence);
+        Assert.Equal("Certificate has expired", SignatureText.Status(report));
+
+        var more = report with { Problems = [SignatureProblem.CertificateExpired, SignatureProblem.WeakDigest] };
+        Assert.Equal("Signed by Ada Lovelace on 10 Mar 2026. The signer is not trusted.", more.Sentence);
+        Assert.Equal("Signer is not trusted", SignatureText.Status(more));
+    }
+
+    [Fact]
     public void A_status_line_is_six_words_at_most()
     {
         foreach (var verdict in Enum.GetValues<SignatureVerdict>())

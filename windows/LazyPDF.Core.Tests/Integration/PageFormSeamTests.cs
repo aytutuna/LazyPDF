@@ -96,7 +96,7 @@ public class PageFormSeamTests
         var form = PdfForm.Read(PdfDocument.Open(middle));
         Assert.Equal(["f3", "f4", "f5"], form.Fields.Select(f => f.Name));
         Assert.Null(form.Find("agree"));
-        Assert.Empty(Outline.Read(PdfDocument.Open(middle)).Items);
+        Assert.Equal([0], Outline.Read(PdfDocument.Open(middle)).Items.Select(i => i.Destination!.PageIndex));
     }
 
     [Fact]

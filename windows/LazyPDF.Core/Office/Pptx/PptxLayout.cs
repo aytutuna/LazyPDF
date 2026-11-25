@@ -1,0 +1,124 @@
+using System.Globalization;
+
+namespace LazyPDF.Core.Office;
+
+/// <summary>
+/// Sets the slides of a presentation on pages the size of the slide: the background, the fill of every shape and its text, which
+/// goes through <see cref="ParagraphLayout"/> and <see cref="Paginator.EmitLine"/> like Word text. There is no paginator; a
+/// shape's text that does not fit runs over the edge of the shape, as it does in PowerPoint. A table is measured like one in a
+/// document and put on the slide whole.
+/// </summary>
+internal static class PptxLayout
+{
+    private const double Wide = 1e7;
+    private const int MaxBoxes = 4_000_000;
+
+    /// <exception cref="PdfReadException">The slides come to too many boxes.</exception>
+    public static LayoutResult Run(PptxPresentation presentation, LayoutFonts fonts, CancellationToken cancellation = default)
+    {
+        var pages = new List<LayoutPage>();
+        int complex = 0, total = 0;
+        foreach (var slide in presentation.Slides)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            var boxes = new List<LayoutBox>();
+            if (slide.Background is { } background)
+            {
+                if (background.Color is { } color) boxes.Add(new PlacedRect(0, 0, presentation.Width, presentation.Height, color));
+                if (background.Picture is { } backdrop) boxes.Add(new PlacedImage(0, 0, presentation.Width, presentation.Height, backdrop));
+            }
+            string number = slide.Number.ToString(CultureInfo.InvariantCulture);
+            foreach (var shape in slide.Shapes)
+            {
+                if (shape.Fill is { } fill && shape.Width > 0 && shape.Height > 0) boxes.Add(new PlacedRect(shape.X, shape.Y, shape.Width, shape.Height, fill));
+                if (shape.Picture is { } picture) boxes.Add(picture);
+                boxes.AddRange(shape.Paths);
+                if (shape.Table is { } table)
+                {
+                    var lines = TableLayout.Measure(table.Table, fonts, Math.Max(1, table.Table.Columns.Sum()), Wide, p =>
+                    {
+                        if (p.ComplexScript) complex++;
+                    });
+                    Paginator.EmitTable(boxes, lines, table.X, table.Y);
+                }
+                if (shape.Body is { } body) Text(shape, body, fonts, number, boxes, ref complex);
+                if (total + boxes.Count > MaxBoxes) throw new PdfReadException(PdfReadProblem.Unsupported, "The presentation is too large.");
+            }
+            total += boxes.Count;
+            pages.Add(new LayoutPage(presentation.Width, presentation.Height, boxes));
+        }
+
+        var skipped = presentation.Skipped.ToList();
+        void Add(string kind, int count)
+        {
+            if (count <= 0) return;
+            int at = skipped.FindIndex(s => s.Kind == kind);
+            if (at < 0) skipped.Add(new SkippedFeature(kind, count));
+            else skipped[at] = skipped[at] with { Count = skipped[at].Count + count };
+        }
+        Add(SkippedKinds.ComplexScript, complex);
+        return new LayoutResult(pages, skipped, [.. fonts.Missing]);
+    }
+
+    private static void Text(PptxShape shape, PptxBody body, LayoutFonts fonts, string number, List<LayoutBox> boxes, ref int complex)
+    {
+        double inner = Math.Max(1, shape.Width - body.Left - body.Right);
+        double room = shape.Height - body.Top - body.Bottom;
+        var laid = new List<ParagraphLines>();
+        foreach (var paragraph in body.Paragraphs)
+        {
+            var lines = ParagraphLayout.Run(body.Wrap ? paragraph : Unwrapped(paragraph), fonts, body.Wrap ? inner : Wide, Wide, _ => number);
+            if (lines.ComplexScript) complex++;
+            laid.Add(lines);
+        }
+        var aligns = body.Paragraphs.Select(p => p.Align).ToList();
+
+        // PowerPoint ignores the space before the first paragraph and after the last one.
+        double height = 0;
+        for (int i = 0; i < laid.Count; i++)
+        {
+            height += laid[i].Height + (i > 0 ? laid[i].Source.Before : 0) + (i < laid.Count - 1 ? laid[i].Source.After : 0);
+        }
+        double y = shape.Y + body.Top + body.Anchor switch
+        {
+            LayoutVAlign.Center => (room - height) / 2,
+            LayoutVAlign.Bottom => room - height,
+            _ => 0,
+        };
+        double left = shape.X + body.Left;
+        for (int i = 0; i < laid.Count; i++)
+        {
+            var lines = laid[i];
+            if (i > 0) y += lines.Source.Before;
+            foreach (var line in lines.Lines)
+            {
+                Paginator.EmitLine(boxes, line, left + (body.Wrap ? 0 : Shift(line, aligns[i], inner, lines.Source.RightToLeft)), y);
+                y += line.Height;
+            }
+            if (i < laid.Count - 1) y += lines.Source.After;
+        }
+    }
+
+    // Text that does not wrap is laid out on a line without end and then moved so that its alignment holds against the shape.
+    // A right-to-left paragraph starts at the right edge of the line without end, so it is first brought back to the left.
+    private static LayoutParagraph Unwrapped(LayoutParagraph p) => new()
+    {
+        Runs = p.Runs, Align = p.RightToLeft ? LayoutAlign.Right : LayoutAlign.Left, Left = p.Left, Right = 0, FirstLine = p.FirstLine, Before = p.Before, After = p.After,
+        LineSpacing = p.LineSpacing, Rule = p.Rule, LabelTab = p.LabelTab, RightToLeft = p.RightToLeft,
+    };
+
+    private static double Shift(LayoutLine line, LayoutAlign align, double inner, bool rightToLeft)
+    {
+        var inked = line.Atoms.Where(a => !a.IsBlank).ToList();
+        if (inked.Count == 0) return 0;
+        if (rightToLeft)
+        {
+            double start = inked.Min(a => a.X), width = inked.Max(a => a.BoxRight) - start;
+            return -start + (align is LayoutAlign.Left ? 0 : align == LayoutAlign.Center ? (inner - width) / 2 : inner - width);
+        }
+        if (align is LayoutAlign.Left or LayoutAlign.Justify) return 0;
+        // Atoms stay in logical order after reordering, so the last one is not necessarily the rightmost.
+        double end = inked.Max(a => a.X + a.Width);
+        return align == LayoutAlign.Center ? (inner - (end - line.Start)) / 2 - line.Start : inner - end;
+    }
+}

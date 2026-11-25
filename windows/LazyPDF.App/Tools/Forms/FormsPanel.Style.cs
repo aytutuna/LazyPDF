@@ -22,7 +22,7 @@ public sealed partial class FormsPanel
         ColourBox.DisplayMemberPath = nameof(ColourChoice.Text);
         ColourBox.ItemsSource = new ColourChoice[]
         {
-            new(Loc.T("Black"), [0]), new(Loc.T("Blue"), [0, 0, 1]), new(Loc.T("Red"), [1, 0, 0]), new(Loc.T("Green"), [0, 0.5, 0]), new(Loc.T("Grey"), [0.5]),
+            new(Loc.T("Black"), [0]), new(Loc.T("Blue"), [0, 0, 1]), new(Loc.T("Red"), [1, 0, 0]), new(Loc.T("Green"), [0, 0.5, 0]), new(Loc.T("Gray"), [0.5]),
         };
         ActionBox.DisplayMemberPath = nameof(ActionChoice.Text);
         ActionBox.ItemsSource = new ActionChoice[]
@@ -79,7 +79,7 @@ public sealed partial class FormsPanel
         if (ReferenceEquals(sender, FontBox) && FontBox.SelectedItem is FontChoice font && font.Name != look.Font)
             done = ChangeField(Loc.T("Change font"), (form, f) => form.SetFont(f, font.Name));
         else if (ReferenceEquals(sender, ColourBox) && ColourBox.SelectedItem is ColourChoice colour && !FormEdits.SameColour(colour.Rgb, look.Color))
-            done = ChangeField(Loc.T("Change text colour"), (form, f) => form.SetTextColor(f, colour.Rgb));
+            done = ChangeField(Loc.T("Change text color"), (form, f) => form.SetTextColor(f, colour.Rgb));
         if (!done) ShowCard(Form);
     }
 

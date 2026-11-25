@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
+using LazyPDF.App.Tools.FillSign;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using FontStyles = LazyPDF.Core.FontStyles;
@@ -26,12 +27,30 @@ public enum MarkTool
     Attach,
 }
 
+public enum LineStyle
+{
+    Solid,
+    Dashed,
+    Dotted,
+}
+
 /// <summary>How a new mark looks. A null colour takes the default of its kind.</summary>
-public sealed record MarkStyle(double[]? Color, double Width, double Opacity, string Family, double Size, FontStyles Font)
+public sealed record MarkStyle(double[]? Color, double Width, double Opacity, string Family, double Size, FontStyles Font, double[]? Fill = null, LineStyle Dash = LineStyle.Solid, LineEnding Head = LineEnding.None, string Icon = "Note", LineEnding StartHead = LineEnding.None)
 {
     public static MarkStyle Default { get; } = new(null, 2, 1, "Helvetica", 12, FontStyles.Regular);
 
-    public AnnotationStyle ToAnnotation() => new(Color, Width, Opacity: Opacity);
+    public AnnotationStyle ToAnnotation() => new(Color, Width, DashesOf(Dash, Width), Fill, Opacity);
+
+    public static double[]? DashesOf(LineStyle style, double width)
+    {
+        double w = Math.Max(width, 1);
+        return style switch
+        {
+            LineStyle.Dashed => [3 * w, 2 * w],
+            LineStyle.Dotted => [w, w + 1],
+            _ => null,
+        };
+    }
 
     public FreeTextStyle ToText() => new(Family, Size, Font, Color ?? [0, 0, 0]);
 }
@@ -43,6 +62,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     public const double CalloutWidth = 150;
     public const double CalloutHeight = 50;
     public const double StampWidth = 130;
+    public const double DatedStampWidth = 220;
     public const double StampHeight = 44;
 
     private readonly PdfAnnotationWriter _writer = new(document, fonts);
@@ -93,9 +113,9 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         switch (tool)
         {
             case MarkTool.Note:
-                return Faded(_writer.AddNote(target, UserRect(new Rect(points[0], new Size(NoteSize, NoteSize))), Info(text), "Note", style.Color), style);
+                return Faded(_writer.AddNote(target, UserRect(new Rect(points[0], new Size(NoteSize, NoteSize))), Info(text), style.Icon, style.Color), style);
             case MarkTool.TextBox:
-                return _writer.AddFreeText(target, Standing(geometry, BoxOf(tool, points)), text, style.ToText(), shape with { Width = 0 }, upright);
+                return _writer.AddFreeText(target, Standing(geometry, BoxOf(tool, points)), text, style.ToText(), shape with { Width = 0, Dash = null, Fill = null }, upright);
             case MarkTool.Callout:
             {
                 var box = BoxOf(tool, points);
@@ -113,9 +133,13 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
                 return boxed;
             }
             case MarkTool.Line:
-                return _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info());
+                return _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info(), style.StartHead, style.Head);
             case MarkTool.Arrow:
-                return _writer.AddArrow(target, User(points[0]), User(points[^1]), shape, Info());
+            {
+                var arrow = _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info(), style.StartHead, style.Head);
+                arrow.Dictionary["IT"] = new PdfName("LineArrow");
+                return arrow;
+            }
             case MarkTool.Rectangle:
                 return _writer.AddSquare(target, UserRect(new Rect(points[0], points[^1])), shape, Info());
             case MarkTool.Oval:
@@ -125,19 +149,36 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             case MarkTool.Cloud:
                 return _writer.AddCloud(target, [.. points.Select(User)], shape with { Cloud = 2 }, Info());
             case MarkTool.Pencil:
-                return _writer.AddInk(target, [[.. points.Select(User)]], shape, Info());
+                return _writer.AddInk(target, [[.. points.Select(User)]], shape with { Fill = null }, Info());
             default:
                 throw new ArgumentException("This tool does not draw by itself.", nameof(tool));
         }
     }
 
-    public PdfAnnotation AddStamp(int page, Point center, string name, MarkStyle style)
+    public PdfAnnotation AddStamp(int page, Point center, string name, MarkStyle style, bool dated = false)
     {
         var target = document.Pages[page];
         var geometry = new PageGeometry(target);
-        var box = Standing(geometry, new Rect(center.X - StampWidth / 2, center.Y - StampHeight / 2, StampWidth, StampHeight));
+        double width = dated ? DatedStampWidth : StampWidth;
+        var box = Standing(geometry, new Rect(center.X - width / 2, center.Y - StampHeight / 2, width, StampHeight));
         return Faded(_writer.AddStamp(target, box, name, Upright(geometry), style.Color), style);
     }
+
+    public PdfAnnotation AddPictureStamp(int page, Point center, PdfRgbaImage image)
+    {
+        var geometry = new PageGeometry(document.Pages[page]);
+        double aspect = image.Width / (double)image.Height;
+        var box = FillSignPlacement.Around(center, Math.Min(StampWidth, StampWidth * aspect), aspect, new Size(geometry.Width, geometry.Height));
+        return FillSignPlacement.AddImage(document, page, box, image, author, date);
+    }
+
+    // Core picks a stamp's colour by its exact name, which a dated name no longer is.
+    public static double[] StampColor(string name) => name switch
+    {
+        "Approved" or "Final" or "ForPublicRelease" => [0, 0.5, 0.15],
+        "AsIs" or "Experimental" or "Sold" or "Departmental" or "ForComment" => [0, 0.2, 0.7],
+        _ => [0.75, 0, 0],
+    };
 
     public PdfAnnotation AddAttachment(int page, Point at, string fileName, byte[] data)
     {
@@ -197,6 +238,11 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     public static bool Selectable(PdfAnnotation a) =>
         a.IsMarkup && a.Reference is not null && a.InReplyTo is null && !a.Flags.HasFlag(AnnotationFlags.Hidden)
         && !a.Flags.HasFlag(AnnotationFlags.Locked) && !a.Flags.HasFlag(AnnotationFlags.ReadOnly);
+
+    /// <summary>A mark the eraser takes: ink, lines and shapes, but not a measurement, which the Measure tool owns.</summary>
+    public static bool Erasable(PdfAnnotation a) =>
+        a.Type is AnnotationType.Ink or AnnotationType.Line or AnnotationType.PolyLine or AnnotationType.Polygon or AnnotationType.Square or AnnotationType.Circle
+        && !a.Dictionary.ContainsKey("Measure");
 
     private static bool Covers(PdfAnnotation a, double x, double y, double tolerance)
     {
@@ -274,8 +320,112 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         return _writer.Move(a, x1 - x0, y1 - y0);
     }
 
+    private static string PointKey(PdfAnnotation a) => a.Type == AnnotationType.Line ? "L" : "Vertices";
+
+    private static IReadOnlyList<double>? UserPoints(PdfAnnotation a) => a.Type switch
+    {
+        AnnotationType.Line when a.Line.Count >= 4 => a.Line,
+        AnnotationType.PolyLine or AnnotationType.Polygon when a.Vertices.Count >= 4 => a.Vertices,
+        _ => null,
+    };
+
+    /// <summary>A mark another app drew with parts the appearance builder does not reproduce: leader lines, a caption, or a cloud edge without /BE. Anything that redraws it loses them.</summary>
+    public static bool Foreign(PdfAnnotation a) =>
+        new[] { "LL", "LLE", "LLO", "Cap", "CO" }.Any(a.Dictionary.ContainsKey) || (a.Intent == "PolygonCloud" && a.Cloud == 0);
+
+    /// <summary>One of the app's own measurements, whose text and value follow from its points.</summary>
+    public static bool Measured(PdfAnnotation a) => a.Dictionary.ContainsKey("Measure");
+
+    /// <summary>A mark that only moves: no points, no box handles, no head.</summary>
+    public static bool Fixed(PdfAnnotation a) => Foreign(a) || Measured(a);
+
+    /// <summary>The ends of a line or the corners of a polygon in display space; null for a mark that moves only by its box, and for a fixed one.</summary>
+    public Point[]? PointsOf(PdfAnnotation a)
+    {
+        if (UserPoints(a) is not { } xy || Fixed(a)) return null;
+        var geometry = new PageGeometry(document.Pages[a.PageIndex]);
+        int count = a.Type == AnnotationType.Line ? 2 : xy.Count / 2;
+        return [.. Enumerable.Range(0, count).Select(i =>
+        {
+            var (x, y) = geometry.ToDisplay(xy[2 * i], xy[2 * i + 1]);
+            return new Point(x, y);
+        })];
+    }
+
+    /// <summary>Moves one end or corner; the box is fitted again to the points, the border and the heads.</summary>
+    public PdfAnnotation MovePoint(PdfAnnotation a, int index, Point to)
+    {
+        if (PointsOf(a) is not { } points || UserPoints(a) is not { } old) throw new ArgumentException("This mark has no points to move.", nameof(a));
+        if (index < 0 || index >= points.Length) throw new ArgumentOutOfRangeException(nameof(index));
+        var (x, y) = new PageGeometry(document.Pages[a.PageIndex]).ToUser(to.X, to.Y);
+        double[] xy = [.. old];
+        xy[2 * index] = x;
+        xy[2 * index + 1] = y;
+        return WritePoints(a, xy);
+    }
+
+    // The snapshot still holds the old points, and the box is made from them.
+    private PdfAnnotation WritePoints(PdfAnnotation a, double[] xy)
+    {
+        var written = _writer.Edit(a, redraw: true, () =>
+        {
+            a.Dictionary[PointKey(a)] = new PdfArray([.. xy.Select(v => (PdfObject)new PdfNumber(v))]);
+            var shifted = a.Type == AnnotationType.Line ? a with { Line = xy } : a with { Vertices = xy };
+            FitBox(shifted, a.Border.Width, a.StartEnding != LineEnding.None || a.EndEnding != LineEnding.None);
+        });
+        return Find(a.PageIndex, a.Reference!.Number) ?? written;
+    }
+
+    /// <summary>A mark with ends or corners to move.</summary>
+    public static bool HasPoints(PdfAnnotation a) => UserPoints(a) is not null && !Fixed(a);
+
+    // Corners can come and go on a polygon the app drew; a cloud keeps its corners and a line its two ends.
+    public static bool PlainPolygon(PdfAnnotation a) => a is { Type: AnnotationType.Polygon, Cloud: 0 } && !Fixed(a) && a.Vertices.Count >= 6;
+
+    /// <summary>Adds a corner between corner <paramref name="after"/> and the next one, the first when it is the last.</summary>
+    public PdfAnnotation InsertPoint(PdfAnnotation a, int after, Point at)
+    {
+        if (!PlainPolygon(a)) throw new ArgumentException("Corners cannot be added to this mark.", nameof(a));
+        if (after < 0 || after >= a.Vertices.Count / 2) throw new ArgumentOutOfRangeException(nameof(after));
+        var (x, y) = new PageGeometry(document.Pages[a.PageIndex]).ToUser(at.X, at.Y);
+        int cut = 2 * (after + 1);
+        return WritePoints(a, [.. a.Vertices.Take(cut), x, y, .. a.Vertices.Skip(cut)]);
+    }
+
+    /// <summary>A polygon keeps three corners at least.</summary>
+    public bool CanRemovePoint(PdfAnnotation a, int index) => PlainPolygon(a) && index >= 0 && index < a.Vertices.Count / 2 && a.Vertices.Count / 2 > 3;
+
+    public PdfAnnotation RemovePoint(PdfAnnotation a, int index)
+    {
+        if (PlainPolygon(a) && (index < 0 || index >= a.Vertices.Count / 2)) throw new ArgumentOutOfRangeException(nameof(index));
+        if (!CanRemovePoint(a, index)) throw new ArgumentException("A corner cannot be taken from this mark.", nameof(a));
+        return WritePoints(a, [.. a.Vertices.Where((_, i) => i / 2 != index)]);
+    }
+
+    /// <summary>The corner that starts the side of a polygon nearest to the point, within the border and <paramref name="tolerance"/> of it; -1 when no side is that near.</summary>
+    public int SegmentAt(PdfAnnotation a, Point at, double tolerance)
+    {
+        if (!PlainPolygon(a)) return -1;
+        var (x, y) = new PageGeometry(document.Pages[a.PageIndex]).ToUser(at.X, at.Y);
+        var xy = a.Vertices;
+        int n = xy.Count / 2, best = -1;
+        double nearest = tolerance + a.Border.Width / 2;
+        for (int i = 0; i < n; i++)
+        {
+            int j = (i + 1) % n;
+            double d = Distance(xy[2 * i], xy[2 * i + 1], xy[2 * j], xy[2 * j + 1], x, y);
+            if (d <= nearest)
+            {
+                nearest = d;
+                best = i;
+            }
+        }
+        return best;
+    }
+
     public PdfAnnotation Resize(PdfAnnotation a, Rect box)
     {
+        if (Fixed(a)) return a;
         var geometry = new PageGeometry(document.Pages[a.PageIndex]);
         var rect = Stands(a, geometry) ? Standing(geometry, box) : geometry.ToUser(new DisplayRect(box.X, box.Y, box.Width, box.Height));
         var resized = _writer.Resize(a, rect);
@@ -288,28 +438,94 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         return Find(a.PageIndex, a.Reference!.Number) ?? resized;
     }
 
-    /// <summary>Paints the mark; a text box takes the colour for its frame and its text.</summary>
+    /// <summary>Paints the mark's outline, not its fill; a text box takes the colour for its frame and its text.</summary>
     public PdfAnnotation Recolor(PdfAnnotation a, double[] color)
     {
-        if (a.Type != AnnotationType.FreeText) return SetColor(a, color);
+        if (Foreign(a)) return a;
         var painted = _writer.SetColor(a, color);
-        return _writer.SetFreeTextStyle(painted, TextOf(painted) with { TextColor = color, RichText = null });
+        return a.Type != AnnotationType.FreeText ? painted : _writer.SetFreeTextStyle(painted, TextOf(painted) with { TextColor = color, RichText = null });
     }
 
-    private PdfAnnotation SetColor(PdfAnnotation a, double[] color) =>
-        a.Type is AnnotationType.Square or AnnotationType.Circle or AnnotationType.Polygon && a.InteriorColor is { Count: > 0 }
-            ? _writer.SetColor(a, color, color)
-            : _writer.SetColor(a, color);
+    /// <summary>Fills the mark with the colour, or takes the fill away for null.</summary>
+    public PdfAnnotation SetFill(PdfAnnotation a, double[]? rgb)
+    {
+        if (Foreign(a)) return a;
+        if (rgb is null) a.Dictionary.Remove("IC");
+        else a.Dictionary["IC"] = new PdfArray([.. rgb.Select(v => (PdfObject)new PdfNumber(v))]);
+        _writer.Regenerate(a);
+        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+    }
 
-    public PdfAnnotation SetOpacity(PdfAnnotation a, double opacity) => _writer.SetOpacity(a, opacity);
+    public PdfAnnotation SetDash(PdfAnnotation a, LineStyle style)
+    {
+        if (Foreign(a)) return a;
+        var border = (document.Dict(a.Dictionary, "BS") ?? new PdfDictionary()).Copy();
+        var dashes = MarkStyle.DashesOf(style, a.Border.Width);
+        // A mark that only had /Border keeps its width in the new /BS.
+        border["W"] = new PdfNumber(a.Border.Width);
+        border["S"] = new PdfName(dashes is null ? "S" : "D");
+        if (dashes is null) border.Remove("D");
+        else border["D"] = new PdfArray([.. dashes.Select(v => (PdfObject)new PdfNumber(v))]);
+        var dashed = _writer.Edit(a, redraw: true, () => a.Dictionary["BS"] = border);
+        return Find(a.PageIndex, a.Reference!.Number) ?? dashed;
+    }
+
+    /// <summary>Gives a line the heads at its two ends and room in its box to show them.</summary>
+    public PdfAnnotation SetEnding(PdfAnnotation a, LineEnding start, LineEnding end)
+    {
+        if (Fixed(a)) return a;
+        var headed = _writer.Edit(a, redraw: true, () =>
+        {
+            a.Dictionary["LE"] = new PdfArray([new PdfName(start.ToString()), new PdfName(end.ToString())]);
+            FitBox(a, a.Border.Width, start != LineEnding.None || end != LineEnding.None);
+        });
+        return Find(a.PageIndex, a.Reference!.Number) ?? headed;
+    }
+
+    // The box of a drawn mark comes from its points and the room for the border and the heads, as when it was made; it is never nudged from the old box.
+    private static void FitBox(PdfAnnotation a, double width, bool head)
+    {
+        if (PdfAnnotationWriter.MarkBox(a, width, head) is { } box) a.Dictionary["Rect"] = box.ToArray();
+    }
+
+    public PdfAnnotation SetIcon(PdfAnnotation a, string name)
+    {
+        a.Dictionary["Name"] = new PdfName(name);
+        _writer.Regenerate(a);
+        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+    }
+
+    /// <summary>How the mark's outline is drawn; a dash as long as three line widths is dashed, a shorter one dotted.</summary>
+    public static LineStyle LineOf(PdfAnnotation a) =>
+        a.Border.Style != BorderStyle.Dashed ? LineStyle.Solid
+        : a.Border.Dash.Count > 0 && a.Border.Dash[0] >= 2 * Math.Max(a.Border.Width, 1) ? LineStyle.Dashed : LineStyle.Dotted;
+
+    public static bool TakesLine(MarkTool tool) =>
+        tool is MarkTool.Callout or MarkTool.Line or MarkTool.Arrow or MarkTool.Rectangle or MarkTool.Oval or MarkTool.Polygon or MarkTool.Cloud or MarkTool.Pencil;
+
+    public static bool TakesFill(MarkTool tool) => tool != MarkTool.Pencil && TakesLine(tool);
+
+    public static bool TakesLine(PdfAnnotation a) =>
+        a.Type is AnnotationType.Line or AnnotationType.PolyLine or AnnotationType.Polygon or AnnotationType.Square or AnnotationType.Circle or AnnotationType.Ink
+        || a is { Type: AnnotationType.FreeText, Callout.Count: >= 4 };
+
+    public static bool TakesFill(PdfAnnotation a) => a.Type != AnnotationType.Ink && TakesLine(a);
+
+    public PdfAnnotation SetOpacity(PdfAnnotation a, double opacity) => Foreign(a) ? a : _writer.SetOpacity(a, opacity);
 
     public PdfAnnotation SetWidth(PdfAnnotation a, double width)
     {
+        if (Foreign(a)) return a;
         var border = (document.Dict(a.Dictionary, "BS") ?? new PdfDictionary()).Copy();
+        var dashes = LineOf(a) == LineStyle.Solid ? null : MarkStyle.DashesOf(LineOf(a), width);
         border["W"] = new PdfNumber(width);
-        a.Dictionary["BS"] = border;
-        _writer.Regenerate(a);
-        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+        if (dashes is not null) border["D"] = new PdfArray([.. dashes.Select(v => (PdfObject)new PdfNumber(v))]);
+        var widened = _writer.Edit(a, redraw: true, () =>
+        {
+            a.Dictionary["BS"] = border;
+            FitBox(a, width, a.StartEnding != LineEnding.None || a.EndEnding != LineEnding.None);
+        });
+        return Find(a.PageIndex, a.Reference!.Number) ?? widened;
     }
 
     public PdfAnnotation SetText(PdfAnnotation a, string text) => _writer.SetContents(a, text, date);
@@ -322,6 +538,9 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
 
     [GeneratedRegex(@"/(\w+)\s+([\d.]+)\s+Tf")]
     private static partial Regex FaceOperator();
+
+    [GeneratedRegex(@"font-family:\s*([^;]+)")]
+    private static partial Regex StyleFamily();
 
     [GeneratedRegex(@"((?:-?[\d.]+\s+){1,4})(?:g|rg|k)\b")]
     private static partial Regex FillOperator();
@@ -341,6 +560,8 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             if (name.EndsWith("It") || name.EndsWith("Ob") || name.EndsWith("BI") || name.EndsWith("BO")) font |= FontStyles.Italic;
             if (double.TryParse(face.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)) size = parsed;
         }
+        // Writing /DA keeps only the three standard families, but /DS still names the one another app used.
+        if (family == "Helvetica" && StyleFamily().Match(a.DefaultStyle ?? "") is { Success: true } named) family = FirstFamily(named.Groups[1].Value);
         double[]? color = null;
         if (FillOperator().Matches(da).LastOrDefault() is { } fill)
         {
@@ -349,6 +570,18 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             if (values.All(double.IsFinite)) color = values;
         }
         return new FreeTextStyle(family, size, font, color, a.Alignment, a.RichText);
+    }
+
+    private static string FirstFamily(string list)
+    {
+        string first = list.Split(',')[0].Trim().Trim('"', '\'').Trim();
+        return first.ToLowerInvariant() switch
+        {
+            "serif" or "times" or "times new roman" => "Times New Roman",
+            "monospace" or "courier" or "courier new" => "Courier New",
+            "sans-serif" or "cursive" or "fantasy" or "helvetica" => "Helvetica",
+            _ => first,
+        };
     }
 
     /// <summary>A colour of gray, RGB or CMYK as RGB; null for anything else, and for none.</summary>

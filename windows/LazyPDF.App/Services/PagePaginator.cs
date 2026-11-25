@@ -1,11 +1,12 @@
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
 
 namespace LazyPDF.App.Services;
 
-/// <summary>The pages of a document for the Windows print dialog, each drawn by the renderer to fit the paper.</summary>
-internal sealed class PagePaginator(IDocumentRenderer renderer, int pageCount) : DocumentPaginator
+/// <summary>The pages of a document for the Windows print dialog, each drawn by the renderer to fit the paper. An entry of -1 in the page list is an empty page.</summary>
+internal sealed class PagePaginator(IDocumentRenderer renderer, int pageCount, IReadOnlyList<int>? pages = null, CancellationToken cancel = default, Action<int, int>? progress = null) : DocumentPaginator
 {
     // The size the printer driver does not mind drawing at; a larger page is shrunk to fit, a smaller one stays its own size.
     private const double PrintDpi = 300;
@@ -15,9 +16,12 @@ internal sealed class PagePaginator(IDocumentRenderer renderer, int pageCount) :
     /// <summary>Pages that came out empty because the renderer could not draw them.</summary>
     public int Blank { get; private set; }
 
+    /// <summary>The part of the paper the printer can reach, in device units; pages are fitted inside it. Empty means the whole paper.</summary>
+    public Rect Content { get; init; } = Rect.Empty;
+
     public override bool IsPageCountValid => true;
 
-    public override int PageCount => pageCount;
+    public override int PageCount => pages?.Count ?? pageCount;
 
     public override Size PageSize
     {
@@ -27,19 +31,48 @@ internal sealed class PagePaginator(IDocumentRenderer renderer, int pageCount) :
 
     public override IDocumentPaginatorSource? Source => null;
 
+    /// <summary>The zero-based pages the print dialog asks for, or null for all of them.</summary>
+    public static List<int>? PagesFor(PageRangeSelection selection, int from, int to, int current, int count)
+    {
+        if (selection == PageRangeSelection.AllPages) return null;
+        if (count < 1) return [];
+        if (selection == PageRangeSelection.CurrentPage) return [Math.Clamp(current, 0, count - 1)];
+        if (selection != PageRangeSelection.UserPages) return null;
+        from = Math.Clamp(from, 1, count);
+        to = Math.Clamp(to, 1, count);
+        if (from > to) (from, to) = (to, from);
+        return [.. Enumerable.Range(from - 1, to - from + 1)];
+    }
+
     public override DocumentPage GetPage(int pageNumber)
     {
+        cancel.ThrowIfCancellationRequested();
+        progress?.Invoke(pageNumber + 1, PageCount);
         var visual = new DrawingVisual();
+        if (pages is not null) pageNumber = pages[pageNumber];
+        if (pageNumber < 0)
+        {
+            var empty = new Rect(_pageSize);
+            return new DocumentPage(visual, _pageSize, empty, empty);
+        }
         var (width, height) = renderer.PageSize(pageNumber);
         bool drawn = false;
         if (width > 0 && height > 0)
         {
             double wide = width * 96 / 72, tall = height * 96 / 72;
-            double scale = Math.Min(1, Math.Min(_pageSize.Width / wide, _pageSize.Height / tall));
+            var fit = Content.IsEmpty ? new Rect(_pageSize) : Content;
+            double w = fit.Width, h = fit.Height;
+            double upright = Math.Min(1, Math.Min(w / wide, h / tall));
+            double turned = Math.Min(1, Math.Min(w / tall, h / wide));
+            bool turn = turned > upright;
+            double scale = turn ? turned : upright;
             if (renderer.Render(pageNumber, PrintDpi * scale) is { } image)
             {
-                var area = new Rect((_pageSize.Width - wide * scale) / 2, (_pageSize.Height - tall * scale) / 2, wide * scale, tall * scale);
+                double across = wide * scale, down = tall * scale;
+                var area = new Rect(fit.X + (w - across) / 2, fit.Y + (h - down) / 2, across, down);
                 using var context = visual.RenderOpen();
+                // The picture is centred upright and then turned about the centre of the printable part, so it ends up sideways.
+                if (turn) context.PushTransform(new RotateTransform(90, fit.X + w / 2, fit.Y + h / 2));
                 context.DrawImage(Pixels.ToBitmap(image), area);
                 drawn = true;
             }

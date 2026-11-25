@@ -1,4 +1,5 @@
 // The words of the text layer drawn over the pages in view, and the correction of the one that was clicked.
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,27 +17,89 @@ public sealed partial class OcrPanel
 
     private sealed record PageWords(IReadOnlyList<OcrLayerWord> Words, List<Border> Boxes);
 
+    // The word a signed file keeps waiting: where it is in the layer, what the layer says, what was typed and the revision of the file.
+    private sealed record Waiting(int Page, int Index, string Origin, PdfRect Box, string Text, int Revision);
+
+    private static readonly ConditionalWeakTable<DocumentTab, Waiting> Kept = [];
+
+    // What the layer says of the picked word, to tell whether the box holds a correction and to find the word again.
+    private string _origin = "";
+    private PdfRect _originBox;
+
     private void AttachWords()
     {
         Viewer!.ViewChanged += Viewer_ViewChanged;
+        if (Kept.TryGetValue(Tab!, out var back))
+        {
+            Kept.Remove(Tab!);
+            Resume(Tab!, back);
+        }
         ShowWords();
     }
 
     private void DetachWords()
     {
+        var tab = Tab!;
+        var back = Waited(tab, tab.Revision);
         Viewer!.ViewChanged -= Viewer_ViewChanged;
         HideWords();
         Pick(null);
+        if (back is null) return;
+        Kept.AddOrUpdate(tab, back);
+        tab.PendingWords = 1;
     }
+
+    private Waiting? Waited(DocumentTab tab, int revision) =>
+        tab.PendingWords > 0 && _picked is { } word ? new Waiting(word.Page, word.Index, _origin, _originBox, WordBox.Text, revision) : null;
+
+    // Puts a waiting word back in the box at once; its box on the page is marked when the page is drawn. After a change of the
+    // file the word is found again by page, box and old text, or dropped.
+    private void Resume(DocumentTab tab, Waiting back)
+    {
+        int index = back.Revision == tab.Revision ? back.Index : Find(tab, back);
+        if (index < 0)
+        {
+            tab.PendingWords = 0;
+            Host?.SetStatus(Loc.T("The word you were correcting is no longer in the file, so the correction was dropped."));
+            return;
+        }
+        _picked = (back.Page, index);
+        (_origin, _originBox) = (back.Origin, back.Box);
+        WordBox.Text = back.Text;
+        WordWhere.Text = Loc.T("Page {0}", back.Page + 1);
+        WordEditor.Visibility = Visibility.Visible;
+        WordHint.Visibility = Visibility.Collapsed;
+        tab.PendingWords = 1;
+    }
+
+    private static int Find(DocumentTab tab, Waiting back)
+    {
+        if (back.Page >= tab.Document.Pages.Count) return -1;
+        // In page space, which a turned page or another crop box leaves as it was.
+        var geometry = new PageGeometry(tab.Document.Pages[back.Page]);
+        var found = PdfOcrLayer.Words(tab.Document, tab.Document.Pages[back.Page]).FirstOrDefault(w => w.Text == back.Origin && Near(geometry.ToUser(w.Box), back.Box));
+        return found?.Index ?? -1;
+    }
+
+    private static bool Near(PdfRect a, PdfRect b) =>
+        Math.Abs(a.Left - b.Left) < 0.01 && Math.Abs(a.Bottom - b.Bottom) < 0.01 && Math.Abs(a.Right - b.Right) < 0.01 && Math.Abs(a.Top - b.Top) < 0.01;
 
     private void Viewer_ViewChanged(object? sender, EventArgs e) => ShowWords();
 
-    // The words and the boxes are for one revision of the file; the next change builds them again.
+    // The words and the boxes are for one revision of the file; the next change builds them again. A word waiting for an
+    // answer is found again in the new layer.
     private void RefreshWords()
     {
+        var tab = Tab;
+        var waiting = tab is null ? null : Waited(tab, -1);
         HideWords();
+        if (waiting is not null)
+        {
+            Pick(null);
+            Resume(tab!, waiting);
+        }
         ShowWords();
-        if (_picked is { } picked) Pick(picked.Page, picked.Index, focus: false);
+        if (waiting is null && _picked is { } picked) Pick(picked.Page, picked.Index, focus: false);
     }
 
     private void ShowWords()
@@ -72,6 +135,7 @@ public sealed partial class OcrPanel
                 overlay.Children.Add(box);
                 boxes.Add(box);
             }
+            if (_picked is { } now && now.Page == page && now.Index < boxes.Count) Mark(boxes[now.Index], true);
         }
         FillWordList();
     }
@@ -111,13 +175,15 @@ public sealed partial class OcrPanel
 
     private void Pick((int Page, int Index)? word, bool focus = false)
     {
+        if (Tab is { } shownTab) shownTab.PendingWords = 0;
         if (_picked is { } old && _shown.TryGetValue(old.Page, out var before) && old.Index < before.Boxes.Count) Mark(before.Boxes[old.Index], false);
         _picked = null;
         if (word is { } next && _shown.TryGetValue(next.Page, out var shown) && next.Index < shown.Words.Count)
         {
             _picked = next;
             Mark(shown.Boxes[next.Index], true);
-            WordBox.Text = shown.Words[next.Index].Text;
+            WordBox.Text = _origin = shown.Words[next.Index].Text;
+            _originBox = new PageGeometry(Tab!.Document.Pages[next.Page]).ToUser(shown.Words[next.Index].Box);
             WordWhere.Text = Loc.T("Page {0}", next.Page + 1);
             if (focus) EditWord();
         }
@@ -180,6 +246,27 @@ public sealed partial class OcrPanel
         if (OcrWork.Cleared(tab, host, () => ApplyAnyway(tab, word, text))) Apply(tab, word, text);
     }
 
+    // A word typed and not yet in the file goes in before the file is saved, undone or closed. A signed file keeps it in the
+    // box, as Measure keeps its readings: nothing is written without the user's answer, and the close question names it.
+    // The word stays with its tab when another tab or tool is shown, so moving on loses nothing.
+    public override bool HandIn()
+    {
+        if (Tab is not { } tab || Host is not { } host) return true;
+        tab.PendingWords = 0;
+        if (_picked is not { } word) return true;
+        string text = WordBox.Text.Trim();
+        if (text == _origin) return true;
+        bool refused = OcrWork.Refusal(tab.Document) is not null;
+        if (tab.Document.IsSigned && !refused)
+        {
+            tab.PendingWords = 1;
+            return true;
+        }
+        if (OcrWork.Cleared(tab, host, () => ApplyAnyway(tab, word, text))) Apply(tab, word, text);
+        else tab.PendingWords = refused ? 0 : 1;
+        return true;
+    }
+
     private void ApplyAnyway(DocumentTab tab, (int Page, int Index) word, string text)
     {
         if (ReferenceEquals(Tab, tab)) Apply(tab, word, text);
@@ -187,6 +274,7 @@ public sealed partial class OcrPanel
 
     private void Apply(DocumentTab tab, (int Page, int Index) word, string text)
     {
+        tab.PendingWords = 0;
         _correcting = true;
         try
         {

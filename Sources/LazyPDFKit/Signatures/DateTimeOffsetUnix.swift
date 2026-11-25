@@ -32,7 +32,7 @@ extension DateTimeOffset {
     }
 
     /// Whole seconds since 1970-01-01T00:00:00 UTC.
-    var unixSeconds: Int {
+    public var unixSeconds: Int {
         Self.daysFromCivil(year, month, day) * 86_400 + hour * 3600 + minute * 60 + second - offsetMinutes * 60
     }
 

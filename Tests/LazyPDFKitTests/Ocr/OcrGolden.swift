@@ -29,6 +29,8 @@ enum OcrGolden {
             case "place": return place(rest)
             case "add": return try add(rest)
             case "triage": return try triage(rest)
+            case "layer": return try layer(rest)
+            case "correct": return try correct(rest)
             default: return ["unknown op \(op)"]
             }
         } catch let failure as PdfReadException {
@@ -227,6 +229,42 @@ enum OcrGolden {
             let text = Latin1.string(try document.data(toUnicode))
             result.append("tounicode " + esc(text.replacingOccurrences(of: GlyphlessFont.identityRanges, with: "<ranges>\n")))
         }
+        return result
+    }
+
+    private static func wordLines(_ document: PdfDocument) throws -> [String] {
+        try PdfOcrLayer.words(document, document.pages[0]).map {
+            "word \($0.index) \(esc($0.text)) [\(n($0.box.x)) \(n($0.box.y)) \(n($0.box.width)) \(n($0.box.height))]"
+        }
+    }
+
+    // layer <page entries or -> ;; <content>: the words read from a layer stream written by hand with that content.
+    private static func layer(_ rest: String) throws -> [String] {
+        let parts = split(rest)
+        let document = try OcrKit.scan(1, entries(parts[0]))
+        try OcrKit.addLayer(document, Latin1.string(Golden.unescape(parts[1])))
+        return try wordLines(document)
+    }
+
+    // correct <page entries or -> ;; <index> ;; <text> ;; <word> ...: Add on the scan, then Correct; the words read back, the
+    // layer's stream decoded and the characters beyond the BMP the font carries, by code.
+    private static func correct(_ rest: String) throws -> [String] {
+        let parts = split(rest)
+        let document = try OcrKit.scan(1, entries(parts[0]))
+        let geometry = PageGeometry(document.pages[0])
+        _ = try PdfOcrLayer.add(document, [OcrPageWords(0, words(parts.dropFirst(3)), Int(geometry.width), Int(geometry.height))], "en")
+        let page = document.pages[0]
+        try PdfOcrLayer.correct(document, page, Int(parts[1]) ?? 0, str(parts[2]))
+        var result = try wordLines(document)
+        let items = (document.resolve(page.dictionary["Contents"]) as? PdfArray)?.items ?? []
+        for item in items {
+            if let stream = document.resolve(item) as? PdfStream, stream.dictionary.containsKey("LazyPDFOcr") {
+                result.append("stream " + esc(Latin1.string(try document.data(stream))))
+            }
+        }
+        let font = OcrLayerContent.fontOf(document, page, "LPOcrF")
+        let supplementary = font.map { GlyphlessCodes.from($0).supplementary.map { String($0, radix: 16, uppercase: true) }.joined(separator: " ") }
+        result.append("supplementary " + (supplementary ?? "none"))
         return result
     }
 

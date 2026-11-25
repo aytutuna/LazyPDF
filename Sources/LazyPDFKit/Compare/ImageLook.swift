@@ -207,7 +207,7 @@ final class ImageLook {
     }
 
     // double.ToString("R", InvariantCulture): the shortest digits that read back as the same double, in scientific form
-    // when the exponent is past the larger of the digit count and 15, or below -4, with at least two exponent digits.
+    // from 1E+17 up or below 1E-4, with at least two exponent digits.
     private static func roundTrip(_ value: Double) -> String {
         if value.isNaN { return "NaN" }
         if value.isInfinite { return value < 0 ? "-Infinity" : "Infinity" }
@@ -227,7 +227,7 @@ final class ImageLook {
         while digits.last == 0 { digits.removeLast() }
         let all = digits.map { String($0) }.joined()
         if all.isEmpty { return sign + "0" }
-        if scale > max(digits.count, 15) || scale < -3 {
+        if scale > 17 || scale < -3 {
             let rest = all.dropFirst()
             let power = abs(scale - 1)
             return sign + String(all.prefix(1)) + (rest.isEmpty ? "" : "." + rest) + "E" + (scale - 1 < 0 ? "-" : "+") + (power < 10 ? "0" : "") + String(power)

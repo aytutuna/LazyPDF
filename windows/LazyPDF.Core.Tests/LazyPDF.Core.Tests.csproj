@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <None Include="..\..\Tests\Fixtures\**\*" LinkBase="Fixtures" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\fonts\**\*.ttf" Link="Fonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

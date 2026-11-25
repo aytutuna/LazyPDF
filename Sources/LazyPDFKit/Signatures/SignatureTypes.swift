@@ -61,11 +61,13 @@ public enum SignatureProblem {
     case noCertificate
     case untrustedSigner
     case certificateNotValid
+    case certificateExpired
     case certificateRevoked
     case changedAfterSigning
     case damagedStructure
     case timestampInvalid
     case weakDigest
+    case weakKey
 }
 
 /// The digests that sign and the one a time stamp or a signature algorithm names (the C# HashAlgorithmName).
@@ -230,6 +232,9 @@ public struct VerifyOptions {
 
     /// The time used for certificates when a signature carries no time of its own; the caller's clock.
     public var now: DateTimeOffset?
+
+    /// When given, asked for the certificate of an issuer a chain lacks; without it verifying never downloads.
+    public var transport: SignatureTransport?
 
     public var password: String?
 

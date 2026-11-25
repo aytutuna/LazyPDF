@@ -49,6 +49,49 @@ public class FreeTextTests
         Reopen(document);
     }
 
+    private sealed class CjkSource(bool covering) : IFontSource
+    {
+        public FontFile? Find(string family, FontStyles style)
+        {
+            string fonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+            string file = covering && family == "Microsoft YaHei" ? "msyh.ttc" : "arial.ttf";
+            return new FontFile(File.ReadAllBytes(Path.Combine(fonts, file)));
+        }
+    }
+
+    [Fact]
+    public void TextTheFontLacksIsDrawnInAFallbackFont()
+    {
+        var (document, writer, page) = Start(new CjkSource(covering: true));
+        var box = writer.AddFreeText(page, new PdfRect(100, 600, 400, 640), "中文 text", new FreeTextStyle("Arial", 14));
+        Assert.Equal("中文 text", Draw(document, box).Text);
+        var font = Assert.Single(Fonts(document, box));
+        Assert.Contains("YaHei", document.Name(font, "BaseFont"));
+        Assert.Equal("", writer.TakeUndrawn());
+    }
+
+    [Fact]
+    public void ARunThatFitsItsFamilyKeepsItWhenAnotherRunNeedsAFallback()
+    {
+        var (document, writer, page) = Start(new CjkSource(covering: true));
+        var box = writer.AddFreeText(page, new PdfRect(100, 600, 400, 640), "", new FreeTextStyle(RichText:
+            "<body xmlns=\"http://www.w3.org/1999/xhtml\"><p><span style=\"font-family:Times New Roman\">Hello</span><span style=\"font-family:Microsoft YaHei\">中文</span></p></body>"));
+        Assert.Equal("Hello中文", Draw(document, box).Text);
+        var fonts = Fonts(document, box);
+        Assert.Equal(["Type0", "Type1"], fonts.Select(f => document.Name(f, "Subtype")).Order());
+        Assert.Equal("", writer.TakeUndrawn());
+    }
+
+    [Fact]
+    public void CharactersNoFontHasAreReportedOnce()
+    {
+        var (document, writer, page) = Start(new CjkSource(covering: false));
+        var box = writer.AddFreeText(page, new PdfRect(100, 600, 400, 640), "文中文", new FreeTextStyle("Arial", 14));
+        Assert.Equal("中文", writer.TakeUndrawn());
+        Assert.Equal("", writer.TakeUndrawn());
+        Assert.Equal("Type0", document.Name(Assert.Single(Fonts(document, box)), "Subtype"));
+    }
+
     [Fact]
     public void TurkishTextWithoutAFontSourceSaysSo()
     {
@@ -185,5 +228,31 @@ public class FreeTextTests
         Assert.Equal("Comment", note.IconName);
         Assert.True(note.Flags.HasFlag(AnnotationFlags.NoZoom));
         Assert.Contains("B", Operators(Appearance(document, note)));
+    }
+
+    [Fact]
+    public void EveryNoteIconIsDrawnDifferentlyInsideTheRect()
+    {
+        var (document, writer, page) = Start();
+        var seen = new HashSet<string>();
+        foreach (var name in new[] { "Note", "Comment", "Help", "Insert", "Key", "NewParagraph", "Paragraph" })
+        {
+            var note = writer.AddNote(page, new PdfRect(100, 700, 120, 720), new AnnotationInfo("A", "x"), name);
+            Assert.True(seen.Add(System.Text.Encoding.Latin1.GetString(document.Data(Normal(document, note)))), name);
+            foreach (var (path, _) in Draw(document, note).Paths)
+            {
+                Assert.True(path.Bounds.Left >= -0.01 && path.Bounds.Bottom >= -0.01, name);
+                Assert.True(path.Bounds.Right <= note.Rect.Width + 0.01 && path.Bounds.Top <= note.Rect.Height + 0.01, name);
+            }
+        }
+    }
+
+    [Fact]
+    public void AnotherNoteIconNameIsKeptWhenTheLookChanges()
+    {
+        var (document, writer, page) = Start();
+        var note = writer.AddNote(page, new PdfRect(100, 700, 120, 720), new AnnotationInfo("A", "x"), "Star");
+        writer.SetColor(note, [1, 0, 0]);
+        Assert.Equal("Star", PdfAnnotations.ReadAll(Reopen(document)).Single().IconName);
     }
 }

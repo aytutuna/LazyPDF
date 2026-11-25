@@ -24,8 +24,13 @@ public sealed partial class OrganizeView
     private void Turn(List<int> pages, int degrees)
     {
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
-        if (PageJobs.Apply(tab, host, Loc.T("Rotate pages"), d => PageOperations.Rotate(d, pages, degrees),
-                           Loc.Plural(pages.Count, "{0} page rotated", "{0} pages rotated", pages.Count))) Reselect(tab, pages);
+        PageJobs.Gated(tab, host, () =>
+        {
+            bool done = PageJobs.Apply(tab, host, Loc.T("Rotate pages"), d => PageOperations.Rotate(d, pages, degrees),
+                                       Loc.Plural(pages.Count, "{0} page rotated", "{0} pages rotated", pages.Count));
+            if (done) Reselect(tab, pages);
+            return done;
+        });
     }
 
     private void Remove_Click(object sender, RoutedEventArgs e)
@@ -33,7 +38,11 @@ public sealed partial class OrganizeView
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
         if (NoneLeft(pages, host)) return;
-        PageJobs.Apply(tab, host, Loc.T("Delete pages"), d => PageOperations.Delete(d, pages), Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+        PageJobs.Gated(tab, host, () =>
+        {
+            PageJobs.Delete(tab, host, Loc.T("Delete pages"), pages, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+            return true;
+        });
     }
 
     private bool NoneLeft(List<int> pages, IToolHost host)
@@ -47,28 +56,46 @@ public sealed partial class OrganizeView
     {
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
-        if (await PageJobs.ApplyAsync(tab, host, Loc.T("Copying pages"), Loc.T("Duplicate pages"), d => PageOperations.Duplicate(d, pages),
-                                      Loc.Plural(pages.Count, "{0} page duplicated", "{0} pages duplicated", pages.Count))) Reselect(tab, PageEdits.Duplicated(pages));
+        await PageJobs.GatedAsync(tab, host, async () =>
+        {
+            bool done = await PageJobs.ApplyAsync(tab, host, Loc.T("Copying pages"), Loc.T("Duplicate pages"), d => PageOperations.Duplicate(d, pages),
+                                                  Loc.Plural(pages.Count, "{0} page duplicated", "{0} pages duplicated", pages.Count));
+            if (done) Reselect(tab, PageEdits.Duplicated(pages));
+            return done;
+        });
+    }
+
+    private void Nudge(int step)
+    {
+        var pages = Selected();
+        int moved = pages.Zip(PageEdits.Nudged(pages, step, Cells.Count)).Count(z => z.First != z.Second);
+        if (Tab is not { } tab || Host is not { } host || !PageEdits.CanNudge(pages, step, Cells.Count)) return;
+        PageJobs.Gated(tab, host, () =>
+        {
+            bool done = PageJobs.Apply(tab, host, Loc.T("Move pages"), d => PageEdits.Nudge(d, pages, step),
+                                       Loc.Plural(moved, "{0} page moved", "{0} pages moved", moved));
+            if (done) Reselect(tab, PageEdits.Nudged(pages, step, Cells.Count));
+            return done;
+        });
     }
 
     private bool MoveTo(IReadOnlyCollection<int> pages, int before)
     {
         if (Tab is not { } tab || Host is not { } host) return false;
-        if (!PageJobs.Apply(tab, host, Loc.T("Move pages"), d => PageOperations.Move(d, pages, before),
-                            Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count))) return false;
-        Reselect(tab, PageEdits.MovedTo(pages, before));
-        return true;
+        return PageJobs.Gated(tab, host, () =>
+        {
+            if (!PageJobs.Apply(tab, host, Loc.T("Move pages"), d => PageOperations.Move(d, pages, before),
+                                Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count))) return false;
+            Reselect(tab, PageEdits.MovedTo(pages, before));
+            return true;
+        });
     }
 
     private async void Extract_Click(object sender, RoutedEventArgs e)
     {
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
-        var failed = new Problem(Loc.T("Pages not extracted"), Loc.T("The pages could not be copied into a new file. Try fewer pages."));
-        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Extracting pages"), failed) is not { } bytes) return;
-        await host.OpenNewAsync(bytes, Loc.T("{0} extract.pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title)));
-        host.SetStatus(Loc.Plural(pages.Count, "{0} page extracted", "{0} pages extracted", pages.Count));
-        CopyRules.NoteUnprotected(tab.Document, host);
+        await PageTransfer.ToNewTabAsync(new PagePayload(tab, [.. pages], tab.Revision), host, files: true);
     }
 
     private async void Copy_Click(object sender, RoutedEventArgs e) => await CopyAsync(Selected());
@@ -77,8 +104,12 @@ public sealed partial class OrganizeView
     {
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0 || NoneLeft(pages, host)) return;
-        if (!await CopyAsync(pages)) return;
-        PageJobs.Apply(tab, host, Loc.T("Cut pages"), d => PageOperations.Delete(d, pages), Loc.Plural(pages.Count, "{0} page cut", "{0} pages cut", pages.Count));
+        await PageJobs.GatedAsync(tab, host, async () =>
+        {
+            if (!await CopyAsync(pages)) return false;
+            PageJobs.Delete(tab, host, Loc.T("Cut pages"), pages, Loc.Plural(pages.Count, "{0} page cut", "{0} pages cut", pages.Count));
+            return true;
+        });
     }
 
     // True when the pages are on the clipboard.
@@ -86,7 +117,7 @@ public sealed partial class OrganizeView
     {
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return false;
         var failed = new Problem(Loc.T("Pages not copied"), Loc.T("The pages could not be copied. Try fewer pages."));
-        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Copying pages"), failed) is not { } bytes) return false;
+        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Copying pages"), failed, files: false) is not var (bytes, _, _)) return false;
         PageClipboard.Set(bytes, pages.Count);
         Refresh();
         host.SetStatus(Loc.Plural(pages.Count, "{0} page copied", "{0} pages copied", pages.Count));
@@ -99,24 +130,30 @@ public sealed partial class OrganizeView
         if (Tab is not { } tab || Host is not { } host || PageClipboard.Pdf is not { Length: > 0 } pdf) return;
         int at = InsertIndex();
         int count = PageClipboard.Count;
-        if (await PageJobs.ApplyAsync(tab, host, Loc.T("Adding pages"), Loc.T("Paste pages"), d => ImportAll(d, PdfDocument.Open(pdf), at),
-                                      Loc.Plural(count, "{0} page pasted", "{0} pages pasted", count))) Reselect(tab, Enumerable.Range(at, count));
+        await PageJobs.GatedAsync(tab, host, async () =>
+        {
+            bool done = await PageTransfer.PasteAsync(tab, host, pdf, count, at);
+            if (done) Reselect(tab, Enumerable.Range(at, count));
+            return done;
+        });
     }
 
     private int InsertIndex() => PageEdits.InsertAt((InsertPlace)Place.SelectedIndex, Selected(), Cells.Count);
-
-    private static void ImportAll(PdfDocument target, PdfDocument source, int at) =>
-        PageOperations.ImportPages(target, source, [.. Enumerable.Range(0, source.Pages.Count)], at);
 
     private void Blank_Click(object sender, RoutedEventArgs e)
     {
         if (Tab is not { } tab || Host is not { } host) return;
         int at = InsertIndex();
-        if (PageJobs.Apply(tab, host, Loc.T("Insert blank page"), d =>
+        PageJobs.Gated(tab, host, () =>
         {
-            var (width, height) = PageEdits.NeighbourSize(d, at);
-            PageOperations.InsertBlank(d, at, width, height);
-        }, Loc.T("Blank page added."))) Reselect(tab, [at]);
+            bool done = PageJobs.Apply(tab, host, Loc.T("Insert blank page"), d =>
+            {
+                var (width, height) = PageEdits.NeighbourSize(d, at);
+                PageOperations.InsertBlank(d, at, width, height);
+            }, Loc.T("Blank page added."));
+            if (done) Reselect(tab, [at]);
+            return done;
+        });
     }
 
     private async void FromFile_Click(object sender, RoutedEventArgs e)
@@ -126,31 +163,14 @@ public sealed partial class OrganizeView
         await InsertFilesAsync(dialog.FileNames, InsertIndex());
     }
 
-    // The files are opened one by one, then all their pages go in at <paramref name="at"/> as one step.
     internal async Task InsertFilesAsync(IEnumerable<string> paths, int at)
     {
         if (Tab is not { } tab || Host is not { } host) return;
-        var files = paths.Where(p => System.IO.Path.GetExtension(p).Equals(".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (files.Count == 0)
+        await PageJobs.GatedAsync(tab, host, async () =>
         {
-            host.ShowProblem(new Problem(Loc.T("Not a PDF"), Loc.T("Only PDF files can be added between pages.")));
-            return;
-        }
-        var sources = new List<PdfDocument>();
-        foreach (string path in files)
-        {
-            if (await SourceFile.OpenAsync(host, path) is { } source) sources.Add(source);
-        }
-        int added = sources.Sum(s => s.Pages.Count);
-        if (added == 0) return;
-        if (await PageJobs.ApplyAsync(tab, host, Loc.T("Adding pages"), Loc.T("Insert pages"), d =>
-        {
-            int place = at;
-            foreach (var source in sources)
-            {
-                ImportAll(d, source, place);
-                place += source.Pages.Count;
-            }
-        }, Loc.Plural(added, "{0} page added", "{0} pages added", added))) Reselect(tab, Enumerable.Range(at, added));
+            int added = await PageJobs.InsertFilesAsync(tab, host, paths, at);
+            if (added > 0) Reselect(tab, Enumerable.Range(at, added));
+            return added > 0;
+        });
     }
 }

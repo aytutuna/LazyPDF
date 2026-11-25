@@ -10,11 +10,16 @@ public sealed record SearchHit(SearchMatch Match, string Before, string After)
 
     public string Text => Match.Text;
 
-    public string PageText => Loc.T("Page {0}", Page + 1);
+    /// <summary>The page's own label, when the file has one.</summary>
+    public string? Label { get; init; }
+
+    public string PageText => Loc.T("Page {0}", Label ?? (Page + 1).ToString());
 
     /// <summary>What a screen reader says for the row: the page, then the words around the match.</summary>
     public string Spoken => $"{PageText}. {Before}{Text}{After}";
 }
+
+public enum SearchWrap { None, Start, End }
 
 /// <summary>
 /// One search of the open file, shared by the find bar, the highlights on the pages and the Search panel.
@@ -26,20 +31,30 @@ public sealed class ViewerSearch
     private const int Context = 32;
     private const int Batch = 25;
 
+    /// <summary>The most hits kept from the start page on; a search that finds more stops there.</summary>
+    public const int MaxHits = 1000;
+
     private readonly Func<Task<TextSource?>> _source;
     private readonly Func<int> _startPage;
     private readonly Action<Action> _post;
+    private readonly Func<int, string>? _pageLabel;
+    private readonly Func<int, bool>? _shown;
     private CancellationTokenSource? _cancel;
     private bool _quiet;
+    private int _landed = -1;
 
     /// <param name="source">The text of the file; null when it cannot be read.</param>
     /// <param name="startPage">The page the first current hit is taken from.</param>
     /// <param name="post">Runs an action on the thread the hits and events belong to.</param>
-    public ViewerSearch(Func<Task<TextSource?>> source, Func<int> startPage, Action<Action> post)
+    /// <param name="pageLabel">The label of a page, read on the post thread; null numbers hits by page.</param>
+    /// <param name="shown">Whether a page is on screen; null counts none as shown.</param>
+    public ViewerSearch(Func<Task<TextSource?>> source, Func<int> startPage, Action<Action> post, Func<int, string>? pageLabel = null, Func<int, bool>? shown = null)
     {
         _source = source;
         _startPage = startPage;
         _post = post;
+        _pageLabel = pageLabel;
+        _shown = shown;
     }
 
     public ObservableCollection<SearchHit> Hits { get; } = [];
@@ -53,8 +68,23 @@ public sealed class ViewerSearch
 
     public bool Running { get; private set; }
 
+    /// <summary>The search ended at <see cref="MaxHits"/> with more of the file left.</summary>
+    public bool Capped { get; private set; }
+
+    /// <summary>The user stopped the search before it finished.</summary>
+    public bool Stopped { get; private set; }
+
+    /// <summary>Pages, 0-based and ascending, where a regular expression ran out of time and the page was not searched to its end.</summary>
+    public IReadOnlyList<int> TimedOut { get; private set; } = [];
+
+    /// <summary>Whether the last step went round the end of the hits, and which way.</summary>
+    public SearchWrap Wrapped { get; private set; }
+
     /// <summary>The query is a regular expression that does not parse.</summary>
     public bool BadPattern { get; private set; }
+
+    /// <summary>The search found nothing and no page of the file has text, as in a scan.</summary>
+    public bool NoText { get; private set; }
 
     /// <summary>Raised when the query, the hits or whether it is still running changed.</summary>
     public event EventHandler? Changed;
@@ -69,9 +99,15 @@ public sealed class ViewerSearch
         _cancel?.Cancel();
         Hits.Clear();
         Current = -1;
+        _landed = -1;
+        Wrapped = SearchWrap.None;
         Query = query;
         Options = options;
         BadPattern = false;
+        NoText = false;
+        Capped = false;
+        Stopped = false;
+        TimedOut = [];
         if (query.Length == 0)
         {
             Running = false;
@@ -84,6 +120,16 @@ public sealed class ViewerSearch
         int start = _startPage();
         var source = _source();
         return Task.Run(() => RunAsync(source, query, options, start, cancel.Token));
+    }
+
+    /// <summary>Ends a running search and keeps the hits found so far.</summary>
+    public void Stop()
+    {
+        if (!Running) return;
+        _cancel?.Cancel();
+        Running = false;
+        Stopped = true;
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     public void Clear() => Start("", Options);
@@ -102,34 +148,121 @@ public sealed class ViewerSearch
 
     private void Move(int step)
     {
-        if (Hits.Count == 0) return;
+        int count = Hits.Count;
+        if (count == 0) return;
+        // The first hit at or after the view is still to come, and it is the one to go to.
+        if (Running && Current < 0) return;
         _quiet = false;
-        Select(((Current < 0 ? (step > 0 ? -1 : 0) : Current) + step + Hits.Count) % Hits.Count);
+        int start = _startPage();
+        int index;
+        if (Current >= 0 && start != _landed && Math.Abs(Hits[Current].Page - start) > 1)
+        {
+            // The reader scrolled away after finding, so step from the page in view.
+            index = step > 0 ? count : -1;
+            if (step > 0)
+            {
+                for (int i = 0; i < count; i++)
+                    if (Hits[i].Page >= start) { index = i; break; }
+            }
+            else
+            {
+                for (int i = count - 1; i >= 0; i--)
+                    if (Hits[i].Page <= start) { index = i; break; }
+            }
+            // The hit the reader landed on is still on screen, so go one further.
+            if (index == Current && _landed >= 0 && _shown?.Invoke(Hits[Current].Page) == true) index += step;
+        }
+        else index = (Current < 0 ? (step > 0 ? -1 : 0) : Current) + step;
+        var wrap = SearchWrap.None;
+        if (index < 0 || index >= count)
+        {
+            // More hits may still arrive, so only a finished search wraps.
+            if (Running && Current >= 0) return;
+            if (Current >= 0) wrap = step > 0 ? SearchWrap.Start : SearchWrap.End;
+            index = (index + count) % count;
+        }
+        Wrapped = wrap;
+        SelectAt(index);
     }
 
     public void Select(int index)
     {
         if ((uint)index >= (uint)Hits.Count) return;
+        Wrapped = SearchWrap.None;
+        SelectAt(index);
+    }
+
+    private void SelectAt(int index)
+    {
         _quiet = false;
         Current = index;
         Changed?.Invoke(this, EventArgs.Empty);
+        MoveView();
+    }
+
+    // The page in view once the view has gone to the hit: Next steps on from the hit while it is still there, even when the hit was already on screen.
+    private void MoveView()
+    {
         CurrentChanged?.Invoke(this, EventArgs.Empty);
+        _landed = _startPage();
     }
 
     private async Task RunAsync(Task<TextSource?> sourceTask, string query, TextSearchOptions options, int start, CancellationToken cancel)
     {
         bool bad = false;
+        bool noText = false;
+        bool capped = false;
+        var timeouts = new SearchTimeouts();
         try
         {
             if (await sourceTask is { } source)
             {
                 var batch = new List<SearchHit>();
-                foreach (var match in source.Find(query, options, cancel))
+                // The first hits before the view are listed as they come, so Stop keeps them; past that only the ones nearest the view are kept.
+                var early = new Queue<SearchMatch>();
+                int count = 0;
+                int after = 0;
+                int streamed = 0;
+                void Add(SearchMatch match)
                 {
                     batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
                     if (batch.Count >= Batch) Flush(batch, start, cancel);
                 }
+                foreach (var match in source.Find(query, options, cancel, timeouts))
+                {
+                    count++;
+                    if (match.Page < start)
+                    {
+                        if (streamed < MaxHits)
+                        {
+                            streamed++;
+                            Add(match);
+                            continue;
+                        }
+                        if (early.Count >= MaxHits)
+                        {
+                            early.Dequeue();
+                            capped = true;
+                        }
+                        early.Enqueue(match);
+                        continue;
+                    }
+                    while (early.Count > 0) Add(early.Dequeue());
+                    if (after >= MaxHits)
+                    {
+                        capped = true;
+                        break;
+                    }
+                    after++;
+                    Add(match);
+                }
+                while (early.Count > 0) Add(early.Dequeue());
                 Flush(batch, start, cancel);
+                if (count == 0 && !cancel.IsCancellationRequested)
+                {
+                    noText = true;
+                    for (int i = 0; i < source.PageCount && noText; i++) noText = source.Page(i).Chars.Count == 0;
+                }
             }
         }
         catch (OperationCanceledException)
@@ -145,10 +278,14 @@ public sealed class ViewerSearch
             if (cancel.IsCancellationRequested) return;
             Running = false;
             BadPattern = bad;
+            NoText = noText;
+            Capped = capped;
+            TimedOut = [.. timeouts.Pages.Order()];
             if (Current < 0 && Hits.Count > 0)
             {
+                // Nothing at or after the view: wrap to the first hit, as Find Next does.
                 Current = 0;
-                if (!_quiet) CurrentChanged?.Invoke(this, EventArgs.Empty);
+                if (!_quiet) MoveView();
             }
             Changed?.Invoke(this, EventArgs.Empty);
         });
@@ -165,11 +302,11 @@ public sealed class ViewerSearch
             bool first = Current < 0;
             foreach (var hit in hits)
             {
-                Hits.Add(hit);
+                Hits.Add(hit with { Label = _pageLabel?.Invoke(hit.Page) });
                 if (Current < 0 && hit.Page >= start) Current = Hits.Count - 1;
             }
             Changed?.Invoke(this, EventArgs.Empty);
-            if (first && Current >= 0 && !_quiet) CurrentChanged?.Invoke(this, EventArgs.Empty);
+            if (first && Current >= 0 && !_quiet) MoveView();
         });
     }
 

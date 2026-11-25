@@ -12,6 +12,7 @@ public sealed class CloseFlowTests
         var tab = f.Vm.ActiveDocument!;
         Pdfs.Retitle(tab.Session, "Changed");
         tab.Commit("Properties");
+        await f.SettledAsync();
         return tab;
     }
 
@@ -57,6 +58,33 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
+    public async Task DiscardAllClosesEveryTabWithChangesAndCarriesOnTheExit()
+    {
+        using var f = new ViewModelFixture();
+        for (int i = 0; i < 3; i++) await OpenDirty(f, $"{i}.pdf");
+        bool exited = false;
+        f.Vm.ExitRequested += (_, _) => exited = true;
+
+        Assert.False(f.Vm.RequestExit());
+        Assert.Equal(3, f.Vm.Unsettled);
+        f.Vm.DiscardAll();
+
+        Assert.True(exited);
+        Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task UnsettledCountsOnlyTabsWithChanges()
+    {
+        using var f = new ViewModelFixture();
+        await OpenDirty(f, "a.pdf");
+        await OpenDirty(f, "b.pdf");
+        await f.Vm.OpenAsync(f.Pdf("c.pdf"));
+
+        Assert.Equal(2, f.Vm.Unsettled);
+    }
+
+    [Fact]
     public async Task ExitAsksAboutAnUnappliedRedactionMarkToo()
     {
         using var f = new ViewModelFixture();
@@ -67,6 +95,47 @@ public sealed class CloseFlowTests
         Assert.False(f.Vm.RequestExit());
 
         Assert.Same(tab, f.Vm.CloseQuestion);
+    }
+
+    [Fact]
+    public async Task ATabWithMeasurementsWaitingIsAskedAboutAndStaysOpen()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMeasurements = 2;
+
+        Assert.False(f.Vm.RequestClose(tab));
+
+        Assert.Same(tab, f.Vm.CloseQuestion);
+        Assert.False(tab.IsDirty);
+        Assert.Single(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task ExitAsksAboutWaitingMeasurementsToo()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMeasurements = 1;
+
+        Assert.False(f.Vm.RequestExit());
+
+        Assert.Same(tab, f.Vm.CloseQuestion);
+    }
+
+    [Fact]
+    public async Task ATabWithNoMeasurementsWaitingClosesAtOnce()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMeasurements = 0;
+
+        Assert.True(f.Vm.RequestClose(tab));
+
+        Assert.Empty(f.Vm.Documents);
     }
 
     [Fact]
@@ -142,6 +211,33 @@ public sealed class CloseFlowTests
 
         Assert.Equal("Not saved", f.Vm.Message?.Title);
         Assert.True(tab.IsDirty);
+        Assert.IsType<IOException>(f.Vm.LastSaveError);
+    }
+
+    [Fact]
+    public async Task AGoodSaveClearsTheLastSaveError()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        using (new FileStream(f.Dir.Sub("a.pdf"), FileMode.Open, FileAccess.Read, FileShare.None))
+            f.Vm.Save(tab);
+
+        Assert.True(f.Vm.Save(tab));
+
+        Assert.Null(f.Vm.LastSaveError);
+    }
+
+    [Fact]
+    public async Task ACloseQuestionForAMadeDocumentStaysUntilSaveAsWorks()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("pic.png", [1, 2, 3]));
+        var tab = f.Vm.ActiveDocument!;
+        tab.Commit("Properties");
+
+        Assert.False(f.Vm.RequestClose(tab));
+        Assert.True(AppViewModel.NeedsName(tab));
+        Assert.Same(tab, f.Vm.CloseQuestion);
     }
 
     [Fact]
@@ -161,6 +257,22 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
+    public async Task ATabThatLeftTheStripWritesNothing()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("a.pdf", Pdfs.Text(1, "fox")));
+        var tab = f.Vm.ActiveDocument!;
+        f.Vm.RequestClose(tab);
+        string target = f.Dir.Sub("late.pdf");
+
+        Assert.False(f.Vm.SaveAs(tab, target));
+        Assert.False(f.Vm.SaveCopy(tab, target));
+
+        Assert.False(System.IO.File.Exists(target));
+        Assert.Equal("File reloaded", f.Vm.Message!.Title);
+    }
+
+    [Fact]
     public async Task SaveCompactWritesTheDocumentAnewAndForgetsItsHistory()
     {
         using var f = new ViewModelFixture();
@@ -170,6 +282,8 @@ public sealed class CloseFlowTests
 
         Assert.False(f.Vm.CanUndo);
         Assert.Equal("small.pdf", tab.Title);
+        Assert.Equal("Saved compact", f.Vm.Message?.Title);
+        Assert.False(f.Vm.Message!.IsError);
     }
 
     [Fact]
@@ -225,5 +339,236 @@ public sealed class CloseFlowTests
         f.Vm.Redo();
 
         Assert.False(f.Vm.CanUndo);
+    }
+
+    [Fact]
+    public async Task SaveAnywayFromTheCloseQuestionClosesTheTab()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        await f.Vm.CheckDiskAsync();
+        f.Vm.CloseRequested += (_, t) => f.Vm.RequestClose(t);
+        f.Vm.RequestClose(tab);
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+
+        Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task SaveAnywayAfterBackingOutOfAnExitOnlyClosesTheTab()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        await f.Vm.CheckDiskAsync();
+        bool exited = false;
+        f.Vm.ExitRequested += (_, _) => exited = true;
+        int closed = 0;
+        f.Vm.CloseRequested += (_, _) => closed++;
+        f.Vm.CloseRequested += (_, t) => f.Vm.RequestClose(t);
+        f.Vm.RequestExit();
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+
+        Assert.False(exited);
+        Assert.Equal(1, closed);
+        Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task SaveAnywayClosesATabWithMarksWithoutAskingAgain()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        tab.PendingMarks = 2;
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        await f.Vm.CheckDiskAsync();
+        f.Vm.CloseRequested += (_, t) => f.Vm.RequestClose(t);
+        f.Vm.RequestClose(tab);
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.Null(f.Vm.CloseQuestion);
+    }
+
+    [Fact]
+    public void SaveAnywayAfterBackingOutOfAnExitLeavesNoExitUnderWay()
+    {
+        // The check a tab switch starts must come back on the window's thread, as in the app.
+        OneTabPerFileTests.OneThread.Run(async () =>
+        {
+            using var f = new ViewModelFixture();
+            var tab = await OpenDirty(f);
+            var other = await OpenDirty(f, "b.pdf");
+            f.Vm.Save(other);
+            File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+            File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+            await f.Vm.CheckDiskAsync();
+            int exits = 0, asks = 0;
+            f.Vm.ExitRequested += (_, _) => exits++;
+            f.Vm.CloseRequested += (_, _) => asks++;
+            f.Vm.RequestExit();
+
+            Assert.False(f.Vm.Save(tab, closeAfter: true));
+            f.Vm.CancelClose();
+            f.Vm.Message!.Action!.Run();
+            f.Vm.Close(other);
+
+            Assert.Equal(1, asks);
+            Assert.Equal(0, exits);
+        });
+    }
+
+    [Fact]
+    public async Task SaveAnywayKeepsTheMarksCountedWhenTheWindowLeavesTheTabOpen()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        tab.PendingMarks = 2;
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        await f.Vm.CheckDiskAsync();
+        f.Vm.CloseRequested += (_, _) => { };
+        f.Vm.RequestClose(tab);
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+
+        Assert.Equal(2, tab.PendingMarks);
+        Assert.False(f.Vm.RequestClose(tab));
+    }
+
+    [Fact]
+    public async Task ClosingManyAsksAboutTheFirstTabWithChangesAndCarriesOnAfterTheAnswer()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("a.pdf"));
+        var keep = f.Vm.ActiveDocument!;
+        var dirty = await OpenDirty(f, "b.pdf");
+        await f.Vm.OpenAsync(f.Pdf("c.pdf"));
+        var clean = f.Vm.ActiveDocument!;
+
+        f.Vm.RequestCloseMany([clean, dirty]);
+
+        Assert.Same(dirty, f.Vm.CloseQuestion);
+        Assert.Equal(2, f.Vm.Documents.Count());
+        f.Vm.Close(dirty);
+        Assert.Null(f.Vm.CloseQuestion);
+        Assert.Same(keep, Assert.Single(f.Vm.Documents));
+    }
+
+    [Fact]
+    public async Task ClosingManyAsksAboutEveryTabWithChanges()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("a.pdf"));
+        var clean = f.Vm.ActiveDocument!;
+        var first = await OpenDirty(f, "b.pdf");
+        var second = await OpenDirty(f, "c.pdf");
+        await f.Vm.OpenAsync(f.Pdf("d.pdf"));
+        var keep = f.Vm.ActiveDocument!;
+
+        f.Vm.RequestCloseMany([clean, first, second]);
+
+        Assert.Same(first, f.Vm.CloseQuestion);
+        f.Vm.Close(first);
+        Assert.Same(second, f.Vm.CloseQuestion);
+        f.Vm.Close(second);
+        Assert.Null(f.Vm.CloseQuestion);
+        Assert.Same(keep, Assert.Single(f.Vm.Documents));
+    }
+
+    [Fact]
+    public async Task CancellingTheQuestionDropsTheRestOfTheTabsToClose()
+    {
+        using var f = new ViewModelFixture();
+        var dirty = await OpenDirty(f, "a.pdf");
+        await f.Vm.OpenAsync(f.Pdf("b.pdf"));
+        var clean = f.Vm.ActiveDocument!;
+
+        f.Vm.RequestCloseMany([dirty, clean]);
+        f.Vm.CancelClose();
+        f.Vm.Close(dirty);
+
+        Assert.Same(clean, Assert.Single(f.Vm.Documents));
+    }
+
+    [Fact]
+    public async Task ReopenClosedOpensTheFileClosedLast()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("a.pdf"));
+        await f.Vm.OpenAsync(f.Pdf("b.pdf"));
+        f.Vm.Close(f.Vm.ActiveDocument!);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        await f.Vm.ReopenClosedAsync();
+
+        Assert.Equal("a.pdf", f.Vm.ActiveDocument!.Title);
+        Assert.Single(f.Vm.ClosedFiles);
+    }
+
+    [Fact]
+    public async Task ReopenClosedSkipsAFileThatIsGone()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf("a.pdf");
+        await f.Vm.OpenAsync(a);
+        string b = f.Pdf("b.pdf");
+        await f.Vm.OpenAsync(b);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+        File.Delete(a);
+
+        await f.Vm.ReopenClosedAsync();
+
+        Assert.Equal("b.pdf", f.Vm.ActiveDocument!.Title);
+        Assert.Empty(f.Vm.ClosedFiles);
+    }
+
+    [Fact]
+    public async Task ReopenClosedWithNothingLeftThereSaysItIsNotFound()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf("a.pdf");
+        await f.Vm.OpenAsync(a);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+        File.Delete(a);
+
+        await f.Vm.ReopenClosedAsync();
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.NotNull(f.Vm.Message);
+        Assert.True(f.Vm.Message!.IsError);
+    }
+
+    [Fact]
+    public async Task ClosedFilesKeepTheLastTenWithoutRepeats()
+    {
+        using var f = new ViewModelFixture();
+        for (int i = 0; i < 12; i++)
+        {
+            await f.Vm.OpenAsync(f.Pdf($"{i}.pdf"));
+            f.Vm.Close(f.Vm.ActiveDocument!);
+        }
+        await f.Vm.OpenAsync(f.Vm.ClosedFiles[^1]);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        Assert.Equal(10, f.Vm.ClosedFiles.Count);
+        Assert.Equal(10, f.Vm.ClosedFiles.Distinct().Count());
+        Assert.EndsWith("11.pdf", f.Vm.ClosedFiles[^1]);
     }
 }

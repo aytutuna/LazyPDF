@@ -26,7 +26,7 @@ internal sealed partial class FormAppearance
             var placed = new List<(string, double, double)>();
             foreach (string line in lines)
             {
-                placed.Add((line, AlignedX(look.Alignment, look.Width, pad, font.Width(line, size)), y));
+                placed.Add((line, AlignedX(Aligned(look, font, line), look.Width, pad, font.Width(line, size)), y));
                 y -= font.LineHeight(size);
             }
             ShowLines(c, look, font, size, placed);
@@ -39,10 +39,13 @@ internal sealed partial class FormAppearance
             if (look.FontSize <= 0 && width > availableWidth) size = Math.Max(MinAutoSize, size * availableWidth / width);
             width = font.Width(text, size);
             double baseline = (look.Height - font.LineHeight(size)) / 2 - font.Descent * size;
-            ShowLines(c, look, font, size, [(text, AlignedX(look.Alignment, look.Width, pad, width), baseline)]);
+            ShowLines(c, look, font, size, [(text, AlignedX(Aligned(look, font, text), look.Width, pad, width), baseline)]);
         }
         return Finish(c, look);
     }
+
+    // A field with no /Q starts text on the right when the text is right to left.
+    private static int Aligned(Look look, FormFont font, string line) => look.Alignment == 0 && font.IsRightToLeft(line) ? 2 : look.Alignment;
 
     private static double AlignedX(int alignment, double width, double pad, double textWidth) => alignment switch
     {

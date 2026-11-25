@@ -47,7 +47,7 @@ public static class PdfAText
     public static string RealTooBig(string text) => Loc.T("The real number {0} is beyond 32767.", text);
     public static string TooMuchContent => Loc.T("The page content is too large to check in full.");
     public static string GraphicsNesting => Loc.T("Graphics states are nested more than 28 deep.");
-    public static string TooManyColorants(int limit) => Loc.T("A DeviceN space has more than {0} colorants.", limit);
+    public static string TooManyColorants(int limit) => Loc.T("A DeviceN space has more than {0} color channels.", limit);
 
     public static string EmbeddedFile => Loc.T("The file embeds another file, which this level does not allow.");
     public static string EmbeddedNotPdfA => Loc.T("An embedded file is not a PDF/A file.");
@@ -77,7 +77,7 @@ public static class PdfAText
     public static string ProfileComponents => Loc.T("An ICC profile stream has no usable /N.");
     public static string ProfileUnreadable => Loc.T("An ICC profile could not be read.");
     public static string ProfileClass(string kind) => Loc.T("An ICC profile of class {0} is not allowed.", kind);
-    public static string ProfileSpace => Loc.T("An ICC profile does not match the colour count in /N.");
+    public static string ProfileSpace => Loc.T("An ICC profile does not match the color count in /N.");
     public static string ProfileVersion(int version) => Loc.T("An ICC profile is version {0}, newer than this level allows.", version);
 
     public static string WidthDiffers(int code, double declared, double actual) =>
@@ -141,6 +141,23 @@ public static class PdfAText
     public static string ConfigNameTwice => Loc.T("Two optional content configurations have the same name.");
     public static string AutoState => Loc.T("An optional content configuration has /AS.");
     public static string OrderIncomplete => Loc.T("The /Order of a configuration leaves out some groups.");
+
+    public static string NoMarkInfo => Loc.T("The catalog has no /MarkInfo with /Marked true.");
+    public static string NoStructTree => Loc.T("The file has no structure tree.");
+    public static string EmptyStructTree => Loc.T("The structure tree has no elements.");
+    public static string StructTreeTooBig => Loc.T("The structure tree is too large to check in full.");
+    public static string ContentOutsideTree => Loc.T("Content is neither in the structure tree nor marked as an artifact.");
+    public static string NoStructParents => Loc.T("A page with tagged content has no /StructParents.");
+    public static string ParentTreeMismatch => Loc.T("The parent tree does not lead the content of this page back to the structure elements that hold it.");
+    public static string NonStandardType(string type) => Loc.T("The structure type {0} is not a standard type and the role map does not lead to one.", type);
+    public static string NoAlternateText(string type) => Loc.T("A {0} element has neither /Alt nor /ActualText.", type);
+    public static string NoLanguage => Loc.T("No natural language is set in the catalog or on the top structure elements.");
+    public static string StructureElement(int number) => Loc.T("Structure element {0}", number);
+    public static string SetLanguageToTag => Loc.T("Set the document language first and Lazy PDF can tag the file itself.");
+    public static string TagFirst(PdfALevel level, IEnumerable<string> problems, string? hint = null) =>
+        string.Join(' ', [Loc.T("{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again.", level.Name(), string.Join(' ', problems)), .. hint is null ? [] : new[] { hint }]);
+    public static string Tagged(int pages) => Loc.T("The file was tagged automatically ({0} pages). Check the reading order and the descriptions.", pages);
+    public static string Marked => Loc.T("The file was marked as tagged.");
 
     public const string Producer = "Lazy PDF";
     public static string NeedsPassword => Loc.T("The file needs a password.");

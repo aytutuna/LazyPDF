@@ -28,6 +28,16 @@ internal static class PublicKeyFiles
         return X509CertificateLoader.LoadPkcs12(made.Export(X509ContentType.Pfx, "pw"), "pw");
     }
 
+    /// <summary>A self-signed elliptic curve certificate with its private key; <paramref name="usage"/> is its key usage.</summary>
+    public static X509Certificate2 EcCertificate(string name, ECCurve curve, X509KeyUsageFlags usage = X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement)
+    {
+        using var ec = ECDsa.Create(curve);
+        var request = new CertificateRequest($"CN={name}", ec, HashAlgorithmName.SHA256);
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(usage, true));
+        using var made = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+        return X509CertificateLoader.LoadPkcs12(made.Export(X509ContentType.Pfx, "pw"), "pw", X509KeyStorageFlags.Exportable);
+    }
+
     /// <summary>The certificate alone, as a recipient list or an address book has it.</summary>
     public static X509Certificate2 PublicPart(X509Certificate2 certificate) => X509CertificateLoader.LoadCertificate(certificate.RawData);
 

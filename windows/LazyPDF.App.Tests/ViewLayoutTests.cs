@@ -11,8 +11,8 @@ public sealed class PageLayoutTests
 
     private static Size[] Pages(int count, double width = 100, double height = 200) => [.. Enumerable.Repeat(new Size(width, height), count)];
 
-    private static LayoutOptions Options(int columns = 1, bool cover = false, bool continuous = true, int rotation = 0, double scale = 1, double ppd = 1) =>
-        new(columns, cover, continuous, rotation, scale, Viewport, ppd);
+    private static LayoutOptions Options(int columns = 1, bool cover = false, bool continuous = true, int rotation = 0, double scale = 1, double ppd = 1, bool rtl = false) =>
+        new(columns, cover, continuous, rotation, scale, Viewport, ppd, rtl);
 
     [Fact]
     public void PagesOfOneColumnAreStackedAndCentred()
@@ -78,6 +78,36 @@ public sealed class PageLayoutTests
         Assert.True(two.Top > cover.Bottom);
         Assert.Equal(three.Left, cover.Left);
         Assert.Equal(two.Left, four.Left);
+    }
+
+    [Fact]
+    public void RightToLeftPutsTheFirstPageOfAPairOnTheRight()
+    {
+        var layout = ViewLayout.Build(Pages(5), Options(columns: 2, rtl: true));
+
+        Assert.True(layout.PageRect(0).Left > layout.PageRect(1).Left);
+        Assert.Equal(layout.PageRect(1).Right + ViewLayout.Gap, layout.PageRect(0).Left);
+        Assert.True(layout.PageRect(2).Left > layout.PageRect(3).Left);
+        Assert.Equal(layout.PageRect(0).Left, layout.PageRect(4).Left);
+    }
+
+    [Fact]
+    public void RightToLeftMovesTheCoverToTheLeft()
+    {
+        var layout = ViewLayout.Build(Pages(5), Options(columns: 2, cover: true, rtl: true));
+
+        Assert.True(layout.PageRect(0).Right < 400);
+        Assert.True(layout.PageRect(1).Left > layout.PageRect(2).Left);
+        Assert.Equal(layout.PageRect(0).Left, layout.PageRect(2).Left);
+    }
+
+    [Fact]
+    public void WithoutRightToLeftTheFirstPageStaysOnTheLeft()
+    {
+        var layout = ViewLayout.Build(Pages(5), Options(columns: 2));
+
+        Assert.True(layout.PageRect(0).Left < layout.PageRect(1).Left);
+        Assert.Equal(layout.PageRect(0).Left, layout.PageRect(4).Left);
     }
 
     [Fact]

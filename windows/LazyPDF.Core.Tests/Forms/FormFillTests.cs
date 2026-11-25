@@ -72,6 +72,81 @@ public class FormFillTests
         Reopen(form.Document);
     }
 
+    private sealed class ScriptSource : IFontSource
+    {
+        private static readonly byte[] Data = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "golden", "shaping", "script.ttf"));
+
+        public FontFile? Find(string family, FontStyles style) => new(Data);
+    }
+
+    [Fact]
+    public void HebrewIsNotShownInASimpleFormFontThatEncodesIt()
+    {
+        var form = Open(fonts: new ScriptSource());
+        var helv = (PdfDictionary)form.Document.Resolve(form.Document.Dict(form.Document.Dict(form.AcroForm, "DR"), "Font")!["Helv"])!;
+        helv["Encoding"] = new PdfDictionary { ["Differences"] = new PdfArray([new PdfNumber(224), new PdfName("uni05E9"), new PdfName("uni05DC"), new PdfName("uni05D5"), new PdfName("uni05DD")]) };
+
+        form.SetValue("name", "שלום");
+
+        var stream = Normal(form, Widget(form, "name"));
+        var used = form.Document.Dict(form.Document.Dict(stream.Dictionary, "Resources"), "Font")!.Entries.Single().Value;
+        Assert.Equal("Type0", form.Document.Name((PdfDictionary)form.Document.Resolve(used)!, "Subtype"));
+    }
+
+    private sealed class CjkSource(bool covering) : IFontSource
+    {
+        public FontFile? Find(string family, FontStyles style)
+        {
+            string fonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+            string file = covering && family == "Microsoft YaHei" ? "msyh.ttc" : "arial.ttf";
+            return new FontFile(File.ReadAllBytes(Path.Combine(fonts, file)));
+        }
+    }
+
+    [Fact]
+    public void TextTheFormFontLacksIsDrawnInAFallbackFont()
+    {
+        var form = Open(fonts: new CjkSource(covering: true));
+
+        var result = form.SetValue("name", "中文 text");
+
+        Assert.Equal("", result.Undrawn);
+        Assert.Equal("中文 text", FormFixtures.Drawn(form.Document, Widget(form, "name")));
+        var stream = Normal(form, Widget(form, "name"));
+        var used = form.Document.Dict(form.Document.Dict(stream.Dictionary, "Resources"), "Font")!.Entries.Single().Value;
+        Assert.Equal("Type0", form.Document.Name((PdfDictionary)form.Document.Resolve(used)!, "Subtype"));
+    }
+
+    [Fact]
+    public void CharactersNoFontHasAreReportedAndTheFillSucceeds()
+    {
+        var form = Open(fonts: new CjkSource(covering: false));
+
+        var result = form.SetValue("name", "文中文 ab");
+
+        Assert.Equal(1, result.Filled);
+        Assert.Equal("中文", result.Undrawn);
+        Assert.Equal("文中文 ab", form.Find("name")!.Value);
+    }
+
+    [Fact]
+    public void OrdinaryTurkishFillLeavesNothingUndrawn()
+    {
+        var form = Open(fonts: new ArialSource());
+
+        Assert.Equal("", form.SetValue("name", "Şükrü ığ İĞ").Undrawn);
+    }
+    [Fact]
+    public void FontNameWithReplacementSyntaxGoesIntoTheDefaultAppearanceLiterally()
+    {
+        var form = Open();
+        var holder = new PdfDictionary();
+
+        PdfForm.SetFontName(holder, "/Helv 12 Tf 0 g", "A$1B");
+
+        Assert.Equal("/A$1B 12 Tf 0 g", PdfText.Read(form.Document, holder, "DA"));
+    }
+
     [Fact]
     public void FieldsOfOneBatchShareOneAddedFont()
     {

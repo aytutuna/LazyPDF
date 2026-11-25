@@ -32,8 +32,8 @@ public sealed record OcrProgress(int PageIndex, int Done, int Total, OcrOutcome 
 
 public sealed record OcrResult(int Added, int NoWords, int Skipped, int NotRendered, int Words, bool Committed);
 
-/// <summary>What <see cref="PdfSearchable.ReadAsync"/> found: the counts, with no words written and nothing committed, and the words to write.</summary>
-public sealed record OcrRead(OcrResult Result, IReadOnlyList<OcrPageWords> Pages);
+/// <summary>What <see cref="PdfSearchable.ReadAsync"/> found: the counts, with no words written and nothing committed, and the words to write. <paramref name="Stopped"/> is true when a cancel ended a read that asked to keep what it had.</summary>
+public sealed record OcrRead(OcrResult Result, IReadOnlyList<OcrPageWords> Pages, bool Stopped = false);
 
 /// <summary>The Make searchable action: reads the pages of a document that need it and adds the text layer.</summary>
 public static class PdfSearchable
@@ -64,12 +64,14 @@ public static class PdfSearchable
     /// <summary>
     /// The reading half of <see cref="RunAsync"/>, for a caller that reads a copy of the file on another thread and
     /// writes the layers into the document it shows (<see cref="PdfOcrLayer.Add"/>). <paramref name="document"/> is only read.
+    /// With <paramref name="keepPartial"/> a cancel does not throw: the pages finished before it are returned, the one being
+    /// read is not, and <see cref="OcrRead.Stopped"/> is true.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException"><see cref="OcrOptions.Dpi"/> outside 72 to 600.</exception>
     /// <exception cref="OperationCanceledException"/>
     public static async Task<OcrRead> ReadAsync(PdfDocument document, ITextRecognizer recognizer, IPageRenderer renderer,
                                                 OcrOptions options, IProgress<OcrProgress>? progress = null,
-                                                CancellationToken cancellation = default)
+                                                CancellationToken cancellation = default, bool keepPartial = false)
     {
         if (!(options.Dpi >= MinDpi && options.Dpi <= MaxDpi)) throw new ArgumentOutOfRangeException(nameof(options));
         var targets = options.Pages is null
@@ -79,41 +81,49 @@ public static class PdfSearchable
         var interpreter = new ContentInterpreter(document);
         var found = new List<OcrPageWords>();
         int added = 0, noWords = 0, skipped = 0, notRendered = 0, done = 0;
-        foreach (int index in targets)
+        bool stopped = false;
+        try
         {
-            cancellation.ThrowIfCancellationRequested();
-            var page = document.Pages[index];
-            var kind = OcrTriage.Classify(document, page, interpreter);
-            OcrOutcome outcome;
-            if (!OcrTriage.NeedsOcr(kind, options.Existing == OcrExisting.Replace, options.Force))
+            foreach (int index in targets)
             {
-                outcome = OcrOutcome.Skipped;
-                skipped++;
-            }
-            else if (renderer.Render(index, options.Dpi) is not { } image)
-            {
-                outcome = OcrOutcome.NotRendered;
-                notRendered++;
-            }
-            else
-            {
-                var recognized = await recognizer.RecognizeAsync(image, options.Language, cancellation).ConfigureAwait(false);
-                found.Add(new OcrPageWords(index, recognized, image.Width, image.Height));
-                if (OcrLayerContent.Layout(recognized, image.Width, image.Height, new PageGeometry(page)).Count > 0)
+                cancellation.ThrowIfCancellationRequested();
+                var page = document.Pages[index];
+                var kind = OcrTriage.Classify(document, page, interpreter);
+                OcrOutcome outcome;
+                if (!OcrTriage.NeedsOcr(kind, options.Existing == OcrExisting.Replace, options.Force))
                 {
-                    outcome = OcrOutcome.Added;
-                    added++;
+                    outcome = OcrOutcome.Skipped;
+                    skipped++;
+                }
+                else if (renderer.Render(index, options.Dpi) is not { } image)
+                {
+                    outcome = OcrOutcome.NotRendered;
+                    notRendered++;
                 }
                 else
                 {
-                    outcome = OcrOutcome.NoWords;
-                    noWords++;
+                    var recognized = await recognizer.RecognizeAsync(image, options.Language, cancellation).ConfigureAwait(false);
+                    found.Add(new OcrPageWords(index, recognized, image.Width, image.Height));
+                    if (OcrLayerContent.Layout(recognized, image.Width, image.Height, new PageGeometry(page)).Count > 0)
+                    {
+                        outcome = OcrOutcome.Added;
+                        added++;
+                    }
+                    else
+                    {
+                        outcome = OcrOutcome.NoWords;
+                        noWords++;
+                    }
                 }
+                progress?.Report(new OcrProgress(index, ++done, targets.Count, outcome));
             }
-            progress?.Report(new OcrProgress(index, ++done, targets.Count, outcome));
+        }
+        catch (OperationCanceledException) when (keepPartial && cancellation.IsCancellationRequested)
+        {
+            stopped = true;
         }
 
-        cancellation.ThrowIfCancellationRequested();
-        return new OcrRead(new OcrResult(added, noWords, skipped, notRendered, 0, false), found);
+        if (!keepPartial) cancellation.ThrowIfCancellationRequested();
+        return new OcrRead(new OcrResult(added, noWords, skipped, notRendered, 0, false), found, stopped);
     }
 }

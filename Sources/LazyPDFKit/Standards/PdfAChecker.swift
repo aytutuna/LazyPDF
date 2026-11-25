@@ -14,7 +14,7 @@ final class PdfAChecker {
     let document: PdfDocument
     let level: PdfALevel
     var issues: [PdfAIssue] = []
-    var seen = Set<String>()
+    var seen = Set<[UInt8]>()
     var truncated = false
 
     /// The fonts met, each with the codes (CIDs for a composite font) shown with it, in the order they were met.
@@ -43,6 +43,10 @@ final class PdfAChecker {
 
     /// Colour components of the output intent's profile; 0 when the file has none.
     var intentComponents = 0
+
+    /// The issues of the level A rules, which the converter turns into a refusal when tagging could not settle them.
+    var structureIssues: [PdfAIssue] = []
+    var structureSeen = Set<String>()
 
     // Annotations
     var nextLists = Set<ObjectIdentifier>()
@@ -81,17 +85,20 @@ final class PdfAChecker {
         checkPages()
         checkObjects()
         checkFonts()
+        checkStructure()
     }
 
     /// The clause for part 1, or for the later parts.
     func c(_ part1: String, _ later: String) -> String { isPart1 ? part1 : later }
 
-    func add(_ clause: String, _ place: String, _ message: String) {
+    // The place and the message go through the localiser, which is slow next to the walk, so they are built once the cap allows an issue.
+    func add(_ clause: String, _ place: @autoclosure () -> String, _ message: @autoclosure () -> String) {
         if issues.count >= Self.maxIssues {
             truncated = true
             return
         }
-        if seen.insert("\(clause)|\(place)|\(message)").inserted { issues.append(PdfAIssue(clause, place, message)) }
+        let at = place(), text = message()
+        if seen.insert(Array("\(clause)|\(at)|\(text)".utf8)).inserted { issues.append(PdfAIssue(clause, at, text)) }
     }
 
     func filterNames(_ dictionary: PdfDictionary, _ key: String = "Filter") -> [String] {

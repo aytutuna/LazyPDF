@@ -69,6 +69,23 @@ public class SanitizeLayerTests
     }
 
     [Fact]
+    public void ALayerMembershipThatNamesTheAnnotationArrayDoesNotStopTheScan()
+    {
+        byte[] file = OptimizeKit.Build("BT /F1 12 Tf (page) Tj ET", "", pdf =>
+        {
+            pdf.Obj(5, "<</Type /OCG /Name (Hidden)>>");
+            pdf.Obj(9, "[10 0 R]");
+            pdf.Obj(10, "<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /OC 11 0 R /Contents (kept)>>");
+            pdf.Obj(11, "<</Type /OCMD /OCGs 9 0 R>>");
+        }, pageExtra: "/Annots 9 0 R", catalogExtra: "/OCProperties <</OCGs [5 0 R] /D <</OFF [5 0 R]>>>>");
+        using var document = PdfDocument.Open(file);
+        var findings = new PdfSanitizer(document).Scan();
+        Assert.Equal(1, SanitizeKit.Count(findings, SanitizeItem.HiddenLayers));
+        var result = new PdfSanitizer(document).Run(new SanitizeOptions { Comments = false });
+        Assert.True(OptimizeKit.Everywhere(result.Bytes, "kept"));
+    }
+
+    [Fact]
     public void AnnotationOnAHiddenLayerGoes()
     {
         byte[] file = OptimizeKit.Build("BT /F1 12 Tf (page) Tj ET", "", pdf =>

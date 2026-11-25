@@ -24,6 +24,28 @@ public enum PdfImageWriter {
         return PdfImage(reference, header.width, header.height)
     }
 
+    /// A picture file as an upright image: a JPEG without an Exif turn as it is, a turned JPEG decoded and stored turned back
+    /// (as a quality 92 JPEG when the codec encodes one, else as pixels), any other file as the codec reads it. Nil when nothing reads it or its pixels do not fit.
+    public static func addPicture(_ document: PdfDocument, _ file: [UInt8], _ codec: ImageCodec?) throws -> PdfImage? {
+        let jpeg = file.count > 2 && file[0] == 0xFF && file[1] == 0xD8
+        let orientation = jpeg ? JpegMeta.orientation(file) : 1
+        if jpeg && (orientation == 1 || codec == nil), let direct = try addJpeg(document, file) { return direct }
+        guard let frame = codec?.decodeFile(file)?.first, ObjectEditor.fits(frame) else { return nil }
+        let upright = JpegMeta.upright(frame, orientation)
+        // A turned photo goes back in as a JPEG, not as raw pixels many times its size; a codec that cannot encode gives none.
+        if orientation > 1, let codec {
+            let turned = codec.encodeJpeg(upright, 92)
+            if !turned.isEmpty, let encoded = try addJpeg(document, turned) { return encoded }
+        }
+        return try addRgba(document, upright.width, upright.height, upright.rgba)
+    }
+
+    /// The first frame of a picture file that is not too big, turned upright by its Exif turn; the Windows app turns the file itself.
+    public static func decodeUpright(_ file: [UInt8], _ codec: ImageCodec) -> PdfRgbaImage? {
+        guard let frame = codec.decodeFile(file)?.first(where: { !$0.tooBig }) else { return nil }
+        return JpegMeta.upright(frame, JpegMeta.orientation(file))
+    }
+
     /// `rgba` is straight RGBA8, top row first. A size that is not positive or does not fit the data is the caller's
     /// mistake, a precondition where the C# throws ArgumentException; a picture with too many pixels is the user's choice
     /// and throws `InvalidOperationException`.

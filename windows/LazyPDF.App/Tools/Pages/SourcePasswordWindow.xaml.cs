@@ -14,9 +14,9 @@ internal sealed partial class SourcePasswordWindow : Window
         Loaded += (_, _) => Input.Focus();
     }
 
-    public static string? Ask(string name, bool wrong)
+    public static string? Ask(string name, bool wrong, Window? owner)
     {
-        var window = new SourcePasswordWindow(name, wrong) { Owner = Application.Current?.MainWindow };
+        var window = new SourcePasswordWindow(name, wrong) { Owner = owner };
         return window.ShowDialog() == true ? window.Input.Password : null;
     }
 

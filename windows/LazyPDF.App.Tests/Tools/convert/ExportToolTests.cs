@@ -126,6 +126,45 @@ public sealed class ExportToolTests
     }
 
     [Fact]
+    public void PicturesFollowTheNamePattern()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+
+        Exporter.Write(SourceOf("doc", Report(12)), new ExportOptions(ExportFormat.Pictures, [0], Dpi: 72, NamePattern: "{name}-{n}"), dir.Path, CancellationToken.None);
+
+        Assert.Equal(["doc-01.png"], Directory.GetFiles(dir.Path).Select(Path.GetFileName));
+        Assert.Equal("a_b1", ExportNames.Apply("a/b{n}", "x", 1, 1));
+        Assert.Equal("x_1", ExportNames.Apply(" {name}/{n}. ", "x", 1, 1));
+        Assert.Equal("x page 1", ExportNames.Apply(" . ", "x", 1, 1));
+    }
+
+    [Fact]
+    public void ReplaceKeepsTheFileCountAndOtherwiseCopiesAreNumbered()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        var source = SourceOf("doc", Report(2));
+
+        var keep = new ExportOptions(ExportFormat.Pictures, Dpi: 72, Replace: true);
+        Exporter.Write(source, keep, dir.Path, CancellationToken.None);
+        Exporter.Write(source, keep, dir.Path, CancellationToken.None);
+        Assert.Equal(2, Directory.GetFiles(dir.Path).Length);
+
+        var copy = keep with { Replace = false };
+        Exporter.Write(source, copy, dir.Path, CancellationToken.None);
+        Assert.Equal(4, Directory.GetFiles(dir.Path).Length);
+    }
+
+    [Fact]
+    public void ManyPagesNeedTheNumberInTheName()
+    {
+        Assert.Equal("Add {n} to the name so each page gets its own file.", ExportNames.Error("page", 3));
+        Assert.Null(ExportNames.Error("page", 1));
+        Assert.Null(ExportNames.Error("page {n}", 3));
+    }
+
+    [Fact]
     public void JpegPicturesAreJpeg()
     {
         using var dir = new TempDir();
@@ -135,6 +174,39 @@ public sealed class ExportToolTests
 
         var bytes = File.ReadAllBytes(Path.Combine(dir.Path, "a page 1.jpg"));
         Assert.Equal(new byte[] { 0xFF, 0xD8 }, bytes[..2]);
+    }
+
+    [Fact]
+    public void ColourPngKeepsThePageImageBytes()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        var source = SourceOf("a", Report(1));
+
+        Exporter.Write(source, new ExportOptions(ExportFormat.Pictures, Dpi: 72), dir.Path, CancellationToken.None);
+
+        Assert.Equal(PageImages.Png(source.Renderer, 0, 72), File.ReadAllBytes(Path.Combine(dir.Path, "a page 1.png")));
+    }
+
+    [Fact]
+    public void AJpegHasNoBlackAndWhite()
+    {
+        Assert.False(Exporter.Allows(PictureFormat.Jpeg, PictureColour.BlackWhite));
+        Assert.True(Exporter.Allows(PictureFormat.Jpeg, PictureColour.Grayscale));
+        Assert.True(Exporter.Allows(PictureFormat.Tiff, PictureColour.BlackWhite));
+    }
+
+    [Fact]
+    public void TiffPicturesAreOneFilePerPage()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+
+        var result = Exporter.Write(SourceOf("doc", Report(2), new WicImageCodec()), new ExportOptions(ExportFormat.Pictures, Picture: PictureFormat.Tiff, Dpi: 72), dir.Path, CancellationToken.None);
+
+        Assert.Equal(2, result.Files);
+        foreach (string name in new[] { "doc page 1.tif", "doc page 2.tif" })
+            Assert.Single(new WicImageCodec().DecodeFile(File.ReadAllBytes(Path.Combine(dir.Path, name)))!);
     }
 
     [Fact]
@@ -294,6 +366,34 @@ public sealed class ExportToolTests
         Assert.Equal("No text found", f.Vm.Message.Title);
         Assert.Contains("Make searchable", f.Vm.Message.Text);
         Assert.False(File.Exists(target));
+    }
+
+    [Fact]
+    public async Task AnExportOfAScanPointsToMakeSearchableAsAScan()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("scan.pdf", PdfFromPictures.Create([new byte[] { 1 }], new FakeCodec(), new PdfPageSetup(PdfPaper.Picture, Margin: 0)).Bytes));
+        string target = f.Dir.Sub("out.txt");
+
+        await ExportJob.RunAsync(f.Vm.ActiveDocument!, f.Vm, new FakeCodec(), new ExportOptions(ExportFormat.Text), target);
+
+        Assert.Equal("This looks like a scan", f.Vm.Message!.Title);
+        Assert.Contains("Make searchable", f.Vm.Message.Text);
+    }
+
+    [Fact]
+    public async Task TheNoTextNoticeOffersMakeSearchableAndOpensThatTool()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("scan.pdf", PdfFromPictures.Create([new byte[] { 1 }], new FakeCodec(), new PdfPageSetup(PdfPaper.Picture, Margin: 0)).Bytes));
+
+        await ExportJob.RunAsync(f.Vm.ActiveDocument!, f.Vm, new FakeCodec(), new ExportOptions(ExportFormat.Text), f.Dir.Sub("out.txt"));
+
+        var action = f.Vm.Message!.Action!;
+        Assert.Equal("Make searchable", action.Text);
+        action.Run();
+        Assert.Equal("ocr", f.Vm.ActiveToolId);
+        Assert.Equal("export", ((LazyPDF.App.Tools.IToolHost)f.Vm).TakeReturnTool());
     }
 
     [Fact]

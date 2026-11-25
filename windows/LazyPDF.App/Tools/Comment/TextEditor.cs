@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
+using LazyPDF.App.Services;
 using LazyPDF.App.Viewer;
 
 namespace LazyPDF.App.Tools.Comment;
@@ -14,32 +15,42 @@ public sealed class TextEditor
     private readonly Action<string?> _done;
     private bool _closed;
 
-    private TextEditor(PageOverlay overlay, Rect area, double fontSize, string text, Action<string?> done)
+    private TextEditor(PageOverlay overlay, Rect area, double fontSize, string text, int rotation, Action<string?> done)
     {
         _overlay = overlay;
         _done = done;
+        double width = Math.Max(area.Width, 120);
+        double line = fontSize * 1.4 + 6;
+        double minHeight = Math.Max(Math.Max(area.Height, 40), line);
+        // The overlay clips to the page, so keep the box inside it and let a long note scroll.
+        double left = Math.Clamp(area.X, 0, Math.Max(0, overlay.Width - width));
+        double top = Math.Clamp(area.Y, 0, Math.Max(0, overlay.Height - minHeight));
         _box = new TextBox
         {
             Text = text,
-            Width = Math.Max(area.Width, 120),
-            MinHeight = Math.Max(area.Height, 40),
+            Width = width,
+            MinHeight = minHeight,
+            MaxHeight = Math.Max(minHeight, overlay.Height - top),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             FontSize = fontSize,
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             Padding = new Thickness(2),
         };
+        TextDirection.SetFollows(_box, true);
         AutomationProperties.SetName(_box, Loc.T("Text of the mark"));
-        Canvas.SetLeft(_box, area.X);
-        Canvas.SetTop(_box, area.Y);
+        PageOverlay.KeepUpright(_box, rotation);
+        Canvas.SetLeft(_box, left);
+        Canvas.SetTop(_box, top);
         _box.PreviewKeyDown += Box_PreviewKeyDown;
         _box.LostKeyboardFocus += Box_LostKeyboardFocus;
         overlay.Children.Add(_box);
     }
 
     /// <summary>Opens the editor; <paramref name="done"/> gets the text, or null when it was dropped, and is called once.</summary>
-    public static TextEditor Open(PageOverlay overlay, Rect area, double fontSize, string text, Action<string?> done)
+    public static TextEditor Open(PageOverlay overlay, Rect area, double fontSize, string text, int rotation, Action<string?> done)
     {
-        var editor = new TextEditor(overlay, area, fontSize, text, done);
+        var editor = new TextEditor(overlay, area, fontSize, text, rotation, done);
         editor._box.Dispatcher.BeginInvoke(() =>
         {
             editor._box.Focus();
@@ -48,6 +59,8 @@ public sealed class TextEditor
         }, System.Windows.Threading.DispatcherPriority.Input);
         return editor;
     }
+
+    public void Upright(int rotation) => PageOverlay.KeepUpright(_box, rotation);
 
     /// <summary>Closes the box and hands over what was typed.</summary>
     public void Finish() => Close(_box.Text);

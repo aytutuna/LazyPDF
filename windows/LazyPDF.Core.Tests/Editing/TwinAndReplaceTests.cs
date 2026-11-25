@@ -262,6 +262,53 @@ public class TwinAndReplaceTests
     }
 
     [Fact]
+    public void ANumberedGroupThatIsNamedKeepsTheCaseOfThePage()
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (Invoice 42) Tj ET");
+        var report = TextReplacer.ReplaceAll(session, @"(?<word>[a-z]+) (\d+)", "$2 #$1", new TextSearchOptions(Regex: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("Invoice #42", Page(session));
+        session = EditKit.Session("BT /F1 12 Tf 50 700 Td (Invoice 42) Tj ET");
+        TextReplacer.ReplaceAll(session, @"(?<word>[a-z]+) (\d+)", "$+!", new TextSearchOptions(Regex: true));
+        Assert.Equal("Invoice!", Page(session));
+        session = EditKit.Session("BT /F1 12 Tf 50 700 Td (Invoice 42) Tj ET");
+        TextReplacer.ReplaceAll(session, @"(?<word>[a-z]+) (\d+)", "${2}|${word}", new TextSearchOptions(Regex: true));
+        Assert.Equal("Invoice|Invoice", Page(session));
+    }
+
+    [Fact]
+    public void ADigitThatIsNotAsciiAfterAGroupNumberIsText()
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (ab) Tj ET");
+        var report = TextReplacer.ReplaceAll(session, "(a)b", "$1\u0663", new TextSearchOptions(Regex: true), new EditArialSource());
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("a\u0663", Page(session));
+    }
+
+    [Theory]
+    [InlineData("$99999999999")]
+    [InlineData("${99999999999}")]
+    [InlineData("$4294967297")]
+    public void AGroupNumberPastInt32IsRefusedAndNothingChanges(string replacement)
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (ab) Tj ET");
+        Assert.ThrowsAny<ArgumentException>(() => TextReplacer.ReplaceAll(session, "(a)b", replacement, new TextSearchOptions(Regex: true)));
+        Assert.False(session.CanUndo);
+        Assert.Equal("ab", Page(session));
+    }
+
+    [Theory]
+    [InlineData("(?x) # (\n(?<y>a)(b)")]
+    [InlineData("(?#c(d)(?<y>a)(b)")]
+    public void AParenthesisInACommentIsNotAGroup(string pattern)
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (ab) Tj ET");
+        var report = TextReplacer.ReplaceAll(session, pattern, "$1|$2|$+", new TextSearchOptions(Regex: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("b|a|a", Page(session));
+    }
+
+    [Fact]
     public void TheTailOfAHiddenCopyFollowsTheNewTextWhenItIsWiderThanTheOldOne()
     {
         string cut = $"<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 32 /LastChar 68 /Widths [278 {string.Join(" ", Enumerable.Repeat(600, 32))} 667 667 722 722] /Encoding /WinAnsiEncoding>>";

@@ -12,8 +12,16 @@
         </Grid.RowDefinitions>
         <StackPanel Margin="12,0,12,6">
             <DockPanel>
-                <Button x:Name="ExportButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE898;" Margin="6,0,0,0"
-                        ToolTip="{loc:T Save a summary of the comments}" AutomationProperties.Name="{loc:T Export summary}" Click="Export_Click" />
+                <Button x:Name="MoreButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE712;" Margin="6,0,0,0" IsEnabled="False"
+                        ToolTip="{loc:T Share}" AutomationProperties.Name="{loc:T Share}" Click="More_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu Placement="Bottom">
+                            <MenuItem Header="{loc:T Save summary…}" Click="Export_Click" />
+                            <MenuItem Header="{loc:T Export as XFDF…}" Click="ExportXfdf_Click" />
+                            <MenuItem x:Name="ImportItem" Header="{loc:T Import comments…}" Click="Import_Click" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
                 <Grid>
                     <TextBox x:Name="Search" AutomationProperties.Name="{loc:T Filter comments}" ToolTip="{loc:T Filter by text or author}" TextChanged="Filter_Changed" />
                     <TextBlock x:Name="SearchHint" Text="{loc:T Filter}" Style="{StaticResource PlaceholderText}" />
@@ -63,19 +71,37 @@
 
         <Border x:Name="Detail" Grid.Row="2" Style="{StaticResource CardStyle}" Margin="8,0,8,8" Visibility="Collapsed">
             <StackPanel>
-                <ItemsControl x:Name="Replies" AutomationProperties.Name="{loc:T Replies}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,4" Text="{Binding}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock Text="{loc:T Status}" Style="{StaticResource FieldLabelText}" />
-                <ComboBox x:Name="StatusBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Status}" SelectionChanged="Status_Changed" />
-                <TextBox x:Name="ReplyBox" Margin="0,8,0,0" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="72" VerticalScrollBarVisibility="Auto"
-                         AutomationProperties.Name="{loc:T Reply}" TextChanged="ReplyBox_TextChanged" />
-                <Button x:Name="ReplyButton" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Reply}" Margin="0,6,0,0" HorizontalAlignment="Right" IsEnabled="False"
-                        AutomationProperties.Name="{loc:T Send reply}" Click="Reply_Click" />
+                <DockPanel HorizontalAlignment="Right">
+                    <Button x:Name="DeleteButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" Margin="4,0,0,0"
+                            ToolTip="{loc:T Delete comment (Del)}" AutomationProperties.Name="{loc:T Delete comment}" Click="Delete_Click" />
+                    <Button x:Name="EditButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70F;"
+                            ToolTip="{loc:T Edit comment}" AutomationProperties.Name="{loc:T Edit comment}" Click="Edit_Click" />
+                </DockPanel>
+                <ScrollViewer x:Name="TextScroll" VerticalScrollBarVisibility="Auto" MaxHeight="160">
+                    <StackPanel>
+                        <TextBox x:Name="FullText" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" IsReadOnly="True" PreviewMouseWheel="FullText_MouseWheel" PreviewKeyDown="FullText_PreviewKeyDown"
+                                 AutomationProperties.Name="{loc:T Comment}" />
+                        <ItemsControl x:Name="Replies" AutomationProperties.Name="{loc:T Replies}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,4" Text="{Binding}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+                <StackPanel x:Name="Answering">
+                    <TextBlock Text="{loc:T Status}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="StatusBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Status}" SelectionChanged="Status_Changed" />
+                    <TextBox x:Name="ReplyBox" Margin="0,8,0,0" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="72" VerticalScrollBarVisibility="Auto"
+                             AutomationProperties.Name="{loc:T Reply}" TextChanged="ReplyBox_TextChanged" />
+                    <Button x:Name="ReplyButton" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Reply}" Margin="0,6,0,0" HorizontalAlignment="Right" IsEnabled="False"
+                            AutomationProperties.Name="{loc:T Send reply}" Click="Reply_Click" />
+                </StackPanel>
+                <StackPanel x:Name="Editing" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0" Visibility="Collapsed">
+                    <Button x:Name="CancelEditButton" Content="{loc:T Cancel}" Margin="0,0,6,0" Click="CancelEdit_Click" />
+                    <Button x:Name="SaveEditButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Save}" Click="SaveEdit_Click" />
+                </StackPanel>
             </StackPanel>
         </Border>
     </Grid>

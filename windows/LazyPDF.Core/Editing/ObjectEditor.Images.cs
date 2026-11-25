@@ -16,13 +16,7 @@ internal sealed partial class ObjectEditor
     /// <summary>Paints another picture where the object is, fitted inside its place with the proportions of the new one.</summary>
     public void ReplaceImage(ImageObject image, byte[] file, bool fit)
     {
-        PdfImage? added = file.Length > 2 && file[0] == 0xFF && file[1] == 0xD8 ? PdfImageWriter.AddJpeg(Document, file) : null;
-        if (added is null && Codec?.DecodeFile(file) is { Count: > 0 } frames && Fits(frames[0]))
-        {
-            var frame = frames[0];
-            added = PdfImageWriter.AddRgba(Document, frame.Width, frame.Height, frame.Rgba);
-        }
-        if (added is null) throw new EditConflictException(EditingText.NoImage);
+        var added = PdfImageWriter.AddPicture(Document, file, Codec) ?? throw new EditConflictException(EditingText.NoImage);
         var place = PlaceOf(image);
         string name = batch.AddResource(place, "XObject", added.Reference) ?? throw new EditConflictException(EditingText.SharedForm);
         var w = new ContentWriter();
@@ -40,7 +34,7 @@ internal sealed partial class ObjectEditor
         Replace(place, op.Start, op.End, drawn);
     }
 
-    /// <summary>The bytes of the picture: a JPEG or JPEG 2000 file as it is stored, anything else as a PNG.</summary>
+    /// <summary>The bytes of the picture: a JPEG or JPEG 2000 file as it is stored, anything else (a JBIG2 picture too) as a PNG.</summary>
     public ExtractedImage Extract(ImageObject image)
     {
         if (image.Info.Inline is { } inline)
@@ -55,8 +49,10 @@ internal sealed partial class ObjectEditor
     {
         try
         {
-            var filter = Document.Resolve(dictionary["Filter"] ?? dictionary["F"]);
-            var parms = Document.Resolve(dictionary["DecodeParms"] ?? dictionary["DP"]);
+            PdfObject? filter, parms;
+            // The globals of a JBIG2 picture are a stream that the filter reads through the document.
+            if (stream is not null) (filter, parms, _) = Document.DecodeSpec(stream, decoding: true);
+            else (filter, parms) = (Document.Resolve(dictionary["Filter"] ?? dictionary["F"]), Document.Resolve(dictionary["DecodeParms"] ?? dictionary["DP"]));
             var decoded = PdfFilters.DecodeToCodec(raw, filter, parms);
             switch (decoded.Codec)
             {
@@ -64,9 +60,6 @@ internal sealed partial class ObjectEditor
                     return new ExtractedImage(decoded.Data, "jpg");
                 case "JPXDecode":
                     return new ExtractedImage(decoded.Data, "jp2");
-                case "JBIG2Decode":
-                    if (Codec?.Decode(decoded.Data, "JBIG2Decode") is { } bits) return new ExtractedImage(PngWriter.Encode(bits), "png");
-                    break;
                 default:
                     var rgba = PdfImageSamples.ToRgba(dictionary, decoded.Data, Document.Resolve, s => Document.Data(s));
                     return new ExtractedImage(PngWriter.Encode(rgba), "png");
@@ -85,6 +78,7 @@ internal sealed partial class ObjectEditor
         var place = PlaceOf(o);
         var ops = unit.Operations;
         var states = unit.States;
+        if (o is not (ImageObject or PathObject)) throw new EditConflictException(EditingText.NotAlone);
         int paint = o is ImageObject image ? image.Op : ((PathObject)o).PaintOp;
         int first = o is PathObject path ? path.FirstOp : paint;
         int d = states.At(first).Depth;

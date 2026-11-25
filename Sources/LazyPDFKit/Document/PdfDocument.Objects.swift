@@ -33,6 +33,11 @@ extension PdfDocument {
         let size: Int
         let offsets: [Int: Int]
         let numbers: [Int]
+        lazy var numberIndex: [Int: Int] = {
+            var index: [Int: Int] = [:]
+            for (i, number) in numbers.enumerated() where index[number] == nil { index[number] = i }
+            return index
+        }()
 
         init(_ bytes: PdfArrayBytes, _ size: Int, _ offsets: [Int: Int], _ numbers: [Int]) {
             self.bytes = bytes
@@ -141,6 +146,7 @@ extension PdfDocument {
             stream.number = number
             stream.generation = generation
         }
+        if entries[number] == nil { entryOrder.append(number) }
         entries[number] = Entry(.new, 0, generation, 0)
         objects[number] = Slot(value, generation, 0, isNew: true)
         deleted.remove(number)

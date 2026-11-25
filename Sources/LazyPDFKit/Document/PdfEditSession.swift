@@ -16,6 +16,8 @@ public final class PdfEditSession {
     private var floor: Int
     private var position = 0
     private var savedPosition = 0
+    // Settable so a test need not build a file of 2 GB.
+    var maxBytes = Int(Int32.max)
 
     /// The document at the current state, to read and to change. Changes wait here until `commit`.
     public private(set) var document: PdfDocument
@@ -42,7 +44,15 @@ public final class PdfEditSession {
     }
 
     public static func open(path: String, password: String? = nil) throws -> PdfEditSession {
-        try open([UInt8](try Data(contentsOf: URL(fileURLWithPath: path))), password: password)
+        try open(try readFile(path), password: password)
+    }
+
+    private static func readFile(_ path: String) throws -> [UInt8] {
+        let file = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
+        defer { try? file.close() }
+        if try file.seekToEnd() > UInt64(Int32.max) { throw PdfReadException(.unsupported, "The file is too large.") }
+        try file.seek(toOffset: 0)
+        return [UInt8](try file.readToEnd() ?? Data())
     }
 
     #if canImport(Security)
@@ -52,7 +62,7 @@ public final class PdfEditSession {
     }
 
     public static func open(path: String, certificate: PdfCertificate) throws -> PdfEditSession {
-        try open([UInt8](try Data(contentsOf: URL(fileURLWithPath: path))), certificate: certificate)
+        try open(try readFile(path), certificate: certificate)
     }
     #endif
 
@@ -66,30 +76,54 @@ public final class PdfEditSession {
     public var isDirty: Bool { position != savedPosition || document.hasChanges }
 
     /// Appends what changed in `document` as one undoable step called `label`, dropping what could be redone.
-    /// False, and nothing added, when nothing changed.
+    /// False, and nothing added, when nothing changed. With `mergeWithPrevious` the step joins the one before it, so the
+    /// two undo together, unless that step was saved or has another label; then it is a step of its own.
     @discardableResult
-    public func commit(_ label: String) throws -> Bool {
+    public func commit(_ label: String, mergeWithPrevious: Bool = false) throws -> Bool {
         let update = try PdfUpdate.build(document)
         if update.isEmpty { return false }
+        if current.count + update.count > maxBytes { throw tooLarge() }
+        return try take(label, current + update, merge: mergeWithPrevious)
+    }
+
+    /// The update that makes `copy`, a document opened from `current` and then changed, into the next step; empty when nothing
+    /// changed. It is built apart from the session so that a long edit can run on a copy off the main thread.
+    public static func update(of copy: PdfDocument) throws -> [UInt8] {
+        try PdfUpdate.build(copy)
+    }
+
+    /// Appends an update from `update(of:)`, built on a copy of the first `length` bytes, as one step called `label`. Throws
+    /// when the session has moved on since, so a stale edit cannot land on a different file.
+    @discardableResult
+    public func commit(_ label: String, update: [UInt8], over length: Int) throws -> Bool {
+        guard length == current.count else { throw InvalidOperationException("The file changed while the edit was made.") }
+        if update.isEmpty { return false }
+        if current.count + update.count > maxBytes { throw tooLarge() }
         return try take(label, current + update)
     }
 
     /// Commits a file the caller built on the current bytes, which must be its start (a signed update, whose
     /// bytes depend on where they land). Read back and recorded like `commit`.
     @discardableResult
-    func commitBytes(_ label: String, _ next: [UInt8]) throws -> Bool {
+    public func commitBytes(_ label: String, _ next: [UInt8]) throws -> Bool {
         precondition(next.count > current.count && Array(next[0..<current.count]) == current, "The file does not continue the current one.")
+        if next.count > maxBytes { throw tooLarge() }
         return try take(label, next)
     }
 
-    private func take(_ label: String, _ next: [UInt8]) throws -> Bool {
+    private func tooLarge() -> PdfReadException {
+        PdfReadException(.unsupported, "The file is too large to change further.")
+    }
+
+    private func take(_ label: String, _ next: [UInt8], merge: Bool = false) throws -> Bool {
         // Reading it back is the check that the update is one a strict parser takes: one that needs a rebuild is not.
         let reopened = try reader(next)
         if reopened.xrefRebuilt && !document.xrefRebuilt { throw PdfReadException.damaged("The update does not read back.") }
 
+        let merges = merge && position > 0 && position != savedPosition && steps[position - 1].label == label
         if savedPosition > position { savedPosition = -1 }
         steps.removeSubrange(position..<steps.count)
-        steps.append((next.count, label))
+        if merges { steps[steps.count - 1] = (next.count, label) } else { steps.append((next.count, label)) }
         position = steps.count
         current = next
         longest = next

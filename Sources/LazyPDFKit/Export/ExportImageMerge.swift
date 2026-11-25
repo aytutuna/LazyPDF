@@ -8,7 +8,7 @@ import Foundation
 // would index past the buffer.
 
 final class ExportImageMerge {
-    private static let coders = ["DCTDecode", "DCT", "JPXDecode", "JBIG2Decode"]
+    private static let coders = ["DCTDecode", "DCT", "JPXDecode"]
 
     private let document: PdfDocument
     private let codec: ImageCodec?
@@ -36,7 +36,7 @@ final class ExportImageMerge {
     func showsAsFile(_ dictionary: PdfDictionary, _ jpeg: [UInt8]) throws -> Bool {
         if present(dictionary["SMask"]) || present(dictionary["Mask"]) || document.bool(dictionary, "ImageMask") == true { return false }
         let decode = PdfFunction.numbers(dictionary["Decode"], resolve)
-        let identity = decode.map { Self.pairs($0, $0.count).allSatisfy { $0 == (0, 1) } } ?? true
+        let identity = decode.map { ImageKit.defaultDecode(document, dictionary, $0) } ?? true
         do {
             let space = try self.space(dictionary)
             if space is SampleColorSpace.Cmyk { return identity ? !Self.hasAdobeMarker(jpeg) : Self.inverts(decode) && Self.hasAdobeMarker(jpeg) }
@@ -57,7 +57,7 @@ final class ExportImageMerge {
     /// image is brought to what the page shows (see `cmykView`). `coded` is the codec's input.
     func fromPixels(_ dictionary: PdfDictionary, _ decoded: PdfRgbaImage, _ coder: String, _ coded: [UInt8]) throws -> PdfRgbaImage {
         var pixels = decoded
-        if coder == "JPXDecode" { pixels = Self.jpxAlpha(pixels, document.integer(dictionary, "SMaskInData") ?? 0) }
+        if coder == "JPXDecode" { pixels = JpxImage.alpha(pixels, JpxImage.maskInData(document, dictionary)) }
         let imageMask = document.bool(dictionary, "ImageMask") == true
         var space: SampleColorSpace?
         var readable = true
@@ -80,10 +80,9 @@ final class ExportImageMerge {
         plain["Height"] = PdfNumber(pixels.height)
         // /Decode does not apply to JPEG 2000 data (ISO 32000-1 Table 89).
         if coder == "JPXDecode" && !imageMask { plain.remove("Decode") }
-        let bits = imageMask || coder == "JBIG2Decode"
-        if !imageMask { plain["BitsPerComponent"] = PdfNumber(bits ? 1 : 8) }
+        if !imageMask { plain["BitsPerComponent"] = PdfNumber(8) }
 
-        var converted = try PdfImageSamples.toRgba(plain, Self.pack(pixels, n, bits), resolve, data)
+        var converted = try PdfImageSamples.toRgba(plain, Self.pack(pixels, n, imageMask), resolve, data)
         if coder == "JPXDecode", let mode = document.integer(dictionary, "SMaskInData"), mode > 0 {
             var rgba = converted.rgba
             var i = 3
@@ -94,23 +93,6 @@ final class ExportImageMerge {
             converted = PdfRgbaImage(converted.width, converted.height, rgba)
         }
         return try apply(converted, mask, stencil)
-    }
-
-    // ISO 32000-1 Table 89: 0 leaves the codestream's alpha out, 1 takes it as straight alpha, 2 as premultiplied.
-    private static func jpxAlpha(_ image: PdfRgbaImage, _ mode: Int) -> PdfRgbaImage {
-        if mode == 1 { return image }
-        var rgba = image.rgba
-        var i = 3
-        while i < rgba.count {
-            let alpha = Int(rgba[i])
-            if mode < 1 {
-                rgba[i] = 255
-            } else if alpha > 0 && alpha < 255 {
-                for c in 1...3 { rgba[i - c] = UInt8(truncatingIfNeeded: min(255, (Int(rgba[i - c]) * 255 + alpha / 2) / alpha)) }
-            }
-            i += 4
-        }
-        return PdfRgbaImage(image.width, image.height, rgba)
     }
 
     // The consecutive pairs of `values`, at most `limit`, the last alone when the count is odd (LINQ Chunk(2)).
@@ -124,13 +106,13 @@ final class ExportImageMerge {
         return result
     }
 
-    private static func inverts(_ decode: [Double]?) -> Bool {
+    static func inverts(_ decode: [Double]?) -> Bool {
         guard let decode, decode.count >= 8 else { return false }
         return pairs(decode, 4).allSatisfy { $0 == (1, 0) }
     }
 
     // The Adobe marker (APP14) tells a codec that the stored inks are inverted.
-    private static func hasAdobeMarker(_ jpeg: [UInt8]) -> Bool {
+    static func hasAdobeMarker(_ jpeg: [UInt8]) -> Bool {
         var p = 2
         while p + 4 <= jpeg.count && jpeg[p] == 0xFF && jpeg[p + 1] != 0xDA {
             let length = Int(jpeg[p + 2]) << 8 | Int(jpeg[p + 3])
@@ -258,7 +240,7 @@ final class ExportImageMerge {
 
     // Nil when a codec is needed and cannot read the mask: the picture stays opaque.
     private func plane(_ mask: PdfStream, _ stencil: Bool) throws -> (width: Int, height: Int, alpha: [UInt8])? {
-        let (filter, parameters, _) = document.decodeSpec(mask)
+        let (filter, parameters, _) = try document.decodeSpec(mask, decoding: true)
         let decoded = try PdfFilters.decodeToCodec(document.rawData(mask), filter, parameters)
         var image: PdfRgbaImage?
         var inverted = false
@@ -266,7 +248,8 @@ final class ExportImageMerge {
             image = try PdfImageSamples.toRgba(mask.dictionary, decoded.data, resolve, data)
         } else if let coder = decoded.codec {
             try charge(0)
-            image = codec?.decode(decoded.data, coder)
+            if coder == "JPXDecode" && !JpxImage.readable(document, mask.dictionary) { return nil }
+            image = codec?.decode(decoded.data, coder, coder == "JPXDecode" ? JpxImage.components(document, mask.dictionary) : 0)
             if let image { try charge(Self.area(image) ?? Int.max) }
             if let d = PdfFunction.numbers(mask.dictionary["Decode"], resolve), d.count >= 2 { inverted = d[0] > d[1] }
         }

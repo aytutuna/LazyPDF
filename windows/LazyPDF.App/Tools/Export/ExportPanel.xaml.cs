@@ -16,6 +16,8 @@ public partial class ExportPanel : ToolPanel
     public ExportPanel()
     {
         InitializeComponent();
+        NameBox.Text = Loc.T("{name} page {n}");
+        NameHint.Text = Loc.T("Use {0} and {1}. A name that is taken gets a number.", "{name}", "{n}");
         _action = new ToolAction(Loc.T("Export"), "", CanRun, RunAsync);
         _ready = true;
     }
@@ -23,6 +25,16 @@ public partial class ExportPanel : ToolPanel
     public override ToolAction? Action => _action;
 
     private ExportFormat Format => Enum.Parse<ExportFormat>((string)((ComboBoxItem)FormatBox.SelectedItem).Tag);
+
+    private PictureFormat Picture => PictureTypeBox.SelectedIndex switch
+    {
+        1 => PictureFormat.Jpeg,
+        2 => PictureFormat.Tiff,
+        3 => PictureFormat.Bmp,
+        _ => PictureFormat.Png,
+    };
+
+    private PictureColour Colour => (PictureColour)ColourBox.SelectedIndex;
 
     private PageScope Scope => TypedPages.IsChecked == true ? PageScope.Typed : CurrentPage.IsChecked == true ? PageScope.Current : PageScope.All;
 
@@ -43,7 +55,9 @@ public partial class ExportPanel : ToolPanel
         if (Tab is not { } tab) return null;
         if (!Exporter.Allowed(tab.Document)) return Loc.T("This file does not allow copying its content.");
         if (Format == ExportFormat.Pictures && !tab.CanDraw) return Loc.T("Windows cannot draw this file.");
-        return Pages().Error;
+        var pages = Pages();
+        if (pages.Error is not null) return pages.Error;
+        return Format == ExportFormat.Pictures ? ExportNames.Error(NameBox.Text, pages.Pages?.Count ?? tab.PageCount) : null;
     }
 
     private bool CanRun() => Tab is not null && Blocker() is null;
@@ -54,7 +68,11 @@ public partial class ExportPanel : ToolPanel
         HtmlOptions.Visibility = format == ExportFormat.Html ? Visibility.Visible : Visibility.Collapsed;
         MarkdownPicturesBox.Visibility = format == ExportFormat.Markdown ? Visibility.Visible : Visibility.Collapsed;
         PictureOptions.Visibility = format == ExportFormat.Pictures ? Visibility.Visible : Visibility.Collapsed;
-        QualityRow.Visibility = PictureTypeBox.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        var picture = Picture;
+        BlackWhiteItem.IsEnabled = Exporter.Allows(picture, PictureColour.BlackWhite);
+        if (!BlackWhiteItem.IsEnabled && Colour == PictureColour.BlackWhite) ColourBox.SelectedIndex = (int)PictureColour.Grayscale;
+        QualityRow.Visibility = picture == PictureFormat.Jpeg ? Visibility.Visible : Visibility.Collapsed;
+        SizeHint.Visibility = picture is PictureFormat.Tiff or PictureFormat.Bmp ? Visibility.Visible : Visibility.Collapsed;
 
         string? blocker = Blocker();
         Reason.Text = blocker ?? "";
@@ -67,9 +85,12 @@ public partial class ExportPanel : ToolPanel
         pages,
         FixedHtml: HtmlLayoutBox.SelectedIndex == 1,
         MarkdownPictures: MarkdownPicturesBox.IsChecked == true,
-        Picture: PictureTypeBox.SelectedIndex == 1 ? PictureFormat.Jpeg : PictureFormat.Png,
+        Picture: Picture,
         Dpi: int.Parse((string)((ComboBoxItem)DpiBox.SelectedItem).Tag),
-        Quality: (int)QualityBox.Value);
+        Quality: (int)QualityBox.Value,
+        NamePattern: NameBox.Text,
+        Replace: ReplaceBox.IsChecked == true,
+        Colour: Colour);
 
     private async Task RunAsync()
     {
@@ -104,6 +125,16 @@ public partial class ExportPanel : ToolPanel
     }
 
     private void PictureTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_ready) Refresh();
+    }
+
+    private void ColourBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_ready) Refresh();
+    }
+
+    private void NameBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (_ready) Refresh();
     }

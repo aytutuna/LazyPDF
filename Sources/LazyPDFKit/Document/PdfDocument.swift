@@ -24,6 +24,10 @@ public final class PdfDocument {
     var password: String?
     var headerVersionEnd = 0
     var hadInfo = false
+    /// How many attachments a page assembly left out of this document because they would not decode or were over the size limit.
+    public internal(set) var skippedAttachments = 0
+    /// How many objects a page assembly could not read in the source and so left out of this document.
+    public internal(set) var droppedObjects = 0
 
     // Cross-references
     /// Where the newest cross-reference section starts, as the file said; 0 when the table was rebuilt.
@@ -35,6 +39,8 @@ public final class PdfDocument {
     /// The table was rebuilt from a scan, so the offsets in the file's own cross-reference data cannot be built on.
     var xrefRebuilt = false
     var entries: [Int: Entry] = [:]
+    /// The numbers of `entries` in the order the file listed them (the order the C# Dictionary enumerates), for walks that must match it.
+    var entryOrder: [Int] = []
     var sections: [Int] = []
     var hybridStreams = Set<Int>()
     var loadingXref = false
@@ -54,6 +60,11 @@ public final class PdfDocument {
     var lastEndstream = -2
     var lastEndobj = -2
     var lengthRepaired = Set<Int>()
+
+    // The last globals stream decoded: the images of a page that share one come one after the other.
+    var globalsOf: PdfStream?
+    var globalsSource: [UInt8]?
+    var globalsData: [UInt8]?
 
     // Security
     #if canImport(Security)

@@ -33,6 +33,34 @@ public class OcrReviewFixTests
         }
     }
 
+    [Theory]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void WordBoxesOfARotatedPageCoverTheTurnedWords(int degrees)
+    {
+        var document = OcrKit.Scan();
+        var geometry = new PageGeometry(document.Pages[0]);
+        PdfOcrLayer.Add(document, [new OcrPageWords(0, OcrKit.Words(), (int)geometry.Width, (int)geometry.Height)], "en-US");
+        var before = PdfOcrLayer.Words(document, document.Pages[0]);
+        PageOperations.Rotate(document, [0], degrees);
+        var after = PdfOcrLayer.Words(document, document.Pages[0]);
+
+        double w = geometry.Width, h = geometry.Height;
+        for (int i = 0; i < before.Count; i++)
+        {
+            var a = before[i].Box;
+            var (x, y, bw, bh) = degrees switch
+            {
+                90 => (h - a.Y - a.Height, a.X, a.Height, a.Width),
+                180 => (w - a.X - a.Width, h - a.Y - a.Height, a.Width, a.Height),
+                _ => (a.Y, w - a.X - a.Width, a.Height, a.Width),
+            };
+            var b = after[i].Box;
+            Assert.True(Math.Abs(b.X - x) < 1 && Math.Abs(b.Y - y) < 1 && Math.Abs(b.Width - bw) < 1 && Math.Abs(b.Height - bh) < 1, $"word {i}: expected {x},{y},{bw},{bh} got {b}");
+        }
+    }
+
     [Fact]
     public async Task AnOwnLayerIsReplacedOnAPageWithAVisibleStampWhenAskedAndKeptWhenNot()
     {

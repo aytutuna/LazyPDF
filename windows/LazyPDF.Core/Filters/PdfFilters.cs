@@ -11,13 +11,13 @@ public sealed record PdfDecodedStream(byte[] Data, string? Codec, PdfDictionary?
 public static class PdfFilters
 {
     /// <summary>The most a filter chain may expand to unless the caller says otherwise.</summary>
-    public const long DefaultMaxSize = 1L << 30;
+    public const long DefaultMaxSize = 256L << 20;
 
     private const int MaxColors = 1 << 16;
 
     /// <summary>
     /// The data of a stream with its filters undone. Both arguments are resolved: a name or an
-    /// array of names, a dictionary or an array of them. An image codec (DCT, JPX, JBIG2) is
+    /// array of names, a dictionary or an array of them. An image codec (DCT, JPX) is
     /// <see cref="PdfReadProblem.Unsupported"/> here; see <see cref="DecodeToCodec"/>.
     /// </summary>
     public static byte[] Decode(byte[] data, PdfObject? filter, PdfObject? parameters) =>
@@ -29,17 +29,35 @@ public static class PdfFilters
 
     /// <summary>With <paramref name="strict"/> a Flate stream that breaks off or does not decode cleanly is damage, not a short result.</summary>
     internal static byte[] Decode(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool strict) =>
-        Run(data, filter, parameters, maxSize, stopAtCodec: false, strict).Data;
+        Run(data, filter, parameters, maxSize, stopAtCodec: false, strict, keepJbig2: false, strictJbig2: false).Data;
 
     /// <summary>
     /// Undoes the filters before an image codec and stops there: the bytes are the codec's input
-    /// (a JPEG file, say), with the codec's name ("DCTDecode", "JPXDecode" or "JBIG2Decode") and its
-    /// /DecodeParms. Without a codec in the chain the data is fully decoded and the name is null.
+    /// (a JPEG file, say), with the codec's name ("DCTDecode" or "JPXDecode") and its /DecodeParms. Without a codec in the chain the data is fully decoded and the name is null.
     /// </summary>
     public static PdfDecodedStream DecodeToCodec(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize = DefaultMaxSize) =>
-        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false);
+        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: false, strictJbig2: false);
 
-    private static PdfDecodedStream Run(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool stopAtCodec, bool strict)
+    /// <summary>As <see cref="DecodeToCodec(byte[], PdfObject?, PdfObject?, long)"/> with JBIG2Decode left coded too, for a caller that changes only the filters in front of it.</summary>
+    internal static PdfDecodedStream DecodeToCodec(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool keepJbig2) =>
+        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2, strictJbig2: false);
+
+    /// <summary>
+    /// As <see cref="DecodeToCodec(byte[], PdfObject?, PdfObject?, long)"/>, but a JBIG2 page that could only be partly decoded is
+    /// <see cref="PdfReadProblem.Damaged"/>, for a caller that would write the missing part out as if it were white.
+    /// </summary>
+    internal static PdfDecodedStream DecodeToCodecWhole(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize) =>
+        Run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: false, strictJbig2: true);
+
+    /// <summary>Whether the chain holds the filter <paramref name="name"/> (its full name).</summary>
+    internal static bool Uses(PdfObject? filter, string name) => filter switch
+    {
+        PdfName n => n.Value == name,
+        PdfArray array => array.Items.Any(i => i is PdfName n && n.Value == name),
+        _ => false,
+    };
+
+    private static PdfDecodedStream Run(byte[] data, PdfObject? filter, PdfObject? parameters, long maxSize, bool stopAtCodec, bool strict, bool keepJbig2, bool strictJbig2)
     {
         List<string> filters = filter switch
         {
@@ -82,6 +100,9 @@ public static class PdfFilters
                     if ((decodeParms?["Name"] as PdfName)?.Value is not (null or "Identity"))
                         throw new PdfReadException(PdfReadProblem.Unsupported, "A named crypt filter reached the filter layer.");
                     break;
+                case "JBIG2Decode" when !keepJbig2:
+                    data = DecodeJbig2(data, decodeParms, maxSize, strictJbig2);
+                    break;
                 case "DCTDecode" or "DCT" or "JPXDecode" or "JBIG2Decode":
                     if (!stopAtCodec) throw new PdfReadException(PdfReadProblem.Unsupported, $"The /{filters[i]} filter is an image codec.");
                     string codec = filters[i] == "DCT" ? "DCTDecode" : filters[i];
@@ -92,6 +113,15 @@ public static class PdfFilters
         }
         return new PdfDecodedStream(data, null, null);
     }
+
+    /// <summary>
+    /// /JBIG2Globals is a stream; it is read as the data it holds, so the caller passes one whose data is in memory
+    /// (<see cref="PdfStream.Data"/> set), as <c>PdfDocument.DecodeSpec</c> does when asked to decode. It also adds the image's
+    /// /Width and /Height to the parameters (they are no part of the filter's own): the page is fitted to that size. Without
+    /// them, for a stream that is not an image, the page keeps its own size.
+    /// </summary>
+    private static byte[] DecodeJbig2(byte[] data, PdfDictionary? p, long maxSize, bool whole) =>
+        Jbig2.Decode((p?["JBIG2Globals"] as PdfStream)?.Data ?? [], data, maxSize, Math.Max(0, Int(p?["Width"], 0)), Math.Max(0, Int(p?["Height"], 0)), whole);
 
     private static byte[] DecodeCcitt(byte[] data, PdfDictionary? p, long maxSize)
     {
@@ -109,6 +139,14 @@ public static class PdfFilters
 
     public static byte[] Inflate(byte[] data, long maxSize) => Inflate(data, maxSize, strict: false);
 
+    /// <summary>A raw deflate stream (a zip entry) inflated; a stream that breaks off or does not inflate is damage.</summary>
+    public static byte[] InflateRaw(byte[] data, long maxSize)
+    {
+        var output = new FilterBuffer(maxSize, (int)Math.Min(data.Length * 4L, 1 << 22));
+        if (!InflateFrom(data, 0, output, strict: true)) throw PdfReadException.Damaged("A compressed stream does not inflate.");
+        return output.ToArray();
+    }
+
     private static byte[] Inflate(byte[] data, long maxSize, bool strict)
     {
         if (data.Length == 0) return [];
@@ -116,20 +154,21 @@ public static class PdfFilters
         // The deflate stream is read bare, past a valid zlib header: the Adler-32 check would throw away
         // the last block of a file whose checksum is wrong (ISO 32000-1 7.4.4).
         int header = data.Length >= 2 && (data[0] & 0x0F) == 8 && (data[0] * 256 + data[1]) % 31 == 0 ? 2 : 0;
-        InflateFrom(data, header, output, strict);
-        if (output.Count == 0 && header > 0) InflateFrom(data, 0, output, strict);
-        if (output.Count == 0) throw PdfReadException.Damaged("A compressed stream does not inflate.");
+        bool clean = InflateFrom(data, header, output, strict);
+        if (output.Count == 0 && !clean && header > 0) clean = InflateFrom(data, 0, output, strict);
+        if (output.Count == 0 && !clean) throw PdfReadException.Damaged("A compressed stream does not inflate.");
         return output.ToArray();
     }
 
-    private static void InflateFrom(byte[] data, int start, FilterBuffer output, bool strict)
+    private static bool InflateFrom(byte[] data, int start, FilterBuffer output, bool strict)
     {
         using var input = new EndWatch(data, start);
         using var d = new DeflateStream(input, CompressionMode.Decompress);
-        Pump(d, output, strict);
+        bool pumped = Pump(d, output, strict);
         // DeflateStream reports a stream that breaks off as the end of its data. It asks its source for more
         // input only when the final block has not ended, so a source that ran dry shows the break.
         if (strict && output.Count > 0 && input.RanDry) throw PdfReadException.Damaged("A compressed stream breaks off.");
+        return pumped && !input.RanDry;
     }
 
     private sealed class EndWatch(byte[] data, int start) : MemoryStream(data, start, data.Length - start)
@@ -147,7 +186,7 @@ public static class PdfFilters
         }
     }
 
-    private static void Pump(Stream source, FilterBuffer output, bool strict)
+    private static bool Pump(Stream source, FilterBuffer output, bool strict)
     {
         try
         {
@@ -158,6 +197,7 @@ public static class PdfFilters
                 if (read == 0) break;
                 output.Commit(read);
             }
+            return true;
         }
         catch (InvalidDataException) when (strict && output.Count > 0)
         {
@@ -165,6 +205,7 @@ public static class PdfFilters
         }
         catch (InvalidDataException)
         {
+            return false;
         }
     }
 

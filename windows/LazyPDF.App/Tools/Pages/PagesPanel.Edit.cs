@@ -11,31 +11,41 @@ internal sealed record PickedPages(PdfDocument Source, List<int> Pages);
 
 public partial class PagesPanel
 {
-    private bool Apply(string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
+    private bool Apply(string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status, Action? after = null)
     {
         if (Tab is not { } tab || Host is not { } host) return false;
-        _reselect = reselect;
-        try
+        return PageJobs.Gated(tab, host, () =>
         {
-            return PageJobs.Apply(tab, host, label, change, status);
-        }
-        finally
-        {
-            _reselect = null;
-        }
+            _reselect = reselect;
+            try
+            {
+                bool done = PageJobs.Apply(tab, host, label, change, status);
+                if (done) after?.Invoke();
+                return done;
+            }
+            finally
+            {
+                _reselect = null;
+            }
+        });
     }
 
-    private async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
+    private async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status, Action? after = null)
     {
-        _reselect = reselect;
-        try
+        return await PageJobs.GatedAsync(tab, host, async () =>
         {
-            return await PageJobs.ApplyAsync(tab, host, busy, label, change, status);
-        }
-        finally
-        {
-            _reselect = null;
-        }
+            _reselect = reselect;
+            try
+            {
+                bool done = await PageJobs.ApplyAsync(tab, host, busy, label, change, status);
+                if (done) after?.Invoke();
+                return done;
+            }
+            finally
+            {
+                _reselect = null;
+            }
+        });
     }
 
     private void TurnLeft_Click(object sender, RoutedEventArgs e) => Turn(-90);
@@ -64,19 +74,24 @@ public partial class PagesPanel
             Host!.ShowProblem(new Problem(Loc.T("Cannot delete every page"), Loc.T("A file needs at least one page. Leave one page out of the selection.")));
             return;
         }
-        Apply(Loc.T("Delete pages"), d => PageOperations.Delete(d, pages), null, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+        var (tab, host) = (Tab!, Host!);
+        PageJobs.Gated(tab, host, () =>
+        {
+            PageJobs.Delete(tab, host, Loc.T("Delete pages"), pages, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+            return true;
+        });
     }
 
-    private void Earlier_Click(object sender, RoutedEventArgs e)
-    {
-        var pages = Selected();
-        MoveTo(pages, pages[0] - 1);
-    }
+    private void Earlier_Click(object sender, RoutedEventArgs e) => Nudge(-1);
 
-    private void Later_Click(object sender, RoutedEventArgs e)
+    private void Later_Click(object sender, RoutedEventArgs e) => Nudge(1);
+
+    private void Nudge(int step)
     {
         var pages = Selected();
-        MoveTo(pages, pages[^1] + 2);
+        int moved = pages.Zip(PageEdits.Nudged(pages, step, Cells.Count)).Count(z => z.First != z.Second);
+        Apply(Loc.T("Move pages"), d => PageEdits.Nudge(d, pages, step), PageEdits.Nudged(pages, step, Cells.Count),
+              Loc.Plural(moved, "{0} page moved", "{0} pages moved", moved));
     }
 
     private bool MoveTo(IReadOnlyCollection<int> pages, int before) =>
@@ -87,11 +102,7 @@ public partial class PagesPanel
         var tab = Tab!;
         var host = Host!;
         var pages = Selected();
-        var failed = new Problem(Loc.T("Pages not extracted"), Loc.T("The pages could not be copied into a new file. Try fewer pages."));
-        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Extracting pages"), failed) is not { } bytes) return;
-        await host.OpenNewAsync(bytes, Loc.T("{0} extract.pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title)));
-        host.SetStatus(Loc.Plural(pages.Count, "{0} page extracted", "{0} pages extracted", pages.Count));
-        CopyRules.NoteUnprotected(tab.Document, host);
+        await PageTransfer.ToNewTabAsync(new PagePayload(tab, [.. pages], tab.Revision), host, files: true);
     }
 
     private void Blank_Click(object sender, RoutedEventArgs e)
@@ -123,8 +134,9 @@ public partial class PagesPanel
         if (selection.Count == 0) return;
         if (await PickPagesAsync(host, Taken.Text) is not { } picked) return;
         var (source, taken) = picked;
+        bool tagged = PageJobs.IsTagged(tab);
         await ApplyAsync(tab, host, Loc.T("Replacing pages"), Loc.T("Replace pages"), d => PageEdits.Replace(d, selection, source, taken),
-                         Enumerable.Range(selection.Max() + 1 - selection.Count, taken.Count), Loc.T("Pages replaced."));
+                         Enumerable.Range(selection.Max() + 1 - selection.Count, taken.Count), Loc.T("Pages replaced."), () => PageJobs.NoticeIfUntagged(tab, host, tagged));
     }
 
     // A PDF chosen by the person, opened off the UI thread, with the pages the box asks for. Null when there is none to use.

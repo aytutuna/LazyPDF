@@ -31,7 +31,7 @@ extension PdfAConversionRun {
     private func profileUsable(_ profile: PdfStream) -> Bool {
         do {
             guard let n = document.integer(profile.dictionary, "N"), n == 1 || n == 3 || n == 4 else { return false }
-            return PdfAChecker.iccProblem(try document.data(profile, 32 << 20), n, part == 1 ? 2 : 4) == nil
+            return PdfAChecker.iccProblem(try document.data(profile, 32 << 20), n, part == 1 ? 2 : 4, true) == nil
         } catch {
             return false
         }

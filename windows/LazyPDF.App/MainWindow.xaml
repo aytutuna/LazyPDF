@@ -17,7 +17,7 @@
         <Style x:Key="DocumentTabItemStyle" TargetType="ListBoxItem">
             <Setter Property="AutomationProperties.Name" Value="{Binding AutomationName}" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-            <Setter Property="Padding" Value="10,5,4,7" />
+            <Setter Property="Padding" Value="10,3,4,5" />
             <Setter Property="Margin" Value="0,0,2,0" />
             <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
             <Setter Property="Template">
@@ -44,6 +44,11 @@
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
                             </Trigger>
+                            <DataTrigger Binding="{Binding PageDropHot}" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                <Setter TargetName="Bd" Property="BorderThickness" Value="2" />
+                                <Setter TargetName="Bd" Property="Margin" Value="-2" />
+                            </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -53,8 +58,8 @@
         <DataTemplate x:Key="DocumentTabTemplate">
             <DockPanel x:Name="Row" MinWidth="64" MaxWidth="220" Background="Transparent" ToolTip="{Binding Title}">
                 <Button x:Name="CloseButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;"
-                        Width="22" Height="22" FontSize="10" Margin="6,0,0,0" Focusable="False"
-                        ToolTip="{loc:T Close}" AutomationProperties.Name="{loc:T Close}" Click="CloseTab_Click" />
+                        Width="28" Height="28" FontSize="10" Margin="6,0,0,0"
+                        ToolTip="{loc:T Close}" AutomationProperties.Name="{Binding CloseAutomationName}" Click="CloseTab_Click" />
                 <Ellipse x:Name="DirtyDot" DockPanel.Dock="Right" Width="7" Height="7" Margin="6,0,0,0"
                          Fill="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed"
                          ToolTip="{loc:T Unsaved changes}" />
@@ -153,8 +158,13 @@
                     <Button.ContextMenu>
                         <ContextMenu x:Name="SaveMenu">
                             <MenuItem x:Name="SaveAsItem" Header="{loc:T Save as…}" AutomationProperties.Name="{loc:T Save as}" Click="SaveAs_Click" />
+                            <MenuItem x:Name="SaveCopyItem" Header="{loc:T Save a copy…}" AutomationProperties.Name="{loc:T Save a copy}"
+                                      ToolTip="{loc:T Writes the file as it is now under another name and keeps this one as it is.}" Click="SaveCopy_Click" />
                             <MenuItem x:Name="SaveCompactItem" Header="{loc:T Save compact…}" AutomationProperties.Name="{loc:T Save compact}"
                                       ToolTip="{loc:T Writes the file again without its history of changes.}" Click="SaveCompact_Click" />
+                            <Separator />
+                            <MenuItem x:Name="SaveAllItem" Header="{loc:T Save all}" AutomationProperties.Name="{loc:T Save all}"
+                                      ToolTip="{loc:T Saves every file that has changes.}" Click="SaveAll_Click" />
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
@@ -165,20 +175,33 @@
                         AutomationProperties.Name="{loc:T Redo}" Click="Redo_Click" />
                 <Button x:Name="PrintButton" Style="{StaticResource IconButtonStyle}" Content="&#xE749;" ToolTip="{loc:T Print (Ctrl+P)}"
                         AutomationProperties.Name="{loc:T Print}" Click="Print_Click" />
+                <Button x:Name="PrintMenuButton" Style="{StaticResource IconButtonStyle}" Content="&#xE712;" ToolTip="{loc:T More ways to print}"
+                        AutomationProperties.Name="{loc:T More ways to print}" Click="PrintMenu_Click" Visibility="Collapsed">
+                    <Button.ContextMenu>
+                        <ContextMenu x:Name="PrintMenu">
+                            <MenuItem x:Name="PrintHereItem" Header="{loc:T Print here…}" AutomationProperties.Name="{loc:T Print here}" InputGestureText="Ctrl+Shift+P"
+                                      ToolTip="{loc:T Opens the Windows print dialog with the print layout instead of sending the file to Lazy Print.}" Click="PrintHere_Click" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
                 <Rectangle Width="1" Margin="6,8" Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
                 <Button x:Name="SettingsButton" Style="{StaticResource IconButtonStyle}" Content="&#xE713;" ToolTip="{loc:T Settings}"
                         AutomationProperties.Name="{loc:T Settings}" Click="Settings_Click" />
             </StackPanel>
             <Button x:Name="TabOverflow" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70D;" Visibility="Collapsed"
                     VerticalAlignment="Center" KeyboardNavigation.TabIndex="1" ToolTip="{loc:T All open files}"
-                    AutomationProperties.Name="{loc:T All open files}" Click="TabOverflow_Click" />
-            <ListBox x:Name="TabList" Background="Transparent" BorderThickness="0" Padding="0" Margin="0" KeyboardNavigation.TabIndex="0"
+                    AutomationProperties.Name="{loc:T All open files}" Click="TabOverflow_Click"
+                    AllowDrop="True" DragOver="TabList_DragOver" DragLeave="TabList_DragLeave" Drop="TabOverflow_Drop" />
+            <ListBox x:Name="TabList" Background="Transparent" BorderThickness="0" Padding="0" Margin="0" KeyboardNavigation.TabIndex="0" KeyboardNavigation.TabNavigation="Continue"
                      ItemContainerStyle="{StaticResource DocumentTabItemStyle}" ItemTemplate="{StaticResource DocumentTabTemplate}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
                      AutomationProperties.Name="{loc:T Open files}" AllowDrop="True"
-                     SelectionChanged="TabList_SelectionChanged" PreviewMouseDown="TabList_PreviewMouseDown"
+                     SelectionChanged="TabList_SelectionChanged" PreviewMouseDown="TabList_PreviewMouseDown" PreviewKeyDown="TabList_PreviewKeyDown"
                      PreviewMouseLeftButtonDown="TabList_PreviewMouseLeftButtonDown" PreviewMouseMove="TabList_PreviewMouseMove"
-                     Drop="TabList_Drop" DragOver="TabList_DragOver">
+                     Drop="TabList_Drop" DragOver="TabList_DragOver" DragLeave="TabList_DragLeave" ContextMenuOpening="TabList_ContextMenuOpening">
+                <ListBox.ContextMenu>
+                    <ContextMenu />
+                </ListBox.ContextMenu>
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <local:TabStripPanel />
@@ -191,7 +214,11 @@
              show while the window is narrow. -->
         <Border Grid.Row="2" x:Name="ToolStrip" BorderThickness="0,1,0,0" Padding="8,2,8,2" SizeChanged="ToolStrip_SizeChanged"
                 BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
-            <StackPanel x:Name="GroupPanel" Orientation="Horizontal" AutomationProperties.Name="{loc:T Tools}" />
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE946;" Click="FileInfo_Click"
+                        ToolTip="{loc:T File information}" AutomationProperties.Name="{loc:T File information}" />
+                <StackPanel x:Name="GroupPanel" Orientation="Horizontal" AutomationProperties.Name="{loc:T Tools}" />
+            </DockPanel>
         </Border>
 
         <Grid Grid.Row="3" x:Name="ContentArea" SizeChanged="ContentArea_SizeChanged">
@@ -200,9 +227,9 @@
             <Grid x:Name="Workspace">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition x:Name="SideColumn" Width="Auto" />
+                    <ColumnDefinition x:Name="SideColumn" Width="260" MinWidth="180" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition x:Name="InspectorColumn" Width="280" MinWidth="180" />
                 </Grid.ColumnDefinitions>
 
                 <!-- The icon rail; each button opens a side panel, and the one that is open closes it again. -->
@@ -212,7 +239,7 @@
                             Click="RailToggle_Click" />
                 </StackPanel>
 
-                <Border Grid.Column="1" x:Name="SidePane" Width="260" Visibility="Collapsed" BorderThickness="0,0,1,0"
+                <Border Grid.Column="1" x:Name="SidePane" Visibility="Collapsed" BorderThickness="0,0,1,0"
                         BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
                     <DockPanel>
                         <DockPanel DockPanel.Dock="Top" Margin="12,8,4,4">
@@ -231,8 +258,17 @@
                     <ContentControl x:Name="ViewerHost" IsTabStop="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                 </Border>
 
+                <GridSplitter Grid.Column="2" x:Name="SideSplitter" Width="6" HorizontalAlignment="Left" ResizeDirection="Columns"
+                              ResizeBehavior="PreviousAndCurrent" Background="Transparent" ShowsPreview="False" Cursor="SizeWE"
+                              KeyboardIncrement="12" Visibility="Collapsed" AutomationProperties.Name="{loc:T Resize the side panel}"
+                              DragCompleted="SideSplitter_Changed" KeyUp="SideSplitter_Changed" MouseDoubleClick="SideSplitter_Reset" />
+                <GridSplitter Grid.Column="2" x:Name="InspectorSplitter" Width="6" HorizontalAlignment="Right" ResizeDirection="Columns"
+                              ResizeBehavior="CurrentAndNext" Background="Transparent" ShowsPreview="False" Cursor="SizeWE"
+                              KeyboardIncrement="12" Visibility="Collapsed" AutomationProperties.Name="{loc:T Resize the inspector}"
+                              DragCompleted="InspectorSplitter_Changed" KeyUp="InspectorSplitter_Changed" MouseDoubleClick="InspectorSplitter_Reset" />
+
                 <!-- The inspector: the panel of the active tool, with its action pinned below. -->
-                <Border Grid.Column="3" x:Name="Inspector" Width="280" BorderThickness="1,0,0,0"
+                <Border Grid.Column="3" x:Name="Inspector" BorderThickness="1,0,0,0"
                         BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -266,9 +302,9 @@
                     <DockPanel>
                         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button x:Name="PasswordOpen" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Open}" AutomationProperties.Name="{loc:T Open}" MinWidth="88"
+                                <Button x:Name="PasswordOpen" Style="{StaticResource AccentButtonStyle}" Content="{loc:T _Open}" AutomationProperties.Name="{loc:T Open}" MinWidth="88"
                                         Margin="0,0,8,0" IsDefault="True" Click="PasswordOpen_Click" />
-                                <Button Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="PasswordCancel_Click" />
+                                <Button Content="{loc:T _Cancel}" AutomationProperties.Name="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="PasswordCancel_Click" />
                             </StackPanel>
                         </Border>
                         <StackPanel Margin="24,20,24,20">
@@ -287,16 +323,24 @@
 
             <!-- What to do with the changes of a document that is closing. -->
             <Grid x:Name="CloseOverlay" Style="{StaticResource OverlayScrimStyle}" PreviewKeyDown="CloseOverlay_PreviewKeyDown">
-                <Border Style="{StaticResource DialogCardStyle}" MaxWidth="440" MinWidth="340" Margin="24"
+                <Border Style="{StaticResource DialogCardStyle}" MaxWidth="560" MinWidth="340" Margin="24"
                         HorizontalAlignment="Center" VerticalAlignment="Center">
                     <DockPanel>
                         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
+                          <DockPanel>
+                            <StackPanel x:Name="CloseAllGroup" DockPanel.Dock="Left" Orientation="Horizontal" Visibility="Collapsed">
+                                <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Save all}" AutomationProperties.Name="{loc:T Save all}" Margin="0,0,8,0"
+                                        Click="CloseSaveAll_Click" />
+                                <Button x:Name="CloseDiscardAllButton" Style="{StaticResource SubtleButtonStyle}" Margin="0,0,8,0"
+                                        Click="CloseDiscardAll_Click" />
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button x:Name="CloseSaveButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Save}" AutomationProperties.Name="{loc:T Save}" MinWidth="88" Margin="0,0,8,0"
+                                <Button x:Name="CloseSaveButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T _Save}" AutomationProperties.Name="{loc:T Save}" MinWidth="88" Margin="0,0,8,0"
                                         IsDefault="True" Click="CloseSave_Click" />
                                 <Button x:Name="CloseDiscardButton" MinWidth="88" Margin="0,0,8,0" Click="CloseDiscard_Click" />
-                                <Button x:Name="CloseCancelButton" Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="CloseCancel_Click" />
+                                <Button x:Name="CloseCancelButton" Content="{loc:T _Cancel}" AutomationProperties.Name="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="CloseCancel_Click" />
                             </StackPanel>
+                          </DockPanel>
                         </Border>
                         <StackPanel Margin="24,20,24,20">
                             <TextBlock x:Name="CloseTitle" Style="{StaticResource SubtitleText}" TextWrapping="Wrap" Margin="0,0,0,8"
@@ -314,9 +358,9 @@
                     <DockPanel>
                         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button x:Name="RestoreButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Restore}" AutomationProperties.Name="{loc:T Restore}" MinWidth="88" Margin="0,0,8,0"
+                                <Button x:Name="RestoreButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T _Restore}" AutomationProperties.Name="{loc:T Restore}" MinWidth="88" Margin="0,0,8,0"
                                         IsDefault="True" Click="Restore_Click" />
-                                <Button Content="{loc:T Discard}" AutomationProperties.Name="{loc:T Discard}" MinWidth="88" Click="DiscardRecovery_Click" />
+                                <Button Content="{loc:T _Discard}" AutomationProperties.Name="{loc:T Discard}" MinWidth="88" Click="DiscardRecovery_Click" />
                             </StackPanel>
                         </Border>
                         <StackPanel Margin="24,20,24,20">
@@ -324,7 +368,10 @@
                                        AutomationProperties.HeadingLevel="Level1" />
                             <TextBlock Text="{loc:T Lazy PDF closed before these were saved. Restore them to carry on where you were.}"
                                        Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,8" />
-                            <TextBlock x:Name="RecoveryList" Style="{StaticResource SecondaryBodyText}" TextWrapping="Wrap" />
+                            <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="RecoveryList" />
+                            </ScrollViewer>
+                            <TextBlock x:Name="RecoveryUntickedNote" Text="{loc:T Files you untick are removed.}" Style="{StaticResource ReasonText}" Margin="0,8,0,0" Visibility="Collapsed" />
                         </StackPanel>
                     </DockPanel>
                 </Border>
@@ -339,32 +386,56 @@
                             <Button x:Name="SettingsDoneButton" Content="{loc:T Done}" AutomationProperties.Name="{loc:T Done}" MinWidth="88" HorizontalAlignment="Right" IsDefault="True" IsCancel="True"
                                     Click="SettingsDone_Click" />
                         </Border>
-                        <StackPanel Margin="24,20,24,20">
-                            <TextBlock Text="{loc:T Settings}" Style="{StaticResource SubtitleText}" Margin="0,0,0,16"
-                                       AutomationProperties.HeadingLevel="Level1" />
-                            <TextBlock Text="{loc:T Appearance}" Style="{StaticResource FieldLabelText}" />
-                            <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,16" HorizontalAlignment="Left">
-                                <StackPanel Orientation="Horizontal">
-                                    <RadioButton x:Name="AppearanceSystem" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Windows}"
-                                                 GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Follow Windows}"
-                                                 Checked="Appearance_Checked" />
-                                    <RadioButton x:Name="AppearanceLight" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Light}"
-                                                 GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Light}"
-                                                 Checked="Appearance_Checked" />
-                                    <RadioButton x:Name="AppearanceDark" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Dark}"
-                                                 GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Dark}"
-                                                 Checked="Appearance_Checked" />
+                        <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="24,20,24,20">
+                                <TextBlock Text="{loc:T Settings}" Style="{StaticResource SubtitleText}" Margin="0,0,0,16"
+                                           AutomationProperties.HeadingLevel="Level1" />
+                                <TextBlock Text="{loc:T Appearance}" Style="{StaticResource FieldLabelText}" />
+                                <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,16" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="AppearanceSystem" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Windows}"
+                                                     GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Follow Windows}"
+                                                     Checked="Appearance_Checked" />
+                                        <RadioButton x:Name="AppearanceLight" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Light}"
+                                                     GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Light}"
+                                                     Checked="Appearance_Checked" />
+                                        <RadioButton x:Name="AppearanceDark" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Dark}"
+                                                     GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Dark}"
+                                                     Checked="Appearance_Checked" />
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="{loc:T Language}" Style="{StaticResource FieldLabelText}" />
+                                <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,0" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="LanguageSystem" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Windows}"
+                                                     GroupName="Language" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Follow Windows}"
+                                                     Checked="Language_Checked" />
+                                        <RadioButton x:Name="LanguageEnglish" Style="{StaticResource SegmentedTextItemStyle}" Content="English"
+                                                     GroupName="Language" Padding="14,5,14,6" Checked="Language_Checked" />
+                                        <RadioButton x:Name="LanguageTurkish" Style="{StaticResource SegmentedTextItemStyle}" Content="Türkçe"
+                                                     GroupName="Language" Padding="14,5,14,6" Checked="Language_Checked" />
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="{loc:T Takes effect the next time Lazy PDF starts.}" Style="{StaticResource ReasonText}" Margin="0,6,0,16" />
+                                <StackPanel x:Name="OpenWithSection">
+                                    <CheckBox x:Name="OpenWithToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Show Lazy PDF in Open with}"
+                                              AutomationProperties.Name="{loc:T Show Lazy PDF in Open with}" Click="OpenWith_Click" />
+                                    <TextBlock Text="{loc:T 'Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.'}"
+                                               Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
                                 </StackPanel>
-                            </Border>
-                            <StackPanel x:Name="OpenWithSection">
-                                <CheckBox x:Name="OpenWithToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Show Lazy PDF in Open with}"
-                                          AutomationProperties.Name="{loc:T Show Lazy PDF in Open with}" Click="OpenWith_Click" />
-                                <TextBlock Text="{loc:T 'Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.'}"
+                                <CheckBox x:Name="ReopenLastToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Reopen the files from last time}"
+                                          AutomationProperties.Name="{loc:T Reopen the files from last time}" Margin="0,12,0,0" Click="ReopenLast_Click" />
+                                <TextBlock Text="{loc:T 'When Lazy PDF starts without a file, it opens the files that were open when you closed it.'}"
                                            Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
+                                <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Choose default apps}"
+                                        AutomationProperties.Name="{loc:T Choose default apps}" HorizontalAlignment="Left" Margin="0,12,0,0" Click="DefaultApps_Click" />
+                                <TextBlock Text="{loc:T 'Opens Windows settings, where you can pick the program that opens PDF files.'}"
+                                           Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
+                                <Button x:Name="AboutButton" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T About Lazy PDF}"
+                                        AutomationProperties.Name="{loc:T About Lazy PDF}" HorizontalAlignment="Left" Margin="0,16,0,0" Click="About_Click" />
+
                             </StackPanel>
-                            <Button x:Name="AboutButton" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T About Lazy PDF}"
-                                    AutomationProperties.Name="{loc:T About Lazy PDF}" HorizontalAlignment="Left" Margin="0,16,0,0" Click="About_Click" />
-                        </StackPanel>
+                        </ScrollViewer>
                     </DockPanel>
                 </Border>
             </Grid>
@@ -382,7 +453,7 @@
                             <TextBlock Text="Lazy PDF" Style="{StaticResource SubtitleText}" AutomationProperties.HeadingLevel="Level1" />
                             <TextBlock x:Name="AboutVersion" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
                             <TextBlock x:Name="AboutCopyright" Style="{StaticResource SecondaryBodyText}" Margin="0,2,0,0" />
-                            <TextBlock Text="{loc:T Free. The source is public to read.}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,12,0,0" />
+                            <TextBlock Text="{loc:T Free. Source available under PolyForm Noncommercial 1.0.0.}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,12,0,0" />
                             <StackPanel Orientation="Horizontal" Margin="-11,8,0,12">
                                 <Button x:Name="SiteLink" Style="{StaticResource SubtleButtonStyle}" Click="SiteLink_Click" />
                                 <Button x:Name="PrivacyLink" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Privacy}"

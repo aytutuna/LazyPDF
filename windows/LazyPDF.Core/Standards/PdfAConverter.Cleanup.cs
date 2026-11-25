@@ -99,6 +99,7 @@ internal sealed partial class PdfAConversionRun
             {
                 if (IsForbidden(d[key]) && d.Remove(key)) removed++;
             }
+            if (_doc.Resolve(d["Next"]) is PdfArray chain) removed += chain.Items.RemoveAll(IsForbidden);
             if (_doc.Dict(d, "AA") is not { } triggers) continue;
             if (ReferenceEquals(d, _doc.Catalog) || IsFieldOrWidget(_doc, d))
             {
@@ -268,7 +269,7 @@ internal sealed partial class PdfAConversionRun
         try
         {
             var (filter, parameters, _) = _doc.DecodeSpec(stream);
-            var decoded = PdfFilters.DecodeToCodec(_doc.RawData(stream), filter, parameters, 256L << 20);
+            var decoded = PdfFilters.DecodeToCodec(_doc.RawData(stream), filter, parameters, 256L << 20, keepJbig2: true);
             if (decoded.Codec is null)
             {
                 stream.Data = PdfFilterEncoders.Flate(decoded.Data);

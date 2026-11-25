@@ -2,6 +2,8 @@ namespace LazyPDF.Core;
 
 public static class AnnotationText
 {
+    public static string Undrawn(string characters) => Loc.T("No installed font has these characters, so they are left blank: {0}", characters);
+
     public static string NoFont => Loc.T("No font can draw this text. Choose another font.");
 
     public static string KindName(AnnotationType type) => type switch
@@ -30,7 +32,7 @@ public static class AnnotationText
     {
         ReviewStatus.Accepted => Loc.T("Accepted"),
         ReviewStatus.Rejected => Loc.T("Rejected"),
-        ReviewStatus.Cancelled => Loc.T("Cancelled"),
+        ReviewStatus.Cancelled => Loc.T("Canceled"),
         ReviewStatus.Completed => Loc.T("Completed"),
         ReviewStatus.Marked => Loc.T("Marked"),
         ReviewStatus.Unmarked => Loc.T("Unmarked"),

@@ -71,8 +71,14 @@ final class PdfAConversionRun {
     func run() throws -> PdfAConversion {
         if let security = document.security, !security.openedAsOwner, !security.permissions.contains(.modify) { return refused(PdfAText.noRights) }
         if PdfForm.read(document).xfa == .dynamic { return refused(PdfAText.dynamicXfa) }
+        let hint = try level.needsTags() ? prepareTags() : nil
         let before = PdfAChecker(document, level)
         before.run()
+        if !before.structureIssues.isEmpty {
+            var problems: [String] = []
+            for issue in before.structureIssues where !problems.contains(issue.message) { problems.append(issue.message) }
+            return refused(PdfAText.tagFirst(level, Array(problems.prefix(5)), hint))
+        }
         var needed: [String] = []
         for issue in before.report().issues where issue.clause == "6.4" && issue.message != PdfAText.transparencyGroup {
             if !needed.contains(issue.message) { needed.append(issue.message) }

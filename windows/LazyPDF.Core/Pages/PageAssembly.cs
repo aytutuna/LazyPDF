@@ -7,43 +7,78 @@ public sealed record MergeSource(PdfDocument Document, IReadOnlyList<int>? Pages
 
 /// <summary>
 /// New documents made of pages of others. A new document holds the pages asked for and what they
-/// use and nothing else: no tree, outlines, names or tags of the source, no resource a page only
-/// lists. Page labels, bookmarks and article threads are not carried over.
+/// use and nothing else: no tree, names or tags of the source, no resource a page only lists. Of
+/// the rest of the source it carries what belongs to those pages (see <see cref="PageCarry"/>);
+/// article threads are not carried over.
 /// </summary>
 public static class PageAssembly
 {
-    /// <summary>A document of the pages at these indexes, in this order. Keeps the source's /Info. Throws <see cref="OperationCanceledException"/> when <paramref name="cancel"/> is raised.</summary>
-    public static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, CancellationToken cancel = default)
+    /// <summary>A document of the pages at these indexes, in this order. Keeps the source's /Info. <paramref name="files"/> false leaves the attached files out, for a copy that only goes back in as pages. Throws <see cref="OperationCanceledException"/> when <paramref name="cancel"/> is raised.</summary>
+    public static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, CancellationToken cancel = default, bool files = true) =>
+        Extract(source, pages, files, PageCarry.HasTags(source), cancel);
+
+    // A split keeps the document's attached files in its first part only.
+    private static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, bool files, bool tags, CancellationToken cancel)
     {
         if (pages.Count == 0) throw new ArgumentException("There are no pages to take.", nameof(pages));
         var target = Blank(source.Version);
-        var importer = new PageImporter(source, target);
+        var importer = new PageImporter(source, target) { KeepTags = tags };
         var copies = importer.Import(pages, cancel);
         if (source.Trailer["Info"] is { } info && source.Info is not null) target.Trailer["Info"] = importer.CopyValue(info);
+        PageCarry.Catalog(source, target, importer);
         PageTree.Set(target, copies);
+        PageCarry.Carry(source, target, pages, 0, files: files);
+        if (importer.KeepTags) PageCarry.Tags(source, target, importer, copies);
+        target.DroppedObjects = importer.Dropped;
         return target;
     }
 
-    /// <summary>The pages of each source one after the other. A document listed twice is copied once. <paramref name="cancel"/> is checked between documents and between pages.</summary>
-    public static PdfDocument Merge(IReadOnlyList<MergeSource> sources, CancellationToken cancel = default)
+    /// <summary>The pages of each source one after the other. A document listed twice is copied once. <paramref name="cancel"/> is checked between documents and between pages. Each source with bookmarks adds one under the title in its /Info, else the one in <paramref name="titles"/> at its place.</summary>
+    public static PdfDocument Merge(IReadOnlyList<MergeSource> sources, CancellationToken cancel = default, IReadOnlyList<string>? titles = null)
     {
         if (sources.Count == 0) throw new ArgumentException("There is nothing to merge.", nameof(sources));
         var target = Blank(sources.Select(s => s.Document.Version).MaxBy(v => Version.TryParse(v, out var parsed) ? parsed : new Version(1, 0))!);
         var importers = new Dictionary<PdfDocument, PageImporter>(ReferenceEqualityComparer.Instance);
+        var spare = new List<PageImporter>();
         var order = new List<PdfReference>();
         var origins = new List<object>();
+        var taken = new List<(IReadOnlyList<int> Pages, int Start)>();
+        var tagged = new List<(PdfDocument, PageImporter, IReadOnlyList<PdfReference>)>();
+        bool all = true;
         foreach (var (document, pages) in sources)
         {
             cancel.ThrowIfCancellationRequested();
-            if (!importers.TryGetValue(document, out var importer)) importers[document] = importer = new PageImporter(document, target);
-            var copies = importer.Import(pages ?? [.. Enumerable.Range(0, document.Pages.Count)], cancel);
+            var indexes = pages ?? [.. Enumerable.Range(0, document.Pages.Count)];
+            bool tags = indexes.Count > 0 && PageCarry.HasTags(document);
+            // A tree is copied once for each importer, so a tagged listing of a document seen before gets an importer of its own.
+            PageImporter importer;
+            if (!importers.TryGetValue(document, out var shared))
+                importer = importers[document] = new PageImporter(document, target) { KeepTags = tags };
+            else if (tags)
+                spare.Add(importer = new PageImporter(document, target) { KeepTags = true });
+            else
+                (importer = shared).KeepTags = false;
+            var copies = importer.Import(indexes, cancel);
+            if (importer.KeepTags) tagged.Add((document, importer, copies));
+            else if (indexes.Count > 0) all = false;
+            taken.Add((indexes, order.Count));
             order.AddRange(copies);
             origins.AddRange(copies.Select(_ => (object)document));
         }
         if (order.Count == 0) throw new ArgumentException("The sources have no pages.", nameof(sources));
         var first = sources[0].Document;
         if (first.Trailer["Info"] is { } info && first.Info is not null) target.Trailer["Info"] = importers[first].CopyValue(info);
+        PageCarry.Catalog(first, target, importers[first]);
         PageTree.Set(target, order);
+        var filed = new HashSet<PdfDocument>(ReferenceEqualityComparer.Instance);
+        for (int i = 0; i < sources.Count; i++)
+        {
+            var document = sources[i].Document;
+            string? title = document.Info is { } own ? PdfText.Read(document, own, "Title") : null;
+            PageCarry.Carry(document, target, taken[i].Pages, taken[i].Start, string.IsNullOrEmpty(title) ? titles?.ElementAtOrDefault(i) ?? "" : title, files: filed.Add(document));
+        }
+        PageCarry.MergeTags(target, tagged, all);
+        target.DroppedObjects = importers.Values.Concat(spare).Sum(i => i.Dropped);
         StampRuns.Separate(target, [.. target.Pages.Select((p, i) => (p, origins[i]))]);
         return target;
     }
@@ -57,8 +92,11 @@ public static class PageAssembly
     }
 
     /// <summary>One part for each list of pages.</summary>
-    public static IReadOnlyList<PdfDocument> SplitByRanges(PdfDocument source, IReadOnlyList<IReadOnlyList<int>> parts, CancellationToken cancel = default) =>
-        [.. parts.Select(p => Extract(source, p, cancel))];
+    public static IReadOnlyList<PdfDocument> SplitByRanges(PdfDocument source, IReadOnlyList<IReadOnlyList<int>> parts, CancellationToken cancel = default)
+    {
+        bool tags = PageCarry.HasTags(source);
+        return [.. parts.Select((p, i) => Extract(source, p, i == 0, tags, cancel))];
+    }
 
     /// <summary>A new part starts at each of these pages (0-based); the first part starts at page 0. Where bookmarks of the top level point is a good list.</summary>
     public static IReadOnlyList<PdfDocument> SplitAt(PdfDocument source, IEnumerable<int> starts, CancellationToken cancel = default)
@@ -74,39 +112,66 @@ public static class PageAssembly
     /// <summary>
     /// Parts that each save (<see cref="PdfDocument.SaveRewrite"/> with <paramref name="options"/>) to
     /// no more than <paramref name="maxBytes"/>, as many pages as fit. A page that is bigger alone
-    /// is a part of its own. The size of a part is measured by saving it, so the work is a few saves of each part; <paramref name="cancel"/> is checked before each.
+    /// is a part of its own. The size of a part is measured by saving it, starting from an estimate
+    /// out of the size of the source, so the work is a few saves of each part; the document that fit is the part.
+    /// <paramref name="cancel"/> is checked before each save.
     /// </summary>
     public static IReadOnlyList<PdfDocument> SplitBySize(PdfDocument source, long maxBytes, PdfSaveOptions? options = null, CancellationToken cancel = default)
     {
         if (maxBytes < 1) throw new ArgumentOutOfRangeException(nameof(maxBytes));
         int total = source.Pages.Count;
-        bool Fits(int start, int length) =>
-            Extract(source, [.. Enumerable.Range(start, length)], cancel).SaveRewrite(options).Length <= maxBytes;
+        bool tags = PageCarry.HasTags(source);
+        (int Length, PdfDocument Doc)? fitted = null;
+        bool Fits(int start, int length)
+        {
+            var candidate = Extract(source, [.. Enumerable.Range(start, length)], start == 0, tags, cancel);
+            if (candidate.SaveRewrite(options, cancel: cancel).Length > maxBytes) return false;
+            if (fitted is null || length > fitted.Value.Length) fitted = (length, candidate);
+            return true;
+        }
 
-        var parts = new List<IReadOnlyList<int>>();
+        var parts = new List<PdfDocument>();
         for (int at = 0; at < total;)
         {
-            int low = 1, high = total - at;
-            for (int probe = 2; probe <= total - at; probe *= 2)
+            fitted = null;
+            int remaining = total - at;
+            int low = 1, high = remaining + 1;
+            if (remaining > 1)
             {
-                if (Fits(at, probe)) { low = probe; continue; }
-                high = probe - 1;
-                break;
+                int guess = (int)Math.Clamp((double)maxBytes * total / Math.Max(source.Length, 1), 2, remaining);
+                if (Fits(at, guess))
+                {
+                    low = guess;
+                    for (int step = 1; low + step < high; step *= 2)
+                    {
+                        if (Fits(at, low + step)) low += step;
+                        else { high = low + step; break; }
+                    }
+                }
+                else
+                {
+                    high = guess;
+                    for (int step = 1; high - step > low; step *= 2)
+                    {
+                        if (Fits(at, high - step)) { low = high - step; break; }
+                        high -= step;
+                    }
+                }
+                while (low + 1 < high)
+                {
+                    int mid = (low + high) / 2;
+                    if (Fits(at, mid)) low = mid;
+                    else high = mid;
+                }
             }
-            while (low < high)
-            {
-                int mid = (low + high + 1) / 2;
-                if (Fits(at, mid)) low = mid;
-                else high = mid - 1;
-            }
-            parts.Add([.. Enumerable.Range(at, low)]);
+            parts.Add(fitted is { } f && f.Length == low ? f.Doc : Extract(source, [.. Enumerable.Range(at, low)], at == 0, tags, cancel));
             at += low;
         }
-        return SplitByRanges(source, parts, cancel);
+        return parts;
     }
 
     // A file of a catalog and an empty tree, with a proper table so that opening it needs no repair.
-    private static PdfDocument Blank(string version)
+    internal static PdfDocument Blank(string version)
     {
         string head = $"%PDF-{version}\n%âãÏÓ\n";
         const string catalog = "1 0 obj\n<</Type /Catalog /Pages 2 0 R>>\nendobj\n";

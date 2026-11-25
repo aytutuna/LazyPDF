@@ -154,7 +154,10 @@ struct AsnReader {
         let tag = AsnTag(tagClass: first >> 6, isConstructed: first & 0x20 != 0, value: Int(first & 0x1F))
         let lengthByte = data[start + 1]
         var at = start + 2
-        if lengthByte < 0x80 { return Header(tag: tag, contentStart: at, length: Int(lengthByte)) }
+        if lengthByte < 0x80 {
+            guard Int(lengthByte) <= end - at else { throw AsnContentException() }
+            return Header(tag: tag, contentStart: at, length: Int(lengthByte))
+        }
         if lengthByte == 0x80 {
             guard tag.isConstructed else { throw AsnContentException() }
             return Header(tag: tag, contentStart: at, length: nil)

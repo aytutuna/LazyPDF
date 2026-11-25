@@ -59,6 +59,56 @@ internal static class PageEdits
     public static IEnumerable<int> MovedTo(IReadOnlyCollection<int> pages, int before) =>
         Enumerable.Range(before - pages.Count(p => p < before), pages.Count);
 
+    /// <summary>Moves each chosen page one place past the unchosen page next to it; a run of pages at the edge stays.</summary>
+    public static void Nudge(PdfDocument document, IReadOnlyCollection<int> pages, int step)
+    {
+        int total = document.Pages.Count;
+        var runs = new List<List<int>>();
+        foreach (int page in pages.Order())
+        {
+            if (runs.Count > 0 && runs[^1][^1] == page - 1) runs[^1].Add(page);
+            else runs.Add([page]);
+        }
+        if (step > 0) runs.Reverse();
+        var order = Enumerable.Range(0, total).ToList();
+        foreach (var run in runs)
+        {
+            if (step < 0 ? run[0] == 0 : run[^1] == total - 1) continue;
+            if (step < 0)
+            {
+                int other = order[run[0] - 1];
+                order.RemoveAt(run[0] - 1);
+                order.Insert(run[^1], other);
+            }
+            else
+            {
+                int other = order[run[^1] + 1];
+                order.RemoveAt(run[^1] + 1);
+                order.Insert(run[0], other);
+            }
+        }
+        PageOperations.Reorder(document, order);
+    }
+
+    /// <summary>Where the chosen pages stand after <see cref="Nudge"/>.</summary>
+    public static IEnumerable<int> Nudged(IReadOnlyCollection<int> pages, int step, int total)
+    {
+        var chosen = pages.ToHashSet();
+        foreach (int page in pages)
+        {
+            int end = page;
+            while (chosen.Contains(end + step)) end += step;
+            yield return end + step < 0 || end + step >= total ? page : page + step;
+        }
+    }
+
+    /// <summary>Whether any chosen page has an unchosen page to step past.</summary>
+    public static bool CanNudge(IReadOnlyCollection<int> pages, int step, int total)
+    {
+        var chosen = pages.ToHashSet();
+        return chosen.Any(p => p + step >= 0 && p + step < total && !chosen.Contains(p + step));
+    }
+
     /// <summary>Where the pages and their copies stand after <see cref="PageOperations.Duplicate"/>.</summary>
     public static IEnumerable<int> Duplicated(IReadOnlyCollection<int> pages)
     {
@@ -85,6 +135,31 @@ internal static class PageEdits
         if (landscape.Count > 0) PageOperations.Resize(document, landscape, longSide, shortSide, mode);
     }
 
+    /// <summary>The pages the display rectangle touches; the others would refuse it as a crop box.</summary>
+    public static List<int> CropTargets(PdfDocument document, IReadOnlyCollection<int> pages, DisplayRect area) =>
+        [.. pages.Where(p => !new PageGeometry(document.Pages[p]).ToUser(area).Intersect(document.Pages[p].MediaBox).IsEmpty)];
+
+    private static DisplayRect? MarginBox(PdfDocument document, int page, double left, double top, double right, double bottom)
+    {
+        var shown = new PageGeometry(document.Pages[page]);
+        double width = shown.Width - left - right, height = shown.Height - top - bottom;
+        return width >= 10 && height >= 10 ? new DisplayRect(left, top, width, height) : null;
+    }
+
+    /// <summary>The pages that keep at least 10 points each way after the margins; the others would be left alone.</summary>
+    public static List<int> CropMarginTargets(PdfDocument document, IReadOnlyCollection<int> pages, double left, double top, double right, double bottom) =>
+        [.. pages.Where(p => MarginBox(document, p, left, top, right, bottom) is not null)];
+
+    /// <summary>Cuts the margins, as the page is shown, from every page that keeps enough of itself.</summary>
+    public static void CropMargins(PdfDocument document, IReadOnlyCollection<int> pages, double left, double top, double right, double bottom)
+    {
+        foreach (int page in pages)
+        {
+            if (MarginBox(document, page, left, top, right, bottom) is not { } area) continue;
+            PageOperations.SetBox(document, [page], PageBox.Crop, new PageGeometry(document.Pages[page]).ToUser(area));
+        }
+    }
+
     /// <summary>Sets the display rectangle (page space of the page it was drawn on) as the crop box of every page, each through its own geometry.</summary>
     public static void Crop(PdfDocument document, IReadOnlyCollection<int> pages, DisplayRect area)
     {
@@ -94,6 +169,38 @@ internal static class PageEdits
             PageOperations.SetBox(document, [page], PageBox.Crop, box);
         }
     }
+
+    /// <summary>Sets each page's own display rectangle as its crop box.</summary>
+    public static void CropEach(PdfDocument document, Dictionary<int, DisplayRect> boxes)
+    {
+        foreach (var (page, area) in boxes)
+        {
+            var box = new PageGeometry(document.Pages[page]).ToUser(area);
+            PageOperations.SetBox(document, [page], PageBox.Crop, box);
+        }
+    }
+
+    /// <summary>Resolution the pages are drawn at to look for ink.</summary>
+    public const double TrimDpi = 50;
+
+    /// <summary>The ink of a page drawn at <see cref="TrimDpi"/> with a 6 point border, in points as shown; null for a blank page or one that is trimmed to almost nothing.</summary>
+    public static DisplayRect? TrimBox(PdfRgbaImage image, double width, double height)
+    {
+        if (PageInk.Bounds(image) is not { } ink) return null;
+        const double border = 6;
+        double scale = 72 / TrimDpi;
+        double left = Math.Max(0, ink.Left * scale - border), top = Math.Max(0, ink.Top * scale - border);
+        double right = Math.Min(width, ink.Right * scale + border), bottom = Math.Min(height, ink.Bottom * scale + border);
+        if ((right - left) * (bottom - top) >= 0.95 * width * height) return null;
+        return new DisplayRect(left, top, right - left, bottom - top);
+    }
+
+    /// <summary>
+    /// The pages that look white and have no annotations to show. <paramref name="inkFree"/> is null for a page that could not be drawn, which is never listed.
+    /// A page with visible text is never listed: its ink test misses light grey and faint scans.
+    /// </summary>
+    public static List<int> BlankPages(IReadOnlyList<OcrPageKind> kinds, IReadOnlyList<bool?> inkFree, IReadOnlyList<bool> annotated) =>
+        [.. Enumerable.Range(0, kinds.Count).Where(i => inkFree[i] == true && kinds[i] != OcrPageKind.Text && !annotated[i])];
 
     /// <summary>
     /// Numbers pages <paramref name="first"/> to <paramref name="last"/> as given. The pages after keep the labels they had:

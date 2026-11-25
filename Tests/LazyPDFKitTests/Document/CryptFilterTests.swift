@@ -88,6 +88,22 @@ final class CryptFilterTests: XCTestCase {
         XCTAssertEqual(TestPdf.text(reopened.rawData(globals)), "globals")
     }
 
+    func test_theJbig2StageAfterTheCryptFilterGetsTheOneParameterDictionary() throws {
+        let (file, _) = try encrypted("/Filter [/Crypt /JBIG2Decode] /DecodeParms <</JBIG2Globals 7 0 R>>",
+                                      more: { pdf, s in pdf.stream(7, "", s.encryptStream(7, 0, TestPdf.latin("globals"), PdfDictionary())) }) { _, _ in
+            TestPdf.latin("HELLO")
+        }
+        let document = try PdfDocument.open(file)
+        let spec = try document.decodeSpec(try XCTUnwrap(document.get(6) as? PdfStream), decoding: true)
+        XCTAssertTrue(spec.crypt)
+        XCTAssertEqual((spec.filter as? PdfArray)?.items.compactMap { ($0 as? PdfName)?.value }, ["JBIG2Decode"])
+        let list = try XCTUnwrap(spec.parameters as? PdfArray)
+        XCTAssertEqual(list.items.count, 1)
+        let stage = try XCTUnwrap(list.items[0] as? PdfDictionary)
+        let globals = try XCTUnwrap(stage["JBIG2Globals"] as? PdfStream)
+        XCTAssertEqual(TestPdf.text(globals.data ?? []), "globals")
+    }
+
     func test_aStreamInTheEncryptDictionaryDoesNotStopAKeptHandlerFromSaving() throws {
         let (file, _) = try encrypted("", encryptEntries: " /Junk 7 0 R",
                                       more: { pdf, s in pdf.stream(7, "", s.encryptStream(7, 0, TestPdf.latin("junk"), PdfDictionary())) }) { s, d in

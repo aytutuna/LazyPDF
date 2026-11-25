@@ -39,7 +39,7 @@ public struct OrderedNames<Value> {
 
 public final class StructureTree {
     private static let maxDepth = 128
-    private static let maxNodes = 1_000_000
+    static let maxNodes = 1_000_000
     static let maxMcid = 1_000_000
     static let maxParentSlots = 4_000_000
 
@@ -187,10 +187,11 @@ public final class StructureTree {
             p = up.parent
         }
         detach(kid)
+        if let element = kid as? StructElement { unmark(element) }
         insert(parent, kid, index)
     }
 
-    private func insert(_ parent: StructElement?, _ kid: StructKid, _ index: Int) {
+    func insert(_ parent: StructElement?, _ kid: StructKid, _ index: Int) {
         if let parent {
             let at = index < 0 || index > parent.kidList.count ? parent.kidList.count : index
             parent.kidList.insert(kid, at: at)
@@ -201,7 +202,7 @@ public final class StructureTree {
         kid.parent = parent
     }
 
-    private func detach(_ kid: StructKid) {
+    func detach(_ kid: StructKid) {
         if let parent = kid.parent {
             if let at = parent.kidList.firstIndex(where: { $0 === kid }) { parent.kidList.remove(at: at) }
         } else if let element = kid as? StructElement, let at = rootList.firstIndex(where: { $0 === element }) {
@@ -239,7 +240,13 @@ public final class StructureTree {
 
     private func readKid(_ item: PdfObject?, _ parent: StructElement?, _ page: Int, _ depth: Int, _ into: inout [StructKid]) {
         if let list = item as? PdfArray {
-            for entry in list.items.prefix(Self.maxNodes) { readKid(entry, parent, page, depth, &into) }
+            // An array counts as a node and a nested one as a level, or a stack of arrays inside one object is not bounded.
+            nodes += 1
+            if nodes > Self.maxNodes || depth > Self.maxDepth {
+                isTruncated = true
+                return
+            }
+            for entry in list.items.prefix(Self.maxNodes) { readKid(entry, parent, page, entry is PdfArray ? depth + 1 : depth, &into) }
             return
         }
         nodes += 1

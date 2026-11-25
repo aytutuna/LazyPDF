@@ -51,6 +51,18 @@ public sealed class RestrictedAndScaledPagesTests
     }
 
     [Fact]
+    public async Task AUserUnitPageLoadedAsyncIsLaidOutAtItsRealSize()
+    {
+        using var renderer = new WindowsPageRenderer();
+
+        Assert.True(await renderer.LoadAsync(PdfEditSession.Open(BlackPage(2)), null));
+
+        var (width, height) = renderer.PageSize(0);
+        Assert.Equal(200, width, 2);
+        Assert.Equal(200, height, 2);
+    }
+
+    [Fact]
     public async Task ARegionOfAUserUnitPageIsTakenFromTheRightPlace()
     {
         var session = PdfEditSession.Open(BlackPage(2));

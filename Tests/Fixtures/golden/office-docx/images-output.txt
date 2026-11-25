@@ -1,0 +1,105 @@
+> inline picture between words
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Before "
+  run Times_New_Roman 10.00 000000 picture=100.00x50.00 bytes=17 crop=0.00,0.00,0.00,0.00 ""
+  run Times_New_Roman 10.00 000000 " after"
+> picture of a png in a styled run
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 20.00 000000 picture=100.00x50.00 bytes=7 crop=0.00,0.00,0.00,0.00 ""
+> floating picture is put in line
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 picture=100.00x50.00 bytes=17 crop=0.00,0.00,0.00,0.00 ""
+  run Times_New_Roman 10.00 000000 "text"
+skipped floating-picture 1
+> cropped picture
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 picture=100.00x50.00 bytes=17 crop=0.25,0.10,0.00,0.95 ""
+> same picture twice
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 picture=100.00x50.00 bytes=17 crop=0.00,0.00,0.00,0.00 ""
+  run Times_New_Roman 10.00 000000 picture=50.00x25.00 bytes=17 crop=0.00,0.00,0.00,0.00 ""
+> pictures that cannot be placed
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+skipped picture 5
+> a drawing that is not a picture
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+skipped chart 1
+> picture in a table cell
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 0.00 indent=0.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 picture=100.00x50.00 bytes=17 crop=0.00,0.00,0.00,0.00 ""
+> picture in a header uses the relationships of the header
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 picture=100.00x50.00 bytes=17 crop=0.00,0.00,0.00,0.00 ""
+  run Times_New_Roman 10.00 000000 "page "
+  run Times_New_Roman 10.00 000000 field=pagenumber ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "body"
+pagebreak
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+> first page header and footer
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+titlepage
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Default header"
+header-first left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "First header"
+footer-first left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "First footer"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "one"
+> first page kinds are not read without titlePg
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Default header"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "one"
+> even and odd headers
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+evenandodd
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Default header"
+header-even left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Even header"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "one"
+> variants are inherited by the next section
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+titlepage
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Default header"
+header-first left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "First header"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "one"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+titlepage
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Default header"
+header-first left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "First header"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "two"
+> a first page with no header of its own is empty
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+titlepage
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Default header"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "one"

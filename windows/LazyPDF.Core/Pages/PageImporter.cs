@@ -16,6 +16,15 @@ internal sealed partial class PageImporter
     private readonly Dictionary<int, PdfReference> _map = [];
     private readonly Dictionary<int, PdfReference> _newPages = [];
     private readonly Queue<(int Source, int Target)> _pending = [];
+    private readonly HashSet<int> _dropped = [];
+    private readonly HashSet<int> _skip = [];
+    private readonly HashSet<PdfObject> _cut = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>Whether the pages and annotations keep their keys into the tag tree, which <see cref="CopyTree"/> then copies.</summary>
+    public bool KeepTags { get; set; }
+
+    /// <summary>How many objects the source lists that were referenced by what came across but could not be read, so they are left out.</summary>
+    public int Dropped => _dropped.Count;
 
     public PageImporter(PdfDocument source, PdfDocument target)
     {
@@ -64,6 +73,37 @@ internal sealed partial class PageImporter
         return copy;
     }
 
+    /// <summary>
+    /// A copy of the source's structure tree in which a page that did not come across is <paramref name="ghost"/>, and an
+    /// element with nothing left on the pages taken is not copied. The parent and ID trees are left to the caller.
+    /// </summary>
+    public PdfObject CopyTree(PdfObject root, PdfReference ghost)
+    {
+        _skip.UnionWith(TagCut.Dead(_source, root, [.. _newPages.Keys], _sourcePages));
+        if (_source.Resolve(root) is PdfDictionary top)
+        {
+            foreach (string key in (string[])["ParentTree", "IDTree"])
+            {
+                if (top[key] is { } tree) _cut.Add(tree);
+            }
+        }
+        var mapped = _sourcePages.Where(n => _newPages.TryAdd(n, ghost)).ToList();
+        foreach (var (number, annotation) in _taggedCopies) _map.TryAdd(number, annotation);
+        // An annotation the importer dropped must not come back through the tree as a copy that is on no page.
+        foreach (var page in _source.Pages)
+        {
+            if (_source.Resolve(page.Dictionary["Annots"]) is not PdfArray annots) continue;
+            foreach (var item in annots.Items)
+            {
+                if (item is PdfReference r && !_taggedCopies.ContainsKey(r.Number)) _skip.Add(r.Number);
+            }
+        }
+        var copy = CopyValue(root);
+        foreach (int number in mapped) _newPages.Remove(number);
+        _cut.Clear();
+        return copy;
+    }
+
     private void FillPage(PdfPage page, PdfReference reference, PdfDictionary dict)
     {
         dict["Type"] = new PdfName("Page");
@@ -74,7 +114,7 @@ internal sealed partial class PageImporter
         dict["Resources"] = Copy(Pruned(page, Inherited(page, "Resources") ?? page.Resources ?? new PdfDictionary()));
         foreach (var (key, value) in page.Dictionary.Entries)
         {
-            if (PageOnly.Contains(key) || !ReferenceEquals(page.Dictionary[key], value)) continue;
+            if ((PageOnly.Contains(key) && !(KeepTags && key == "StructParents")) || !ReferenceEquals(page.Dictionary[key], value)) continue;
             var copy = Copy(value);
             if (copy is not PdfNull) dict.Add(key, copy);
         }
@@ -109,7 +149,7 @@ internal sealed partial class PageImporter
         var copy = new PdfDictionary();
         foreach (var (key, value) in source.Entries)
         {
-            if (!ReferenceEquals(source[key], value)) continue;
+            if (!ReferenceEquals(source[key], value) || _cut.Contains(value)) continue;
             var item = Copy(value);
             if (item is not PdfNull) copy.Add(key, item);
         }
@@ -118,14 +158,33 @@ internal sealed partial class PageImporter
 
     private PdfObject CopyReference(PdfReference reference)
     {
+        if (_skip.Contains(reference.Number)) return PdfNull.Instance;
         if (_map.TryGetValue(reference.Number, out var done) || _newPages.TryGetValue(reference.Number, out done)) return done;
         // A page that did not come across, the tree above it and the catalog would drag the whole file in.
         var value = _source.Get(reference.Number);
-        if (value is null or PdfNull || _sourcePages.Contains(reference.Number) || IsStructure(value)) return PdfNull.Instance;
+        if (value is null or PdfNull)
+        {
+            NoteUnreadable(reference);
+            return PdfNull.Instance;
+        }
+        if (_sourcePages.Contains(reference.Number) || IsStructure(value)) return PdfNull.Instance;
         var made = _target.Add(PdfNull.Instance);
         _map[reference.Number] = made;
         _pending.Enqueue((reference.Number, made.Number));
         return made;
+    }
+
+    // The source's object for a value, counting a reference it lists but cannot read among the dropped.
+    private PdfObject? Read(PdfObject? value)
+    {
+        var found = _source.Resolve(value);
+        if (found is null && value is PdfReference reference) NoteUnreadable(reference);
+        return found;
+    }
+
+    private void NoteUnreadable(PdfReference reference)
+    {
+        if (_source.Entries.TryGetValue(reference.Number, out var listed) && listed.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed) _dropped.Add(reference.Number);
     }
 
     private bool IsStructure(PdfObject value) =>

@@ -18,6 +18,27 @@ public sealed class MeasureMathTests
         Assert.Equal("1 in = 10 ft", scale.Ratio);
     }
 
+    [Theory]
+    [InlineData(1, LengthUnit.Inch, 10, LengthUnit.Foot)]
+    [InlineData(1.5, LengthUnit.Millimetre, 2, LengthUnit.Metre)]
+    [InlineData(2, LengthUnit.Centimetre, 0.25, LengthUnit.Kilometre)]
+    [InlineData(1, LengthUnit.Inch, 3, LengthUnit.Mile)]
+    public void ARatioReadsBackAsTheScaleThatWroteIt(double page, LengthUnit pageUnit, double real, LengthUnit realUnit)
+    {
+        var scale = new MeasureScale(page, pageUnit, real, realUnit);
+
+        Assert.Equal(scale, MeasureScale.TryParse(scale.Ratio));
+    }
+
+    [Theory]
+    [InlineData("garbage")]
+    [InlineData("0 mm = 1 m")]
+    [InlineData("-1 mm = 1 m")]
+    [InlineData("1 mm = -2 m")]
+    [InlineData("1 mm = 2 parsec")]
+    [InlineData("1 mm = 2 m = 3 m")]
+    public void OtherTextIsNotAScale(string text) => Assert.Null(MeasureScale.TryParse(text));
+
     [Fact]
     public void MillimetresOnThePageAreMillimetresInTheWorldByDefault()
     {
@@ -72,6 +93,16 @@ public sealed class MeasureMathTests
     }
 
     [Fact]
+    public void SnappingToALineTakesThePointAlongIt()
+    {
+        (Point, Point)[] lines = [(new Point(0, 0), new Point(10, 0))];
+
+        Assert.Equal(new Point(4, 0), MeasureShape.NearestOnLines(lines, new Point(4, 2), 3));
+        Assert.Equal(new Point(10, 0), MeasureShape.NearestOnLines(lines, new Point(12, 1), 3));
+        Assert.Null(MeasureShape.NearestOnLines(lines, new Point(4, 5), 3));
+    }
+
+    [Fact]
     public void AMeasurementReadsInTheScaleAndSitsAtItsMiddle()
     {
         var scale = new MeasureScale(1, LengthUnit.Inch, 1, LengthUnit.Metre);
@@ -84,5 +115,16 @@ public sealed class MeasureMathTests
         Assert.Equal("4 m", outline.Value(scale));
         Assert.Equal(new Point(72, 0), line.Middle);
         Assert.Equal(new Point(36, 36), area.Middle);
+    }
+
+    [Fact]
+    public void AnAngleReadsAsSeenOnThePage()
+    {
+        Assert.Equal(45, MeasureShape.Angle([new(0, 0), new(10, -10)], MeasureKind.Distance)!.Value, 9);
+        Assert.Equal(135, MeasureShape.Angle([new(0, 0), new(10, 10)], MeasureKind.Distance)!.Value, 9);
+        Assert.Equal(90, MeasureShape.Angle([new(0, 0), new(10, 0), new(10, 10)], MeasureKind.Perimeter)!.Value, 9);
+        Assert.Equal(180, MeasureShape.Angle([new(0, 0), new(5, 0), new(10, 0)], MeasureKind.Area)!.Value, 9);
+        Assert.Null(MeasureShape.Angle([new(0, 0), new(10, 0)], MeasureKind.Area));
+        Assert.Null(MeasureShape.Angle([new(0, 0)], MeasureKind.Distance));
     }
 }

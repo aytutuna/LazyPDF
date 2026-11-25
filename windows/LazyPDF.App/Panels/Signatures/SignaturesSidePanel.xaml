@@ -23,6 +23,7 @@
                                 <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
                                 <TextBlock Text="{Binding Status}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
                                 <TextBlock Text="{Binding Sentence}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding Caveat}" Visibility="{Binding CaveatVisibility}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
                             </StackPanel>
                         </DockPanel>
                         <DataTemplate.Triggers>
@@ -58,14 +59,42 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <StackPanel Orientation="Horizontal">
+                <WrapPanel>
                     <Button x:Name="ViewButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A7;" Content="{loc:T View signed version}" AutomationProperties.Name="{loc:T View signed version}"
-                            Padding="10,3,10,4" Click="View_Click" />
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="View_Click" />
                     <Button x:Name="RestoreButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74E;" Content="{loc:T Save it}"
                             ToolTip="{loc:T Save the signed version as a file}" AutomationProperties.Name="{loc:T Save the signed version as a file}"
-                            Padding="10,3,10,4" Margin="8,0,0,0" Click="Restore_Click" />
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="Restore_Click" />
+                    <Button x:Name="CertificateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8D7;" Content="{loc:T View certificate}"
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="Certificate_Click" />
+                    <Button x:Name="ClearButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74D;" Content="{loc:T Clear signature}"
+                            ToolTip="{loc:T Remove the signature so the field can be signed again}" AutomationProperties.Name="{loc:T Remove the signature so the field can be signed again}"
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="Clear_Click" />
+                    <Button x:Name="TrustSignerButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE73E;" Content="{loc:T Trust this signer}"
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="TrustSigner_Click" />
+                    <Button x:Name="FetchButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE896;" Content="{loc:T Fetch missing certificates}"
+                            ToolTip="{loc:T Asks the servers named in the signer certificate for the certificates between it and a trusted one.}"
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="FetchIssuers_Click" />
+                </WrapPanel>
+                <StackPanel x:Name="CertificateInfo" Visibility="Collapsed" Margin="0,4,0,4">
+                    <TextBlock Text="{loc:T Certificate}" Style="{StaticResource FieldLabelText}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level3" />
+                    <ItemsControl x:Name="CertificateText" IsTabStop="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Copy fingerprint}" AutomationProperties.Name="{loc:T Copy fingerprint}"
+                            Padding="10,3,10,4" HorizontalAlignment="Left" Margin="0,4,0,0" Click="CopyFingerprint_Click" />
                 </StackPanel>
                 <TextBlock x:Name="VersionNote" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+            </StackPanel>
+
+            <StackPanel x:Name="Online" Visibility="Collapsed" Margin="12,4,12,8">
+                <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE774;" Content="{loc:T Check online}" AutomationProperties.Name="{loc:T Check online}"
+                        Padding="10,3,10,4" HorizontalAlignment="Left" Click="CheckOnline_Click" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Asks the certificate servers whether each certificate was withdrawn. The file is not changed.}" Margin="0,4,0,0" />
             </StackPanel>
 
             <Expander x:Name="Trust" Header="{loc:T Trust settings}" Margin="8,4,8,8" AutomationProperties.Name="{loc:T Trust settings}">

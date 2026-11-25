@@ -22,15 +22,20 @@ public struct OcrBox: Equatable {
 }
 
 /// One recognized word and where it sits in the image. `confidence` is 0 to 1; 1 when the engine does not say.
+/// `angle` is how far the line the word is on is turned, in radians, counter-clockwise as seen; `box` is then the
+/// word's box in the line's own upright frame, its bottom-left corner on the baseline where the word starts. 0 for a
+/// straight line.
 public struct OcrWord {
     public let text: String
     public let box: OcrBox
     public let confidence: Float
+    public let angle: Double
 
-    public init(_ text: String, _ box: OcrBox, _ confidence: Float = 1) {
+    public init(_ text: String, _ box: OcrBox, _ confidence: Float = 1, _ angle: Double = 0) {
         self.text = text
         self.box = box
         self.confidence = confidence
+        self.angle = angle
     }
 }
 

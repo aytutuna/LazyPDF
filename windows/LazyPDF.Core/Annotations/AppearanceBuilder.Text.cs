@@ -31,10 +31,12 @@ internal sealed partial class AppearanceBuilder
         var textBox = new PdfRect(box.Left + inset, box.Bottom + inset, box.Right - inset, box.Top - inset);
         if (textBox.IsEmpty || paragraphs.Count == 0) return c;
 
-        var texts = paragraphs.SelectMany(p => p.Select(r => r.Text)).ToList();
+        var runs = paragraphs.SelectMany(p => p).ToList();
         var cache = new Dictionary<(string, FontStyles), PdfDrawFont>();
         var names = new Dictionary<int, string>();
-        var lines = TextLayout.Layout(paragraphs, textBox.Width, format, f => FontFor(f, texts, cache));
+        // A font only has to cover the runs that are set in it.
+        var lines = TextLayout.Layout(paragraphs, textBox.Width, format,
+            f => FontFor(f, [.. runs.Where(r => r.Format.Family == f.Family && r.Format.Style == f.Style).Select(r => r.Text)], cache));
 
         c.W.Save();
         c.W.Rect(c.X(box.Left), c.Y(box.Bottom), box.Width, box.Height).Clip();
@@ -43,11 +45,12 @@ internal sealed partial class AppearanceBuilder
         {
             if (y < box.Bottom) break;
             double baseline = y - line.Ascent;
+            // Left is the default alignment, and the default of a right-to-left paragraph is the right.
             double x = a.Alignment switch
             {
                 1 => textBox.Left + (textBox.Width - line.Width) / 2,
                 2 => textBox.Right - line.Width,
-                _ => textBox.Left,
+                _ => line.RightToLeft ? textBox.Right - line.Width : textBox.Left,
             };
             foreach (var piece in line.Pieces)
             {
@@ -70,7 +73,7 @@ internal sealed partial class AppearanceBuilder
             names[piece.Font.Reference.Number] = name;
         }
         c.Color(format.Color, stroke: false);
-        c.W.BeginText().Font(name, format.Size).MoveText(c.X(x), c.Y(baseline)).Show(piece.Font.Encode(piece.Text)).EndText();
+        c.W.BeginText().Font(name, format.Size).MoveText(c.X(x), c.Y(baseline)).ShowRun(piece.Font, piece.Text, piece.RightToLeft, format.Size).EndText();
         if (format.Underline)
         {
             c.Color(format.Color, stroke: true);
@@ -114,8 +117,9 @@ internal sealed partial class AppearanceBuilder
     private PdfDrawFont FontFor(TextFormat format, List<string> texts, Dictionary<(string, FontStyles), PdfDrawFont> cache)
     {
         if (cache.TryGetValue((format.Family, format.Style), out var known)) return known;
-        var font = Embedder.Add(format.Family, format.Style, texts) ?? Embedder.Add("Helvetica", format.Style, texts)
+        var font = Embedder.AddCovering(format.Family, format.Style, texts) ?? Embedder.Add("Helvetica", format.Style, texts)
             ?? throw new InvalidOperationException(AnnotationText.NoFont);
+        _undrawn.UnionWith(font.Missing);
         cache[(format.Family, format.Style)] = font;
         return font;
     }
@@ -145,7 +149,7 @@ internal sealed partial class AppearanceBuilder
         double baseline = (h - (font.Ascent + font.Descent) * size) / 2;
         string fontName = c.AddFont(font.Reference);
         c.Color(color, stroke: false);
-        c.W.BeginText().Font(fontName, size).MoveText((w - textWidth) / 2, baseline).Show(font.Encode(label)).EndText();
+        c.W.BeginText().Font(fontName, size).MoveText((w - textWidth) / 2, baseline).Show(font, label, size).EndText();
         return c;
     }
 

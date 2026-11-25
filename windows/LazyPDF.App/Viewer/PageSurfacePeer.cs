@@ -1,6 +1,8 @@
+using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Viewer;
 
@@ -10,15 +12,61 @@ namespace LazyPDF.App.Viewer;
 /// </summary>
 internal sealed class PageSurfacePeer(PageSurface owner) : FrameworkElementAutomationPeer(owner), IValueProvider
 {
+    private readonly Dictionary<(int Page, int Index), LinkPeer> _links = [];
+    private PageTextProvider? _text;
+
     protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Document;
 
     protected override string GetClassNameCore() => "PageSurface";
 
-    protected override string GetNameCore() =>
-        owner.PageCount == 0 ? base.GetNameCore() : Loc.T("Page {0} of {1}", owner.CurrentPage + 1, owner.PageCount);
+    protected override string GetNameCore()
+    {
+        if (owner.PageCount == 0) return base.GetNameCore();
+        string label = owner.PageLabel?.Invoke(owner.CurrentPage) ?? "";
+        return label.Length > 0 && label != (owner.CurrentPage + 1).ToString()
+            ? Loc.T("Page {0} ({1} of {2})", label, owner.CurrentPage + 1, owner.PageCount)
+            : Loc.T("Page {0} of {1}", owner.CurrentPage + 1, owner.PageCount);
+    }
 
-    public override object? GetPattern(PatternInterface pattern) =>
-        pattern == PatternInterface.Value ? this : base.GetPattern(pattern);
+    protected override List<AutomationPeer>? GetChildrenCore()
+    {
+        var peers = base.GetChildrenCore() ?? [];
+        peers.AddRange(LinkPeers());
+        return peers.Count == 0 ? null : peers;
+    }
+
+    // The same instances every time until the links change, so a range hands out elements that share an id with the tree's.
+    internal IEnumerable<LinkPeer> LinkPeers()
+    {
+        if (owner.PageLinks is not { } links || owner.PageCount == 0) yield break;
+        foreach (int page in owner.Layout.PagesIn(owner.ViewRect))
+        {
+            var targets = links(page);
+            for (int i = 0; i < targets.Count; i++)
+            {
+                if (!_links.TryGetValue((page, i), out var link) || link.Target.Area != targets[i].Area || link.Target.Name != targets[i].Name)
+                    _links[(page, i)] = link = new LinkPeer(owner, page, targets[i]);
+                yield return link;
+            }
+        }
+    }
+
+    internal IRawElementProviderSimple ProviderOf(AutomationPeer peer) => ProviderFromPeer(peer);
+
+    internal AutomationPeer? PeerOf(IRawElementProviderSimple provider) => PeerFromProvider(provider);
+
+    internal PageSurface Surface => owner;
+
+    public override object? GetPattern(PatternInterface pattern)
+    {
+        if (pattern == PatternInterface.Value) return this;
+        if (pattern == PatternInterface.Text && owner.TextHost is { } host)
+        {
+            if (_text is null || !ReferenceEquals(_text.Host, host)) _text = new PageTextProvider(this, host);
+            return _text;
+        }
+        return base.GetPattern(pattern);
+    }
 
     public string Value => owner.PageText?.Invoke(owner.CurrentPage) ?? "";
 
@@ -30,6 +78,85 @@ internal sealed class PageSurfacePeer(PageSurface owner) : FrameworkElementAutom
     public void PageChanged()
     {
         RaisePropertyChangedEvent(AutomationElementIdentifiers.NameProperty, "", GetNameCore());
-        RaisePropertyChangedEvent(ValuePatternIdentifiers.ValueProperty, "", Value);
+        ValueChanged();
     }
+
+    /// <summary>The text of the page in view arrived or changed; its name did not.</summary>
+    public void ValueChanged() => RaisePropertyChangedEvent(ValuePatternIdentifiers.ValueProperty, "", Value);
+
+    /// <summary>The links in view changed.</summary>
+    public void LinksChanged()
+    {
+        _links.Clear();
+        ResetChildrenCache();
+        if (ListenerExists(AutomationEvents.StructureChanged)) RaiseAutomationEvent(AutomationEvents.StructureChanged);
+    }
+}
+
+/// <summary>A link on a page: it can be focused and followed, so a screen reader lists it and can act on it.</summary>
+internal sealed class LinkPeer(PageSurface surface, int page, LinkTarget target) : AutomationPeer, IInvokeProvider
+{
+    public int Page => page;
+
+    public LinkTarget Target => target;
+
+    protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Hyperlink;
+
+    protected override string GetClassNameCore() => "Link";
+
+    protected override List<AutomationPeer>? GetChildrenCore() => null;
+
+    protected override string GetNameCore() => target.Name;
+
+    protected override string GetAutomationIdCore() => "";
+
+    protected override Rect GetBoundingRectangleCore()
+    {
+        if (surface.PageMatrix(page) is not { } matrix) return Rect.Empty;
+        var area = Rect.Intersect(new Rect(matrix.Transform(target.Area.TopLeft), matrix.Transform(target.Area.BottomRight)), new Rect(surface.Viewport));
+        if (area.IsEmpty) return Rect.Empty;
+        return new Rect(surface.PointToScreen(area.TopLeft), surface.PointToScreen(area.BottomRight));
+    }
+
+    protected override Point GetClickablePointCore()
+    {
+        var area = GetBoundingRectangleCore();
+        return area.IsEmpty ? new Point(double.NaN, double.NaN) : new Point(area.X + area.Width / 2, area.Y + area.Height / 2);
+    }
+
+    protected override bool IsOffscreenCore() => GetBoundingRectangleCore().IsEmpty;
+
+    protected override bool IsKeyboardFocusableCore() => true;
+
+    protected override bool HasKeyboardFocusCore() => false;
+
+    protected override bool IsEnabledCore() => true;
+
+    protected override bool IsControlElementCore() => true;
+
+    protected override bool IsContentElementCore() => true;
+
+    protected override bool IsPasswordCore() => false;
+
+    protected override bool IsRequiredForFormCore() => false;
+
+    protected override string GetAcceleratorKeyCore() => "";
+
+    protected override string GetAccessKeyCore() => "";
+
+    protected override string GetHelpTextCore() => "";
+
+    protected override string GetItemStatusCore() => "";
+
+    protected override string GetItemTypeCore() => "";
+
+    protected override AutomationPeer? GetLabeledByCore() => null;
+
+    protected override AutomationOrientation GetOrientationCore() => AutomationOrientation.None;
+
+    protected override void SetFocusCore() => target.Focus();
+
+    public override object? GetPattern(PatternInterface pattern) => pattern == PatternInterface.Invoke ? this : null;
+
+    public void Invoke() => surface.Dispatcher.BeginInvoke(target.Follow);
 }

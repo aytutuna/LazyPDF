@@ -8,9 +8,9 @@ namespace LazyPDF.App.Tools.FillSign;
 
 /// <summary>
 /// Takes one click, or one drag when the thing placed has a shape to draw, on a page. The drag shows a dashed
-/// outline of the box the picture will fill.
+/// outline of the box the picture will fill. With <c>ends</c> the drag is kept without an outline.
 /// </summary>
-internal sealed class PlacementTool(IDocumentViewer viewer, double aspect, Action<int, Point, Point?> placed, Action stopped) : IPagePointerTool
+internal sealed class PlacementTool(IDocumentViewer viewer, double aspect, Action<int, Point, Point?> placed, Action stopped, bool ends = false) : IPagePointerTool
 {
     private const double ClickSlop = 4;
 
@@ -22,6 +22,7 @@ internal sealed class PlacementTool(IDocumentViewer viewer, double aspect, Actio
 
     public void Press(PagePointer pointer)
     {
+        if (pointer.Clicks >= 2) return;
         _page = pointer.Page;
         _from = pointer.Point;
     }
@@ -51,7 +52,7 @@ internal sealed class PlacementTool(IDocumentViewer viewer, double aspect, Actio
     {
         if (_page < 0) return;
         int page = _page;
-        bool dragged = aspect > 0 && pointer.Page == page && (pointer.Point - _from).Length > ClickSlop;
+        bool dragged = (aspect > 0 || ends) && pointer.Page == page && (pointer.Point - _from).Length > ClickSlop;
         Clear();
         placed(page, _from, dragged ? pointer.Point : null);
     }

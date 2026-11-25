@@ -65,6 +65,35 @@ final class PublicKeyRoundTripTests: XCTestCase {
         XCTAssertFalse(created.permsMismatch)
     }
 
+    func test_onlyKeysThatMayEncipherOrAgreeCanProtect() throws {
+        let ec = try XCTUnwrap(PdfCertificate(Pki.instance.leafEc))
+        let signOnly = try XCTUnwrap(PdfCertificate(PdfDigitalId.create("Signer", nil, DateTimeOffset(2025, 1, 1, 0, 0, 0), keyBits: 2048)))
+
+        XCTAssertTrue(PdfRecipient.canProtect(PublicKeyFiles.alice))
+        XCTAssertFalse(PdfRecipient.canProtect(ec))
+        XCTAssertFalse(PdfRecipient.canProtect(signOnly))
+    }
+
+    func test_aCertificateWithoutKeyUsageCanProtect() throws {
+        let attributes: [String: Any] = [kSecAttrKeyType as String: kSecAttrKeyTypeRSA, kSecAttrKeySizeInBits as String: 2048]
+        let privateKey = try XCTUnwrap(SecKeyCreateRandomKey(attributes as CFDictionary, nil))
+        let pkcs1 = try XCTUnwrap(SecKeyCopyExternalRepresentation(try XCTUnwrap(SecKeyCopyPublicKey(privateKey)), nil) as Data?)
+        let der = TestCertificate.der("Open", publicKey: [UInt8](pkcs1), withUsage: false) { tbs in
+            [UInt8](SecKeyCreateSignature(privateKey, .rsaSignatureMessagePKCS1v15SHA256, Data(tbs) as CFData, nil) as Data? ?? Data())
+        }
+        let open = try XCTUnwrap(SecCertificateCreateWithData(nil, Data(der) as CFData))
+
+        XCTAssertTrue(PdfRecipient.canProtect(PdfCertificate(certificate: open)))
+    }
+
+    func test_aCertificateThatCannotProtectIsRefused() throws {
+        let ec = try XCTUnwrap(PdfCertificate(Pki.instance.leafEc))
+
+        XCTAssertThrowsError(try PdfSecurity.createPublicKey([PdfRecipient(PublicKeyFiles.alice), PdfRecipient(ec)], .aes256)) { error in
+            XCTAssertEqual((error as? PdfReadException)?.message, "This certificate cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key.")
+        }
+    }
+
     func test_readerDecryptsWhatTheCreatorEncrypted() throws {
         for strength in PdfCryptStrength.allCases {
             let created = try PdfSecurity.createPublicKey([PdfRecipient(PublicKeyFiles.alice)], strength)

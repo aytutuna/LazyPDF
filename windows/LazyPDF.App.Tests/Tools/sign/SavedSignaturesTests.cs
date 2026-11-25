@@ -53,6 +53,25 @@ public sealed class SavedSignaturesTests
     }
 
     [Fact]
+    public void StampPicturesAreKeptApartFromSignatures()
+    {
+        OnSta.Run(() =>
+        {
+            using var dir = new TempDir();
+            var saved = new SavedSignatures(dir.Sub("stamps"));
+            var picture = saved.Add(SavedKind.Stamp, Image(7));
+            saved.Add(SavedKind.Signature, Image(8));
+
+            Assert.Equal([picture], saved.List(SavedKind.Stamp));
+            Assert.Equal(7, saved.Load(picture)!.Rgba[0]);
+
+            saved.Remove(picture);
+
+            Assert.Empty(saved.List(SavedKind.Stamp));
+        });
+    }
+
+    [Fact]
     public void ARemovedSignatureIsGone()
     {
         OnSta.Run(() =>

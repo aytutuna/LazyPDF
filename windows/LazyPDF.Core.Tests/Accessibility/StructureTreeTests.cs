@@ -296,4 +296,21 @@ public class StructureTreeTests
         Assert.Equal((0, 10), (objr.PageIndex, objr.Target.Number));
         Assert.Equal(11, Assert.IsType<StructContent>(kids[2]).Stream!.Number);
     }
+
+    [Fact]
+    public void ARemovedElementMovedBackKeepsItsObject()
+    {
+        using var document = TaggedFile.Open();
+        var tree = StructureTree.Read(document)!;
+        var p = tree.Elements.First(e => e.Type == "P");
+        int number = p.Reference!.Number;
+        tree.Remove(p);
+        tree.Move(p, tree.Roots[0], -1);
+        tree.Write(document);
+
+        Assert.NotNull(document.Get(number));
+        var read = StructureTree.Read(document)!;
+        Assert.Equal(["H1", "Figure", "P"], read.Roots[0].Children.Select(c => c.Type));
+        Assert.Equal("P", read.ElementFor(0, 1)!.Type);
+    }
 }

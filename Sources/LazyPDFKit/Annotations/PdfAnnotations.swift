@@ -100,7 +100,7 @@ public enum PdfAnnotations {
         a.richText = PdfText.read(document, d, "RC")
         // The C# casts the long to int without a check.
         a.alignment = Int(Int32(truncatingIfNeeded: document.integer(d, "Q") ?? 0))
-        a.iconName = document.name(d, "Name")
+        a.iconName = (document.resolve(d["Name"]) as? PdfName)?.text
         a.popup = d["Popup"] as? PdfReference
         a.hasAppearance = document.dict(d, "AP")?["N"] != nil
         return a

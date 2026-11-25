@@ -22,13 +22,23 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "batch")))
+        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "batch" or "combine")))
         {
             Assert.False(tile.Available);
             Assert.Equal("Open a file first", tile.Reason);
         }
         Assert.True(f.Vm.Tiles[0].Available);
         Assert.Null(f.Vm.Tiles[0].Reason);
+    }
+
+    [Fact]
+    public void CombineNeedsNoFile()
+    {
+        using var f = new ViewModelFixture();
+        var combine = f.Vm.Tiles.Single(t => t.Id == "combine");
+
+        Assert.True(combine.Available);
+        Assert.Null(combine.Reason);
     }
 
     [Fact]
@@ -46,7 +56,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        Assert.Equal("Join files into a new one, or split this one. Not available: Open a file first", f.Vm.Tiles.Single(t => t.Id == "combine").HelpText);
+        Assert.Equal("Make the file smaller. Not available: Open a file first", f.Vm.Tiles.Single(t => t.Id == "compress").HelpText);
         Assert.Equal("Open a PDF, a picture or a text file.", f.Vm.Tiles[0].HelpText);
     }
 
@@ -62,6 +72,23 @@ public sealed class HomeTilesTests
         Assert.True(scan.Available);
         Assert.Null(scan.Reason);
         Assert.Equal("export", tiles[tiles.IndexOf(scan) + 1].Id);
+    }
+
+    [Fact]
+    public void ALateAnswerFromLazyScanRefreshesTheWindow()
+    {
+        var context = SynchronizationContext.Current;
+        SynchronizationContext.SetSynchronizationContext(null);
+        using var f = new ViewModelFixture();
+        SynchronizationContext.SetSynchronizationContext(context);
+        var raised = new List<string?>();
+        f.Vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        f.Sisters.LazyScanInstalled = true;
+        f.Sisters.RaiseChanged();
+
+        Assert.Equal([string.Empty], raised);
+        Assert.Contains(f.Vm.Tiles, t => t.Id == "scan");
     }
 
     [Fact]
@@ -103,7 +130,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        f.Vm.StartTile("combine");
+        f.Vm.StartTile("compress");
 
         Assert.Null(f.Vm.ActiveToolId);
         Assert.True(f.Vm.IsHome);
@@ -120,6 +147,20 @@ public sealed class HomeTilesTests
         f.Sisters.LazyScanInstalled = true;
         f.Vm.StartTile("scan");
         Assert.Equal(1, f.Sisters.ScanOpened);
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public void ScanSaysSoWhenLazyScanDoesNotStart()
+    {
+        using var f = new ViewModelFixture();
+        f.Sisters.LazyScanInstalled = true;
+        f.Sisters.ScanResult = false;
+
+        f.Vm.StartTile("scan");
+
+        Assert.NotNull(f.Vm.Message);
+        Assert.True(f.Vm.Message.IsError);
     }
 
     [Fact]
@@ -127,7 +168,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        f.Vm.StartTile("combine");
+        f.Vm.StartTile("compress");
 
         Assert.Contains("Open a file first", f.Vm.StatusFull);
     }
@@ -139,6 +180,6 @@ public sealed class HomeTilesTests
         await f.Vm.OpenAsync(f.Pdf());
         f.Vm.Close(f.Vm.ActiveDocument!);
 
-        Assert.False(f.Vm.Tiles.Single(t => t.Id == "combine").Available);
+        Assert.False(f.Vm.Tiles.Single(t => t.Id == "compress").Available);
     }
 }

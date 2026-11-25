@@ -1,22 +1,26 @@
-using System.Globalization;
+using System.Text.RegularExpressions;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Accessibility;
 
 /// <summary>The changes the accessibility panel makes to a document, kept apart from the controls.</summary>
-internal static class AccessibilityEdits
+internal static partial class AccessibilityEdits
 {
-    /// <summary>Makes the fix a failed row offers; for the title and language rows, with the text of their box. False when nothing changed.</summary>
-    public static bool Apply(PdfDocument document, CheckRow row)
+    [GeneratedRegex(@"^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\z", RegexOptions.CultureInvariant)]
+    private static partial Regex LanguageTag();
+
+    public static bool IsLanguageTag(string text) => LanguageTag().IsMatch(text.Trim());
+
+    /// <summary>The tagger's options for the text in the language box; a box that is empty or not a language tag gives none.</summary>
+    public static AutoTagOptions? TagOptions(string? language) => language?.Trim() is { } tag && LanguageTag().IsMatch(tag) ? new AutoTagOptions(tag) : null;
+
+    /// <summary>Makes the fix a failed row offers; for the title and language rows, with the text of their box as it was when the button was pressed. False when nothing changed.</summary>
+    public static bool Apply(PdfDocument document, RowEditor editor, RowAction action, string value) => editor switch
     {
-        string value = row.Value.Trim();
-        return row.Editor switch
-        {
-            RowEditor.Title => value.Length > 0 && AccessibilityChecker.Fix(document, AccessibilityFix.SetTitle, value),
-            RowEditor.Language => AccessibilityChecker.Fix(document, AccessibilityFix.SetLanguage, value),
-            _ => row.Action == RowAction.SetTabOrder && AccessibilityChecker.Fix(document, AccessibilityFix.SetTabOrder),
-        };
-    }
+        RowEditor.Title => value.Length > 0 && AccessibilityChecker.Fix(document, AccessibilityFix.SetTitle, value),
+        RowEditor.Language => value.Length > 0 && AccessibilityChecker.Fix(document, AccessibilityFix.SetLanguage, value),
+        _ => action == RowAction.SetTabOrder && AccessibilityChecker.Fix(document, AccessibilityFix.SetTabOrder),
+    };
 
     /// <summary>What the title box starts with: the file's title, else its name.</summary>
     public static string TitleOf(PdfDocument document, string fileName)
@@ -25,15 +29,14 @@ internal static class AccessibilityEdits
         return title.Trim().Length > 0 ? title : Path.GetFileNameWithoutExtension(fileName);
     }
 
-    /// <summary>What the language box starts with: the file's language, else the one Windows speaks.</summary>
-    public static string LanguageOf(PdfDocument document)
-    {
-        string language = PdfText.Read(document, document.Catalog, "Lang") ?? "";
-        return language.Length > 0 ? language : CultureInfo.CurrentUICulture.Name;
-    }
+    /// <summary>What the language box starts with: the file's language, else nothing.</summary>
+    public static string LanguageOf(PdfDocument document) => PdfText.Read(document, document.Catalog, "Lang") ?? "";
 
     /// <summary>Whether tags can be added: the file has neither the tagged mark nor a tree, which is what the tagger needs.</summary>
     public static bool CanAddTags(PdfDocument document) => !document.IsTagged && document.Dict(document.Catalog, "StructTreeRoot") is null;
+
+    /// <summary>True when the figure found by number is gone or no longer has the description the list was built from.</summary>
+    internal static bool FigureChanged(StructElement? figure, string listedAlt) => figure is null || (figure.Alt?.Trim() ?? "") != listedAlt;
 
     /// <summary>Writes the description of a figure; an empty one removes it.</summary>
     public static void SetAlt(PdfDocument document, StructureTree tree, StructElement figure, string text)

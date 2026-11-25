@@ -1,0 +1,368 @@
+> plain paragraphs without styles
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Hello "
+  run Times_New_Roman 10.00 000000 b "bold words"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Two runs, one format"
+> defaults and style chain
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p center 0.00 0.00 0.00 12.00 0.00 1.08 multiple keep
+  run Cambria 16.00 2f5496 b "Title"
+p left 36.00 0.00 0.00 12.00 0.00 1.08 multiple keep
+  run Cambria 13.00 2f5496 b i "Sub"
+p left 0.00 0.00 0.00 0.00 8.00 1.08 multiple
+  run Calibri 11.00 000000 "Body "
+  run Calibri 11.00 c00000 b "strong"
+  run Calibri 11.00 c00000 i " LOUD ONE"
+p left 0.00 0.00 0.00 6.00 8.00 1.08 multiple
+  run Calibri 11.00 000000 "unknown styles fall back"
+> style chain that loops
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 b i "loops stop"
+> theme fonts and colors
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Arial 10.50 000000 "minor theme font"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Cambria 10.50 4472c4 "major"
+  run Arial 10.50 4472c4 "accent"
+  run Arial 10.50 44546a "text2"
+  run Courier_New 10.50 00ff00 "cached value wins"
+> run properties
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 14.00 ff0000 b i u s hl=ffff00 "all on"
+  run Times_New_Roman 10.00 000000 "all off"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "x"
+  run Times_New_Roman 6.67 000000 shift=3.30 "2"
+  run Times_New_Roman 10.00 000000 "H"
+  run Times_New_Roman 8.00 000000 shift=-1.68 "2"
+  run Times_New_Roman 10.00 000000 s "dstrike"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "SHOUT ÄÖshown"
+> paragraph properties
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p justify 36.00 18.00 18.00 6.00 12.00 1.50 multiple keep break nowidow
+  run Times_New_Roman 10.00 000000 "justified"
+p right 72.00 0.00 -36.00 0.00 0.00 15.00 exact
+  run Times_New_Roman 10.00 000000 "exact, hanging"
+p center 0.00 0.00 0.00 0.00 0.00 20.00 atleast
+  run Times_New_Roman 10.00 000000 "at least"
+p left 0.00 0.00 -20.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "hanging wins"
+> breaks and tabs
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "one\ntwo\tthree\nfour‑five"
+p left 0.00 0.00 0.00 10.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "before"
+pagebreak
+p left 0.00 0.00 0.00 10.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "after"
+pagebreak
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "text"
+pagebreak
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+pagebreak
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "first thing is a break"
+> sections
+section 792.00 612.00 36.00 54.00 72.00 72.00 18.00 18.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "landscape"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+section 595.30 841.90 72.00 72.00 72.00 72.00 35.40 35.40
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "swapped sizes"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a4"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "continuous, same page setup"
+> section break ends the document
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "only"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+> no section properties
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "defaults to letter"
+> empty document
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+> header and footer fields
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+header right 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Page "
+  run Times_New_Roman 10.00 000000 field=pagenumber ""
+footer left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 b field=pagecount ""
+  run Times_New_Roman 10.00 000000 " pages, "
+  run Times_New_Roman 10.00 000000 field=pagenumber ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "first"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+header right 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Page "
+  run Times_New_Roman 10.00 000000 field=pagenumber ""
+footer left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 b field=pagecount ""
+  run Times_New_Roman 10.00 000000 " pages, "
+  run Times_New_Roman 10.00 000000 field=pagenumber ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "second inherits both"
+> header variants are counted
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+titlepage
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "head"
+header-first left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "head"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "body"
+> fields in the body
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Intro 3"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Next"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Page 7 of 12"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "link text 1 Jan"
+skipped field 2
+> unsupported content is counted
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "text box:"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "note"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "inserted kept"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "list item"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "not a list item"
+table 0.00,0.00 indent=0.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "cell a"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "cell b"
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "cell c"
+skipped chart 1
+skipped comment 1
+skipped endnote 1
+skipped equation 1
+skipped footnote 1
+skipped picture 2
+skipped shape 1
+skipped text-box 1
+skipped tracked-change 3
+> content controls, links and wrappers
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "block control"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "inline control a link tagged marked"
+> empty paragraphs take the size of the paragraph mark
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 20.00 000000 ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 24.00 000000 ""
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 24.00 000000 b ""
+> missing sizes use Word's defaults
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "no styles part"
+p left 0.00 0.00 0.00 0.00 1584.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "bad numbers"
+> bullets and numbers with levels
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "1.\tfirst"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a)\tsub a"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b)\tsub b"
+p left 108.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "i.\tdeeper"
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "2.\tsecond"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a)\tstarts over"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "plain"
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "•\tbullet"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Courier_New 10.00 000000 "o\t"
+  run Times_New_Roman 10.00 000000 "nested bullet"
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "3.\t"
+> number formats and multi level text
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Part III a"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "III.Ab"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "3.1.01\tc"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "3.1.02\td"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "z\tz"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "aa\taa"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "mmmcmxcix\tmax roman"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "4000\tpast roman"
+> restarts, overrides and lists that continue
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "1.\tone"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "1.1\tone one"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "2.\tcontinues the list"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "2.2\tlevel two never restarts"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "5.\trestarted at five"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "6.\tsix"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "(C)\treplaced level"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "unknown list"
+> list styles, label formatting and tab stops
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 75.00 0.00 -75.00 0.00 0.00 1.00 multiple labeltab=50.00
+  run Times_New_Roman 11.00 ff0000 b "1)\t"
+  run Times_New_Roman 11.00 000000 "from the style"
+p left 150.00 0.00 -20.00 0.00 0.00 1.00 multiple labeltab=50.00
+  run Times_New_Roman 11.00 ff0000 b "2)\t"
+  run Times_New_Roman 11.00 000000 "own indent"
+p left 5.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 "1.\tlevel linked to the style"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 "switched off"
+> right to left paragraphs and runs
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "אבג דהו"
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "left is the start"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "right is the end"
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "start"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "end"
+p center 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "center"
+p justify 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "justified"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "left to right start"
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "left to right end"
+p left 36.00 18.00 -10.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "switched off, indents"
+p right 36.00 18.00 10.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "indents count from the start"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 rtl "(12)"
+  run Times_New_Roman 10.00 000000 "abc"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "not rtl"
+> style that makes a paragraph right to left
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 rtl "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 rtl "abc"
+> complex script fonts and sizes
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 "Hello "
+  run Arial 14.00 000000 "שלום "
+  run Calibri 11.00 000000 "world"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Arial 14.00 000000 "שלום 12 "
+  run Calibri 11.00 000000 "world"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Arial 14.00 000000 "12 (שלום) "
+  run Calibri 11.00 000000 "abc"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 b i "bold "
+  run Arial 14.00 000000 b i "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 b i "bold "
+  run Arial 14.00 000000 "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 "plain "
+  run Tahoma 10.00 000000 b i "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Tahoma 14.00 000000 rtl "abc 12"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Arial 14.00 000000 "abc"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 "theme "
+  run Times_New_Roman 14.00 000000 "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 "empty theme "
+  run Arial 14.00 000000 "אבג"
+> section direction puts the gutter on the right
+section 612.00 792.00 72.00 72.00 72.00 90.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "left to right"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+section 612.00 792.00 72.00 90.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "right to left"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+section 612.00 792.00 72.00 72.00 72.00 90.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "switched off"
+> list level direction
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p right 36.00 0.00 -18.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "1.\tאבג"
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "2.\town direction wins"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a)\tleft to right level"
+p right 72.00 0.00 -18.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "b)\tדהו"
+p right 50.00 0.00 -10.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "-\tזחט"

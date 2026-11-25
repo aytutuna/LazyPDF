@@ -1,8 +1,7 @@
 import Foundation
 
 // Twin of windows/LazyPDF.Core/Export/PdfFromPicturesExif.cs: what a JPEG file says about how it is to be shown: JFIF
-// density and Exif orientation. A header cut short reads as no density and no orientation, where the C# indexes past the
-// end of the file.
+// density and Exif orientation.
 
 enum JpegMeta {
     private static let defaultDpi = 96.0
@@ -79,5 +78,31 @@ enum JpegMeta {
         default: (xa, xb, xc, ya, yb, yc) = (1, 0, 0, 0, 1, 0)
         }
         return PdfMatrix(w * xa, -h * ya, -w * xb, h * yb, x + w * (xb + xc), y + h * (1 - yb - yc))
+    }
+
+    /// The pixels turned and mirrored so that `orientation` is undone; 5 to 8 swap width and height.
+    static func upright(_ image: PdfRgbaImage, _ orientation: Int) -> PdfRgbaImage {
+        if orientation < 2 || orientation > 8 { return image }
+        let w = image.width, h = image.height
+        let swap = orientation >= 5
+        let dw = swap ? h : w
+        var rgba = [UInt8](repeating: 0, count: image.rgba.count)
+        for r in 0..<h {
+            for c in 0..<w {
+                let (x, y): (Int, Int)
+                switch orientation {
+                case 2: (x, y) = (w - 1 - c, r)
+                case 3: (x, y) = (w - 1 - c, h - 1 - r)
+                case 4: (x, y) = (c, h - 1 - r)
+                case 5: (x, y) = (r, c)
+                case 6: (x, y) = (h - 1 - r, c)
+                case 7: (x, y) = (h - 1 - r, w - 1 - c)
+                default: (x, y) = (r, w - 1 - c)
+                }
+                let from = 4 * (r * w + c), to = 4 * (y * dw + x)
+                rgba[to..<(to + 4)] = image.rgba[from..<(from + 4)]
+            }
+        }
+        return PdfRgbaImage(dw, swap ? w : h, rgba)
     }
 }

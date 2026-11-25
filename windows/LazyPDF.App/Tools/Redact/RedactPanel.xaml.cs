@@ -22,6 +22,9 @@ public partial class RedactPanel : ToolPanel
 
         // The page objects in order, to know when marks, which are kept by page number, no longer fit the pages.
         public int[]? Pages { get; set; }
+
+        // Hits in comments and fields hold offsets into text, so they only fit the revision they were found in.
+        public int Revision { get; set; }
     }
 
     private static readonly ConditionalWeakTable<DocumentTab, RedactState> States = [];
@@ -32,6 +35,10 @@ public partial class RedactPanel : ToolPanel
     private RedactState? _state;
     private bool _restricted;
     private bool _working;
+    private bool _editing;
+    private bool _showing;
+    private (MarkItem Old, MarkItem Now)? _replaced;
+    private RedactBoxEditor? _editor;
 
     // The copy opens as a tab of its own; the panel finds that tab by its title when it is attached there.
     private RedactSummary? _incoming;
@@ -67,6 +74,7 @@ public partial class RedactPanel : ToolPanel
         tab.Changed += Tab_Changed;
         Viewer!.SelectionChanged += Viewer_SelectionChanged;
         Viewer.ModeChanged += Viewer_ModeChanged;
+        _editor = new RedactBoxEditor(Viewer, BoxEdited, text => Host?.SetStatus(text), FocusSelectedRow, focus => focus is System.Windows.Media.Visual row && MarkedList.IsAncestorOf(row));
         ShowMarks();
         ShowResult();
         ShowSelectionNote();
@@ -76,6 +84,8 @@ public partial class RedactPanel : ToolPanel
     protected override void OnDetach()
     {
         DrawToggle.IsChecked = false;
+        _editor!.Detach();
+        _editor = null;
         ClearOverlays();
         _state!.Marks.Changed -= Marks_Changed;
         Tab!.Changed -= Tab_Changed;
@@ -87,6 +97,7 @@ public partial class RedactPanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
+        _editor!.Clear();
         DropMarksOfOtherPages();
         DrawOverlays(redrawAll: true);
     }
@@ -97,8 +108,22 @@ public partial class RedactPanel : ToolPanel
         int[] pages = [.. Tab!.Document.Pages.Select(p => p.Reference.Number)];
         bool moved = state.Pages is { } before && !before.SequenceEqual(pages);
         state.Pages = pages;
-        if (!moved || state.Marks.Items.Count == 0) return;
+        int revision = Tab.Revision;
+        bool edited = state.Revision != revision;
+        state.Revision = revision;
+        if (!moved)
+        {
+            if (!edited) return;
+            bool removed = state.Marks.RemoveValues();
+            state.Marks.Forget();
+            if (!removed) return;
+            Host!.ShowNotice(Loc.T("Hits removed"), Loc.T("The file changed, so the hits in comments and fields no longer fit. Search again."));
+            return;
+        }
+        bool any = state.Marks.Items.Count > 0;
         state.Marks.Clear();
+        state.Marks.Forget();
+        if (!any) return;
         Host!.ShowNotice(Loc.T("Marks removed"), Loc.T("The pages changed, so the marks no longer fit. Mark them again."));
     }
 

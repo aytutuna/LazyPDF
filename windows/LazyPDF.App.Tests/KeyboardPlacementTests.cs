@@ -1,6 +1,9 @@
+using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.App.Tools.Redact;
@@ -21,7 +24,17 @@ public sealed class KeyboardPlacementTests
 
         public bool Cancelled { get; private set; }
 
+        public bool Handle { get; set; }
+
+        public int Asked { get; private set; }
+
         public Cursor? Cursor => null;
+
+        public bool HandleUnder(PagePointer pointer)
+        {
+            Asked++;
+            return Handle;
+        }
 
         public void Press(PagePointer pointer) => Calls.Add(("press", pointer));
 
@@ -32,9 +45,24 @@ public sealed class KeyboardPlacementTests
         public void Cancel() => Cancelled = true;
     }
 
+    private sealed class GatedRenderer : IDocumentRenderer
+    {
+        public TaskCompletionSource<bool> Gate { get; } = new();
+
+        public bool Load(PdfEditSession session, string? password) => true;
+
+        public Task<bool> LoadAsync(PdfEditSession session, string? password) => Gate.Task;
+
+        public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi) => null;
+
+        public void Dispose() { }
+    }
+
     private static (PageViewer Viewer, RecordingTool Tool) Open(DocumentTab tab)
     {
-        var viewer = new PageViewer();
+        var viewer = new PageViewer(null);
         viewer.Show(tab);
         viewer.Measure(new Size(800, 600));
         viewer.Arrange(new Rect(0, 0, 800, 600));
@@ -67,6 +95,76 @@ public sealed class KeyboardPlacementTests
     });
 
     [Fact]
+    public Task APlacementBegunByAToolStartsTheCrossAtThatPoint() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+
+        viewer.BeginPlacement(0, new Point(40, 60));
+        Assert.True(viewer.PlaceWithKeys(Key.Enter));
+
+        Assert.Equal(["press", "release"], tool.Calls.Select(c => c.Kind));
+        Assert.Equal(new Point(40, 60), tool.Calls[0].Pointer.Point);
+        Assert.True(tool.Calls[0].Pointer.FromKeys);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheArrowKeysMoveACrossBegunAtAPoint() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+
+        viewer.BeginPlacement(0, new Point(40, 60));
+        viewer.PlaceWithKeys(Key.Right);
+        viewer.PlaceWithKeys(Key.Enter);
+
+        Assert.True(tool.Calls[0].Pointer.Point.X > 40);
+        Assert.Equal(60, tool.Calls[0].Pointer.Point.Y, 6);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task EscapeAndCancelRaiseAPlacementEndedButAnEnterDoesNot() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        int ended = 0;
+        viewer.PlacementEnded += (_, _) => ended++;
+
+        viewer.PlaceWithKeys(Key.Enter);
+        viewer.PlaceWithKeys(Key.Enter);
+        Assert.Equal(0, ended);
+
+        viewer.PlaceWithKeys(Key.Enter);
+        viewer.PlaceWithKeys(Key.Escape);
+        Assert.Equal(1, ended);
+
+        viewer.BeginPlacement(0, new Point(40, 60));
+        viewer.CancelPlacement();
+        viewer.CancelPlacement();
+        Assert.Equal(2, ended);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task NoClickIsPlacedWhileTheNewPagesAreStillLoading() => Sta.Run(async () =>
+    {
+        var renderer = new GatedRenderer();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), renderer, null, "a.pdf");
+        var (viewer, tool) = Open(tab);
+        Pdfs.Retitle(tab.Session, "New title");
+        tab.Commit("Properties");
+
+        Assert.False(viewer.PlaceWithKeys(Key.Enter));
+        renderer.Gate.SetResult(true);
+        await tab.Drawing;
+
+        Assert.True(viewer.PlaceWithKeys(Key.Enter));
+        Assert.Empty(tool.Calls);
+    });
+
+    [Fact]
     public Task TheArrowKeysMoveTheClick() => Sta.Run(() =>
     {
         using var tab = NewTab();
@@ -85,6 +183,25 @@ public sealed class KeyboardPlacementTests
         var moved = tool.Calls[0].Pointer.Point;
         Assert.True(moved.X > middle.X);
         Assert.True(moved.Y > middle.Y);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheCrossStaysInViewWhenZoomedIn() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        viewer.Zoom = 4;
+        viewer.UpdateLayout();
+
+        viewer.PlaceWithKeys(Key.Enter);
+        for (int i = 0; i < 50; i++) viewer.PlaceWithKeys(Key.Down);
+        viewer.UpdateLayout();
+        viewer.PlaceWithKeys(Key.Enter);
+
+        var at = tool.Calls[0].Pointer.View;
+        Assert.InRange(at.X, 0, 800);
+        Assert.InRange(at.Y, 0, 600);
         return Task.CompletedTask;
     });
 
@@ -177,6 +294,758 @@ public sealed class KeyboardPlacementTests
         tool.Release(new PagePointer(0, at, at, false, 0, ModifierKeys.None));
 
         Assert.False(drawn);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheTiltHookLeavesTheMessageAloneWithoutTheMouseOver() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var hook = typeof(PageViewer).GetMethod("TiltHook", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        object?[] args = [IntPtr.Zero, 0x020E, new IntPtr(120 << 16), IntPtr.Zero, false];
+
+        var result = (IntPtr)hook.Invoke(viewer, args)!;
+
+        Assert.Equal(IntPtr.Zero, result);
+        Assert.False((bool)args[4]!);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task UnloadingDropsTheHookedSource() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var field = typeof(PageViewer).GetField("_hooked", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        using var source = new HwndSource(new HwndSourceParameters("hook-test"));
+        field.SetValue(viewer, source);
+
+        viewer.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+
+        Assert.Null(field.GetValue(viewer));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ALeftReleaseDoesNotEndAMiddlePan() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var drag = typeof(PageViewer).GetField("_drag", flags)!;
+        var middlePan = typeof(PageViewer).GetField("_middlePan", flags)!;
+        var pan = Enum.ToObject(drag.FieldType, 1);
+        drag.SetValue(viewer, pan);
+        middlePan.SetValue(viewer, true);
+        var up = typeof(PageViewer).GetMethod("Surface_MouseUp", flags)!;
+        var e = new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.MouseUpEvent };
+
+        up.Invoke(viewer, [viewer, e]);
+
+        Assert.True((bool)middlePan.GetValue(viewer)!);
+        Assert.Equal(pan, drag.GetValue(viewer));
+        Assert.True(e.Handled);
+        return Task.CompletedTask;
+    });
+
+    private static object Call(PageViewer viewer, string name, params object?[] args) =>
+        typeof(PageViewer).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, args)!;
+
+    [Fact]
+    public Task AToastShowsItsTextUntilTheTimerHidesIt() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var toast = (UIElement)viewer.FindName("Toast");
+        var text = (System.Windows.Controls.TextBlock)viewer.FindName("ToastText");
+
+        Call(viewer, "ShowToast", "Copied", 3000);
+
+        Assert.Equal(Visibility.Visible, toast.Visibility);
+        Assert.Equal("Copied", text.Text);
+        Call(viewer, "HideToast");
+        Assert.Equal(Visibility.Collapsed, toast.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ReadAloudSaysEachPageInOrderUntilStopped() => Sta.Run(async () =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(3)), new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        var said = new List<string>();
+        var second = new TaskCompletionSource();
+        viewer.Say = async (text, cancel) =>
+        {
+            said.Add(text);
+            if (said.Count == 2) second.SetResult();
+            if (said.Count >= 2) await Task.Delay(Timeout.Infinite, cancel);
+        };
+
+        viewer.ToggleReadAloud();
+        await second.Task;
+        Assert.True(viewer.Speaking);
+        Assert.Contains("Page 1", said[0]);
+        Assert.Contains("Page 2", said[1]);
+        Assert.Equal(1, viewer.PageIndex);
+
+        Call(viewer, "StopSpeech");
+        Assert.False(viewer.Speaking);
+    });
+
+    [Fact]
+    public Task SwitchingTabsStopsReadAloud() => Sta.Run(async () =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var started = new TaskCompletionSource<CancellationToken>();
+        viewer.Say = async (_, cancel) =>
+        {
+            started.SetResult(cancel);
+            await Task.Delay(Timeout.Infinite, cancel);
+        };
+
+        viewer.ToggleReadAloud();
+        var token = await started.Task;
+        viewer.Show(null);
+
+        Assert.True(token.IsCancellationRequested);
+        Assert.False(viewer.Speaking);
+    });
+
+    [Fact]
+    public Task ReadAloudOfAFileWithNoTextShowsAToast() => Sta.Run(async () =>
+    {
+        var session = PdfEditSession.Open(Pdfs.Text(1));
+        PageOperations.InsertBlank(session.Document, 1, 612, 792, 2);
+        PageOperations.Delete(session.Document, [0]);
+        session.Commit("Delete");
+        using var tab = new DocumentTab(session, new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        var said = new List<string>();
+        viewer.Say = (text, _) =>
+        {
+            said.Add(text);
+            return Task.CompletedTask;
+        };
+
+        viewer.ToggleReadAloud();
+        while (viewer.Speaking) await Task.Delay(10);
+
+        Assert.Empty(said);
+        Assert.Equal("This file has no text to read. Try Make searchable.", ((System.Windows.Controls.TextBlock)viewer.FindName("ToastText")).Text);
+    });
+
+    [Fact]
+    public void PiecesSplitOnABlankLine()
+    {
+        Assert.Equal(["One two", "Three"], PageViewer.Pieces("One\ntwo\r\n\r\n \nThree\n"));
+    }
+
+    [Fact]
+    public Task SpeakSetsTheHiddenLine() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var speech = (System.Windows.Controls.TextBlock)viewer.FindName("Speech");
+
+        Call(viewer, "Speak", "Page 2");
+
+        Assert.Equal("Page 2", speech.Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AToastWaitsOutAnOpenLinkQuestion() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var toast = (UIElement)viewer.FindName("Toast");
+        Call(viewer, "ShowToast", "Copied", 3000);
+
+        Call(viewer, "Tell", "Nothing here", null);
+        Call(viewer, "ShowToast", "Copied again", 3000);
+
+        Assert.Equal(Visibility.Collapsed, toast.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ToastAndSpeechDoNothingWithoutAFile() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+        viewer.Show(null);
+
+        Call(viewer, "ShowToast", "Copied", 3000);
+        Call(viewer, "Speak", "Page 2");
+
+        Assert.Equal(Visibility.Collapsed, ((UIElement)viewer.FindName("Toast")).Visibility);
+        Assert.Equal("", ((System.Windows.Controls.TextBlock)viewer.FindName("Speech")).Text);
+        return Task.CompletedTask;
+    });
+
+    private static MouseButtonEventArgs Click(RoutedEvent routed, int clicks)
+    {
+        var e = new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = routed };
+        typeof(MouseButtonEventArgs).GetProperty(nameof(MouseButtonEventArgs.ClickCount))!.GetSetMethod(true)!.Invoke(e, [clicks]);
+        return e;
+    }
+
+    private static async Task<bool> DoubleClickThenAsync(Action<PageViewer>? between)
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        viewer.PointerTool = null;
+        var down = typeof(PageViewer).GetMethod("Surface_MouseDown", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        down.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 2)]);
+        between?.Invoke(viewer);
+        await viewer.GetTextAsync(0);
+        await Task.Delay(200);
+        return viewer.HasSelection;
+    }
+
+    [Fact]
+    public Task ADoubleClickSelectsTheWordOnceThePageTextIsThere() => Sta.Run(async () =>
+    {
+        Assert.True(await DoubleClickThenAsync(null));
+    });
+
+    [Fact]
+    public Task AClearedSelectionIsNotRestoredByADoubleClickStillWaitingForText() => Sta.Run(async () =>
+    {
+        Assert.False(await DoubleClickThenAsync(viewer => viewer.ClearSelection()));
+    });
+
+    [Fact]
+    public Task SwitchingToTheHandIsNotUndoneByADoubleClickStillWaitingForText() => Sta.Run(async () =>
+    {
+        Assert.False(await DoubleClickThenAsync(viewer => viewer.Mode = PointerMode.Hand));
+    });
+
+    [Fact]
+    public Task AQuickThirdPressOnALinkFollowsItAgain() => Sta.Run(() =>
+    {
+        var document = PdfDocument.Open(Pdfs.Text(3));
+        foreach (var page in document.Pages) PdfLinks.Add(document, page, new PdfRect(0, 0, 10000, 10000), new PdfDestination(2));
+        using var tab = new DocumentTab(PdfEditSession.Open(document.SaveRewrite()), new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        viewer.PointerTool = null;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetZoom(4);
+        // A press lands at the surface's origin, so put a spot inside page 0 there.
+        void Back() => surface.GoToPage(0, new Point(100, 100));
+        var down = typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!;
+        var up = typeof(PageViewer).GetMethod("Surface_MouseUp", flags)!;
+        void Press(int clicks)
+        {
+            down.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, clicks)]);
+            up.Invoke(viewer, [viewer, Click(Mouse.MouseUpEvent, clicks)]);
+        }
+
+        Back();
+        Press(1);
+        Assert.Equal(2, tab.PageIndex);
+
+        Back();
+        Press(2);
+        Assert.Equal(0, tab.PageIndex);
+        Assert.False(viewer.HasSelection);
+
+        Press(3);
+        Assert.Equal(2, tab.PageIndex);
+        return Task.CompletedTask;
+    });
+
+    // The press lands at the surface's origin; scrolling puts a page point there, so an offset past the page's end puts it in the gap.
+    // Zoomed past the view's width so the scroll can reach a column on the page; the offset is clamped to the extent otherwise.
+    private static (PageViewer Viewer, RecordingTool Tool, double PageHeight) PressBelowFirstPage(bool handle, double below, DocumentTab tab)
+    {
+        var (viewer, tool) = Open(tab);
+        tool.Handle = handle;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetZoom(3);
+        double height = viewer.PageSize(0).Height;
+        surface.GoToPage(0, new Point(100, height + below / surface.PageMatrix(0)!.Value.M22), keepX: true);
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+        return (viewer, tool, height);
+    }
+
+    [Fact]
+    public Task APressJustOffAPageReachesTheToolOnlyWhenItReportsAHandle() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (_, tool, height) = PressBelowFirstPage(true, 10, tab);
+
+        var press = Assert.Single(tool.Calls);
+        Assert.Equal("press", press.Kind);
+        Assert.Equal(0, press.Pointer.Page);
+        Assert.True(press.Pointer.Point.Y > height);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressInTheGapWithoutAHandleCreatesNothing() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (_, tool, _) = PressBelowFirstPage(false, 10, tab);
+
+        Assert.True(tool.Asked > 0);
+        Assert.Empty(tool.Calls);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressFarFromEveryPageIsNotEvenAsked() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        tool.Handle = true;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        // The page is narrower than the view and centred, so the origin is far left of it; below a page is the next one, 12 px away.
+        surface.SetZoom(1);
+        surface.GoToPage(0, new Point(100, 100));
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+
+        Assert.Equal(0, tool.Asked);
+        Assert.Empty(tool.Calls);
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(90)]
+    [InlineData(270)]
+    public Task APressJustOffTheRightEdgeOfARotatedViewStaysOnThatSideInPageSpace(int rotation) => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        tool.Handle = true;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetRotation(rotation);
+        surface.SetZoom(3);
+        var size = surface.PageSize(0);
+        // 1 pt is 4 px here, inside the 12 px gap; the other coordinate sits near the page's left in view so the scroll is not clamped.
+        var off = new Point(size.Width + 1, rotation == 90 ? size.Height - 50 : 50);
+        surface.GoToPage(0, off, keepX: true);
+
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+
+        var press = Assert.Single(tool.Calls);
+        Assert.Equal(off.X, press.Pointer.Point.X, 0.5);
+        Assert.Equal(off.Y, press.Pointer.Point.Y, 0.5);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressOnAPageIsDeliveredWithoutAsking() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetZoom(3);
+        surface.GoToPage(0, new Point(100, 100), keepX: true);
+        typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 1)]);
+
+        Assert.Equal(0, tool.Asked);
+        Assert.Single(tool.Calls);
+        return Task.CompletedTask;
+    });
+
+    private static bool PressKey(PageViewer viewer, Key key, object? from = null)
+    {
+        using var source = new HwndSource(new HwndSourceParameters("key-test"));
+        var args = new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key) { RoutedEvent = Keyboard.KeyDownEvent, Source = from ?? viewer.Surface };
+        typeof(PageViewer).GetMethod("Surface_KeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [viewer, args]);
+        return args.Handled;
+    }
+
+    [Fact]
+    public Task TabWalksTheLinksAndEnterFollowsTheFocusedOne() => Sta.Run(() =>
+    {
+        var document = PdfDocument.Open(Pdfs.Text(3));
+        PdfLinks.Add(document, document.Pages[0], new PdfRect(50, 300, 150, 350), new PdfDestination(1));
+        PdfLinks.Add(document, document.Pages[0], new PdfRect(50, 600, 150, 650), new PdfDestination(2));
+        using var tab = new DocumentTab(PdfEditSession.Open(document.SaveRewrite()), new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        viewer.PointerTool = null;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var focus = typeof(PageViewer).GetField("_focusLink", flags)!;
+
+        Assert.True(PressKey(viewer, Key.Tab));
+        Assert.Equal(new PdfRect(50, 600, 150, 650), ((ValueTuple<int, PdfLink>)focus.GetValue(viewer)!).Item2.Rect);
+        Assert.True(PressKey(viewer, Key.Tab));
+        Assert.Equal(new PdfRect(50, 300, 150, 350), ((ValueTuple<int, PdfLink>)focus.GetValue(viewer)!).Item2.Rect);
+        Assert.True(PressKey(viewer, Key.Enter));
+        Assert.Equal(1, tab.PageIndex);
+
+        viewer.GoToPage(0);
+        Assert.False(PressKey(viewer, Key.Tab));
+        Assert.Null(focus.GetValue(viewer));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TabInAFormFieldDoesNotWalkTheLinks() => Sta.Run(() =>
+    {
+        var document = PdfDocument.Open(Pdfs.Text(3));
+        PdfLinks.Add(document, document.Pages[0], new PdfRect(50, 300, 150, 350), new PdfDestination(1));
+        using var tab = new DocumentTab(PdfEditSession.Open(document.SaveRewrite()), new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        viewer.PointerTool = null;
+        var field = new System.Windows.Controls.TextBox();
+
+        Assert.False(PressKey(viewer, Key.Tab, field));
+        Assert.Null(typeof(PageViewer).GetField("_focusLink", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(viewer));
+        return Task.CompletedTask;
+    });
+
+    private static void PressEnterInZoomBox(PageViewer viewer)
+    {
+        using var source = new HwndSource(new HwndSourceParameters("zoom-test"));
+        viewer.ZoomBox.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, Key.Enter) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+    }
+
+    [Fact]
+    public Task EnterInTheZoomBoxWithUntouchedTextKeepsFitWidth() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        viewer.Fit = FitMode.Width;
+        viewer.UpdateLayout();
+
+        PressEnterInZoomBox(viewer);
+
+        Assert.Equal(FitMode.Width, viewer.Fit);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AnUnreadableZoomEntryGoesBackToTheShownValue() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        string shown = viewer.ZoomBox.Text;
+        viewer.ZoomBox.Text = "abc";
+
+        PressEnterInZoomBox(viewer);
+
+        Assert.Equal(shown, viewer.ZoomBox.Text);
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(360)]
+    [InlineData(410)]
+    [InlineData(475)]
+    [InlineData(550)]
+    public Task TheZoomGroupFitsAtNarrowWidths(int width) => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var viewer = new PageViewer(null);
+        viewer.Show(tab);
+        viewer.Measure(new Size(width, 600));
+        viewer.Arrange(new Rect(0, 0, width, 600));
+        viewer.UpdateLayout();
+
+        Assert.Null(System.Windows.Controls.Primitives.LayoutInformation.GetLayoutClip(viewer.ZoomGroup));
+        double given = viewer.ZoomGroup.DesiredSize.Width;
+        viewer.ZoomGroup.Measure(new Size(double.PositiveInfinity, 600));
+        Assert.Equal(viewer.ZoomGroup.DesiredSize.Width, given, 0.5);
+        return Task.CompletedTask;
+    });
+
+    private static void Click(PageViewer viewer, string handler, object item) =>
+        typeof(PageViewer).GetMethod(handler, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [item, new RoutedEventArgs()]);
+
+    [Fact]
+    public Task TheViewerOpensInTheSavedTintAndLayout() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(p => { p.Tint = PageTint.Dark; p.Columns = 2; p.Cover = true; p.Continuous = false; }, dir.Path);
+
+        var viewer = new PageViewer(dir.Path);
+
+        Assert.Equal(PageTint.Dark, viewer.Surface.Tint);
+        Assert.Equal(2, viewer.Surface.Columns);
+        Assert.True(viewer.Surface.Cover);
+        Assert.False(viewer.Surface.Continuous);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AViewerWithoutASettingsFolderStartsPlainAndSavesNothing() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+
+        Click(viewer, "Tint_Click", viewer.TintDarkItem);
+        Click(viewer, "Arrangement_Click", viewer.TwoPageItem);
+
+        Assert.Equal(PageTint.Dark, viewer.Surface.Tint);
+        Assert.Equal(2, viewer.Surface.Columns);
+        Assert.Equal(PageTint.None, new PageViewer(null).Surface.Tint);
+        Assert.Equal(1, new PageViewer(null).Surface.Columns);
+        Assert.True(new PageViewer(null).Surface.Continuous);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheTintAndTheLayoutPickedInTheMenuAreSaved() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        var viewer = new PageViewer(dir.Path);
+
+        Click(viewer, "Tint_Click", viewer.TintSepiaItem);
+        Click(viewer, "Arrangement_Click", viewer.TwoPageItem);
+        Click(viewer, "Arrangement_Click", viewer.CoverItem);
+
+        var saved = AppPreferencesStore.Load(dir.Path);
+        Assert.Equal(PageTint.Sepia, saved.Tint);
+        Assert.Equal(2, saved.Columns);
+        Assert.True(saved.Cover);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ReadingModesOneColumnLayoutIsNotSaved() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(p => { p.Columns = 2; p.Continuous = false; }, dir.Path);
+        var viewer = new PageViewer(dir.Path);
+
+        viewer.ReadingMode = true;
+        Assert.Equal(1, viewer.Surface.Columns);
+
+        var saved = AppPreferencesStore.Load(dir.Path);
+        Assert.Equal(2, saved.Columns);
+        Assert.False(saved.Continuous);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ShowingAnotherTabEndsReadingMode() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+        Click(viewer, "Arrangement_Click", viewer.TwoPageItem);
+        viewer.ReadingMode = true;
+
+        viewer.Show(null);
+
+        Assert.False(viewer.ReadingMode);
+        Assert.Equal(2, viewer.Surface.Columns);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task OnePageFromTwoPagesContinuousStaysContinuousInTheMenu() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+        Click(viewer, "Arrangement_Click", viewer.TwoPageItem);
+        Assert.True(viewer.Surface.Continuous);
+
+        Click(viewer, "Arrangement_Click", viewer.OnePageItem);
+        typeof(PageViewer).GetMethod("MoreMenu_Opened", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [viewer, new RoutedEventArgs()]);
+
+        Assert.True(viewer.Surface.Continuous);
+        Assert.True(viewer.OnePageItem.IsChecked);
+        Assert.True(viewer.ContinuousItem.IsChecked);
+        Assert.False(viewer.TwoPageItem.IsChecked);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ATabComesBackThroughShowWithItsRotationAndPage() => Sta.Run(() =>
+    {
+        using var first = NewTab();
+        using var second = NewTab();
+        var viewer = new PageViewer(null);
+        viewer.Show(first);
+        viewer.Measure(new Size(800, 600));
+        viewer.Arrange(new Rect(0, 0, 800, 600));
+        viewer.UpdateLayout();
+        viewer.Surface.SetRotation(90);
+        int page = first.PageIndex;
+
+        viewer.Show(second);
+        Assert.Equal(0, viewer.Surface.Rotation);
+        viewer.Show(first);
+
+        Assert.Equal(90, viewer.Surface.Rotation);
+        Assert.Equal(page, first.PageIndex);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task SwitchingTabsKeepsEachOnesZoomWhateverItsLayout() => Sta.Run(() =>
+    {
+        using var asking = TabAsking();
+        using var plain = NewTab();
+        var viewer = ArrangedViewer();
+        viewer.Show(plain);
+        viewer.Surface.SetZoom(1.75);
+        viewer.Show(asking);
+        Assert.Equal(FitMode.Page, viewer.Surface.Fit);
+
+        viewer.Show(plain);
+
+        Assert.Equal((FitMode.None, 1.75), (viewer.Surface.Fit, plain.Zoom));
+        Assert.Equal(1.75, viewer.Surface.Zoom, 3);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ATintDoesNotSaveTheLayoutAFileAskedFor() => Sta.Run(() =>
+    {
+        string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var asking = TabAsking();
+            var viewer = new PageViewer(directory);
+            viewer.Show(asking);
+            var dark = new System.Windows.Controls.MenuItem { Tag = "Dark" };
+
+            typeof(PageViewer).GetMethod("Tint_Click", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [dark, new RoutedEventArgs()]);
+
+            var saved = AppPreferencesStore.Load(directory);
+            Assert.Equal(PageTint.Dark, saved.Tint);
+            Assert.Equal((1, false, true), (saved.Columns, saved.Cover, saved.Continuous));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+        return Task.CompletedTask;
+    });
+
+    private static DocumentTab TabAsking()
+    {
+        var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(4)), new FakeRenderer(), null, "a.pdf");
+        var document = tab.Document;
+        (ViewerSettings.Read(document) with { PageLayout = PageLayout.TwoPageRight }).Write(document);
+        document.Catalog["OpenAction"] = PdfDestinations.ToObject(document, new PdfDestination(2))!;
+        return tab;
+    }
+
+    private static PageViewer ArrangedViewer()
+    {
+        var viewer = new PageViewer(null);
+        viewer.Measure(new Size(800, 600));
+        viewer.Arrange(new Rect(0, 0, 800, 600));
+        viewer.UpdateLayout();
+        return viewer;
+    }
+
+    [Fact]
+    public Task AFileOpensInTheLayoutAndAtThePageItAsksForAndEachTabKeepsItsOwn() => Sta.Run(() =>
+    {
+        using var asking = TabAsking();
+        using var plain = NewTab();
+        var viewer = ArrangedViewer();
+
+        viewer.Show(asking);
+        Assert.Equal((2, true, false, 2), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous, viewer.Surface.CurrentPage));
+
+        viewer.Show(plain);
+        Assert.Equal((1, false, true), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous));
+
+        viewer.Show(asking);
+        Assert.Equal((2, true, false), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ATabThatWasViewedBeforeDoesNotTakeTheFilesLayoutAgain() => Sta.Run(() =>
+    {
+        using var asking = TabAsking();
+        asking.Zoom = 1.5;
+        var viewer = ArrangedViewer();
+
+        viewer.Show(asking);
+
+        Assert.Equal(1, viewer.Surface.Columns);
+        Assert.Equal(0, viewer.Surface.CurrentPage);
+        return Task.CompletedTask;
+    });
+
+    private static PageViewer PresentationViewer(DocumentTab tab)
+    {
+        var viewer = new PageViewer(null);
+        viewer.Show(tab);
+        viewer.Measure(new Size(800, 600));
+        viewer.Arrange(new Rect(0, 0, 800, 600));
+        viewer.UpdateLayout();
+        return viewer;
+    }
+
+    [Fact]
+    public Task PresentingShowsOnePageAtATimeWithoutTheBar() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(3)), new FakeRenderer(), null, "a.pdf");
+        var viewer = PresentationViewer(tab);
+        viewer.Surface.SetArrangement(2, true, true);
+
+        viewer.Presenting = true;
+
+        Assert.True(viewer.Presenting);
+        Assert.Equal(Visibility.Collapsed, viewer.Bar.Visibility);
+        Assert.Equal((1, false, false, FitMode.Page), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous, viewer.Surface.Fit));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheAdvanceAndBackKeysStepPagesAndStopAtTheEnds() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(3)), new FakeRenderer(), null, "a.pdf");
+        var viewer = PresentationViewer(tab);
+        Assert.False(viewer.PresentWithKeys(Key.Right, false));
+        viewer.Presenting = true;
+
+        Assert.False(viewer.PresentWithKeys(Key.F, false));
+        Assert.True(viewer.PresentWithKeys(Key.Left, false));
+        Assert.Equal(0, viewer.Surface.CurrentPage);
+        foreach (var key in new[] { Key.Right, Key.Down, Key.PageDown, Key.N, Key.Space })
+            Assert.True(viewer.PresentWithKeys(key, false));
+        Assert.Equal(2, viewer.Surface.CurrentPage);
+
+        viewer.PresentWithKeys(Key.Space, true);
+        Assert.Equal(1, viewer.Surface.CurrentPage);
+        viewer.PresentWithKeys(Key.Home, false);
+        Assert.Equal(0, viewer.Surface.CurrentPage);
+        viewer.PresentWithKeys(Key.End, false);
+        Assert.Equal(2, viewer.Surface.CurrentPage);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task EscapeLeavesPresentingAndTheViewIsBack() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(3)), new FakeRenderer(), null, "a.pdf");
+        var viewer = PresentationViewer(tab);
+        viewer.Surface.SetArrangement(2, true, false);
+        viewer.Surface.SetZoom(1.5);
+        viewer.Surface.SetRotation(90);
+
+        viewer.Presenting = true;
+        Assert.True(viewer.PresentWithKeys(Key.Escape, false));
+
+        Assert.False(viewer.Presenting);
+        Assert.Equal(Visibility.Visible, viewer.Bar.Visibility);
+        Assert.Equal((2, true, false, FitMode.None, 1.5, 90), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous, viewer.Surface.Fit, viewer.Surface.Zoom, viewer.Surface.Rotation));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task PresentingWithoutAFileDoesNothing() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+
+        viewer.Presenting = true;
+
+        Assert.False(viewer.Presenting);
         return Task.CompletedTask;
     });
 }

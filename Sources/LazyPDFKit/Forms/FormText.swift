@@ -17,9 +17,11 @@ public enum FormText {
 
     public static var badRect: String { L10n.t("The field needs a rectangle with an area.") }
 
-    public static var noPage: String { L10n.t("The page is not in the document.") }
+    public static var noPage: String { L10n.t("The page is not in the file.") }
 
     public static var notAField: String { L10n.t("This field is not part of the form.") }
+
+    public static var notSigned: String { L10n.t("This signature field is not signed.") }
 
     public static var notAButton: String { L10n.t("Only a check box or radio button has an export value.") }
 
@@ -31,7 +33,7 @@ public enum FormText {
 
     public static var badSize: String { L10n.t("The text size must be from 0 to 200 points.") }
 
-    public static var badColor: String { L10n.t("A colour is one, three or four numbers from 0 to 1.") }
+    public static var badColor: String { L10n.t("A color is one, three or four numbers from 0 to 1.") }
 
     public static var notAPushButton: String { L10n.t("Only a button can have an action.") }
 

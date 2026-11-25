@@ -25,6 +25,7 @@ public sealed partial class EditContentPanel : ToolPanel
     // Set while this panel changes the document, so that the change is not mistaken for someone else's (an undo).
     private bool _editing;
     private bool _loading;
+    private bool _reading;
 
     // The person said to go on with a signed file; asked once for as long as the panel is attached.
     private bool _signedOk;
@@ -32,7 +33,7 @@ public sealed partial class EditContentPanel : ToolPanel
     public EditContentPanel()
     {
         InitializeComponent();
-        Swatches(TextColors, color => Restyle(new TextStyleChange(Color: color), Loc.T("Colour changed.")));
+        Swatches(TextColors, color => Restyle(new TextStyleChange(Color: color), Loc.T("Color changed.")));
         Swatches(FillColors, color => ShapeStyle(fill: color, stroke: null, width: null));
         Swatches(LineColors, color => ShapeStyle(fill: null, stroke: color, width: null));
         FontBox.ItemsSource = Fonts.SystemFontFamilies.Select(f => f.Source).Order().ToList();
@@ -67,6 +68,7 @@ public sealed partial class EditContentPanel : ToolPanel
         _tab.Changed += Tab_Changed;
         Viewer!.View.PreviewKeyDown += View_PreviewKeyDown;
         Viewer.ModeChanged += Viewer_ModeChanged;
+        Viewer.ViewChanged += Viewer_ViewChanged;
         _surface.Attach();
         ModeSelect.IsChecked = true;
         HideMessage();
@@ -85,7 +87,6 @@ public sealed partial class EditContentPanel : ToolPanel
 
     protected override void OnDetach()
     {
-        HandIn();
         _editor!.Close();
         _pending = Pending.None;
         _linkArea = null;
@@ -94,6 +95,7 @@ public sealed partial class EditContentPanel : ToolPanel
         _tab!.Changed -= Tab_Changed;
         Viewer!.View.PreviewKeyDown -= View_PreviewKeyDown;
         Viewer.ModeChanged -= Viewer_ModeChanged;
+        Viewer.ViewChanged -= Viewer_ViewChanged;
         _edits = null;
         _surface = null;
         _editor = null;
@@ -114,6 +116,8 @@ public sealed partial class EditContentPanel : ToolPanel
     }
 
     // The Hand or Select button of the viewer took the pointer; it comes back when a mode here is picked.
+    private void Viewer_ViewChanged(object? sender, EventArgs e) => _editor?.Upright();
+
     private void Viewer_ModeChanged(object? sender, EventArgs e)
     {
         if (_surface is not { IsActive: false }) return;

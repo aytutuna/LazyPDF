@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Forms;
@@ -57,12 +58,25 @@ internal sealed partial class FillLayer
             Style = FieldStyles.Text,
             Text = field.Value ?? "",
             FontSize = FontSizeOf(field, box, multiline),
-            TextAlignment = field.Alignment switch { 1 => System.Windows.TextAlignment.Center, 2 => System.Windows.TextAlignment.Right, _ => System.Windows.TextAlignment.Left },
             MaxLength = field.MaxLength,
             AcceptsReturn = multiline,
             TextWrapping = multiline ? TextWrapping.Wrap : TextWrapping.NoWrap,
             VerticalScrollBarVisibility = multiline ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled,
         };
+        // A mirrored box puts Left at the right edge, so an unset or right alignment is Left there, as the saved appearance starts such a line at the right edge.
+        void Flow()
+        {
+            bool rtl = TextDirection.IsRightToLeft(text.Text);
+            text.FlowDirection = rtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+            text.TextAlignment = field.Alignment switch
+            {
+                1 => System.Windows.TextAlignment.Center,
+                2 => rtl ? System.Windows.TextAlignment.Left : System.Windows.TextAlignment.Right,
+                _ => System.Windows.TextAlignment.Left,
+            };
+        }
+        Flow();
+        text.TextChanged += (_, _) => Flow();
         string last = text.Text;
         var slot = new Slot(field.Name, index, box, text, (f, _) =>
         {
@@ -151,12 +165,20 @@ internal sealed partial class FillLayer
     private Slot? Push(FormField field, int index, Rect box, FormWidget widget)
     {
         var action = PdfActions.Read(_form.Document, widget.Dictionary["A"]);
-        if (action is not (GoToAction or UriAction or NamedAction or ResetFormAction)) return null;
+        string? unsupported = action switch
+        {
+            SubmitFormAction => Loc.T("It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself."),
+            JavaScriptAction => Loc.T("It runs a script, which Lazy PDF does not do."),
+            LaunchAction or GoToRemoteAction => Loc.T("It opens another file or program, which Lazy PDF does not do."),
+            _ => null,
+        };
+        if (unsupported is null && action is not (GoToAction or UriAction or NamedAction or ResetFormAction)) return null;
         var button = new ToggleButton { Style = FieldStyles.Hit };
         button.Click += (_, _) =>
         {
             button.IsChecked = false;
-            if (action is ResetFormAction reset)
+            if (unsupported is not null) _unsupported(unsupported);
+            else if (action is ResetFormAction reset)
             {
                 IReadOnlyList<string>? names = reset.Fields.Count == 0 ? null
                     : (reset.Flags & 1) == 0 ? reset.Fields

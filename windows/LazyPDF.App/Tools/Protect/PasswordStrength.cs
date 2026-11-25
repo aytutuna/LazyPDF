@@ -25,6 +25,8 @@ public static class PasswordStrength
         };
     }
 
+    public static bool VeryShort(string password) => password.Length is > 0 and < 6;
+
     public static string Hint(Strength strength) => strength switch
     {
         Strength.None => "",

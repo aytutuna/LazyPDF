@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Input;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Viewer;
@@ -10,6 +12,7 @@ public partial class PageViewer
 {
     private readonly PageHistory _history = new();
     private string? _pendingAddress;
+    private string? _pendingSite;
 
     public bool CanGoBack => _history.CanGoBack;
 
@@ -19,8 +22,9 @@ public partial class PageViewer
     {
         if (_tab is null || Surface.PageCount == 0) return;
         page = Math.Clamp(page, 0, Surface.PageCount - 1);
-        _history.Jump(Surface.CurrentPage, page);
+        if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(page, new Point(0, 0)), Surface.Rotation);
         Surface.GoToPage(page);
+        RefreshBar();
     }
 
     // The next or previous page, or spread when facing pages show.
@@ -29,14 +33,46 @@ public partial class PageViewer
         if (Surface.PageCount == 0) return;
         int spread = ViewLayout.SpreadOf(Surface.Columns, Surface.Cover, Surface.CurrentPage) + direction;
         if (spread < 0 || spread >= ViewLayout.SpreadsOf(Surface.Columns, Surface.Cover, Surface.PageCount)) return;
-        GoToPage(ViewLayout.PagesOf(Surface.Columns, Surface.Cover, spread, Surface.PageCount).First);
+        Surface.GoToPage(ViewLayout.PagesOf(Surface.Columns, Surface.Cover, spread, Surface.PageCount).First);
     }
 
     public void GoToDestination(PdfDestination destination)
     {
-        if (_tab is null || PdfDestinations.Locate(_tab.Document, destination) is not { } place) return;
-        _history.Jump(Surface.CurrentPage, place.PageIndex);
-        Surface.GoToPage(place.PageIndex, new Point(place.X, Math.Max(0, place.Y - 12)));
+        if (_tab is null) return;
+        if (PdfDestinations.Locate(_tab.Document, destination) is not { } place)
+        {
+            Tell(Loc.T("This link goes to a page that is not in the file."), null);
+            return;
+        }
+        var size = Surface.PageSize(place.PageIndex);
+        bool aimed = AimsAtTop(destination, _tab.Document.Pages[place.PageIndex].Rotate, Surface.Rotation);
+        var to = (aimed, Surface.Rotation) switch
+        {
+            (false, 180) => new Point(0, size.Height),
+            (false, 270) => new Point(size.Width, 0),
+            (false, _) => new Point(0, 0),
+            (_, 90) => new Point(Math.Max(0, place.X - 12), place.Y),
+            (_, 180) => new Point(place.X, Math.Min(size.Height, place.Y + 12)),
+            (_, 270) => new Point(Math.Min(size.Width, place.X + 12), place.Y),
+            _ => new Point(place.X, Math.Max(0, place.Y - 12)),
+        };
+        if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(place.PageIndex, to), Surface.Rotation);
+        Surface.GoToPage(place.PageIndex, aimed ? to : null);
+        RefreshBar();
+    }
+
+    // Whether the destination gives the coordinate that runs down the screen; Locate fills a missing one with the page's corner, which is not a target.
+    internal static bool AimsAtTop(PdfDestination destination, int pageRotate, int viewRotate)
+    {
+        bool top = (pageRotate + viewRotate) % 180 == 0;
+        var (hasTop, hasLeft) = destination.Fit switch
+        {
+            DestinationFit.Xyz or DestinationFit.FitR => (destination.Top is not null, destination.Left is not null),
+            DestinationFit.FitH or DestinationFit.FitBH => (destination.Top is not null, false),
+            DestinationFit.FitV or DestinationFit.FitBV => (false, destination.Left is not null),
+            _ => (false, false),
+        };
+        return top ? hasTop : hasLeft;
     }
 
     public void FollowAction(PdfAction? action)
@@ -52,6 +88,24 @@ public partial class PageViewer
             case NamedAction named:
                 Named(named.Name);
                 break;
+            case GoToRemoteAction remote:
+                Tell(Loc.T("This link goes to another file, which Lazy PDF does not open from here."), remote.File);
+                break;
+            case LaunchAction launch:
+                Tell(Loc.T("This link goes to another file, which Lazy PDF does not open from here."), launch.File);
+                break;
+            case SubmitFormAction submit:
+                Tell(Loc.T("This link runs a script or sends a form, which Lazy PDF does not do."), submit.Url);
+                break;
+            case JavaScriptAction or ResetFormAction:
+                Tell(Loc.T("This link runs a script or sends a form, which Lazy PDF does not do."), null);
+                break;
+            case OtherAction other:
+                Tell(OtherText(other.Type), null);
+                break;
+            default:
+                Tell(Loc.T("This link cannot be followed."), null);
+                break;
         }
     }
 
@@ -66,17 +120,35 @@ public partial class PageViewer
             case "GoBack": GoBack(); break;
             case "GoForward": GoForward(); break;
             case "Find": ShowFind(); break;
+            default: Tell(Loc.T("This link cannot be followed."), null); break;
         }
     }
 
+    private static string OtherText(string type) => type switch
+    {
+        "SetOCGState" => Loc.T("This link shows or hides a layer. Use the Layers panel for that."),
+        "GoToE" => Loc.T("This link goes to a file inside this file, which Lazy PDF does not open from here."),
+        "Sound" or "Movie" or "Rendition" or "GoTo3DView" or "Screen" => Loc.T("This link plays sound, video or 3D content, which Lazy PDF does not do."),
+        "Hide" => Loc.T("This link shows or hides part of the page, which Lazy PDF does not do."),
+        _ => Loc.T("This link cannot be followed."),
+    };
+
     public void GoBack()
     {
-        if (_history.Back(Surface.CurrentPage) is { } page) Surface.GoToPage(page);
+        if (Surface.TopPlace() is { } from && _history.Back(from) is { } place)
+        {
+            Surface.GoToPage(place.Page, place.Point, keepX: true);
+            RefreshBar();
+        }
     }
 
     public void GoForward()
     {
-        if (_history.Forward(Surface.CurrentPage) is { } page) Surface.GoToPage(page);
+        if (Surface.TopPlace() is { } from && _history.Forward(from) is { } place)
+        {
+            Surface.GoToPage(place.Page, place.Point, keepX: true);
+            RefreshBar();
+        }
     }
 
     public void Reveal(int page, Rect area) => Surface.Reveal(page, area);
@@ -85,7 +157,7 @@ public partial class PageViewer
 
     public void ShowGoToPage()
     {
-        if (_tab is null) return;
+        if (_tab is null || _presenting) return;
         if (Bar.Visibility != Visibility.Visible) ReadingMode = false;
         PageBox.Focus();
     }
@@ -111,16 +183,39 @@ public partial class PageViewer
         }
     }
 
+    private void ZoomBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) => ZoomBox.SelectAll();
+
+    private void ZoomBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) => RefreshBar();
+
+    private void ZoomBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            if (ZoomBox.Text != _shownZoom)
+            {
+                if (ZoomMath.Parse(ZoomBox.Text, out double zoom)) Surface.SetZoom(zoom);
+                else ZoomBox.Text = _shownZoom;
+            }
+            Surface.Focus();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            Surface.Focus();
+            e.Handled = true;
+        }
+    }
+
     // ----- Find
 
     public ViewerSearch Search { get; }
 
     public void ShowFind()
     {
-        if (_tab is null) return;
+        if (_tab is null || _presenting) return;
         if (_reading) ReadingMode = false;
         Find.Visibility = Visibility.Visible;
-        string? selected = _selection.IsEmpty || _selection.Start.Page != _selection.End.Page ? null : SelectedOnOnePage();
+        string? selected = _selection.IsEmpty || _selection.Start.Page != _selection.End.Page || !CanCopy ? null : SelectedOnOnePage();
         Find.Open(selected);
     }
 
@@ -134,9 +229,13 @@ public partial class PageViewer
 
     private void Search_Changed(object? sender, EventArgs e)
     {
+        if (Search.Query.Length == 0) _searchJumped = false;
         _hitGeometry.Clear();
         Surface.InvalidateVisual();
     }
+
+    // Back from a find returns to where the search began, so only its first move is a history entry.
+    private bool _searchJumped;
 
     private void Search_CurrentChanged(object? sender, EventArgs e)
     {
@@ -144,7 +243,10 @@ public partial class PageViewer
         var hit = Search.Hits[Search.Current].Match;
         if (_tab is null || hit.Quads.Count == 0) return;
         var area = PageBounds(hit.Page, hit.Quads);
-        _history.Jump(Surface.CurrentPage, hit.Page);
+        if (!_searchJumped && Surface.TopPlace() is { } from)
+        {
+            _searchJumped = _history.Jump(from, new PagePoint(hit.Page, new Point(0, area.Top)), Surface.Rotation);
+        }
         Surface.Reveal(hit.Page, area);
         _hitGeometry.Clear();
         Surface.InvalidateVisual();
@@ -155,20 +257,66 @@ public partial class PageViewer
     private static readonly string[] OpenableSchemes = ["http", "https", "mailto"];
 
     // An address in a file is the file's, not the reader's: it is shown and asked about, and only the usual schemes are opened.
-    private void AskToOpen(string address)
+    internal void AskToOpen(string address)
     {
+        _linkTip.IsOpen = false;
+        address = WebAddress(address);
         bool openable = Uri.TryCreate(address, UriKind.Absolute, out var uri) && OpenableSchemes.Contains(uri.Scheme);
+        string? site = openable ? SiteKey(uri!) : null;
+        if (site is not null && _preferencesDirectory is not null
+            && AppPreferencesStore.Load(_preferencesDirectory).AllowedLinkHosts.Contains(site))
+        {
+            OpenAddress(address);
+            return;
+        }
         _pendingAddress = openable ? address : null;
         LinkTitle.Text = openable ? Loc.T("Open this link?") : Loc.T("This link cannot be opened.");
+        AutomationProperties.SetName(LinkCard, LinkTitle.Text);
         LinkAddress.Text = address;
+        LinkAddress.Visibility = Visibility.Visible;
+        _pendingSite = _preferencesDirectory is null ? null : site;
+        LinkRemember.IsChecked = false;
+        LinkRemember.Visibility = _pendingSite is null ? Visibility.Collapsed : Visibility.Visible;
+        LinkRemember.Content = Loc.T("Don't ask again for {0}", uri?.IdnHost);
         LinkOpen.Visibility = openable ? Visibility.Visible : Visibility.Collapsed;
         LinkCancel.Content = openable ? Loc.T("Cancel") : Loc.T("Close");
+        AutomationProperties.SetName(LinkCancel, (string)LinkCancel.Content);
+        HideToast();
         LinkCard.Visibility = Visibility.Visible;
         (openable ? LinkOpen : LinkCancel).Focus();
     }
 
+    // Only https sites are remembered; the punycode host shows a look-alike name for what it is.
+    private static string? SiteKey(Uri uri) => uri.Scheme == "https" ? "https://" + uri.IdnHost.ToLowerInvariant() : null;
+
+    private void Tell(string title, string? detail)
+    {
+        _pendingAddress = null;
+        _pendingSite = null;
+        LinkRemember.Visibility = Visibility.Collapsed;
+        LinkTitle.Text = title;
+        AutomationProperties.SetName(LinkCard, title);
+        LinkAddress.Text = detail;
+        LinkAddress.Visibility = string.IsNullOrEmpty(detail) ? Visibility.Collapsed : Visibility.Visible;
+        LinkOpen.Visibility = Visibility.Collapsed;
+        LinkCancel.Content = Loc.T("Close");
+        AutomationProperties.SetName(LinkCancel, (string)LinkCancel.Content);
+        HideToast();
+        LinkCard.Visibility = Visibility.Visible;
+        LinkCancel.Focus();
+    }
+
+    private static string WebAddress(string address)
+    {
+        address = address.Trim();
+        if (!Uri.TryCreate(address, UriKind.Absolute, out _) && address.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            address = "https://" + address;
+        return address;
+    }
+
     private void HideLink()
     {
+        _linkTip.IsOpen = false;
         _pendingAddress = null;
         LinkCard.Visibility = Visibility.Collapsed;
     }
@@ -182,9 +330,24 @@ public partial class PageViewer
     private void LinkOpen_Click(object sender, RoutedEventArgs e)
     {
         string? address = _pendingAddress;
+        string? site = LinkRemember.IsChecked == true ? _pendingSite : null;
         HideLink();
         Surface.Focus();
         if (address is null) return;
+        if (site is not null && _preferencesDirectory is not null)
+        {
+            AppPreferencesStore.Update(p =>
+            {
+                p.AllowedLinkHosts.Remove(site);
+                p.AllowedLinkHosts.Add(site);
+                if (p.AllowedLinkHosts.Count > 100) p.AllowedLinkHosts.RemoveAt(0);
+            }, _preferencesDirectory);
+        }
+        OpenAddress(address);
+    }
+
+    internal Action<string> OpenAddress { get; set; } = address =>
+    {
         try
         {
             Process.Start(new ProcessStartInfo(address) { UseShellExecute = true });
@@ -193,5 +356,11 @@ public partial class PageViewer
         {
             // No program is set up for the address; nothing more to do.
         }
+    };
+
+    private void ForgetLinks_Click(object sender, RoutedEventArgs e)
+    {
+        if (_preferencesDirectory is not null) AppPreferencesStore.Update(p => p.AllowedLinkHosts.Clear(), _preferencesDirectory);
+        Tell(Loc.T("Lazy PDF will ask before opening links again."), null);
     }
 }

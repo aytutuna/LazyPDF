@@ -6,8 +6,10 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
 
 namespace LazyPDF.App;
@@ -23,6 +25,9 @@ public partial class MainWindow
 
     private bool _narrow;
     private bool _actionRunning;
+    private readonly List<string> _held = new();
+    private InfoMessage? _heldMessage;
+    private InfoMessage? _settledMessage;
 
     private readonly Dictionary<ToolGroup, Button> _groupButtons = [];
     private readonly Dictionary<string, ToggleButton> _railButtons = [];
@@ -31,6 +36,11 @@ public partial class MainWindow
     private DocumentTab? _inspectorTab;
     private ToolPanel? _sidePanel;
     private DocumentTab? _sideTab;
+
+    // False while typed text waits for an answer; the side panel may hold some as well as the inspector.
+    private bool HandedIn() => _inspectorPanel?.HandIn() != false && _sidePanel?.HandIn() != false;
+
+    private bool HandedInOnSwitch() => _inspectorPanel?.HandInOnSwitch() != false && _sidePanel?.HandInOnSwitch() != false;
 
     private void BuildToolStrip()
     {
@@ -123,9 +133,65 @@ public partial class MainWindow
 
     private void ContentArea_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        SettingsScroll.MaxHeight = Math.Max(0, e.NewSize.Height - 48);
+        LimitPaneWidths();
         if (_narrow == e.NewSize.Width < NarrowWidth) return;
         _narrow = !_narrow;
         RefreshFromViewModel();
+    }
+
+    // The stage keeps 320 pixels; a window too narrow for the saved widths only clamps them. The inspector is
+    // clamped first and the side panel takes what is left, so the result does not depend on the last layout.
+    private void LimitPaneWidths()
+    {
+        var (side, inspector) = PaneLimits(ContentArea.ActualWidth - 48 - 320, _vm.SidePanelWidth, _vm.InspectorWidth,
+            SidePane.Visibility == Visibility.Visible, Inspector.Visibility == Visibility.Visible);
+        SideColumn.MaxWidth = side;
+        InspectorColumn.MaxWidth = inspector;
+    }
+
+    internal static (double Side, double Inspector) PaneLimits(double room, double side, double inspector, bool sideShown, bool inspectorShown)
+    {
+        double inspectorMax = Math.Max(180, room - (sideShown ? 180 : 0));
+        double inspectorWidth = inspectorShown ? Math.Min(inspector, inspectorMax) : 0;
+        double sideMax = Math.Max(180, room - inspectorWidth);
+        return (sideMax, inspectorMax);
+    }
+
+    private void SetPane(Border pane, GridSplitter splitter, ColumnDefinition column, bool shown, double width)
+    {
+        pane.Visibility = splitter.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+        column.MinWidth = shown ? 180 : 0;
+        column.Width = new GridLength(shown ? width : 0);
+        LimitPaneWidths();
+    }
+
+    private void SideSplitter_Changed(object sender, RoutedEventArgs e)
+    {
+        if (e is KeyEventArgs { Key: not (Key.Left or Key.Right) }) return;
+        _vm.SetSidePanelWidth(SideColumn.ActualWidth);
+        LimitPaneWidths();
+    }
+
+    private void InspectorSplitter_Changed(object sender, RoutedEventArgs e)
+    {
+        if (e is KeyEventArgs { Key: not (Key.Left or Key.Right) }) return;
+        _vm.SetInspectorWidth(InspectorColumn.ActualWidth);
+        LimitPaneWidths();
+    }
+
+    private void SideSplitter_Reset(object sender, MouseButtonEventArgs e)
+    {
+        _vm.SetSidePanelWidth(AppPreferences.DefaultSidePanelWidth);
+        SideColumn.Width = new GridLength(AppPreferences.DefaultSidePanelWidth);
+        LimitPaneWidths();
+    }
+
+    private void InspectorSplitter_Reset(object sender, MouseButtonEventArgs e)
+    {
+        _vm.SetInspectorWidth(AppPreferences.DefaultInspectorWidth);
+        InspectorColumn.Width = new GridLength(AppPreferences.DefaultInspectorWidth);
+        LimitPaneWidths();
     }
 
     private void RailToggle_Click(object sender, RoutedEventArgs e) => ShowSidePanel(null);
@@ -133,12 +199,16 @@ public partial class MainWindow
     // The side pane has no room beside an open tool on a narrow window, so the tool gives way.
     private void ShowSidePanel(string? id)
     {
+        if (!HandedInOnSwitch()) return;
         if (_narrow && _vm.ActiveTool is not null) _vm.SelectTool(_vm.ActiveToolId);
         if (id is null) _vm.ToggleSidePanel();
         else _vm.SetSidePanel(id);
     }
 
-    private void SidePaneClose_Click(object sender, RoutedEventArgs e) => _vm.SetSidePanel(_vm.SidePanelId);
+    private void SidePaneClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (HandedInOnSwitch()) _vm.SetSidePanel(_vm.SidePanelId);
+    }
 
     private void RefreshSidePane()
     {
@@ -147,7 +217,7 @@ public partial class MainWindow
         var info = ToolCatalog.FindSide(_vm.SidePanelId);
         if (tab is null || info is null)
         {
-            SidePane.Visibility = Visibility.Collapsed;
+            SetPane(SidePane, SideSplitter, SideColumn, false, 0);
             _sidePanel?.Detach();
             _sidePanel = null;
             _sideTab = null;
@@ -156,10 +226,10 @@ public partial class MainWindow
         }
         if (_narrow && _vm.ActiveTool is not null)
         {
-            SidePane.Visibility = Visibility.Collapsed;
+            SetPane(SidePane, SideSplitter, SideColumn, false, 0);
             return;
         }
-        SidePane.Visibility = Visibility.Visible;
+        SetPane(SidePane, SideSplitter, SideColumn, true, _vm.SidePanelWidth);
         SideTitle.Text = info.Title;
         Place(info.Id, info.Create, SideHost, ref _sidePanel, ref _sideTab, tab);
     }
@@ -169,21 +239,27 @@ public partial class MainWindow
         var tab = _vm.ActiveDocument;
         if (tab is null)
         {
+            SetPane(Inspector, InspectorSplitter, InspectorColumn, false, 0);
             _inspectorPanel?.Detach();
             _inspectorPanel = null;
             _inspectorTab = null;
             InspectorHost.Content = null;
             return;
         }
-        Inspector.Visibility = _narrow && _vm.ActiveTool is null ? Visibility.Collapsed : Visibility.Visible;
+        SetPane(Inspector, InspectorSplitter, InspectorColumn, _vm.ActiveTool is not null || (!_narrow && _vm.ShowFileInfo), _vm.InspectorWidth);
         if (_vm.ActiveTool is not { } tool)
         {
+            // Closing the tool does not go through Place, so words still being typed go in here.
+            if (_inspectorTab is not null && _vm.Strip.Contains(_inspectorTab) && !_vm.IsBusy && _inspectorPanel?.HandInOnSwitch() == false)
+                _vm.DropAction();
             _inspectorPanel?.Detach();
             _inspectorPanel = null;
             _inspectorTab = null;
             InspectorGlyph.Text = "\uE946";
             InspectorTitle.Text = Loc.T("File");
-            InspectorClose.Visibility = Visibility.Collapsed;
+            InspectorClose.Visibility = Visibility.Visible;
+            InspectorClose.ToolTip = Loc.T("Hide file information");
+            AutomationProperties.SetName(InspectorClose, Loc.T("Hide file information"));
             InspectorHost.Content = DocumentSummary(tab);
             InspectorFooter.Visibility = Visibility.Collapsed;
             return;
@@ -191,6 +267,8 @@ public partial class MainWindow
         InspectorGlyph.Text = tool.Glyph;
         InspectorTitle.Text = tool.Title;
         InspectorClose.Visibility = Visibility.Visible;
+        InspectorClose.ToolTip = Loc.T("Close the tool");
+        AutomationProperties.SetName(InspectorClose, Loc.T("Close the tool"));
         Place("tool:" + tool.Id, tool.Create, InspectorHost, ref _inspectorPanel, ref _inspectorTab, tab);
         RefreshAction();
     }
@@ -205,6 +283,14 @@ public partial class MainWindow
             panel.ActionChanged += (_, _) => RefreshAction();
         }
         if (ReferenceEquals(current, panel) && ReferenceEquals(attached, tab)) return;
+        // The tab can change under the panel (open, close, Save all), so words still being typed go in before it lets go.
+        // A running job edits the session on another thread, so nothing is written to it from here.
+        if (attached is not null && _vm.Strip.Contains(attached) && !_vm.IsBusy && current?.HandInOnSwitch() == false)
+        {
+            // A signed file asked before taking the words. On the same tab the panel keeps them and its button still works.
+            if (!ReferenceEquals(attached, tab)) _vm.DropAction();
+            if (!ReferenceEquals(attached, tab) && !current.KeepsDrafts) _vm.SetStatus(Loc.T("Typed text was not kept."));
+        }
         current?.Detach();
         current = panel;
         attached = tab;
@@ -239,11 +325,11 @@ public partial class MainWindow
         }
         catch (OperationCanceledException)
         {
-            _vm.SetStatus(Loc.T("Cancelled."));
+            _vm.SetStatus(Loc.T("Canceled."));
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
-            _vm.ShowProblem(new Problem(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", action.Text)));
+            _vm.ShowProblem(Problems.Tool(error, action.Text));
             System.Diagnostics.Trace.TraceError(error.ToString());
         }
         finally
@@ -252,9 +338,21 @@ public partial class MainWindow
             TabBar.IsEnabled = !Modal;
         }
         RefreshAction();
+        ReleaseHeld();
     }
 
-    private void InspectorClose_Click(object sender, RoutedEventArgs e) => _vm.SelectTool(_vm.ActiveToolId);
+    private void InspectorClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.ActiveTool is null) _vm.SetShowFileInfo(false);
+        else _vm.SelectTool(_vm.ActiveToolId);
+        RefreshInspector();
+    }
+
+    private void FileInfo_Click(object sender, RoutedEventArgs e)
+    {
+        _vm.SetShowFileInfo(!_vm.ShowFileInfo);
+        RefreshInspector();
+    }
 
     // What the inspector shows while no tool is open: the facts of the file.
     private static UIElement DocumentSummary(DocumentTab tab)

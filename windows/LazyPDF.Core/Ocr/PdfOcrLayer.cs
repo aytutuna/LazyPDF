@@ -37,21 +37,33 @@ public static class PdfOcrLayer
             layouts.Add((page, geometry, OcrLayerContent.Layout(entry.Words, entry.PixelWidth, entry.PixelHeight, geometry)));
         }
 
-        foreach (var (page, _, _) in layouts) Remove(document, page);
+        // Adding objects can fail (the file has no numbers left), so everything that adds one comes before the old layers go.
         var texts = layouts.SelectMany(l => l.Lines).SelectMany(l => l).Select(w => w.Text);
         var codes = GlyphlessCodes.For(texts);
         PdfReference? font = null;
-        int count = 0;
+        var streams = new List<PdfReference?>();
         foreach (var (page, geometry, lines) in layouts)
         {
-            if (lines.Count == 0) continue;
+            if (lines.Count == 0)
+            {
+                streams.Add(null);
+                continue;
+            }
             font ??= OcrLayerContent.AddFont(document, codes);
-            var content = OcrLayerContent.Build(lines, geometry, UnitOf(page), codes);
-            PrivateFonts(document, page, create: true)![OcrLayerContent.FontName] = font;
+            streams.Add(OcrLayerContent.AddStream(document, OcrLayerContent.Build(lines, geometry, UnitOf(page), codes), language));
+        }
+
+        foreach (var (page, _, _) in layouts) Remove(document, page);
+        int count = 0;
+        for (int i = 0; i < layouts.Count; i++)
+        {
+            if (streams[i] is not { } stream) continue;
+            var page = layouts[i].Page;
+            PrivateFonts(document, page, create: true)![OcrLayerContent.FontName] = font!;
             var items = Contents(document, page);
-            items.Insert(0, OcrLayerContent.AddStream(document, content, language));
+            items.Insert(0, stream);
             page.Dictionary["Contents"] = new PdfArray(items);
-            count += lines.Sum(l => l.Count);
+            count += layouts[i].Lines.Sum(l => l.Count);
         }
         return count;
     }
@@ -91,10 +103,25 @@ public static class PdfOcrLayer
         {
             foreach (var word in OcrLayerContent.Read(document, page, stream, geometry).SelectMany(l => l))
             {
-                words.Add(new OcrLayerWord(words.Count, word.Text, new DisplayRect(word.X, word.Y, word.Width, word.Height)));
+                words.Add(new OcrLayerWord(words.Count, word.Text, Bounds(word)));
             }
         }
         return words;
+    }
+
+    // A turned word is an upright box at its baseline start, turned by Angle; the box shown covers the turned word.
+    private static DisplayRect Bounds(PlacedWord word)
+    {
+        if (word.Angle == 0) return new DisplayRect(word.X, word.Y, word.Width, word.Height);
+        double cos = Math.Cos(word.Angle), sin = Math.Sin(word.Angle);
+        double px = word.X, py = word.Y + word.Height;
+        double ex = word.Width * cos, ey = -word.Width * sin;
+        double ux = -word.Height * sin, uy = -word.Height * cos;
+        double left = px + Math.Min(0, Math.Min(ex, Math.Min(ux, ex + ux)));
+        double right = px + Math.Max(0, Math.Max(ex, Math.Max(ux, ex + ux)));
+        double top = py + Math.Min(0, Math.Min(ey, Math.Min(uy, ey + uy)));
+        double bottom = py + Math.Max(0, Math.Max(ey, Math.Max(uy, ey + uy)));
+        return new DisplayRect(left, top, right - left, bottom - top);
     }
 
     /// <summary>
@@ -144,11 +171,13 @@ public static class PdfOcrLayer
     private static void Rewrite(PdfDocument document, PdfPage page, PdfStream stream, List<List<PlacedWord>> lines, PageGeometry geometry)
     {
         var fonts = PrivateFonts(document, page, create: true)!;
-        var codes = GlyphlessCodes.For(lines.SelectMany(l => l).Select(w => w.Text));
+        var texts = lines.SelectMany(l => l).Select(w => w.Text).ToList();
         var current = OcrLayerContent.FontOf(document, page, OcrLayerContent.FontName);
         var known = current is null ? null : GlyphlessCodes.From(current);
+        // The font serves every layer stream of the page, so a replacement keeps the characters the old one had at their codes.
+        var codes = GlyphlessCodes.For((known?.Supplementary ?? []).Select(char.ConvertFromUtf32).Concat(texts));
         // Codes of characters beyond the BMP depend on the font, so a font that lacks one of them is replaced.
-        if (known is not null && lines.SelectMany(l => l).All(w => known.Covers(w.Text))) codes = known;
+        if (known is not null && texts.All(known.Covers)) codes = known;
         else fonts[OcrLayerContent.FontName] = OcrLayerContent.AddFont(document, codes);
         // A new stream, not new data in the old one: a duplicated page shares the old stream.
         var items = Contents(document, page);

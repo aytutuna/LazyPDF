@@ -29,9 +29,16 @@ enum Flate {
     /// Inflates the deflate stream that starts at `data[start]` into `output`. True when its final block was
     /// read, false when the data ended early or is invalid; a stream that expands past the cap throws.
     static func inflate(_ data: [UInt8], _ start: Int, _ output: FilterBuffer) throws -> Bool {
+        var end = start
+        return try inflate(data, start, output, end: &end)
+    }
+
+    /// As above; `end` is where the final block stopped, bytes the code did not need not counted (a gzip trailer follows it).
+    static func inflate(_ data: [UInt8], _ start: Int, _ output: FilterBuffer, end: inout Int) throws -> Bool {
         var reader = Reader(data: data, start: start, output: output)
         do {
             try reader.blocks()
+            end = reader.position - reader.bits / 8
             return true
         } catch Failure.truncated {
             return false

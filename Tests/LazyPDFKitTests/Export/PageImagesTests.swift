@@ -18,7 +18,7 @@ final class PageImagesTests: XCTestCase {
     private final class Capture: ImageCodec {
         var seen: PdfRgbaImage?
 
-        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
 
         func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { nil }
 
@@ -44,6 +44,10 @@ final class PageImagesTests: XCTestCase {
     func test_aPageTheRendererCannotDrawGivesNull() throws {
         XCTAssertNil(try PageImages.png(ExportFakeRenderer(8, 8), 5, 72))
         XCTAssertNil(try PageImages.jpeg(ExportFakeRenderer(8, 8), ExportFakeCodec(), 5, 72))
+    }
+
+    func test_aJpegTheCodecCannotWriteGivesNull() throws {
+        XCTAssertNil(try PageImages.jpeg(ExportFakeRenderer(8, 8), Capture(), 0, 72))
     }
 
     func test_theJpegComesFromTheCodecAndTransparencyIsFlattenedOnWhite() throws {

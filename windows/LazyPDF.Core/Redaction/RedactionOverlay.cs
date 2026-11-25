@@ -62,6 +62,6 @@ internal static class RedactionOverlay
         w.BeginText().Font(fontName, size);
         if (onDark) w.FillGray(1);
         else w.FillGray(0);
-        w.TextMatrix(new PdfMatrix(ux, uy, -uy, ux, q.X0 + dx * ux - dy * uy, q.Y0 + dx * uy + dy * ux)).Show(font.Encode(line)).EndText();
+        w.TextMatrix(new PdfMatrix(ux, uy, -uy, ux, q.X0 + dx * ux - dy * uy, q.Y0 + dx * uy + dy * ux)).Show(font, line, size).EndText();
     }
 }

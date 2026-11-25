@@ -71,6 +71,16 @@ final class FormFont {
         return true
     }
 
+    /// Shows the text in display order, shaped when the font was added for it.
+    @discardableResult
+    func show(_ writer: ContentWriter, _ text: String, _ size: Double) -> ContentWriter {
+        if let added { return writer.show(added, text, size) }
+        return text.isEmpty ? writer : writer.show(encode(text))
+    }
+
+    /// Whether the line is a right-to-left paragraph, which a field aligns to the right unless /Q says otherwise.
+    func isRightToLeft(_ line: String) -> Bool { added.map { $0.isEmbedded && $0.isRightToLeft(line) } ?? false }
+
     func encode(_ text: String) -> [UInt8] {
         if let added { return added.encode(text) }
         var bytes: [UInt8] = []
@@ -91,6 +101,7 @@ final class FormFont {
 
     /// Lines no wider than `maxWidth`: broken at spaces and newlines, a word wider than the box at the character.
     func wrap(_ text: String, _ size: Double, _ maxWidth: Double) -> [String] {
+        if let added, added.isEmbedded, Scripts.needsBidi(text) { return added.wrap(text, size, maxWidth) }
         var lines: [String] = []
         for paragraph in Self.paragraphs(text) {
             var line = String.UnicodeScalarView()

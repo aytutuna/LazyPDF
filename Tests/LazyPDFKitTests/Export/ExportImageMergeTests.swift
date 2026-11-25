@@ -7,6 +7,7 @@ import XCTest
 final class ExportRgbaCodec: ImageCodec {
     private let width: Int
     private let rgba: [UInt8]
+    private(set) var hints: [Int] = []
 
     init(_ width: Int, _ rgba: UInt8...) {
         self.width = width
@@ -18,7 +19,10 @@ final class ExportRgbaCodec: ImageCodec {
         self.rgba = rgba
     }
 
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { PdfRgbaImage(width, rgba.count / 4 / width, rgba) }
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? {
+        hints.append(components)
+        return PdfRgbaImage(width, rgba.count / 4 / width, rgba)
+    }
 
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { nil }
 
@@ -35,7 +39,7 @@ final class ExportSizedCodec: ImageCodec {
         self.height = height
     }
 
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { PdfRgbaImage(width, height, []) }
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { PdfRgbaImage(width, height, []) }
 
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { nil }
 
@@ -114,14 +118,21 @@ final class ExportImageMergeTests: XCTestCase {
         XCTAssertEqual(try rgba(extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], codec)), [10, 20, 30, 255])
     }
 
-    func test_aColourKeyOnABilevelCodecImageMatchesItsOwnDepth() throws {
-        let png = try extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode /Mask [1 1]", [1], ExportPixelCodec(2, 0, 255))
+    // The first pixel black (sample 0 once the filter has made it an image), the second white.
+    private func blackThenWhite() -> [UInt8] {
+        let bm = Bm(2, 1)
+        bm[0, 0] = 1
+        return Jbig2Segments.generic(bm, 0, false)
+    }
+
+    func test_aColourKeyOnABilevelJbig2ImageMatchesItsOwnDepth() throws {
+        let png = try extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode /Mask [1 1]", blackThenWhite(), nil)
         XCTAssertEqual(alphas(try rgba(png)), [255, 0])
     }
 
-    func test_anIndexedBilevelCodecImageReadsItsPaletteByTheStoredSample() throws {
-        let png = try extract("/Width 2 /Height 1 /ColorSpace [/Indexed /DeviceRGB 3 <000000 FF0000 00FF00 0000FF>] /BitsPerComponent 1 /Filter /JBIG2Decode", [1],
-                              ExportPixelCodec(2, 0, 255))
+    func test_anIndexedBilevelJbig2ImageReadsItsPaletteByTheStoredSample() throws {
+        let png = try extract("/Width 2 /Height 1 /ColorSpace [/Indexed /DeviceRGB 3 <000000 FF0000 00FF00 0000FF>] /BitsPerComponent 1 /Filter /JBIG2Decode", blackThenWhite(),
+                              nil)
         XCTAssertEqual(try rgba(png), [0, 0, 0, 255, 255, 0, 0, 255])
     }
 
@@ -132,20 +143,59 @@ final class ExportImageMergeTests: XCTestCase {
         XCTAssertEqual(try rgba(png), [9, 8, 7, 128])
     }
 
-    func test_aDecodedImageWithAnUnreadableColourSpaceIsStillExported() throws {
-        let png = try extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], ExportRgbaCodec(1, 10, 20, 30, 255))
-        XCTAssertEqual(try rgba(png), [10, 20, 30, 255])
+    func test_aCodecPictureWhoseBufferIsShorterThanItsSizeIsLeftOut() throws {
+        XCTAssertNil(try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], ExportSizedCodec(100, 100)))
     }
 
-    func test_theAlphaOfAJpxImageWithAnUnreadableColourSpaceFollowsSMaskInData() throws {
-        let codec = ExportRgbaCodec(1, 10, 20, 30, 40)
-        XCTAssertEqual(try rgba(extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], codec)), [10, 20, 30, 255])
-        XCTAssertEqual(try rgba(extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode /SMaskInData 1", [1], codec)), [10, 20, 30, 40])
+    func test_aCodecSoftMaskWhoseBufferIsShorterThanItsSizeLeavesThePictureOpaque() throws {
+        let png = try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask 11 0 R", TestPdf.deflate([9, 8, 7]), ExportSizedCodec(1, 1)) { pdf in
+            pdf.stream(11, "\(self.image) /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCT", [1])
+        }
+        XCTAssertEqual(try rgba(png), [9, 8, 7, 255])
     }
 
-    func test_premultipliedJpxAlphaIsUndone() throws {
-        let png = try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], ExportRgbaCodec(1, 10, 20, 30, 128))
-        XCTAssertEqual(try rgba(png), [20, 40, 60, 128])
+    func test_aJpxImageInASpaceTheCodecCannotShowIsLeftOutAndNeverDecoded() throws {
+        let spaces = ["[/Indexed /DeviceRGB 1 <000000FFFFFF>]",
+                      "[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]",
+                      "[/DeviceN [/A /B] /DeviceRGB <</FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Length 10>>]",
+                      "[/Lab <</WhitePoint [0.95 1 1.09]>>]",
+                      "[/CalCMYK <<>>]"]
+        for space in spaces {
+            let codec = ExportRgbaCodec(1, 10, 20, 30, 255)
+            XCTAssertNil(try extract("/Width 1 /Height 1 /ColorSpace \(space) /BitsPerComponent 8 /Filter /JPXDecode", [1], codec), space)
+            XCTAssertTrue(codec.hints.isEmpty, space)
+        }
+    }
+
+    func test_aJpxImageInAPlainSpaceIsExportedFromTheCodecPixels() throws {
+        for space in ["", "/ColorSpace /DeviceRGB"] {
+            let png = try extract("/Width 1 /Height 1 \(space) /Filter /JPXDecode", [1], ExportRgbaCodec(1, 10, 20, 30, 255))
+            XCTAssertEqual(try rgba(png), [10, 20, 30, 255], space)
+        }
+    }
+
+    func test_theCodecIsToldHowManyComponentsThePdfColourSpaceHas() throws {
+        let codec = ExportRgbaCodec(1, 10, 20, 30, 255)
+        _ = try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], codec)
+        _ = try extract("/Width 1 /Height 1 /ColorSpace /DeviceGray /Filter /JPXDecode", [1], codec)
+        _ = try extract("/Width 1 /Height 1 /ColorSpace /DeviceCMYK /Filter /JPXDecode", [1], codec)
+        _ = try extract("/Width 1 /Height 1 /Filter /JPXDecode", [1], codec)
+
+        XCTAssertEqual(codec.hints, [3, 1, 4, 0])
+    }
+
+    func test_theAlphaOfAJpxImageFollowsSMaskInData() throws {
+        let cases: [(String, UInt8)] = [("/SMaskInData 0", 255), ("", 255), ("/SMaskInData 1", 40)]
+        for (entry, alpha) in cases {
+            let png = try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode \(entry)", [1], ExportRgbaCodec(1, 10, 20, 30, 40))
+            XCTAssertEqual(try rgba(png), [10, 20, 30, alpha], entry)
+        }
+    }
+
+    func test_aJpxImageWithPremultipliedAlphaIsLeftOutAndNeverDecoded() throws {
+        let codec = ExportRgbaCodec(1, 10, 20, 30, 128)
+        XCTAssertNil(try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], codec))
+        XCTAssertTrue(codec.hints.isEmpty)
     }
 
     func test_aCodedSoftMaskBesideAMaskStreamLeavesTheMaskStreamUnread() throws {

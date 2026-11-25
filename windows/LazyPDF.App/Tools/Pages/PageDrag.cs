@@ -2,8 +2,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using LazyPDF.App.Documents;
 
 namespace LazyPDF.App.Tools.Pages;
+
+/// <summary>What a page drag carries: the tab the pages are in, their indexes and the tab's revision when the drag started.</summary>
+internal sealed record PagePayload(DocumentTab Tab, int[] Pages, int Revision);
 
 /// <summary>
 /// Dragging the selected pages of a grid to a new place, with a mark on the tile where they would land. A grid that
@@ -14,6 +18,7 @@ internal sealed class PageDrag
     public const string Format = "LazyPDF.Pages";
 
     private readonly ListBox _grid;
+    private readonly Func<DocumentTab?> _tab;
     private readonly Func<List<PageCell>> _cells;
     private readonly Func<List<int>> _selected;
     private readonly Action<int[], int> _move;
@@ -26,9 +31,10 @@ internal sealed class PageDrag
 
     /// <param name="move">Gets the pages and the index they go before.</param>
     /// <param name="files">Gets dropped file paths and the index they go before; null when the grid takes no files.</param>
-    public PageDrag(ListBox grid, Func<List<PageCell>> cells, Func<List<int>> selected, Action<int[], int> move, Action<string[], int>? files = null)
+    public PageDrag(ListBox grid, Func<DocumentTab?> tab, Func<List<PageCell>> cells, Func<List<int>> selected, Action<int[], int> move, Action<string[], int>? files = null)
     {
         _grid = grid;
+        _tab = tab;
         _cells = cells;
         _selected = selected;
         _move = move;
@@ -39,6 +45,17 @@ internal sealed class PageDrag
         grid.DragOver += Grid_DragOver;
         grid.DragLeave += Grid_DragLeave;
         grid.Drop += Grid_Drop;
+    }
+
+    /// <summary>The payload of a page drag that began in <paramref name="tab"/>; null for anything else, including pages of another tab.</summary>
+    internal static PagePayload? From(IDataObject data, DocumentTab? tab) =>
+        data.GetData(Format) is PagePayload payload && ReferenceEquals(payload.Tab, tab) ? payload : null;
+
+    /// <summary>A right-click on a page that is not selected selects it, as a menu over the grid acts on the selection.</summary>
+    internal static void SelectUnder(ListBox grid, object source)
+    {
+        if (source is DependencyObject element && ItemsControl.ContainerFromElement(grid, element) is ListBoxItem { IsSelected: false } item)
+            grid.SelectedItem = item.DataContext;
     }
 
     private PageCell? CellAt(object source) =>
@@ -74,14 +91,15 @@ internal sealed class PageDrag
         if (Math.Abs(moved.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(moved.Y) < SystemParameters.MinimumVerticalDragDistance) return;
         _pressed = null;
         _keptSelection = false;
-        DragDrop.DoDragDrop(_grid, new DataObject(Format, _selected().ToArray()), DragDropEffects.Move);
+        if (_tab() is not { } tab) return;
+        DragDrop.DoDragDrop(_grid, new DataObject(Format, new PagePayload(tab, [.. _selected()], tab.Revision)), DragDropEffects.Move | DragDropEffects.Copy);
         Unmark();
     }
 
     private void Grid_DragOver(object sender, DragEventArgs e)
     {
         e.Handled = true;
-        bool pages = e.Data.GetDataPresent(Format);
+        bool pages = From(e.Data, _tab()) is not null;
         if (!pages && !(_files is not null && e.Data.GetDataPresent(DataFormats.FileDrop)))
         {
             e.Effects = DragDropEffects.None;
@@ -106,7 +124,7 @@ internal sealed class PageDrag
     {
         int before = _marked is null ? _cells().Count : _marked.DropAfter ? _marked.Index + 1 : _marked.Index;
         Unmark();
-        if (e.Data.GetData(Format) is int[] pages && pages.Length > 0) _move(pages, before);
+        if (From(e.Data, _tab()) is { Pages.Length: > 0 } payload) _move(payload.Pages, before);
         else if (_files is not null && e.Data.GetData(DataFormats.FileDrop) is string[] paths && paths.Length > 0) _files(paths, before);
         e.Handled = true;
     }

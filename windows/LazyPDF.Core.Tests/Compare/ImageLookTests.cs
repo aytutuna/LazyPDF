@@ -69,4 +69,13 @@ public class ImageLookTests
         Assert.Equal(CompareText.ImageReplaced, Assert.Single(PdfComparer.Compare(full, half).Changes).Detail);
         Assert.True(PdfComparer.Compare(full, respelled).IsIdentical);
     }
+
+    [Fact]
+    public void NumbersAreSpelledAsRoundTripUpToTheSeventeenthPlace()
+    {
+        using var document = CompareReviewTests.Picture("");
+        var image = new PdfDictionary();
+        image["Matte"] = new PdfArray([new PdfNumber(1000000000000000L), new PdfNumber(10000000000000000L), new PdfNumber(100000000000000000L), new PdfNumber(0.00001)]);
+        Assert.Contains("[1000000000000000 10000000000000000 1E+17 1E-05]", new ImageLook(document, default).Of(image));
+    }
 }

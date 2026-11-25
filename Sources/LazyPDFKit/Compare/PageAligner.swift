@@ -167,11 +167,19 @@ enum PageAligner {
             }
             for (_, i) in ranked.prefix(topCandidates) { choose(i) }
             if let identical = byHash[hash(after[j])] {
-                let closest = identical.enumerated().sorted { a, b in
-                    let da = abs(a.element - j), db = abs(b.element - j)
-                    return da != db ? da < db : a.offset < b.offset
+                // The few nearest, kept by insertion: a full sort per page is quadratic work on a file of identical pages.
+                var closest: [(distance: Int, page: Int)] = []
+                for i in identical {
+                    let distance = abs(i - j)
+                    if closest.count == sameHashCandidates {
+                        guard let last = closest.last, distance < last.distance else { continue }
+                        closest.removeLast()
+                    }
+                    var at = closest.count
+                    while at > 0 && closest[at - 1].distance > distance { at -= 1 }
+                    closest.insert((distance, i), at: at)
                 }
-                for (_, i) in closest.prefix(sameHashCandidates) { choose(i) }
+                for (_, i) in closest { choose(i) }
             }
             var near = max(0, j - 1)
             while near <= min(before.count - 1, j + 1) {

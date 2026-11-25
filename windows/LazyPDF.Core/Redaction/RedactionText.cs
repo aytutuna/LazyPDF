@@ -17,8 +17,13 @@ public static class RedactionText
         if (p.Paths > 0) parts.Add(Loc.Plural(p.Paths, "{0} shape", "{0} shapes"));
         if (p.Annotations > 0) parts.Add(Loc.Plural(p.Annotations, "{0} note", "{0} notes"));
         if (p.Fields > 0) parts.Add(Loc.Plural(p.Fields, "{0} form field", "{0} form fields"));
+        if (p.Values > 0) parts.Add(Loc.Plural(p.Values, "text in {0} note or field", "text in {0} notes or fields"));
         return Loc.T("Page {0}: removed {1}.", p.Page + 1, string.Join(", ", parts));
     }
+
+    public static string WholePicture(int page, int count) => Loc.Plural(count, "A picture on page {1} that could not be read was removed whole.", "{0} pictures on page {1} that could not be read were removed whole.", page + 1);
+
+    public static string ValuesWhole(int page, int count) => Loc.Plural(count, "A note or field on page {1} could not keep its other text and was removed whole.", "{0} notes or fields on page {1} could not keep their other text and were removed whole.", page + 1);
 
     public static string NeedsPicture(int page) => Loc.T("Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture.", page + 1);
     public static string NotDrawn(int page) => Loc.T("Page {0} could not be drawn, so it cannot be turned into a picture.", page + 1);

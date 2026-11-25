@@ -21,7 +21,13 @@ internal sealed class EditPiece
     /// <summary>The resource name of the stand-in font; null for the font in force.</summary>
     public string? Font { get; init; }
 
+    /// <summary>The stand-in font the bytes were made in; its pieces are shaped together when the line is written.</summary>
+    public PdfDrawFont? Draw { get; init; }
+
     public bool IsSpace { get; init; }
+
+    /// <summary>The piece is a whole shaped run (see <see cref="TextBuilder.Shape"/>): <see cref="Text"/> is its logical text and <see cref="Bytes"/> is not used.</summary>
+    public bool IsShaped { get; init; }
 
     /// <summary>The width in em before spacing and scaling, and whether word spacing applies to it (a single byte code 32).</summary>
     public double Em { get; init; }
@@ -66,6 +72,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
         var codec = Codec(anchor.Font);
         var pieces = new EditPiece?[runes.Count];
         var missing = new List<int>();
+        bool bidi = fonts is not null && Scripts.NeedsBidi(text);
         for (int i = 0; i < runes.Count; i++)
         {
             string r = runes[i];
@@ -73,8 +80,25 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
             else if (r == " ") pieces[i] = new EditPiece { Text = r, Shift = -250, Advance = 0.25 * anchor.FontSize * anchor.Scale, IsSpace = true, Em = 0.25 };
             else missing.Add(i);
         }
-        if (missing.Count > 0) Substitute(place, anchor, runes, pieces, missing);
+        if (bidi) ShapeInStandIn(place, anchor, runes, pieces, missing);
+        else if (missing.Count > 0) Substitute(place, anchor, runes, pieces, missing);
         return [.. pieces.Select(p => p!)];
+    }
+
+    // The font in the file draws characters one by one in logical order, so text with right-to-left characters goes whole
+    // into a stand-in that Items shapes. When no stand-in can be had the pieces stay as they are, unless a glyph is missing anyway.
+    private void ShapeInStandIn(Place place, EditGlyph anchor, List<string> runes, EditPiece?[] pieces, List<int> missing)
+    {
+        var all = new EditPiece?[runes.Count];
+        try
+        {
+            Substitute(place, anchor, runes, all, [.. Enumerable.Range(0, runes.Count)]);
+        }
+        catch (EditConflictException) when (missing.Count == 0)
+        {
+            return;
+        }
+        Array.Copy(all, pieces, all.Length);
     }
 
     /// <summary>The pieces of <paramref name="text"/> all in a font chosen for the job, drawn at <paramref name="size"/>.</summary>
@@ -85,6 +109,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
             Text = r,
             Bytes = draw.Encode(r),
             Font = name,
+            Draw = draw,
             IsSpace = r == " ",
             Em = draw.Width(r, 1000) / 1000,
             Code32 = r == " " && !draw.IsEmbedded,
@@ -107,12 +132,13 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
         if (fonts is null) throw new EditConflictException(EditingText.NoFont);
         var state = place.States.At(anchor.Op);
         if (state.Font is null) throw new EditConflictException(EditingText.FontSetOutside);
-        string needed = string.Concat(missing.Select(i => runes[i]).Distinct());
+        // The whole text goes to the embedder: joined forms depend on the neighbours, so distinct characters would miss them.
+        string needed = string.Concat(missing.Select(i => runes[i]));
         var key = (place.Unit, anchor.Font);
         // An edit taken back removes its resources; a stand-in named by one is no longer there.
         bool known = _stand.TryGetValue(key, out var stand) && batch.HasResource(place, stand.Name);
         if (!known) stand = (null!, "", "");
-        if (!known || !needed.All(c => stand.Covered.Contains(c)))
+        if (!known || !stand.Covered.Contains(needed, StringComparison.Ordinal))
         {
             string covered = stand.Covered + needed;
             var (families, style) = FontMatch.For(anchor.Font);
@@ -133,7 +159,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
             }
             string name = batch.AddResource(place, "Font", draw.Reference) ?? throw new EditConflictException(EditingText.SharedForm);
             _stand[key] = stand = (draw, name, covered);
-            _made.Add((new FontSubstitution(anchor.Font.Name, family, needed, draw.IsEmbedded), place, name));
+            _made.Add((new FontSubstitution(anchor.Font.Name, family, string.Concat(needed.EnumerateRunes().Distinct().Select(r => r.ToString())), draw.IsEmbedded), place, name));
         }
         foreach (int i in missing)
         {
@@ -144,12 +170,54 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
                 Text = r,
                 Bytes = stand.Draw.Encode(r),
                 Font = stand.Name,
+                Draw = stand.Draw,
                 IsSpace = r == " ",
                 Em = width / 1000,
                 Code32 = r == " " && !stand.Draw.IsEmbedded,
                 Advance = (width / 1000 * anchor.FontSize + anchor.CharSpacing + (r == " " && !stand.Draw.IsEmbedded ? anchor.WordSpacing : 0)) * anchor.Scale,
             };
         }
+    }
+
+    /// <summary>
+    /// Joins consecutive pieces of one stand-in font with right-to-left characters into one piece, so that it is shaped and
+    /// written in display order and measured by what the shaper makes of it. <paramref name="rightToLeft"/> is the direction
+    /// of the paragraph the line belongs to; a line that would start the other way gets a direction mark. Pieces
+    /// with no such text stay as they are.
+    /// </summary>
+    internal static List<EditPiece> Shape(IReadOnlyList<EditPiece> pieces, EditGlyph anchor, double? size = null, bool? rightToLeft = null)
+    {
+        double em = size ?? anchor.FontSize;
+        var result = new List<EditPiece>();
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            int end = i + 1;
+            if (pieces[i].Draw is { } draw && pieces[i].Shift is null && !pieces[i].IsShaped)
+            {
+                while (end < pieces.Count && pieces[end].Draw == draw && pieces[end].Font == pieces[i].Font && pieces[end].Shift is null && !pieces[end].IsShaped) end++;
+                string text = string.Concat(pieces.Skip(i).Take(end - i).Select(p => p.Text));
+                if (Scripts.NeedsBidi(text) && draw.IsEmbedded)
+                {
+                    if (rightToLeft is { } rtl && draw.IsRightToLeft(text) != rtl) text = (rtl ? (char)0x200F : (char)0x200E) + text;
+                    if (draw.Shaped(text) is { } line)
+                    {
+                        result.Add(new EditPiece
+                        {
+                            Text = text,
+                            Font = pieces[i].Font,
+                            Draw = draw,
+                            IsShaped = true,
+                            Em = line.Width / 1000,
+                            Advance = (line.Width / 1000 * em + anchor.CharSpacing * line.Glyphs.Count) * anchor.Scale,
+                        });
+                        i = end - 1;
+                        continue;
+                    }
+                }
+            }
+            result.Add(pieces[i]);
+        }
+        return result;
     }
 
     /// <summary>
@@ -174,7 +242,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
             if (next == font) return;
             Flush();
             if (next is not null) items.Add(new ShowOps(new ContentWriter().Font(next, size ?? at.FontSize).ToArray()));
-            else items.Add(new ShowOps(new ContentWriter().Add(current ?? place.States.At(at.Op).Font!).ToArray()));
+            else items.Add(new ShowOps(new ContentWriter().Add(current ?? place.States.At(at.Op).Font ?? throw new EditConflictException(EditingText.FontSetOutside)).ToArray()));
             font = next;
         }
         foreach (var piece in pieces)
@@ -187,6 +255,12 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
                 continue;
             }
             Select(piece.Font);
+            if (piece.IsShaped)
+            {
+                Flush();
+                items.Add(new ShowOps(new ContentWriter().Show(piece.Draw!, piece.Text, size ?? at.FontSize).ToArray()));
+                continue;
+            }
             run.AddRange(piece.Bytes);
         }
         Select(null);

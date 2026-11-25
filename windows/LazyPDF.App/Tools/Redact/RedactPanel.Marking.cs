@@ -1,6 +1,8 @@
 // Putting marks on: the drawing tool, the selection and the two kinds of search.
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Input;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Redact;
@@ -28,7 +30,7 @@ public partial class RedactPanel
     private void BoxDrawn(int page, Point from, Point to)
     {
         var mark = MarkShapes.Box(page, Viewer!.Geometry(page), from, to);
-        _state!.Marks.Add([new MarkItem(mark, Loc.T("Box"))]);
+        _state!.Marks.Add([new MarkItem(mark, Loc.T("Box"), IsBox: true)]);
     }
 
     private void Viewer_SelectionChanged(object? sender, EventArgs e) => ShowSelectionNote();
@@ -51,21 +53,58 @@ public partial class RedactPanel
         host.SetStatus(Added(added));
     }
 
-    private void QueryBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) =>
-        FindWordsButton.IsEnabled = QueryBox.Text.Trim().Length > 0;
+    private void QueryBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        FindWordsButton.IsEnabled = !string.IsNullOrWhiteSpace(QueryBox.Text);
+        ShowQueryNote(null);
+    }
+
+    private void RegexBox_Changed(object sender, RoutedEventArgs e)
+    {
+        bool regex = RegexBox.IsChecked == true;
+        WholeWordBox.IsEnabled = !regex;
+        QueryLabel.Text = regex ? Loc.T("Patterns, one per line") : Loc.T("Words or phrases, one per line");
+        RegexNote.Visibility = regex ? Visibility.Visible : Visibility.Collapsed;
+        ShowQueryNote(null);
+    }
+
+    private void ShowQueryNote(string? text)
+    {
+        QueryNote.Text = text;
+        QueryNote.Visibility = text is null ? Visibility.Collapsed : Visibility.Visible;
+        if (text is null) return;
+        (UIElementAutomationPeer.FromElement(QueryNote) ?? UIElementAutomationPeer.CreatePeerForElement(QueryNote))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
+    }
 
     private void QueryBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter || !FindWordsButton.IsEnabled) return;
+        if (e.Key != Key.Enter || Keyboard.Modifiers != ModifierKeys.Control || !FindWordsButton.IsEnabled) return;
         e.Handled = true;
         FindWords_Click(sender, e);
     }
 
     private async void FindWords_Click(object sender, RoutedEventArgs e)
     {
-        string words = QueryBox.Text.Trim();
+        bool regex = RegexBox.IsChecked == true;
+        var terms = RedactJob.Terms(QueryBox.Text, regex);
+        if (terms.Count > 200)
+        {
+            Host!.ShowProblem(new(Loc.T("Too many lines"), Loc.T("Use 200 or fewer words or phrases.")));
+            return;
+        }
         bool matchCase = MatchCaseBox.IsChecked == true, whole = WholeWordBox.IsChecked == true;
-        await FindAsync((document, token) => RedactJob.Find(document, words, matchCase, whole, token));
+        if (regex)
+        {
+            if (RedactJob.CheckPatterns(QueryBox.Text.ReplaceLineEndings("\n").Split('\n')) is { } problem)
+            {
+                ShowQueryNote(problem);
+                QueryBox.Focus();
+                return;
+            }
+            await FindAsync((document, token) => RedactJob.FindPatterns(document, terms, matchCase, token));
+            return;
+        }
+        await FindAsync((document, token) => RedactJob.Find(document, terms, matchCase, whole, token));
     }
 
     private async void FindKind_Click(object sender, RoutedEventArgs e)
@@ -107,12 +146,59 @@ public partial class RedactPanel
             _working = false;
         }
         if (found is null) return;
-        host.SetStatus(found.Items.Count == 0 ? Loc.T("Nothing found.") : Added(state.Marks.Add(found.Items)));
+        string? slow = TimedOutText.For(found.TimedOut ?? []);
+        host.SetStatus(found.Items.Count == 0 ? slow ?? Loc.T("Nothing found.") : Added(state.Marks.Add(found.Items)));
+        if (Notice(found) is not { } notice) return;
+        host.ShowNotice(notice.Title, notice.Text, notice.MakeSearchable ? new NoticeAction(Loc.T("Make searchable"), () => host.OpenTool("ocr")) : null);
+    }
+
+    // The timed-out pages are added to the picture and recognized-text notices, so none of the three is dropped.
+    internal static (string Title, string Text, bool MakeSearchable)? Notice(Found found)
+    {
+        string? slow = TimedOutText.For(found.TimedOut ?? []);
+        string more = slow is not null && found.Items.Count > 0 ? " " + slow : "";
         if (found.Pictures > 0)
         {
-            host.ShowNotice(Loc.Plural(found.Pictures, "{0} page has no text", "{0} pages have no text"),
-                            Loc.T("Words and numbers on those pages were not searched. Draw boxes over them instead."));
+            return (Loc.Plural(found.Pictures, "{0} page has no text", "{0} pages have no text"),
+                    Loc.T("Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them.") + more, true);
         }
+        if (found.Recognized > 0)
+        {
+            return (Loc.Plural(found.Recognized, "{0} page was searched in recognized text", "{0} pages were searched in recognized text"),
+                    Loc.T("Recognized text can miss words. Check those pages and draw boxes over anything left.") + more, false);
+        }
+        return more.Length > 0 ? (Loc.T("Some pages were not searched"), slow!, false) : null;
+    }
+
+    private void PagesBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        MarkPagesButton.IsEnabled = !string.IsNullOrWhiteSpace(PagesBox.Text);
+        PagesNote.Visibility = Visibility.Collapsed;
+    }
+
+    private void PagesBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || !MarkPagesButton.IsEnabled) return;
+        e.Handled = true;
+        MarkPages_Click(sender, e);
+    }
+
+    private void MarkPages_Click(object sender, RoutedEventArgs e)
+    {
+        var tab = Tab!;
+        var range = PageRange.Parse(PagesBox.Text, tab.PageCount);
+        if (range.Error is { } error)
+        {
+            PagesNote.Text = error.Message;
+            PagesNote.Visibility = Visibility.Visible;
+            PagesBox.Focus();
+            return;
+        }
+        var marks = _state!.Marks;
+        int added = marks.Add(RedactJob.WholePages(tab.Document, range.Pages));
+        Host!.SetStatus(added > OutlinePages
+            ? Loc.T("{0} marks added. The page outlines are drawn for the first 300.", added)
+            : Added(added));
     }
 
     private static string Added(int count) =>

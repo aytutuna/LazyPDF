@@ -18,6 +18,9 @@ public enum FitMode
     Page,
 }
 
+/// <summary>A link of a page for screen readers: where it is on the page, its name, and what following and focusing it do.</summary>
+internal readonly record struct LinkTarget(Rect Area, string Name, Action Follow, Action Focus);
+
 /// <summary>
 /// The pages of a document in a scrolled area: it lays them out, scrolls, zooms and draws them, and keeps only
 /// what is near the window alive (the tiles in <see cref="TileCache"/>, the overlays in the tree). This file is the
@@ -32,11 +35,13 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     private ViewLayout _layout = ViewLayout.Build([], new LayoutOptions(1, false, true, 0, 1, new Size(0, 0)));
     private Size _viewport;
     private double _offsetX, _offsetY;
+    private long _lastWheel;
     private double _zoom = 1;
     private FitMode _fit;
     private int _rotation;
     private int _columns = 1;
     private bool _cover;
+    private bool _rtl;
     private bool _continuous = true;
     private PageTint _tint;
     private int _page;
@@ -48,7 +53,6 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         ClipToBounds = true;
         SnapsToDevicePixels = true;
         IsManipulationEnabled = true;
-        FocusVisualStyle = null;
         InitTiles();
     }
 
@@ -63,6 +67,15 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
 
     /// <summary>The text of a page for screen readers, if the viewer has it.</summary>
     public Func<int, string?>? PageText { get; set; }
+
+    /// <summary>The label of a page (i, ii, 1) for screen readers.</summary>
+    public Func<int, string>? PageLabel { get; set; }
+
+    /// <summary>The links of a page for screen readers, in page space.</summary>
+    public Func<int, IReadOnlyList<LinkTarget>>? PageLinks { get; set; }
+
+    /// <summary>Where screen readers read the text of the document, set by the viewer that owns the surface.</summary>
+    public ITextHost? TextHost { get; set; }
 
     public int PageCount => _sizes.Length;
 
@@ -101,9 +114,11 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
 
     // ----- Showing a document
 
-    public void Show(DocumentTab? tab)
+    public void Show(DocumentTab? tab, int rotation = 0, bool rightToLeft = false)
     {
         ResetTiles();
+        _rtl = rightToLeft;
+        _rotation = PageSpace.NormalizeRotation(rotation);
         _tab = tab;
         _renderer = tab?.Renderer as WindowsPageRenderer;
         _display = null;
@@ -114,7 +129,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         _sizes = tab is null ? [] : ReadSizes(tab);
         _versions = new int[_sizes.Length];
         _pageObjects = tab is null ? [] : PageObjects(tab);
-        _bytes = tab is null ? null : Bytes(tab);
+        _bytes = tab is null || !tab.Drawing.IsCompleted ? null : Bytes(tab);
         _page = tab is null ? 0 : Math.Clamp(tab.PageIndex, 0, Math.Max(0, _sizes.Length - 1));
         _pinned = true;
         if (tab is not null)
@@ -135,6 +150,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         GoToPage(_page);
         PageChanged?.Invoke(this, EventArgs.Empty);
         OptionsChanged?.Invoke(this, EventArgs.Empty);
+        TellLinks();
     }
 
     internal static byte[] Bytes(DocumentTab tab) =>
@@ -189,12 +205,14 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         _sizes = sizes;
         SyncOverlays();
         _page = Math.Clamp(_page, 0, Math.Max(0, sizes.Length - 1));
+        tab.PageIndex = _page;
         if (_fit != FitMode.None) _zoom = FitZoom();
         _zoom = ZoomMath.Clamp(_zoom, ZoomLimits);
         _failed.Clear();
         Rebuild(null, new Point(0, 0), anchor);
         PageChanged?.Invoke(this, EventArgs.Empty);
         OptionsChanged?.Invoke(this, EventArgs.Empty);
+        TellLinks();
     }
 
     // ----- Options
@@ -227,6 +245,14 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         if (!_continuous || fit == FitMode.Page) GoToPage(_page);
         NoteZoomChange();
         OptionsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void SetRightToLeft(bool rightToLeft)
+    {
+        if (rightToLeft == _rtl) return;
+        _rtl = rightToLeft;
+        Rebuild(null, new Point(0, 0), null);
+        GoToPage(_page);
     }
 
     public void SetArrangement(int columns, bool cover, bool continuous)
@@ -287,6 +313,13 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     // A point on a page that stays where it is on screen while the layout around it changes.
     private readonly record struct Anchor(int Page, Point Point);
 
+    // Anchored on the current page, so going back there keeps the page box right; the point can lie above the page.
+    public PagePoint? TopPlace()
+    {
+        if (!_layout.Contains(_page)) return AnchorAt(new Point(0, 0)) is { } a ? new PagePoint(a.Page, a.Point) : null;
+        return new PagePoint(_page, PageSpace.ToPage(ContentMatrix(_page)).Transform(new Point(_offsetX, _offsetY)));
+    }
+
     private Anchor? AnchorAt(Point viewPoint)
     {
         if (_layout.PageCount == 0) return null;
@@ -299,7 +332,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     // Lays the pages out again and puts the anchor back where it was on the screen.
     private void Rebuild(int? spread, Point viewPoint, Anchor? anchor)
     {
-        _layout = ViewLayout.Build(_sizes, new LayoutOptions(_columns, _cover, _continuous, _rotation, Scale, _viewport, Dpi),
+        _layout = ViewLayout.Build(_sizes, new LayoutOptions(_columns, _cover, _continuous, _rotation, Scale, _viewport, Dpi, _rtl),
             spread ?? ViewLayout.SpreadOf(_columns, _cover, _page));
         if (anchor is { } a && _layout.Contains(a.Page))
         {
@@ -335,10 +368,18 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         return (page, PageSpace.ToPage(ContentMatrix(page)).Transform(content));
     }
 
+    /// <summary>The pages within <paramref name="reach"/> view pixels of a point of the surface, with the point in each one's space; for a press just off a page.</summary>
+    public IEnumerable<(int Page, Point Point)> HitsNear(Point surfacePoint, double reach)
+    {
+        var content = new Point(surfacePoint.X + _offsetX, surfacePoint.Y + _offsetY);
+        var area = new Rect(content.X - reach, content.Y - reach, 2 * reach, 2 * reach);
+        foreach (int page in _layout.PagesIn(area)) yield return (page, PageSpace.ToPage(ContentMatrix(page)).Transform(content));
+    }
+
     // ----- Going places
 
-    /// <summary>Scrolls to a page. With <paramref name="at"/> (page space) that point comes to the top of the view, whatever the rotation.</summary>
-    public void GoToPage(int page, Point? at = null)
+    /// <summary>Scrolls to a page. With <paramref name="at"/> (page space) that point comes to the top of the view, whatever the rotation; <paramref name="keepX"/> also keeps its column when the layout is wider than the view.</summary>
+    public void GoToPage(int page, Point? at = null, bool keepX = false)
     {
         if (_sizes.Length == 0) return;
         page = Math.Clamp(page, 0, _sizes.Length - 1);
@@ -353,16 +394,28 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         var rect = _layout.PageRect(page);
         if (at is { } point) _offsetY = ContentMatrix(page).Transform(point).Y;
         else _offsetY = _continuous ? rect.Top - ViewLayout.Margin : 0;
-        if (_layout.Extent.Width > _viewport.Width) _offsetX = Math.Max(0, rect.Left + rect.Width / 2 - _viewport.Width / 2);
+        if (keepX && at is { } kept) _offsetX = ContentMatrix(page).Transform(kept).X;
+        else if (_layout.Extent.Width > _viewport.Width) _offsetX = Math.Max(0, rect.Left + rect.Width / 2 - _viewport.Width / 2);
         ClampOffset();
         AfterScroll(user: false);
         ScrollOwner?.InvalidateScrollInfo();
         if (_tab is not null) _tab.PageIndex = page;
         PageChanged?.Invoke(this, EventArgs.Empty);
+        TellLinks();
     }
 
-    /// <summary>Scrolls so that <paramref name="area"/> (page space) is in view, centred when it is not already.</summary>
-    public void Reveal(int page, Rect area)
+    /// <summary>Zooms so that <paramref name="area"/> (page space) fills the view, and centres it.</summary>
+    public void ZoomToArea(int page, Rect area)
+    {
+        if ((uint)page >= (uint)_sizes.Length || area.Width <= 0 || area.Height <= 0) return;
+        if (!_layout.Contains(page)) GoToPage(page);
+        _fit = FitMode.None;
+        ChangeZoom(ZoomMath.FitPage(PageSpace.Shown(area.Size, _rotation, 1), _viewport), null);
+        Reveal(page, area, centre: true);
+    }
+
+    /// <summary>Scrolls so that <paramref name="area"/> (page space) is in view, centred when it is not already or when <paramref name="centre"/> asks.</summary>
+    public void Reveal(int page, Rect area, bool centre = false)
     {
         if ((uint)page >= (uint)_sizes.Length) return;
         if (!_layout.Contains(page)) GoToPage(page);
@@ -370,7 +423,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         var view = ViewRect;
         var margin = new Size(Math.Min(48, view.Width / 4), Math.Min(48, view.Height / 4));
         var inner = new Rect(view.Left + margin.Width, view.Top + margin.Height, view.Width - 2 * margin.Width, view.Height - 2 * margin.Height);
-        if (inner.Contains(shown)) return;
+        if (!centre && inner.Contains(shown)) return;
         _pinned = true;
         _page = page;
         _offsetY = shown.Top + shown.Height / 2 - view.Height / 2;
@@ -380,18 +433,23 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         ScrollOwner?.InvalidateScrollInfo();
         if (_tab is not null) _tab.PageIndex = page;
         PageChanged?.Invoke(this, EventArgs.Empty);
+        TellLinks();
     }
 
     /// <summary>Scrolls by the user's doing. In a paged layout, running past the edge turns the page.</summary>
-    public void ScrollBy(double dx, double dy)
+    public void ScrollBy(double dx, double dy, bool smooth = false)
     {
+        long now = Environment.TickCount64;
+        // A touchpad's inertia keeps sending small wheel events; only a pause lets the next one turn the page.
+        bool mayTurn = !smooth || now - _lastWheel >= 250;
+        if (smooth) _lastWheel = now;
         double maxY = Math.Max(0, _layout.Extent.Height - _viewport.Height);
-        if (!_continuous && dy > 0 && _offsetY >= maxY - 0.5 && _layout.LastSpread < _layout.SpreadCount - 1)
+        if (mayTurn && !_continuous && dy > 0 && _offsetY >= maxY - 0.5 && _layout.LastSpread < _layout.SpreadCount - 1)
         {
             GoToPage(ViewLayout.PagesOf(_columns, _cover, _layout.LastSpread + 1, _sizes.Length).First);
             return;
         }
-        if (!_continuous && dy < 0 && _offsetY <= 0.5 && _layout.FirstSpread > 0)
+        if (mayTurn && !_continuous && dy < 0 && _offsetY <= 0.5 && _layout.FirstSpread > 0)
         {
             GoToPage(ViewLayout.PagesOf(_columns, _cover, _layout.FirstSpread - 1, _sizes.Length).First);
             _offsetY = Math.Max(0, _layout.Extent.Height - _viewport.Height);
@@ -437,6 +495,55 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     private void TellScreenReader()
     {
         if (AutomationPeer.ListenerExists(AutomationEvents.PropertyChanged) && UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) peer.PageChanged();
+        TellLinks();
+    }
+
+    /// <summary>What screen readers are told of the text, whether or not one listens; tests watch it.</summary>
+    internal event Action<AutomationEvents>? Told;
+
+    /// <summary>Whether a screen reader listens for an event; tests stand in for one.</summary>
+    internal Func<AutomationEvents, bool> Listening { get; set; } = AutomationPeer.ListenerExists;
+
+    private bool _textChangeQueued;
+
+    /// <summary>The text of a page arrived. If it is the page in view, its value changed; if a reader asked for it, its text did.</summary>
+    public void TextLoaded(int page, bool asked)
+    {
+        if (page == _page) Tell(AutomationEvents.PropertyChanged, peer => peer.ValueChanged());
+        if (asked) TextChanged();
+    }
+
+    /// <summary>The text a reader can read changed; one event goes out however many changes there are in a turn of the dispatcher.</summary>
+    public void TextChanged()
+    {
+        if (_textChangeQueued) return;
+        _textChangeQueued = true;
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+        {
+            _textChangeQueued = false;
+            Tell(AutomationEvents.TextPatternOnTextChanged, peer => peer.RaiseAutomationEvent(AutomationEvents.TextPatternOnTextChanged));
+        });
+    }
+
+    /// <summary>What was read is gone: another file is shown or the file changed.</summary>
+    public void TextReset()
+    {
+        TextChanged();
+        Tell(AutomationEvents.StructureChanged, peer => peer.RaiseAutomationEvent(AutomationEvents.StructureChanged));
+    }
+
+    public void TellSelection() =>
+        Tell(AutomationEvents.TextPatternOnTextSelectionChanged, peer => peer.RaiseAutomationEvent(AutomationEvents.TextPatternOnTextSelectionChanged));
+
+    private void Tell(AutomationEvents kind, Action<PageSurfacePeer> raise)
+    {
+        Told?.Invoke(kind);
+        if (Listening(kind) && UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) raise(peer);
+    }
+
+    private void TellLinks()
+    {
+        if (UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) peer.LinksChanged();
     }
 
     // ----- Layout pass

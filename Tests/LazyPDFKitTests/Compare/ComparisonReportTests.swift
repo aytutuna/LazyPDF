@@ -118,12 +118,24 @@ final class ComparisonReportTests: CompareTestCase {
         XCTAssertTrue(PdfAnnotations.read(changed, changed.pages[0]).isEmpty)
     }
 
+    func test_controlCharactersInNamesPrintAsQuestionMarksWithoutAFont() throws {
+        let name = "A\u{7F}B\u{80}C\u{90}D\u{9F}E.pdf"
+        let plain = try self.report(pages("a"), pages("a"), nil, oldName: name, newName: "yeni.pdf")
+        XCTAssertTrue(try summary(plain.report).contains("A?B?C?D?E.pdf"))
+    }
+
     func test_namesOutsideLatin1PrintAsQuestionMarksWithoutAFontAndInFullWithOne() throws {
         let name = "AB ğİ BA"
         let plain = try self.report(pages("a"), pages("a"), nil, oldName: name, newName: "yeni.pdf")
         XCTAssertTrue(try summary(plain.report).contains("AB ?? BA"))
         let embedded = try self.report(pages("a"), pages("a"), try CompareArial(), oldName: name, newName: "yeni.pdf")
         XCTAssertTrue(try summary(embedded.report).contains(name))
+    }
+
+    func test_aCutNeverSplitsASurrogatePair() {
+        let text = String(repeating: "a", count: 119) + "\u{1F600} end"
+        let change = CompareChange(.removed, .text, 0, 0, text, "", [], [])
+        XCTAssertTrue(ComparisonReport.line(change).hasSuffix(": " + String(repeating: "a", count: 119) + "..."))
     }
 
     func test_longSummariesRunOverSeveralPages() throws {

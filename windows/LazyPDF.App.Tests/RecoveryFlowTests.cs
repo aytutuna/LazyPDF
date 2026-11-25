@@ -59,6 +59,28 @@ public sealed class RecoveryFlowTests
     }
 
     [Fact]
+    public async Task ARestoredCopyOfAReadOnlyFileNeedsAName()
+    {
+        using var f = new ViewModelFixture();
+        string original = f.Pdf("report.pdf");
+        Crash(f, "report.pdf", original);
+        f.Vm.CheckRecovery();
+        File.SetAttributes(original, FileAttributes.ReadOnly);
+        try
+        {
+            await f.Vm.RestoreAsync();
+
+            var tab = Assert.Single(f.Vm.Documents);
+            Assert.True(tab.ReadOnly);
+            Assert.True(AppViewModel.NeedsName(tab));
+        }
+        finally
+        {
+            File.SetAttributes(original, FileAttributes.Normal);
+        }
+    }
+
+    [Fact]
     public async Task ARestoredDocumentSavesOverTheOriginal()
     {
         using var f = new ViewModelFixture();
@@ -98,6 +120,48 @@ public sealed class RecoveryFlowTests
 
         Assert.True(AppViewModel.NeedsName(f.Vm.ActiveDocument!));
         Assert.Equal("scan.pdf", f.Vm.ActiveDocument!.Title);
+    }
+
+    [Fact]
+    public async Task OnlyTheChosenEntriesAreRestoredAndTheRestAreDeleted()
+    {
+        using var f = new ViewModelFixture();
+        Crash(f, "a.pdf", null);
+        Crash(f, "b.pdf", null);
+        f.Vm.CheckRecovery();
+        var keep = f.Vm.RecoveryOffer![0];
+
+        await f.Vm.RestoreAsync(new HashSet<Guid> { keep.Id });
+
+        Assert.Equal(keep.Meta.Title, Assert.Single(f.Vm.Documents).Title);
+        Assert.Equal(keep.Meta.Title, Assert.Single(new RecoveryStore(f.Dir.Sub("recovery")).List()).Meta.Title);
+    }
+
+    [Fact]
+    public async Task RestoringWithNoChoiceOpensEveryEntry()
+    {
+        using var f = new ViewModelFixture();
+        Crash(f, "a.pdf", null);
+        Crash(f, "b.pdf", null);
+        f.Vm.CheckRecovery();
+
+        await f.Vm.RestoreAsync(null);
+
+        Assert.Equal(2, f.Vm.Documents.Count());
+    }
+
+    [Fact]
+    public async Task RestoringAnEmptyChoiceDeletesEveryEntry()
+    {
+        using var f = new ViewModelFixture();
+        Crash(f, "a.pdf", null);
+        Crash(f, "b.pdf", null);
+        f.Vm.CheckRecovery();
+
+        await f.Vm.RestoreAsync(new HashSet<Guid>());
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.Empty(new RecoveryStore(f.Dir.Sub("recovery")).List());
     }
 
     [Fact]

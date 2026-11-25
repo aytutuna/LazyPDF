@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using LazyPDF.Core;
 using FontWeights = System.Windows.FontWeights;
@@ -5,9 +6,12 @@ using FontStretches = System.Windows.FontStretches;
 
 namespace LazyPDF.App.Services;
 
-/// <summary>The fonts installed in Windows, as files Core can embed.</summary>
-public sealed class SystemFontSource : IFontSource
+/// <summary>The fonts installed in Windows, as files Core can embed, and the shaper for the files it gave out.</summary>
+public sealed class SystemFontSource : IFontSource, IShaper
 {
+    // The typeface behind each file handed out, since WPF shapes with a typeface and Core hands back only the bytes.
+    private readonly ConditionalWeakTable<byte[], Typeface> _typefaces = new();
+
     // The names a PDF or a person uses for fonts Windows has under another.
     private static readonly Dictionary<string, string> Aliases = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -31,11 +35,16 @@ public sealed class SystemFontSource : IFontSource
         {
             // A .ttc names the face it wants after the file name's number sign.
             int index = int.TryParse(uri.Fragment.TrimStart('#'), out int found) ? found : 0;
-            return new FontFile(File.ReadAllBytes(uri.LocalPath), index);
+            var file = new FontFile(File.ReadAllBytes(uri.LocalPath), index);
+            _typefaces.AddOrUpdate(file.Data, typeface);
+            return file;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return null;
         }
     }
+
+    public IReadOnlyList<ShapedGlyph>? Shape(string text, FontFile font, bool rightToLeft, string? language) =>
+        _typefaces.TryGetValue(font.Data, out var typeface) ? WpfShaper.Shape(typeface, text, rightToLeft, language) : null;
 }

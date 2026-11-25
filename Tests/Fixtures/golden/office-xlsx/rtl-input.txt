@@ -1,0 +1,21 @@
+# Cases of right-to-left sheets and cell text, in the format of xlsx-layout-input.txt. Every family is the script font of ../shaping/script.ttf.
+> reading order and general alignment
+@workbook
+<sheets><sheet name="S" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment readingOrder="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment readingOrder="2"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment horizontal="left" readingOrder="2"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment wrapText="1" readingOrder="2"/></xf></cellXfs>
+@sheet1
+<cols><col min="1" max="1" width="16.7109375" customWidth="1"/></cols><sheetData><row r="1"><c r="A1" t="str"><v>אבג</v></c></row><row r="2"><c r="A2" t="str"><v>abc</v></c></row><row r="3"><c r="A3" s="1" t="str"><v>אבג</v></c></row><row r="4"><c r="A4" s="2" t="str"><v>abc אבג</v></c></row><row r="5"><c r="A5" s="3" t="str"><v>אבג</v></c></row><row r="6"><c r="A6" s="2"><v>123</v></c></row><row r="7"><c r="A7" t="str"><v>12 34</v></c></row><row r="8"><c r="A8" s="4" t="str"><v>אבג דהו זחט יכל מנס עפצ קרש תאב גדה</v></c></row></sheetData>
+> a sheet that runs right to left
+@workbook
+<sheets><sheet name="S" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFFF00"/></patternFill></fill></fills>
+<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF000000"/></left><right style="thin"><color rgb="FF000000"/></right><top style="thin"><color rgb="FF000000"/></top><bottom style="thin"><color rgb="FF000000"/></bottom><diagonal/></border><border><left style="thick"><color rgb="FFFF0000"/></left><right/><top/><bottom/><diagonal/></border></borders>
+<cellXfs count="6"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/><xf numFmtId="0" fontId="0" fillId="2" borderId="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="2"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment horizontal="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment horizontal="left"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1"><alignment horizontal="center"/></xf></cellXfs>
+@sheet1
+<sheetViews><sheetView rightToLeft="1" workbookViewId="0"/></sheetViews><cols><col min="1" max="1" width="9.140625" customWidth="1"/><col min="2" max="2" width="16.7109375" customWidth="1"/><col min="3" max="3" width="9.140625" customWidth="1"/></cols><sheetData><row r="1"><c r="A1" s="1" t="str"><v>אבג</v></c><c r="B1" s="2" t="str"><v>abc</v></c><c r="C1"><v>5</v></c></row><row r="2"><c r="A2" t="str"><v>אבג דהו זחט יכל מנס עפצ</v></c></row><row r="3"><c r="B3" s="3" t="str"><v>mid</v></c><c r="C3" s="4" t="str"><v>left</v></c></row><row r="4"><c r="A4" s="5" t="str"><v>אבג</v></c></row><row r="5"><c r="C5" t="str"><v>abc אבג spills to the right of the sheet</v></c></row></sheetData><mergeCells count="1"><mergeCell ref="A4:B4"/></mergeCells><printOptions gridLines="1" headings="1"/>

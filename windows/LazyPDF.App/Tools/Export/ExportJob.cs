@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Ocr;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Export;
@@ -8,14 +9,17 @@ public static class ExportJob
 {
     public static async Task RunAsync(DocumentTab tab, IToolHost host, IImageCodec codec, ExportOptions options, string target)
     {
+        await tab.Drawing;
         var source = Exporter.Source(tab, codec);
         ExportResult? result = null;
+        bool scan = false;
         try
         {
             await host.RunBusyAsync(Loc.T("Exporting"), token => Task.Run(() =>
             {
                 using var drawn = options.Format == ExportFormat.Pictures ? Exporter.Snapshot(source) : null;
                 result = Exporter.Write(drawn is null ? source : source with { Renderer = drawn }, options, target, token);
+                if (result.Gap == ExportGap.NoText) scan = LooksLikeScan(source, options);
             }, token));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
@@ -27,7 +31,9 @@ public static class ExportJob
 
         if (result.Files == 0)
         {
-            if (result.Gap == ExportGap.NoText) host.ShowNotice(Loc.T("No text found"), Loc.T("This file has no text to export. Run Make searchable first, or save the pages as pictures."));
+            var makeSearchable = new NoticeAction(Loc.T("Make searchable"), () => host.OpenToolReturning("ocr", "export"));
+            if (result.Gap == ExportGap.NoText && scan) host.ShowNotice(Loc.T("This looks like a scan"), Loc.T("It has pictures of pages and no text. Make searchable (under Optimize) can read the pages, then export again. You can also save the pages as pictures."), makeSearchable);
+            else if (result.Gap == ExportGap.NoText) host.ShowNotice(Loc.T("No text found"), Loc.T("This file has no text to export. Run Make searchable first, or save the pages as pictures."), makeSearchable);
             else if (options.Format == ExportFormat.Images) host.ShowNotice(Loc.T("No pictures found"), Loc.T("This file has no pictures to save."));
             else host.ShowProblem(new Problem(Loc.T("Nothing exported"), Loc.T("Windows cannot draw these pages. Try another format.")));
             return;
@@ -44,10 +50,16 @@ public static class ExportJob
         host.SetStatus(Loc.T("Export saved."));
     }
 
+    private static bool LooksLikeScan(ExportSource source, ExportOptions options)
+    {
+        var kinds = OcrPages.Classify(source.Pdf, source.Password, source.Certificate);
+        return kinds.Where((_, page) => options.Pages is null || options.Pages.Contains(page)).Contains(OcrPageKind.Picture);
+    }
+
     // A drive root has no file name; the root is what the folder is called then.
     internal static string Leaf(string path) => Path.GetFileName(path.TrimEnd('\\', '/')) is { Length: > 0 } name ? name : path;
 
-    private static void Reveal(string path, bool folder)
+    internal static void Reveal(string path, bool folder)
     {
         var start = new ProcessStartInfo("explorer.exe");
         start.ArgumentList.Add(folder ? path : "/select," + path);

@@ -6,7 +6,13 @@ namespace LazyPDF.Core.Tests;
 /// <summary>Hands back the same RGBA pixels for every coded stream it is asked to read.</summary>
 internal sealed class ExportRgbaCodec(int width, params byte[] rgba) : IImageCodec
 {
-    public PdfRgbaImage? Decode(byte[] data, string codec) => new(width, rgba.Length / 4 / width, rgba);
+    public List<int> Hints { get; } = [];
+
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0)
+    {
+        Hints.Add(components);
+        return new(width, rgba.Length / 4 / width, rgba);
+    }
 
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => null;
 
@@ -16,7 +22,7 @@ internal sealed class ExportRgbaCodec(int width, params byte[] rgba) : IImageCod
 /// <summary>Reports an image of the given size without holding any pixels.</summary>
 internal sealed class ExportSizedCodec(int width, int height) : IImageCodec
 {
-    public PdfRgbaImage? Decode(byte[] data, string codec) => new(width, height, []);
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => new(width, height, []);
 
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => null;
 
@@ -109,18 +115,26 @@ public class ExportImageMergeTests
         Assert.Equal([10, 20, 30, 255], Rgba(Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], codec)));
     }
 
-    [Fact]
-    public void AColourKeyOnABilevelCodecImageMatchesItsOwnDepth()
+    // The first pixel black (sample 0 once the filter has made it an image), the second white.
+    private static byte[] BlackThenWhite()
     {
-        var png = Extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode /Mask [1 1]", [1], new ExportPixelCodec(2, 0, 255));
+        var bm = new Bm(2, 1);
+        bm[0, 0] = 1;
+        return Jbig2Segments.Generic(bm, 0, false);
+    }
+
+    [Fact]
+    public void AColourKeyOnABilevelJbig2ImageMatchesItsOwnDepth()
+    {
+        var png = Extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode /Mask [1 1]", BlackThenWhite(), null);
         Assert.Equal([255, 0], Rgba(png).Where((_, i) => i % 4 == 3));
     }
 
     [Fact]
-    public void AnIndexedBilevelCodecImageReadsItsPaletteByTheStoredSample()
+    public void AnIndexedBilevelJbig2ImageReadsItsPaletteByTheStoredSample()
     {
-        var png = Extract("/Width 2 /Height 1 /ColorSpace [/Indexed /DeviceRGB 3 <000000 FF0000 00FF00 0000FF>] /BitsPerComponent 1 /Filter /JBIG2Decode", [1],
-            new ExportPixelCodec(2, 0, 255));
+        var png = Extract("/Width 2 /Height 1 /ColorSpace [/Indexed /DeviceRGB 3 <000000 FF0000 00FF00 0000FF>] /BitsPerComponent 1 /Filter /JBIG2Decode", BlackThenWhite(),
+            null);
         Assert.Equal([0, 0, 0, 255, 255, 0, 0, 255], Rgba(png));
     }
 
@@ -133,25 +147,73 @@ public class ExportImageMergeTests
     }
 
     [Fact]
-    public void ADecodedImageWithAnUnreadableColourSpaceIsStillExported()
+    public void ACodecPictureWhoseBufferIsShorterThanItsSizeIsLeftOut()
     {
-        var png = Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], new ExportRgbaCodec(1, 10, 20, 30, 255));
+        Assert.Null(Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], new ExportSizedCodec(100, 100)));
+    }
+
+    [Fact]
+    public void ACodecSoftMaskWhoseBufferIsShorterThanItsSizeLeavesThePictureOpaque()
+    {
+        var png = Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask 11 0 R", TestPdf.Deflate([9, 8, 7]), new ExportSizedCodec(1, 1),
+            pdf => pdf.Stream(11, $"{Image} /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCT", [1]));
+        Assert.Equal([9, 8, 7, 255], Rgba(png));
+    }
+
+    [Theory]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]")]
+    [InlineData("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]")]
+    [InlineData("[/DeviceN [/A /B] /DeviceRGB <</FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Length 10>>]")]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]")]
+    [InlineData("[/CalCMYK <<>>]")]
+    public void AJpxImageInASpaceTheCodecCannotShowIsLeftOutAndNeverDecoded(string space)
+    {
+        var codec = new ExportRgbaCodec(1, 10, 20, 30, 255);
+
+        Assert.Null(Extract($"/Width 1 /Height 1 /ColorSpace {space} /BitsPerComponent 8 /Filter /JPXDecode", [1], codec));
+        Assert.Empty(codec.Hints);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("/ColorSpace /DeviceRGB")]
+    public void AJpxImageInAPlainSpaceIsExportedFromTheCodecPixels(string space)
+    {
+        var png = Extract($"/Width 1 /Height 1 {space} /Filter /JPXDecode", [1], new ExportRgbaCodec(1, 10, 20, 30, 255));
+
         Assert.Equal([10, 20, 30, 255], Rgba(png));
     }
 
     [Fact]
-    public void TheAlphaOfAJpxImageWithAnUnreadableColourSpaceFollowsSMaskInData()
+    public void TheCodecIsToldHowManyComponentsThePdfColourSpaceHas()
     {
-        var codec = new ExportRgbaCodec(1, 10, 20, 30, 40);
-        Assert.Equal([10, 20, 30, 255], Rgba(Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], codec)));
-        Assert.Equal([10, 20, 30, 40], Rgba(Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode /SMaskInData 1", [1], codec)));
+        var codec = new ExportRgbaCodec(1, 10, 20, 30, 255);
+        Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], codec);
+        Extract("/Width 1 /Height 1 /ColorSpace /DeviceGray /Filter /JPXDecode", [1], codec);
+        Extract("/Width 1 /Height 1 /ColorSpace /DeviceCMYK /Filter /JPXDecode", [1], codec);
+        Extract("/Width 1 /Height 1 /Filter /JPXDecode", [1], codec);
+
+        Assert.Equal([3, 1, 4, 0], codec.Hints);
+    }
+
+    [Theory]
+    [InlineData("/SMaskInData 0", 255)]
+    [InlineData("", 255)]
+    [InlineData("/SMaskInData 1", 40)]
+    public void TheAlphaOfAJpxImageFollowsSMaskInData(string entry, int alpha)
+    {
+        var png = Extract($"/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode {entry}", [1], new ExportRgbaCodec(1, 10, 20, 30, 40));
+
+        Assert.Equal([10, 20, 30, alpha], Rgba(png).Select(b => (int)b));
     }
 
     [Fact]
-    public void PremultipliedJpxAlphaIsUndone()
+    public void AJpxImageWithPremultipliedAlphaIsLeftOutAndNeverDecoded()
     {
-        var png = Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], new ExportRgbaCodec(1, 10, 20, 30, 128));
-        Assert.Equal([20, 40, 60, 128], Rgba(png));
+        var codec = new ExportRgbaCodec(1, 10, 20, 30, 128);
+
+        Assert.Null(Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], codec));
+        Assert.Empty(codec.Hints);
     }
 
     [Fact]

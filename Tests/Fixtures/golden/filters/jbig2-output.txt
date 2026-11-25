@@ -1,0 +1,102 @@
+> jbig2 generic-t0.bin - - - -
+< length=320 fnv=9e29afae
+> jbig2 generic-t1.bin - - - -
+< length=320 fnv=ddf7697c
+> jbig2 generic-t2.bin - - - -
+< length=320 fnv=56664da0
+> jbig2 generic-t3.bin - - - -
+< length=320 fnv=fc417d98
+> jbig2 generic-tpgd.bin - - - -
+< length=270 fnv=b5135142
+> jbig2 generic-at.bin - - - -
+< length=396 fnv=335a4737
+> jbig2 generic-mmr.bin - - - -
+< length=320 fnv=139c1d08
+> jbig2 stripes.bin - - - -
+< length=210 fnv=d92f7356
+> jbig2 refine-page.bin - - - -
+< length=180 fnv=c182bf9a
+> jbig2 refine-intermediate.bin - - - -
+< length=180 fnv=c182bf9a
+> jbig2 text-arith.bin - - - -
+< length=600 fnv=4b06757f
+> jbig2 text-transposed.bin - - - -
+< length=600 fnv=6a9df862
+> jbig2 text-huffman.bin - - - -
+< length=600 fnv=0cb9f1c0
+> jbig2 text-huffman-mmr.bin - - - -
+< length=600 fnv=0cb9f1c0
+> jbig2 text-refine.bin - - - -
+< length=360 fnv=efdd0b87
+> jbig2 text-huffman-refine.bin - - - -
+< length=360 fnv=efdd0b87
+> jbig2 text-custom.bin - - - -
+< length=360 fnv=7f8dfc46
+> jbig2 symbols-aggregate.bin - - - -
+< length=500 fnv=c60c0c40
+> jbig2 symbols-contexts.bin - - - -
+< length=450 fnv=d84d3ac4
+> jbig2 text-huffman-lengths.bin - - - -
+< length=360 fnv=c62fa290
+> jbig2 page-operators.bin - - - -
+< length=120 fnv=99e936d5
+> jbig2 page-default-pixel.bin - - - -
+< 00000008000C00000C00380C00280C00280C3FA80C00280C03A80C02A80C07F808000000
+> jbig2 generic-unknown-length.bin - - - -
+< length=125 fnv=d6ad318f
+> jbig2 generic-unknown-length-mmr.bin - - - -
+< length=125 fnv=d6ad318f
+> jbig2 header-wide.bin - - - -
+< length=320 fnv=88ceb261
+> jbig2 with-globals.bin globals.bin - - -
+< length=320 fnv=38cf9604
+> jbig2 halftone-arith.bin - - - -
+< length=320 fnv=1cfbcb43
+> jbig2 halftone-mmr.bin - - - -
+< length=320 fnv=ad513dc6
+> jbig2 halftone-skip.bin - - - -
+< length=150 fnv=41ae91d2
+> jbig2 generic-t0.bin - 0:ff - -
+< length=320 fnv=9e29afae
+> jbig2 generic-t0.bin - 13:80 - -
+< length=164160 fnv=e531cfae
+> jbig2 generic-t0.bin - 40:55,41:aa,42:0f - -
+< error unsupported: A stream expands past the size limit.
+> jbig2 generic-t0.bin - - 30 -
+< length=320 fnv=ea417385
+> jbig2 generic-t0.bin - - 60 -
+< error damaged: A JBIG2 segment is cut off.
+> jbig2 generic-t0.bin - - 120 -
+< length=320 fnv=eac8574a
+> jbig2 generic-mmr.bin - - 80 -
+< length=320 fnv=29b5043c
+> jbig2 text-arith.bin - - 200 -
+< error damaged: A JBIG2 integer is out of range.
+> jbig2 text-arith.bin - 100:ff - -
+< error damaged: A JBIG2 symbol dictionary has more symbols than it says.
+> jbig2 text-huffman.bin - 70:5a - -
+< length=600 fnv=0cb9f1c0
+> jbig2 text-huffman-mmr.bin - - 150 -
+< error damaged: A JBIG2 symbol bitmap is longer than its segment.
+> jbig2 with-globals.bin - - - -
+< error damaged: A JBIG2 text region uses a symbol that is not there.
+> jbig2 with-globals.bin globals.bin - 60 -
+< error damaged: A JBIG2 segment is cut off.
+> jbig2 halftone-arith.bin - - 100 -
+< error damaged: A JBIG2 region segment is cut off.
+> jbig2 halftone-mmr.bin - 60:33 - -
+< length=320 fnv=74ff3b5f
+> jbig2 stripes.bin - - 90 -
+< length=84 fnv=609b2a70
+> jbig2 text-arith.bin - - - 100x70
+< length=910 fnv=bbc5b549
+> jbig2 text-arith.bin - - - 60x40
+< length=320 fnv=62ceccd7
+> jbig2 text-arith.bin - - - 80x30
+< length=300 fnv=cefc2bd2
+> jbig2 generic-t0.bin - - - 61x50
+< length=400 fnv=9a6713de
+> jbig2 generic-t0.bin - - - 1x1
+< FF
+> jbig2 with-globals.bin globals.bin - - 70x44
+< length=396 fnv=187f3abc

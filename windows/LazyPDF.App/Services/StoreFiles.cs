@@ -79,7 +79,7 @@ internal static class StoreFiles
         },
     };
 
-    internal static string DefaultDirectory =>
+    internal static string DefaultDirectory { get; set; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                      "Lazy PDF");
 

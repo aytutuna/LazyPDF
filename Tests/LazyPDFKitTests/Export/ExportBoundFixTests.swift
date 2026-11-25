@@ -124,4 +124,21 @@ final class ExportBoundFixTests: XCTestCase {
         let last = edges[62] - edges[61]
         XCTAssertTrue(last >= 8 * edges[0] - 8 && last <= 8 * edges[0] + 8, "\(edges[0]) \(last)")
     }
+
+    func test_aRowShorterThanTheTableReadsAsBlankCells() throws {
+        let table = ExportTable(DisplayRect(10, 10, 500, 20), [["a", "b"], ["c"]], [10], true)
+        XCTAssertFalse(try DocxWriter.make(onePage([table])).isEmpty)
+        XCTAssertTrue(try RtfWriter.make(onePage([table])).contains(#"\pard\intbl\fs20 c\cell\pard\intbl\fs20 \cell"#))
+    }
+
+    func test_digitsOutsideTheBasicPlaneAreNotPageNumbers() {
+        let row = self.row(cell("\u{1D7CF}\u{1D7D0}", 10, 780))
+        XCTAssertFalse(ExportStructure.runningHeads([(792, [row])]).contains(row))
+    }
+
+    func test_headsThatDifferOnlyInTheirCompositionAreDifferentHeads() {
+        let first = row(cell("Part \u{E9}", 10, 10))
+        let second = row(cell("Part e\u{301}", 10, 10))
+        XCTAssertTrue(ExportStructure.runningHeads([(792, [first]), (792, [second])]).isEmpty)
+    }
 }

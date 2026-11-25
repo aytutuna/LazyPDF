@@ -6,12 +6,25 @@
                  xmlns:viewer="clr-namespace:LazyPDF.App.Viewer">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Margin="12,0,12,8">
-            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Search}" AutomationProperties.Name="{loc:T Search}" Padding="10,3,10,4" HorizontalAlignment="Left"
-                    ToolTip="{loc:T Search (Ctrl+F)}" Click="Find_Click" />
+            <Grid Margin="0,0,0,8">
+                <TextBox x:Name="Query" AutomationProperties.Name="{loc:T Search}" TextChanged="Query_TextChanged" PreviewKeyDown="Query_PreviewKeyDown" />
+                <TextBlock x:Name="QueryHint" Text="{loc:T Search the file}" Style="{StaticResource PlaceholderText}" />
+            </Grid>
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Search}" AutomationProperties.Name="{loc:T Search}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                        ToolTip="{loc:T Search (Ctrl+F)}" Click="Find_Click" />
+                <Button x:Name="StopButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE71A;" Content="{loc:T Stop searching}" AutomationProperties.Name="{loc:T Stop searching}"
+                        Padding="10,3,10,4" Margin="8,0,0,0" Visibility="Collapsed" Click="Stop_Click" />
+            </StackPanel>
             <TextBlock x:Name="Summary" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+            <DockPanel x:Name="StageNote" Margin="0,8,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite">
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T 'A tool is open, so the page is hidden. Close the tool to see each result on its page.'}" />
+            </DockPanel>
         </StackPanel>
         <ListBox x:Name="Results" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Search results}"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" SelectionChanged="Results_SelectionChanged">
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" SelectionChanged="Results_SelectionChanged"
+                 PreviewMouseLeftButtonDown="Results_PreviewMouseDown" PreviewMouseLeftButtonUp="Results_PreviewMouseUp">
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                     <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />

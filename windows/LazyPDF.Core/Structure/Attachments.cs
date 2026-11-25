@@ -19,6 +19,7 @@ public sealed record PdfAttachment(
 public static class PdfAttachments
 {
     private const int MaxAnnotations = 50_000;
+    private const long MaxExtractSize = 1L << 30;
     private static readonly string[] StreamKeys = ["UF", "F", "DOS", "Mac", "Unix"];
 
     /// <summary>The embedded files of the tree, then those of the pages' attachment annotations. A file specification with no embedded stream is left out.</summary>
@@ -48,12 +49,12 @@ public static class PdfAttachments
     internal static PdfStream? StreamOf(PdfDocument document, PdfAttachment attachment) =>
         EmbeddedStream(document, document.Resolve(attachment.Spec) as PdfDictionary);
 
-    /// <summary>The file's bytes, decoded.</summary>
+    /// <summary>The file's bytes, decoded; up to 1 GiB, above the default decode cap.</summary>
     public static byte[] Extract(PdfDocument document, PdfAttachment attachment)
     {
         var stream = EmbeddedStream(document, document.Resolve(attachment.Spec) as PdfDictionary)
                      ?? throw new InvalidOperationException("The attachment is no longer in the document.");
-        return document.Data(stream);
+        return document.Data(stream, MaxExtractSize);
     }
 
     /// <summary>

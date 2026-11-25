@@ -14,6 +14,7 @@ final class AppearanceBuilder {
     let document: PdfDocument
     private let fonts: FontSource?
     private var embedderMade: PdfFontEmbedder?
+    var undrawn: Set<Int> = []
 
     init(_ document: PdfDocument, _ fonts: FontSource?) {
         self.document = document
@@ -25,6 +26,13 @@ final class AppearanceBuilder {
         let made = PdfFontEmbedder(document, fonts)
         embedderMade = made
         return made
+    }
+
+    /// The characters no font could draw since the last call, once each in code point order; clears them.
+    func takeUndrawn() -> String {
+        let text = String(String.UnicodeScalarView(undrawn.sorted().compactMap { Unicode.Scalar(UInt32($0)) }))
+        undrawn = []
+        return text
     }
 
     /// True for the subtypes this builder can draw.

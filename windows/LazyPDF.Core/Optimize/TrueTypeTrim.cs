@@ -27,6 +27,7 @@ internal static class TrueTypeTrim
         if (!tables.TryGetValue("head", out var head) || !tables.TryGetValue("maxp", out var maxp) || !tables.TryGetValue("loca", out var loca)
             || !tables.TryGetValue("glyf", out var glyf) || head.Length < 54 || maxp.Length < 6) return null;
         int numGlyphs = BinaryPrimitives.ReadUInt16BigEndian(maxp.AsSpan(4));
+        if (numGlyphs == 0) return null;
         bool longLoca = BinaryPrimitives.ReadInt16BigEndian(head.AsSpan(50)) != 0;
         if (loca.Length < (numGlyphs + 1) * (longLoca ? 4 : 2)) return null;
 

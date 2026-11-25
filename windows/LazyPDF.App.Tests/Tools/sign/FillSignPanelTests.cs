@@ -1,0 +1,287 @@
+using System.Windows;
+using System.Windows.Controls;
+using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Certificates;
+using LazyPDF.App.Tools.FillSign;
+using LazyPDF.App.Viewer;
+using LazyPDF.Core;
+using Xunit;
+
+namespace LazyPDF.App.Tests;
+
+[Collection("Application")]
+public sealed class FillSignPanelTests
+{
+    [Fact]
+    public Task ARemovedSignatureIsKeptUntilTheNoticeIsAnswered() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        var saved = new SavedSignatures(dir.Sub("sigs"));
+        var item = saved.Add(SavedKind.Signature, new PdfRgbaImage(2, 1, [1, 0, 0, 255, 0, 1, 0, 128]));
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        var list = (ListBox)panel.FindName("SavedList");
+        var row = (SavedRow)list.Items[0]!;
+
+        var remove = typeof(FillSignPanel).GetMethod("Remove_Click", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        remove.Invoke(panel, [new Button { DataContext = row }, new RoutedEventArgs()]);
+
+        Assert.True(File.Exists(item.Path));
+        Assert.Equal("Delete this signature?", host.Notices[0]);
+        Assert.Equal("Delete", host.Actions[0]!.Text);
+
+        host.Actions[0]!.Run();
+
+        Assert.False(File.Exists(item.Path));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task DeletingAnotherSignatureKeepsTheChosenOneAndTheRunningPlacement() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        var saved = new SavedSignatures(dir.Sub("sigs"));
+        var older = saved.Add(SavedKind.Signature, new PdfRgbaImage(2, 1, [1, 0, 0, 255, 0, 1, 0, 128]));
+        Thread.Sleep(50);
+        saved.Add(SavedKind.Signature, new PdfRgbaImage(1, 1, [0, 0, 1, 255]));
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        var list = (ListBox)panel.FindName("SavedList");
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var remove = typeof(FillSignPanel).GetMethod("Remove_Click", flags)!;
+        var image = typeof(FillSignPanel).GetField("_image", flags)!;
+        var rows = list.Items.Cast<SavedRow>().ToList();
+        var olderRow = rows.Single(r => r.Item.Path == older.Path);
+        var newerRow = rows.Single(r => r.Item.Path != older.Path);
+        list.SelectedItem = olderRow;
+        typeof(FillSignPanel).GetMethod("Begin", flags)!.Invoke(panel, []);
+        var chosen = image.GetValue(panel);
+
+        remove.Invoke(panel, [new Button { DataContext = newerRow }, new RoutedEventArgs()]);
+        host.Actions[0]!.Run();
+
+        Assert.Equal(older.Path, ((SavedRow)list.SelectedItem!).Item.Path);
+        Assert.Same(chosen, image.GetValue(panel));
+        Assert.Equal("Stop placing", panel.Action!.Text);
+
+        remove.Invoke(panel, [new Button { DataContext = list.SelectedItem }, new RoutedEventArgs()]);
+        host.Actions[1]!.Run();
+
+        Assert.Equal(-1, list.SelectedIndex);
+        Assert.Null(image.GetValue(panel));
+        Assert.Equal("Place on page", panel.Action!.Text);
+        Assert.False(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task KeepPlacingStaysArmedAfterEachPlacementUntilItIsUnticked() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, new RecordingHost());
+        ((RadioButton)panel.FindName("TextKind")).IsChecked = true;
+        ((TextBox)panel.FindName("WordsBox")).Text = "AB";
+        var keep = (CheckBox)panel.FindName("KeepPlacing");
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var begin = typeof(FillSignPanel).GetMethod("Begin", flags)!;
+        var placed = typeof(FillSignPanel).GetMethod("Placed", flags)!;
+
+        keep.IsChecked = true;
+        begin.Invoke(panel, []);
+        placed.Invoke(panel, [0, new Point(50, 50), null]);
+
+        Assert.Equal("Stop placing", panel.Action!.Text);
+        Assert.Equal("Place text", tab.Session.UndoLabel);
+
+        keep.IsChecked = false;
+        placed.Invoke(panel, [0, new Point(50, 100), null]);
+
+        Assert.Equal("Place on page", panel.Action!.Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AKeptSignatureIsSavedAndAOneOffIsNot() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new CertificatesPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, new RecordingHost());
+        var maker = (SignatureMaker)panel.FindName("Maker");
+        var list = (ListBox)panel.FindName("SavedList");
+        var saved = new SavedSignatures(dir.Sub("sigs"));
+        var made = typeof(CertificatesPanel).GetMethod("Maker_Made", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        ((TextBox)maker.FindName("NameBox")).Text = "Ann";
+        var keep = (CheckBox)maker.FindName("KeepBox");
+
+        keep.IsChecked = false;
+        made.Invoke(panel, [maker, EventArgs.Empty]);
+
+        Assert.Empty(saved.List(SavedKind.Signature));
+        Assert.Single(list.Items);
+
+        keep.IsChecked = true;
+        made.Invoke(panel, [maker, EventArgs.Empty]);
+
+        Assert.Single(saved.List(SavedKind.Signature));
+        Assert.Single(list.Items);
+        Assert.IsType<SavedRow>(list.SelectedItem);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AKeptSignatureThatCannotBeSavedIsStillUsedOnceForTheSigning() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        string blocked = dir.File("sigs", [1]);
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new CertificatesPanel(blocked);
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        var maker = (SignatureMaker)panel.FindName("Maker");
+        var list = (ListBox)panel.FindName("SavedList");
+        ((TextBox)maker.FindName("NameBox")).Text = "Ann";
+        ((CheckBox)maker.FindName("KeepBox")).IsChecked = true;
+
+        typeof(CertificatesPanel).GetMethod("Maker_Made", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(panel, [maker, EventArgs.Empty]);
+
+        var problem = host.Problems.Single();
+        Assert.Equal("Signature not kept", problem.Title);
+        Assert.Equal("It could not be saved. It will be used for this signing only.", problem.Text);
+        Assert.Single(list.Items);
+        Assert.Equal("OneOffRow", list.SelectedItem!.GetType().Name);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ASignatureThatCannotBeKeptIsStillPlacedThisTime() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        string blocked = dir.File("sigs", [1]);
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(blocked);
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        var maker = (SignatureMaker)panel.FindName("Maker");
+        var list = (ListBox)panel.FindName("SavedList");
+        ((TextBox)maker.FindName("NameBox")).Text = "Ann";
+        ((CheckBox)maker.FindName("KeepBox")).IsChecked = true;
+
+        typeof(FillSignPanel).GetMethod("Maker_Made", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(panel, [maker, EventArgs.Empty]);
+
+        var problem = host.Problems.Single();
+        Assert.Equal("Signature not kept", problem.Title);
+        Assert.Equal("It could not be saved. It can still be placed this time.", problem.Text);
+        Assert.Equal(-1, list.SelectedIndex);
+        Assert.True(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task LeavingTheCertificatesToolClosesTheMakerAndDropsTheOneOff() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new CertificatesPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, new RecordingHost());
+        var maker = (SignatureMaker)panel.FindName("Maker");
+        var button = (Button)panel.FindName("NewButton");
+        typeof(CertificatesPanel).GetMethod("New_Click", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(panel, [button, new RoutedEventArgs()]);
+        Assert.Equal(Visibility.Visible, maker.Visibility);
+
+        panel.Detach();
+
+        Assert.Equal(Visibility.Collapsed, maker.Visibility);
+        Assert.Equal(Visibility.Visible, button.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheSecondPressOfADoubleClickDoesNotPlaceAgainWhileKeepPlacing() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, new RecordingHost());
+        ((RadioButton)panel.FindName("TextKind")).IsChecked = true;
+        ((TextBox)panel.FindName("WordsBox")).Text = "AB";
+        ((CheckBox)panel.FindName("KeepPlacing")).IsChecked = true;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        typeof(FillSignPanel).GetMethod("Begin", flags)!.Invoke(panel, []);
+        var armed = typeof(FillSignPanel).GetField("_tool", flags)!;
+        var point = new Point(50, 50);
+
+        var first = (IPagePointerTool)armed.GetValue(panel)!;
+        first.Press(new PagePointer(0, point, point, true, 1, System.Windows.Input.ModifierKeys.None));
+        first.Release(new PagePointer(0, point, point, false, 1, System.Windows.Input.ModifierKeys.None));
+        var second = (IPagePointerTool)armed.GetValue(panel)!;
+        second.Press(new PagePointer(0, point, point, true, 2, System.Windows.Input.ModifierKeys.None));
+        second.Release(new PagePointer(0, point, point, false, 2, System.Windows.Input.ModifierKeys.None));
+
+        Assert.True(tab.Session.Undo());
+        Assert.False(tab.Session.CanUndo);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ARendererThatCannotLoadACommitLeavesItKeptAndUndrawn() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        var renderer = new FailingRenderer();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), renderer, null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        ((RadioButton)panel.FindName("TextKind")).IsChecked = true;
+        ((TextBox)panel.FindName("WordsBox")).Text = "AB";
+        ((CheckBox)panel.FindName("KeepPlacing")).IsChecked = true;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        typeof(FillSignPanel).GetMethod("Begin", flags)!.Invoke(panel, []);
+        renderer.Fails = true;
+
+        typeof(FillSignPanel).GetMethod("Placed", flags)!.Invoke(panel, [0, new Point(50, 50), null]);
+
+        await tab.Drawing;
+        Assert.Empty(host.Problems);
+        Assert.True(tab.Session.CanUndo);
+        Assert.False(tab.CanDraw);
+
+        renderer.Fails = false;
+        tab.Reload();
+        await tab.Drawing;
+        Assert.True(tab.CanDraw);
+    });
+
+    private sealed class FailingRenderer : IDocumentRenderer
+    {
+        public bool Fails { get; set; }
+
+        public bool Load(PdfEditSession session, string? password) =>
+            Fails ? throw PdfReadException.Damaged("The update does not read back.") : true;
+
+        public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi) => null;
+
+        public void Dispose() { }
+    }
+}

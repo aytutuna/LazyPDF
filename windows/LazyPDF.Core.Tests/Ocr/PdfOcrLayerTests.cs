@@ -23,6 +23,49 @@ public class PdfOcrLayerTests
     }
 
     [Fact]
+    public void SkewedLineIsWrittenWithTurnedTextMatrices()
+    {
+        var document = OcrKit.Scan();
+        double angle = 0.1;
+        AddWords(document, [new OcrWord("Skewed", new OcrBox(50, 100, 100, 20), 1f, angle), new OcrWord("line", new OcrBox(160, 100, 60, 20), 1f, angle)]);
+        var page = document.Pages[0];
+        var matrices = System.Text.RegularExpressions.Regex.Matches(OcrKit.Latin(page.Contents()), @"(\S+) (\S+) (\S+) (\S+) (\S+) (\S+) Tm")
+            .Select(m => Enumerable.Range(1, 6).Select(i => double.Parse(m.Groups[i].Value, System.Globalization.CultureInfo.InvariantCulture)).ToArray()).ToList();
+        Assert.Equal(3, matrices.Count);
+        foreach (var m in matrices)
+        {
+            Assert.Equal(Math.Cos(angle), m[0], 4);
+            Assert.Equal(Math.Sin(angle), m[1], 4);
+            Assert.Equal(-Math.Sin(angle), m[2], 4);
+            Assert.Equal(Math.Cos(angle), m[3], 4);
+        }
+        Assert.Equal(50, matrices[0][4], 3);
+        Assert.Equal(600 - 120, matrices[0][5], 3);
+        Assert.Equal(["Skewed", "line"], TextPage.Create(document, page).Words.Select(w => w.Text));
+
+        var layer = PdfOcrLayer.Words(document, page);
+        Assert.Equal(["Skewed", "line"], layer.Select(w => w.Text));
+        Assert.Equal(48.003, layer[0].Box.X, 3);
+        Assert.Equal(90.117, layer[0].Box.Y, 3);
+        Assert.Equal(101.497, layer[0].Box.Width, 3);
+        Assert.Equal(29.883, layer[0].Box.Height, 3);
+
+        PdfOcrLayer.Correct(document, page, 1, "lane");
+        Assert.Contains("0.995", OcrKit.Latin(page.Contents()));
+        Assert.Equal(["Skewed", "lane"], PdfOcrLayer.Words(document, page).Select(w => w.Text));
+    }
+
+    [Fact]
+    public void StraightLineIsWrittenAsBefore()
+    {
+        var a = OcrKit.Scan();
+        var b = OcrKit.Scan();
+        AddWords(a, [new OcrWord("Same", new OcrBox(50, 100, 100, 20)), new OcrWord("here", new OcrBox(160, 102, 60, 18))]);
+        AddWords(b, [new OcrWord("Same", new OcrBox(50, 100, 100, 20), 1f, 0), new OcrWord("here", new OcrBox(160, 102, 60, 18), 1f, double.NaN)]);
+        Assert.Equal(OcrKit.Latin(a.Pages[0].Contents()), OcrKit.Latin(b.Pages[0].Contents()));
+    }
+
+    [Fact]
     public void PictureSizeScalesTheBoxes()
     {
         var document = OcrKit.Scan();
@@ -255,5 +298,50 @@ public class PdfOcrLayerTests
         Assert.Equal((720, 1080), (geometry.Width, geometry.Height));
         AddWords(document, OcrKit.Words(), 720, 1080);
         OcrKit.AssertAtBoxes(document);
+    }
+
+    [Fact]
+    public void AddThatCannotAddObjectsLeavesTheOldLayerAlone()
+    {
+        var document = OcrKit.Scan();
+        AddWords(document, OcrKit.Words());
+        document.Set(PdfDocument.MaxObjectNumber, PdfNull.Instance);
+
+        Assert.Throws<InvalidOperationException>(() => AddWords(document, [OcrKit.Word("other", 10, 10, 50, 20)]));
+
+        Assert.Equal(["Hello", "world", "Second", "line"], PdfOcrLayer.Words(document, document.Pages[0]).Select(w => w.Text));
+        Assert.Equal(1, OcrKit.LayerStreams(document));
+    }
+
+    [Fact]
+    public void ALayerWithMoreOperationsThanTheFormatCanHoldIsAReadError()
+    {
+        var document = OcrKit.Scan();
+        OcrKit.AddLayer(document, string.Concat(Enumerable.Repeat("BT\n", 8 * PdfOcrLayer.MaxWords + 2)));
+
+        Assert.Throws<PdfReadException>(() => PdfOcrLayer.Words(document, document.Pages[0]));
+    }
+
+    [Fact]
+    public void ALayerWithMoreWordsThanMaxWordsIsReadUpToMaxWords()
+    {
+        var document = OcrKit.Scan();
+        OcrKit.AddLayer(document, "BT\n/LPOcrF 12 Tf\n" + string.Concat(Enumerable.Repeat("1 0 0 1 0 0 Tm\n<0041> Tj\n", PdfOcrLayer.MaxWords + 1)) + "ET\n");
+
+        Assert.Equal(PdfOcrLayer.MaxWords, PdfOcrLayer.Words(document, document.Pages[0]).Count);
+    }
+
+    [Fact]
+    public void ALayerStreamThatDoesNotDecodeIsAReadError()
+    {
+        var document = OcrKit.Scan();
+        var marker = new PdfDictionary();
+        var dictionary = new PdfDictionary();
+        dictionary["LazyPDFOcr"] = marker;
+        dictionary["Filter"] = new PdfName("FlateDecode");
+        var stream = document.Add(new PdfStream(dictionary, [1, 2, 3, 4, 5]));
+        document.Pages[0].Dictionary["Contents"] = new PdfArray([stream]);
+
+        Assert.Throws<PdfReadException>(() => PdfOcrLayer.Words(document, document.Pages[0]));
     }
 }

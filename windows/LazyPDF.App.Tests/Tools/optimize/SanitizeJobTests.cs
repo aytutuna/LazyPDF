@@ -32,13 +32,26 @@ public sealed class SanitizeJobTests
         var rows = Enum.GetValues<SanitizeItem>().ToDictionary(i => i, i => new SanitizeRow(new SanitizeFinding(i, 1)));
 
         Assert.True(rows[SanitizeItem.Comments].CanTick);
-        Assert.True(rows[SanitizeItem.Comments].IsChecked);
+        Assert.True(rows[SanitizeItem.Metadata].IsChecked);
         Assert.False(rows[SanitizeItem.HiddenText].CanTick);
         Assert.False(rows[SanitizeItem.HiddenText].IsChecked);
         Assert.False(rows[SanitizeItem.PreviousVersions].CanTick);
         Assert.True(rows[SanitizeItem.PreviousVersions].IsChecked);
         Assert.True(rows[SanitizeItem.InvisibleText].CanTick);
         Assert.False(rows[SanitizeItem.InvisibleText].IsChecked);
+    }
+
+    [Theory]
+    [InlineData(SanitizeItem.Comments)]
+    [InlineData(SanitizeItem.FormData)]
+    [InlineData(SanitizeItem.ExternalLinks)]
+    public void WhatTheReaderCanSeeStartsOffWithANoteSayingSo(SanitizeItem item)
+    {
+        var row = new SanitizeRow(new SanitizeFinding(item, 1));
+
+        Assert.True(row.CanTick);
+        Assert.False(row.IsChecked);
+        Assert.Contains("Off unless you tick it", row.Note);
     }
 
     [Fact]

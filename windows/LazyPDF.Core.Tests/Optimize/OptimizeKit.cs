@@ -121,12 +121,15 @@ internal static class OptimizeKit
 internal sealed class OptimizeFakeCodec : IImageCodec
 {
     public int Decodes { get; private set; }
+    public Action? OnDecode { get; init; }
     public int LastQuality { get; private set; }
     public PdfRgbaImage? LastEncoded { get; private set; }
+    public byte Alpha { get; init; } = 255;
 
-    public PdfRgbaImage? Decode(byte[] data, string codec)
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0)
     {
         Decodes++;
+        OnDecode?.Invoke();
         int at = data.AsSpan().IndexOf(new byte[] { 0xFF, 0xC0 });
         if (at < 0) return null;
         int height = data[at + 5] << 8 | data[at + 6], width = data[at + 7] << 8 | data[at + 8];
@@ -136,7 +139,7 @@ internal sealed class OptimizeFakeCodec : IImageCodec
             for (int x = 0; x < width; x++)
             {
                 int o = (y * width + x) * 4;
-                (rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3]) = ((byte)(x * 255 / Math.Max(1, width - 1)), (byte)(y * 255 / Math.Max(1, height - 1)), 128, 255);
+                (rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3]) = ((byte)(x * 255 / Math.Max(1, width - 1)), (byte)(y * 255 / Math.Max(1, height - 1)), 128, Alpha);
             }
         }
         return new PdfRgbaImage(width, height, rgba);

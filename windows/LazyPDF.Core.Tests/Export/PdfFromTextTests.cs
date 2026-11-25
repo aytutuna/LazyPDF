@@ -89,6 +89,24 @@ public class PdfFromTextTests
         Assert.Equal((792, 612), (document.Pages[0].MediaBox.Width, document.Pages[0].MediaBox.Height));
     }
 
+    [Theory]
+    [InlineData(PdfPaper.A3, 841.89, 1190.551)]
+    [InlineData(PdfPaper.A5, 419.528, 595.276)]
+    [InlineData(PdfPaper.Legal, 612, 1008)]
+    public void NamedPapersSetThePage(PdfPaper paper, double width, double height)
+    {
+        using var document = PdfDocument.Open(PdfFromText.Create("x", setup: new PdfPageSetup(paper)).Bytes);
+        Assert.Equal((width, height), (document.Pages[0].MediaBox.Width, document.Pages[0].MediaBox.Height));
+    }
+
+    [Fact]
+    public void CustomPaperTurnsWhenLandscape()
+    {
+        var setup = new PdfPageSetup(PdfPaper.Custom, PdfOrientation.Landscape, 1, 200, 300);
+        using var document = PdfDocument.Open(PdfFromText.Create("x", setup: setup).Bytes);
+        Assert.Equal((300, 200), (document.Pages[0].MediaBox.Width, document.Pages[0].MediaBox.Height));
+    }
+
     [Fact]
     public void TurkishTextIsEmbeddedAndReadsBack()
     {
@@ -124,4 +142,32 @@ public class PdfFromTextTests
         Assert.Throws<ArgumentException>(() => PdfFromText.Create("x", setup: new PdfPageSetup(Margin: -5)));
         Assert.Throws<ArgumentException>(() => PdfFromText.Create("x", size: 0));
     }
-}
+
+    [Fact]
+    public void ACancelledTokenStopsTheMakingOfThePdf()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() => PdfFromText.Create("Hello\fWorld", cancellation: source.Token));
+    }
+
+    [Fact]
+    public void ACancelDuringTheFontLookupStopsBeforeThePages()
+    {
+        using var source = new CancellationTokenSource();
+        var fonts = new CancellingFonts(source);
+        Assert.Throws<OperationCanceledException>(() => PdfFromText.Create("Çağrı\fŞanlıurfa", fonts, cancellation: source.Token));
+        Assert.Equal(1, fonts.Asked);
+    }
+
+    private sealed class CancellingFonts(CancellationTokenSource source) : IFontSource
+    {
+        public int Asked { get; private set; }
+
+        public FontFile? Find(string family, FontStyles style)
+        {
+            Asked++;
+            source.Cancel();
+            return new ExportArialSource().Find(family, style);
+        }
+    }}

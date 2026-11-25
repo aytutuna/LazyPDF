@@ -1,4 +1,8 @@
+using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 
 namespace LazyPDF.App;
@@ -8,6 +12,8 @@ public partial class App : Application
     /// <summary>One instance per user session.</summary>
     private const string InstanceMutexName = @"Local\LazyPDF.App";
 
+    private readonly DocumentRegistry _registry = new();
+    private readonly RecoveryStore _recovery = new();
     private Mutex? _instance;
     private InstanceChannel? _channel;
 
@@ -17,11 +23,15 @@ public partial class App : Application
     /// </summary>
     public static bool Unattended { get; set; }
 
+    /// <summary>The language Windows speaks, kept apart from the one the texts are shown in.</summary>
+    internal static CultureInfo WindowsLanguage { get; set; } = CultureInfo.CurrentUICulture;
+
     /// <summary>The files named on the command line; the main window takes them once it is open.</summary>
     public static IReadOnlyList<string> StartupFiles { get; private set; } = [];
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        EventManager.RegisterClassHandler(typeof(UIElement), AccessKeyManager.AccessKeyPressedEvent, new AccessKeyPressedEventHandler(RequireAlt));
         if (Unattended)
         {
             ThemeService.Initialize();
@@ -44,11 +54,51 @@ public partial class App : Application
             }
         }
         StartupFiles = files;
+        DispatcherUnhandledException += App_DispatcherUnhandledException;
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            System.Diagnostics.Trace.TraceError(args.Exception.ToString());
+            args.SetObserved();
+        };
         if (first) _channel = new InstanceChannel(Opened);
+        WindowsLanguage = CultureInfo.CurrentUICulture;
+        if (AppPreferencesStore.Load().Language is ("en" or "tr") and var language)
+        {
+            // Only the texts change; number and date formats stay Windows'.
+            var culture = CultureInfo.GetCultureInfo(language);
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
+        }
         // Apply the saved appearance before the first window is created.
         ThemeService.Initialize();
         base.OnStartup(e);
+        JumpLists.Install();
+        SessionEnding += (_, _) => WindowHub.BeginExit(_registry, session: true);
+        // Built here rather than through StartupUri so the first window shares the registry and recovery store.
+        new MainWindow(_registry, _recovery).Show();
     }
+
+    // WPF fires an access key on a plain letter unless a text box has focus; a stray key must not discard work. Enter and Escape reach the default and cancel buttons the same way and stay.
+    private static void RequireAlt(object sender, AccessKeyPressedEventArgs e)
+    {
+        if (e.Key is "\r" or "\u001B" || Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase or PasswordBox || Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) return;
+        e.Target = null;
+        e.Handled = true;
+    }
+
+    // One failed handler should not take every open tab with it. Before the window is up there is nothing to show it in.
+    private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    {
+        System.Diagnostics.Trace.TraceError(e.Exception.ToString());
+        if (e.Exception is OutOfMemoryException || WindowHub.Target is not { } window) return;
+        // A failure in layout or rendering comes back on every pass; let a repeat end the process so recovery takes over.
+        if (DateTime.UtcNow - _lastHandled < TimeSpan.FromSeconds(5)) return;
+        _lastHandled = DateTime.UtcNow;
+        window.ShowProblem(Problems.Crashed());
+        e.Handled = true;
+    }
+
+    private DateTime _lastHandled;
 
     /// <summary>
     /// The files a command line asks for: each argument is a path, except one that starts with <c>lazypdf:</c>, which
@@ -60,13 +110,20 @@ public partial class App : Application
     {
         var all = args.Where(arg => arg.Length > 0).ToList();
         if (all.Count > 0 && LazyPdfAddress.IsAddress(all[0])) return [.. LazyPdfAddress.Parse(all[0])];
-        return [.. all.SelectMany(arg => LazyPdfAddress.IsAddress(arg) ? LazyPdfAddress.Parse(arg) : [Path.GetFullPath(arg)])];
+        return [.. all.SelectMany(arg => LazyPdfAddress.IsAddress(arg) ? LazyPdfAddress.Parse(arg) : FullPath(arg))];
+
+        // An argument that is not a usable path is skipped: no window exists yet to say so.
+        static string[] FullPath(string arg)
+        {
+            try { return [Path.GetFullPath(arg)]; }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return []; }
+        }
     }
 
     /// <summary>Files handed over by a second start: opened at once, or kept for the window if it is not open yet.</summary>
     private void Opened(IReadOnlyList<string> paths) => Dispatcher.BeginInvoke(() =>
     {
-        if (MainWindow is MainWindow { IsLoaded: true } window) window.OpenFiles(paths);
+        if (WindowHub.Target is { } window) window.OpenFiles(paths);
         else StartupFiles = [.. StartupFiles, .. paths];
     });
 

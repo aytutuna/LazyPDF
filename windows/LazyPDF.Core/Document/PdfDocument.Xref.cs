@@ -5,7 +5,7 @@ namespace LazyPDF.Core;
 public sealed partial class PdfDocument
 {
     /// <summary>Longest /Prev chain followed (a loop is caught before that).</summary>
-    private const int MaxSections = 4096;
+    internal const int MaxSections = 4096;
 
     internal enum EntryKind { Free, InUse, Compressed, New }
 

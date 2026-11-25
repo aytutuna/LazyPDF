@@ -25,6 +25,14 @@ public sealed partial class PdfDocument
         return _security.DecryptStream(stream.Number, stream.Generation, raw, CryptView(stream.Dictionary));
     }
 
+    /// <summary>The size of <see cref="RawData"/> without copying it.</summary>
+    internal int RawLength(PdfStream stream)
+    {
+        if (stream.Data is { } memory) return memory.Length;
+        if (stream.DataOffset < 0 || stream.DataOffset > _data.Length) return 0;
+        return StreamLength(stream, (int)stream.DataOffset);
+    }
+
     /// <summary>
     /// The data of <paramref name="stream"/> decrypted and decoded, with /Length, /Filter and
     /// /DecodeParms resolved first. Throws <see cref="PdfReadException"/> for a filter that is
@@ -34,7 +42,7 @@ public sealed partial class PdfDocument
 
     internal byte[] Data(PdfStream stream, long maxSize, bool strict = false)
     {
-        var (filter, parameters, _) = DecodeSpec(stream);
+        var (filter, parameters, _) = DecodeSpec(stream, decoding: true, maxSize);
         return PdfFilters.Decode(RawData(stream), filter, parameters, maxSize, strict);
     }
 
@@ -53,11 +61,19 @@ public sealed partial class PdfDocument
     /// <summary>
     /// What the filter layer is given: the resolved /Filter and /DecodeParms of an encrypted file's
     /// stream without the Crypt stage, which the decryption has already carried out. <c>Crypt</c> says there was one.
+    /// With <paramref name="decoding"/> a /JBIG2Globals stream comes with its decoded data in memory, which is what the
+    /// filter reads; a caller that writes the parameters back leaves it off and gets the stream as the file has it.
     /// </summary>
-    internal (PdfObject? Filter, PdfObject? Parameters, bool Crypt) DecodeSpec(PdfStream stream)
+    internal (PdfObject? Filter, PdfObject? Parameters, bool Crypt) DecodeSpec(PdfStream stream, bool decoding = false, long maxSize = PdfFilters.DefaultMaxSize)
     {
-        var filter = Flatten(stream.Dictionary["Filter"], 2);
-        var parameters = Flatten(stream.Dictionary["DecodeParms"], 3);
+        var (filter, parameters, crypt) = WithoutCrypt(Flatten(stream.Dictionary["Filter"], 2), Flatten(stream.Dictionary["DecodeParms"], 3));
+        // After the Crypt stage is gone, so that the stage that follows it gets the parameters that were given for it.
+        if (decoding) parameters = ForJbig2(filter, parameters, stream.Dictionary, maxSize);
+        return (filter, parameters, crypt);
+    }
+
+    private (PdfObject? Filter, PdfObject? Parameters, bool Crypt) WithoutCrypt(PdfObject? filter, PdfObject? parameters)
+    {
         if (_security is null) return (filter, parameters, false);
         switch (filter)
         {
@@ -70,6 +86,59 @@ public sealed partial class PdfDocument
             default:
                 return (filter, parameters, false);
         }
+    }
+
+    // The JBIG2 stage of an image gets what it needs besides its own parameters: the decoded globals, and the size of the image,
+    // which the stage fits its page to. A stream with no such stage is left alone, whatever its parameters hold.
+    private PdfObject? ForJbig2(PdfObject? filter, PdfObject? parameters, PdfDictionary image, long maxSize)
+    {
+        List<PdfObject> names = filter switch
+        {
+            PdfName name => [name],
+            PdfArray array => array.Items,
+            _ => [],
+        };
+        int at = names.FindIndex(n => n is PdfName { Value: "JBIG2Decode" });
+        if (at < 0) return parameters;
+        var each = new List<PdfObject>();
+        switch (parameters)
+        {
+            case PdfArray array: each.AddRange(array.Items); break;
+            case PdfDictionary single: each.Add(single); break;
+        }
+        while (each.Count <= at) each.Add(PdfNull.Instance);
+        var stage = (each[at] as PdfDictionary)?.Copy() ?? new PdfDictionary();
+        if (stage["JBIG2Globals"] is PdfStream globals) stage["JBIG2Globals"] = new PdfStream(new PdfDictionary(), GlobalsData(globals, maxSize));
+        long width = Integer(image, "Width") ?? 0, height = Integer(image, "Height") ?? 0;
+        if (width is >= 1 and <= int.MaxValue && height is >= 1 and <= int.MaxValue)
+        {
+            stage["Width"] = new PdfNumber(width);
+            stage["Height"] = new PdfNumber(height);
+        }
+        each[at] = stage;
+        return new PdfArray(each);
+    }
+
+    /// <summary>The most a globals stream may expand to; they hold symbols, not pictures.</summary>
+    private const long MaxGlobals = 32L << 20;
+
+    // The last globals stream decoded: the images of a page that share one come one after the other.
+    private PdfStream? _globalsOf;
+    private byte[]? _globalsSource;
+    private byte[]? _globalsData;
+
+    /// <summary>
+    /// The data of a globals stream. Its own filters are read without any globals of theirs (a JBIG2 stage on it is damage),
+    /// so that streams that name each other cannot send this round in circles.
+    /// </summary>
+    private byte[] GlobalsData(PdfStream globals, long maxSize)
+    {
+        if (ReferenceEquals(_globalsOf, globals) && ReferenceEquals(_globalsSource, globals.Data) && _globalsData is { } known && known.Length <= maxSize) return known;
+        var (filter, parameters, _) = DecodeSpec(globals);
+        if (PdfFilters.Uses(filter, "JBIG2Decode")) throw PdfReadException.Damaged("A JBIG2 globals stream is JBIG2 coded.");
+        byte[] data = PdfFilters.Decode(RawData(globals), filter, parameters, Math.Min(maxSize, MaxGlobals));
+        (_globalsOf, _globalsSource, _globalsData) = (globals, globals.Data, data);
+        return data;
     }
 
     private int StreamLength(PdfStream stream, int start)

@@ -133,14 +133,15 @@ enum ExportStructure {
     /// Rows in the top or bottom band of a page that are page numbers, or that repeat on at least half the pages (digits
     /// ignored), are running heads and feet.
     static func runningHeads(_ pages: [(height: Double, rows: [ExRow])]) -> Set<ExRow> {
-        var seen: [String: Int] = [:]
-        var inBand: [(row: ExRow, key: String)] = []
+        // Keyed by UTF-16 units: the C# compares ordinally, where String equates canonically equivalent texts.
+        var seen: [[UInt16]: Int] = [:]
+        var inBand: [(row: ExRow, key: [UInt16])] = []
         for (height, rows) in pages {
-            var keys = Set<String>()
+            var keys = Set<[UInt16]>()
             for row in rows {
                 let middle = (row.top + row.bottom) / 2
                 if middle > height * bandFraction && middle < height * (1 - bandFraction) { continue }
-                let key = ExportTrim.both(hashDigits(row.text)).lowercased()
+                let key = Array(ExportTrim.both(hashDigits(row.text)).lowercased().utf16)
                 inBand.append((row, key))
                 if keys.insert(key).inserted { seen[key, default: 0] += 1 }
             }

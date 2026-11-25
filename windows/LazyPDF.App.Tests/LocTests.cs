@@ -28,8 +28,16 @@ public sealed class LocTests
         Assert.Equal("No entry for this", InTurkish(() => Loc.T("No entry for this")));
 
     [Fact]
+    public void LanguageIsDilInTurkish() =>
+        Assert.Equal("Dil", InTurkish(() => Loc.T("Language")));
+
+    [Fact]
     public void CancelIsIptalInTurkish() =>
         Assert.Equal("İptal", InTurkish(() => Loc.T("Cancel")));
+
+    [Fact]
+    public void BackToTheFileTooltipInTurkish() =>
+        Assert.Equal("Dosyaya dön (Esc)", InTurkish(() => Loc.T("Back to the file (Esc)")));
 
     [Fact]
     public void ValuesFillTheNumberedPlaces()
@@ -94,5 +102,33 @@ public sealed class LocTests
         {
             Loc.Table = null;
         }
+    }
+
+    public static TheoryData<string[]> DialogButtons => new()
+    {
+        new[] { "_Open", "_Cancel" },
+        new[] { "_Save", "Do_n't save", "_Cancel" },
+        new[] { "_Save", "C_lose", "_Cancel" },
+        new[] { "_Restore", "_Discard" },
+        new[] { "C_reate", "_Cancel" },
+        new[] { "_Cancel", "C_lose" },
+    };
+
+    private static char AccessKey(string text) => char.ToLowerInvariant(text[text.IndexOf('_') + 1]);
+
+    [Theory]
+    [MemberData(nameof(DialogButtons))]
+    public void AccessKeysInADialogAreDistinct(string[] keys)
+    {
+        Assert.Equal(keys.Length, InEnglish(() => keys.Select(k => AccessKey(Loc.T(k))).Distinct().Count()));
+        Assert.Equal(keys.Length, InTurkish(() => keys.Select(k => AccessKey(Loc.T(k))).Distinct().Count()));
+    }
+
+    [Theory]
+    [MemberData(nameof(DialogButtons))]
+    public void NoTurkishAccessKeyIsADottedOrDotlessI(string[] keys)
+    {
+        foreach (string key in keys)
+            Assert.DoesNotContain(InTurkish(() => AccessKey(Loc.T(key))), "iı");
     }
 }

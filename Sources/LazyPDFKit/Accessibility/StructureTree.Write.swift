@@ -31,6 +31,7 @@ extension StructureTree {
         Self.put(dictionary, "RoleMap", roleMap.count == 0 ? nil : Self.mapOf(roleMap.entries.map { (key: $0.key, value: PdfName($0.value) as PdfObject) }))
         Self.put(dictionary, "ClassMap", classMap.count == 0 ? nil : Self.mapOf(classMap.entries))
         try writeParentTree(document, all, pages)
+        try writeIdTree(document, all)
 
         for number in removed { document.delete(number) }
         removed.removeAll()
@@ -50,7 +51,7 @@ extension StructureTree {
 
     // Each page's array in the parent tree runs up to its highest MCID, so a few far-off numbers would allocate a great deal.
     // A sequence number is a C# int; clamping keeps a caller's huge one from overflowing the sum.
-    private func parentSlots() -> Int {
+    func parentSlots() -> Int {
         var highest: [SlotKey: Int] = [:]
         for content in contents {
             let key = SlotKey(page: content.pageIndex, stream: content.stream?.number ?? 0)
@@ -168,10 +169,8 @@ extension StructureTree {
         for item in assigned {
             guard let reference = item.element.reference else { continue }
             if let content = item.kid as? StructContent {
-                var list = arrays[item.key] ?? []
-                while list.count <= content.mcid { list.append(PdfNull.instance) }
-                list[content.mcid] = reference
-                arrays[item.key] = list
+                while arrays[item.key, default: []].count <= content.mcid { arrays[item.key, default: []].append(PdfNull.instance) }
+                arrays[item.key, default: []][content.mcid] = reference
             } else {
                 entries[item.key] = reference
             }
@@ -190,6 +189,29 @@ extension StructureTree {
         }
         let highest = entries.keys.max() ?? -1
         Self.put(dictionary, "ParentTreeNextKey", PdfNumber(Swift.max(next, highest + 1)))
+    }
+
+    // Headers names elements by ID, and a reader finds them through /IDTree, so an ID the tree lacks has to be added.
+    private func writeIdTree(_ document: PdfDocument, _ all: [StructElement]) throws {
+        var entries: [String: PdfObject] = [:]
+        for element in all {
+            if let id = element.id, !id.isEmpty, let reference = element.reference {
+                // The key is the /ID string as stored, since /Headers and /Ref hold the same bytes and decoding then encoding does not give them back.
+                let key = (document.resolve(element.dictionary["ID"]) as? PdfString).map { Latin1.string($0.bytes) } ?? PdfNameTree.keyOf(id)
+                if entries[key] == nil { entries[key] = reference }
+            }
+        }
+        if entries.isEmpty && dictionary["IDTree"] == nil { return }
+
+        let existing = PdfNameTree.read(document, dictionary["IDTree"])
+        let same = existing.count == entries.count && existing.allSatisfy { entry in
+            entries[entry.key]?.description == entry.value.description
+        }
+        if same { return }
+        let list = entries.map { (key: $0.key, value: $0.value) }
+        let tree = document.dict(dictionary, "IDTree")
+        let root = try PdfNameTree.write(document, tree, list)
+        if tree == nil { dictionary["IDTree"] = try document.add(root) }
     }
 
     private static func keyOf(_ document: PdfDocument, _ owner: PdfDictionary, _ name: String) -> Int? {

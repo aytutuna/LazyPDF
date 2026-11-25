@@ -65,6 +65,53 @@ public class EditSessionTests : IDisposable
     }
 
     [Fact]
+    public void MergedCommitUndoesWithThePreviousOne()
+    {
+        byte[] original = SaveFixtures.Table();
+        var session = PdfEditSession.Open(original);
+        Retitle(session, "One");
+        session.Commit("Fill");
+        Retitle(session, "Two");
+        Assert.True(session.Commit("Fill", mergeWithPrevious: true));
+        Assert.Equal("Two", Title(session));
+
+        Assert.True(session.Undo());
+        Assert.Equal(original, session.Current.ToArray());
+        Assert.False(session.CanUndo);
+        Assert.True(session.Redo());
+        Assert.Equal("Two", Title(session));
+        Assert.False(session.CanRedo);
+    }
+
+    [Fact]
+    public void MergeIsRefusedWithoutAStepAfterASaveAndForAnotherLabel()
+    {
+        var session = PdfEditSession.Open(SaveFixtures.Table());
+        Retitle(session, "One");
+        session.Commit("Fill", mergeWithPrevious: true);
+        Assert.False(session.Undo() && session.CanUndo);
+        session.Redo();
+
+        Retitle(session, "Two");
+        session.Commit("Other", mergeWithPrevious: true);
+        Retitle(session, "Three");
+        session.Commit("Other");
+        session.Save(Path.Combine(_folder, "a.pdf"));
+        Retitle(session, "Four");
+        session.Commit("Other", mergeWithPrevious: true);
+
+        Assert.True(session.Undo());
+        Assert.Equal("Three", Title(session));
+        Assert.True(session.Undo());
+        Assert.Equal("Two", Title(session));
+        Assert.True(session.Undo());
+        Assert.Equal("One", Title(session));
+        Assert.True(session.Undo());
+        Assert.Equal("Original title", Title(session));
+        Assert.False(session.CanUndo);
+    }
+
+    [Fact]
     public void CommitWithNothingChangedAddsNothing()
     {
         var session = PdfEditSession.Open(SaveFixtures.Table());
@@ -306,5 +353,59 @@ public class EditSessionTests : IDisposable
         pdf.Stream(4, "", "startxref\n9\n%%EOF\n");
         var session = PdfEditSession.Open(pdf.Finish());
         Assert.Single(session.Versions);
+    }
+
+    [Theory]
+    [InlineData("table")]
+    [InlineData("stream")]
+    public void PastTheSectionLimitTheNextUpdateIsAFullSection(string kind)
+    {
+        var session = PdfEditSession.Open(SaveFixtures.Make(kind));
+        for (int i = 1; i <= PdfDocument.MaxSections + 4; i++)
+        {
+            Retitle(session, "Title " + i);
+            Assert.True(session.Commit("Title"));
+            if (i % 500 == 0) Assert.False(session.Document.XrefRebuilt);
+        }
+        Assert.False(session.Document.XrefRebuilt);
+        Assert.True(session.Document.SectionOffsets.Count < PdfDocument.MaxSections);
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        Assert.False(reopened.XrefRebuilt);
+        Assert.Equal("Title " + (PdfDocument.MaxSections + 4), SaveFixtures.Title(reopened));
+        Assert.Equal(2, reopened.Pages.Count);
+    }
+
+    [Fact]
+    public void CommitPastTheLimitIsRefusedAndKeepsTheChanges()
+    {
+        var session = PdfEditSession.Open(SaveFixtures.Table());
+        Retitle(session, "One");
+        Assert.True(session.Commit("Title one"));
+        byte[] afterOne = session.Current.ToArray();
+
+        session.MaxBytes = afterOne.Length + 10;
+        Retitle(session, "Two");
+        var e = Assert.Throws<PdfReadException>(() => session.Commit("Title two"));
+        Assert.Equal(PdfReadProblem.Unsupported, e.Problem);
+        Assert.Equal("The file is too large to change further.", e.Message);
+        Assert.True(session.IsDirty);
+        Assert.True(session.CanUndo);
+        Assert.Equal("Title one", session.UndoLabel);
+        Assert.Equal(afterOne, session.Current.ToArray());
+
+        session.MaxBytes = long.MaxValue;
+        Assert.True(session.Commit("Title two"));
+        Assert.Equal("Two", Title(session));
+    }
+
+    [Fact]
+    public void FileLargerThanTheLimitIsNotRead()
+    {
+        string path = Path.Combine(_folder, "huge.pdf");
+        using (var file = File.Create(path)) file.SetLength(Array.MaxLength + 1L);
+        var e = Assert.Throws<PdfReadException>(() => PdfEditSession.Open(path));
+        Assert.Equal(PdfReadProblem.Unsupported, e.Problem);
+        Assert.Equal("The file is too large.", e.Message);
     }
 }

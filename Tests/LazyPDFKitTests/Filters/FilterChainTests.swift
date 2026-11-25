@@ -69,7 +69,7 @@ final class FilterChainTests: XCTestCase {
     }
 
     func test_codecIsReportedWithItsInput() throws {
-        for (filter, codec) in [("DCTDecode", "DCTDecode"), ("DCT", "DCTDecode"), ("JPXDecode", "JPXDecode"), ("JBIG2Decode", "JBIG2Decode")] {
+        for (filter, codec) in [("DCTDecode", "DCTDecode"), ("DCT", "DCTDecode"), ("JPXDecode", "JPXDecode")] {
             let result = try PdfFilters.decodeToCodec(plain, PdfName(filter), nil)
             XCTAssertEqual(result.codec, codec, filter)
             XCTAssertEqual(result.data, plain, filter)
@@ -108,8 +108,8 @@ final class FilterChainTests: XCTestCase {
         assertProblem(.unsupported, try PdfFilters.decode(stored, filter, nil, 1_000_000))
     }
 
-    func test_defaultCapIsOneGibibyte() {
-        XCTAssertEqual(PdfFilters.defaultMaxSize, 1 << 30)
+    func test_defaultCapIs256Mebibytes() {
+        XCTAssertEqual(PdfFilters.defaultMaxSize, 256 << 20)
     }
 
     func test_bombThroughTwoFiltersStillStops() throws {

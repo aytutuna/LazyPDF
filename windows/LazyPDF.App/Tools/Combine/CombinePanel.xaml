@@ -4,7 +4,7 @@
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:combine="clr-namespace:LazyPDF.App.Tools.Combine"
-                 AllowDrop="True" DragOver="Panel_DragOver" Drop="Panel_Drop">
+                 AllowDrop="True" PreviewDragOver="Panel_DragOver" PreviewDrop="Panel_Drop" PreviewMouseLeftButtonDown="Panel_PreviewMouseLeftButtonDown">
     <StackPanel Margin="{StaticResource PanePadding}">
         <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,12" HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal">
@@ -25,7 +25,10 @@
             <ItemsControl x:Name="Files" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Files to combine}" IsTabStop="False">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type combine:CombineEntry}">
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6" Padding="10,8">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6" Padding="10,8" AllowDrop="True"
+                                PreviewMouseLeftButtonDown="Card_PreviewMouseLeftButtonDown" PreviewMouseMove="Card_PreviewMouseMove"
+                                DragLeave="Card_DragLeave" PreviewDrop="Card_Drop">
+                            <Grid>
                             <StackPanel>
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;" ToolTip="{loc:T Remove from the list}"
@@ -44,10 +47,19 @@
                                     <TextBlock x:Name="Hint" Text="{loc:T All pages}" Style="{StaticResource PlaceholderText}" Visibility="Collapsed" />
                                 </Grid>
                             </StackPanel>
+                            <Border x:Name="Before" Height="2" VerticalAlignment="Top" Margin="-10,-8,-10,0" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                            <Border x:Name="After" Height="2" VerticalAlignment="Bottom" Margin="-10,0,-10,-8" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                            </Grid>
                         </Border>
                         <DataTemplate.Triggers>
                             <DataTrigger Binding="{Binding Range}" Value="">
                                 <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DropBefore}" Value="True">
+                                <Setter TargetName="Before" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DropAfter}" Value="True">
+                                <Setter TargetName="After" Property="Visibility" Value="Visible" />
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
@@ -55,6 +67,8 @@
             </ItemsControl>
             <Button x:Name="AddFiles" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Add files}"
                     loc:Icon.Glyph="&#xE710;" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Add files}" Click="AddFiles_Click" />
+            <CheckBox x:Name="BookmarkEach" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Add a bookmark for each file}" IsChecked="True"
+                      Margin="0,0,0,12" Visibility="Collapsed" AutomationProperties.Name="{loc:T Add a bookmark for each file}" />
         </StackPanel>
 
         <StackPanel x:Name="SplitView" Visibility="Collapsed">
@@ -63,6 +77,8 @@
                 <ComboBoxItem Content="{loc:T Number of pages}" />
                 <ComboBoxItem Content="{loc:T File size}" />
                 <ComboBoxItem Content="{loc:T Bookmarks}" />
+                <ComboBoxItem Content="{loc:T Each page}" />
+                <ComboBoxItem Content="{loc:T Page ranges}" />
             </ComboBox>
             <StackPanel x:Name="AmountView" Margin="0,0,0,12">
                 <TextBlock x:Name="AmountLabel" Style="{StaticResource FieldLabelText}" />
@@ -72,9 +88,10 @@
         </StackPanel>
 
         <TextBlock Text="{loc:T Result}" Style="{StaticResource FieldLabelText}" />
-        <ComboBox x:Name="Output" SelectedIndex="0" AutomationProperties.Name="{loc:T Result}">
+        <ComboBox x:Name="Output" SelectedIndex="0" AutomationProperties.Name="{loc:T Result}" SelectionChanged="Output_SelectionChanged">
             <ComboBoxItem Content="{loc:T Open in new tabs}" />
             <ComboBoxItem Content="{loc:T Save to a folder}" />
         </ComboBox>
+        <TextBlock x:Name="OutputReason" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Visibility="Collapsed" />
     </StackPanel>
 </tools:ToolPanel>

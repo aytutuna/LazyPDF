@@ -51,7 +51,7 @@ public class StreamDataTests
     [Fact]
     public void UnsupportedFilterIsAReadException()
     {
-        var pdf = TestPdf.WithPages(1).Stream(9, "/Filter /JBIG2Decode", "x");
+        var pdf = TestPdf.WithPages(1).Stream(9, "/Filter /JPXDecode", "x");
         var document = Open(pdf);
         var e = Assert.Throws<PdfReadException>(() => document.Data((PdfStream)document.Get(9)!));
         Assert.Equal(PdfReadProblem.Unsupported, e.Problem);
@@ -63,6 +63,15 @@ public class StreamDataTests
         var pdf = TestPdf.WithPages(1).Stream(9, "/Filter /FlateDecode", "this is not zlib data at all");
         var document = Open(pdf);
         Assert.Equal(PdfReadProblem.Damaged, Assert.Throws<PdfReadException>(() => document.Data((PdfStream)document.Get(9)!)).Problem);
+    }
+
+    [Fact]
+    public void EmptyFlateStreamDecodesToNothing()
+    {
+        byte[] empty = [0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01];
+        var document = Open(TestPdf.WithPages(1).Stream(9, "/Filter /FlateDecode", empty));
+        Assert.Empty(document.Data((PdfStream)document.Get(9)!));
+        Assert.Empty(document.Repairs);
     }
 
     [Fact]

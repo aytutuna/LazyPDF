@@ -596,3 +596,77 @@
 < Drawing
 > triage - ;; q 0.5 g 0 0 10 10 re f Q BT /F1 12 Tf 50 500 Td (Hi) Tj ET
 < Text
+> layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<00480069> Tj\nET\n
+< word 0 Hi [40 476 24 24]
+> layer - ;; BT\n/LPOcrF 24 Tf\n100 Tz\n1 0 0 1 40 100 Tm\n<00480069> Tj\n1 0 0 1 100 100 Tm\n<0020> Tj\n1 0 0 1 120 100 Tm\n<00770078> Tj\nET\nBT\n/LPOcrF 12 Tf\...
+< word 0 Hi [40 476 24 24]
+< word 1 wx [120 476 24 24]
+< word 2 y [40 388 12 12]
+< word 3 z{ [40 388 24 12]
+> layer - ;; <00480069> Tj\nBT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<00480069> Tj\nET\n<004A> Tj\n
+< word 0 Hi [40 476 24 24]
+< word 1 J [40 476 12 24]
+> layer - ;; BT\n1 0 0 1 40 100 Tm\n<00480069> Tj\nET\n
+< word 0 Hi [40 500 0 0]
+> layer - ;; BT\n/LPOcrF 24 Tf\n(a) (b) (c) (d) (e) (f) Tm\n<00480069> Tj\nET\n
+< word 0 Hi [0 576 24 24]
+> layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 Tm\n<00480069> Tj\n/Z Tz\n<0041> Tj\nET\n
+< word 0 Hi [0 576 24 24]
+< word 1 A [0 576 12 24]
+> layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<004100> Tj\n<0041> Tj\n() Tj\n(A) Tj\n<D83DDE00> Tj\n<0041D83DDE00> Tj\nET\n
+< word 0 A\uFFFD [40 476 12 24]
+< word 1 A [40 476 12 24]
+< word 2 \uD83D\uDE00 [40 476 24 24]
+< word 3 A\uD83D\uDE00 [40 476 36 24]
+> layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<00480069> Tj\nET\nBT\nET\nBT\n/LPOcrF 12 Tf\nET\n
+< word 0 Hi [40 476 24 24]
+> layer /Rotate 90 ;; BT\n/LPOcrF 24 Tf\n0 1 -1 0 100 40 Tm\n<00480069> Tj\nET\n
+< word 0 Hi [40 76 24 24]
+> layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<00480069 Tj\nET\n
+> layer - ;; \n
+> layer - ;; BT BT BT\n/LPOcrF 1e9 Tf\n1 0 0 1 1e9 -1e9 Tm\n<00480069> Tj\nET\n
+< word 0 Hi [0 600 0 0]
+> correct - ;; 1 ;; earth ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+< word 0 Hello [40 100 100 24]
+< word 1 earth [160 100 110 24]
+< word 2 Second [40 160 120 24]
+< word 3 line [180 160 60 24]
+< stream q\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n1 0 0 1 40 476 Tm\n<00480065006C006C006F> Tj\n166.666665 Tz\n1 0 0 1 140 476 Tm\n<0020> Tj\n183.333333 Tz\n1 0 0 1 160 476 Tm\n<00650061007200740068> Tj\nET\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n1 0 0 1 40 416 Tm\n<005300650063006F006E0064> Tj\n166.666665 Tz\n1 0 0 1 160 416 Tm\n<0020> Tj\n125 Tz\n1 0 0 1 180 416 Tm\n<006C0069006E0065> Tj\nET\nQ\n
+< supplementary 
+> correct /Rotate 90 ;; 0 ;; \u011f\u00fc\u015f ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+< word 0 \u011F\u00FC\u015F [40 100 100 24]
+< word 1 world [160 100 110 24]
+< word 2 Second [40 160 120 24]
+< word 3 line [180 160 60 24]
+< stream q\nBT\n3 Tr\n/LPOcrF 24 Tf\n277.777778 Tz\n0 1 -1 0 124 40 Tm\n<011F00FC015F> Tj\n166.666665 Tz\n0 1 -1 0 124 140 Tm\n<0020> Tj\n183.333333 Tz\n0 1 -1 0 124 160 Tm\n<0077006F0072006C0064> Tj\nET\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n0 1 -1 0 184 40 Tm\n<005300650063006F006E0064> Tj\n166.666665 Tz\n0 1 -1 0 184 160 Tm\n<0020> Tj\n125 Tz\n0 1 -1 0 184 180 Tm\n<006C0069006E0065> Tj\nET\nQ\n
+< supplementary 
+> correct - ;; 1 ;; \ud83d\ude00 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+< word 0 Hello [40 100 100 24]
+< word 1 \uD83D\uDE00 [160 100 110 24]
+< word 2 Second [40 160 120 24]
+< word 3 line [180 160 60 24]
+< stream q\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n1 0 0 1 40 476 Tm\n<00480065006C006C006F> Tj\n166.666665 Tz\n1 0 0 1 140 476 Tm\n<0020> Tj\n916.666665 Tz\n1 0 0 1 160 476 Tm\n<D800> Tj\nET\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n1 0 0 1 40 416 Tm\n<005300650063006F006E0064> Tj\n166.666665 Tz\n1 0 0 1 160 416 Tm\n<0020> Tj\n125 Tz\n1 0 0 1 180 416 Tm\n<006C0069006E0065> Tj\nET\nQ\n
+< supplementary 1F600
+> correct - ;; 2 ;; \ud83d\ude01x ;; \ud840\udc00@10,10,40,20 ;; \ud83d\ude00@60,10,40,20 ;; x@110,10,40,20 ;; y@160,10,40,20
+< word 0 \uD840\uDC00 [10 10 40 20]
+< word 1 \uD83D\uDE00 [60 10 40 20]
+< word 2 \uD83D\uDE01x [110 10 40 20]
+< word 3 y [160 10 40 20]
+< stream q\nBT\n3 Tr\n/LPOcrF 20 Tf\n400 Tz\n1 0 0 1 10 570 Tm\n<D800> Tj\n100 Tz\n1 0 0 1 50 570 Tm\n<0020> Tj\n400 Tz\n1 0 0 1 60 570 Tm\n<D801> Tj\n100 Tz\n1 0 0 1 100 570 Tm\n<0020> Tj\n200 Tz\n1 0 0 1 110 570 Tm\n<D8020078> Tj\n100 Tz\n1 0 0 1 150 570 Tm\n<0020> Tj\n400 Tz\n1 0 0 1 160 570 Tm\n<0079> Tj\nET\nQ\n
+< supplementary 20000 1F600 1F601
+> correct - ;; 0 ;; \x01 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+< word 0 world [160 100 110 24]
+< word 1 Second [40 160 120 24]
+< word 2 line [180 160 60 24]
+< stream q\nBT\n3 Tr\n/LPOcrF 24 Tf\n183.333333 Tz\n1 0 0 1 160 476 Tm\n<0077006F0072006C0064> Tj\nET\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n1 0 0 1 40 416 Tm\n<005300650063006F006E0064> Tj\n166.666665 Tz\n1 0 0 1 160 416 Tm\n<0020> Tj\n125 Tz\n1 0 0 1 180 416 Tm\n<006C0069006E0065> Tj\nET\nQ\n
+< supplementary 
+> correct - ;; 3 ;; \x20\x20 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+< word 0 Hello [40 100 100 24]
+< word 1 world [160 100 110 24]
+< word 2 Second [40 160 120 24]
+< stream q\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n1 0 0 1 40 476 Tm\n<00480065006C006C006F> Tj\n166.666665 Tz\n1 0 0 1 140 476 Tm\n<0020> Tj\n183.333333 Tz\n1 0 0 1 160 476 Tm\n<0077006F0072006C0064> Tj\nET\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n1 0 0 1 40 416 Tm\n<005300650063006F006E0064> Tj\nET\nQ\n
+< supplementary 
+> correct - ;; 0 ;; a\tb\x00c ;; Hello@40,100,100,24
+< word 0 a b c [40 100 100 24]
+< stream q\nBT\n3 Tr\n/LPOcrF 24 Tf\n166.666667 Tz\n1 0 0 1 40 476 Tm\n<00610020006200200063> Tj\nET\nQ\n
+< supplementary 

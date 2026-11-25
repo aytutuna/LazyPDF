@@ -1,9 +1,11 @@
 using System.Reflection;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools;
 using LazyPDF.App.Viewer;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Tests;
 
@@ -20,8 +22,7 @@ internal static class Sta
         {
             LazyPDF.App.App.Unattended = true;
             var app = new LazyPDF.App.App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-            // The application has queued its start, which opens the window named by StartupUri. InitializeComponent
-            // sets that name, so it runs after the start and no window is opened.
+            // The unattended start opens no window; the resources still have to be loaded.
             app.Dispatcher.InvokeAsync(() =>
             {
                 app.InitializeComponent();
@@ -67,7 +68,7 @@ internal sealed class RecordingHost : IToolHost
         }
         catch (OperationCanceledException)
         {
-            Status = "Cancelled.";
+            Status = "Canceled.";
         }
     }
 
@@ -83,7 +84,7 @@ internal sealed class RecordingHost : IToolHost
 
     public Task OpenAsync(string path) => Task.CompletedTask;
 
-    public Task OpenNewAsync(byte[] pdf, string title) => Task.CompletedTask;
+    public Task<bool> OpenNewAsync(byte[] pdf, string title) => Task.FromResult(true);
 
     public Task ReloadAsync(DocumentTab tab) => Task.CompletedTask;
 }
@@ -92,6 +93,47 @@ internal sealed class RecordingHost : IToolHost
 public class FakeViewer : DispatchProxy
 {
     public PageOverlay Overlay { get; } = new(0, new Size(200, 300));
+
+    public FrameworkElement View { get; } = Laid();
+
+    private static FrameworkElement Laid()
+    {
+        var view = new FrameworkElement { Width = 800, Height = 600 };
+        view.Measure(new Size(800, 600));
+        view.Arrange(new Rect(0, 0, 800, 600));
+        return view;
+    }
+
+    public ViewerSearch? Search { get; private set; }
+
+    public DocumentTab? Tab { get; set; }
+
+    public int PageIndex { get; set; }
+
+    public List<SelectedRun> Selected { get; } = [];
+
+    private EventHandler? _selectionChanged;
+
+    public void Select(params SelectedRun[] runs)
+    {
+        Selected.Clear();
+        Selected.AddRange(runs);
+        _selectionChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    internal static IDocumentViewer Create(ViewerSearch search)
+    {
+        var viewer = Create<IDocumentViewer, FakeViewer>();
+        ((FakeViewer)(object)viewer).Search = search;
+        return viewer;
+    }
+
+    internal static IDocumentViewer Create(DocumentTab tab)
+    {
+        var viewer = Create<IDocumentViewer, FakeViewer>();
+        ((FakeViewer)(object)viewer).Tab = tab;
+        return viewer;
+    }
 
     internal static (IDocumentViewer Viewer, PageOverlay Overlay) Create()
     {
@@ -102,9 +144,48 @@ public class FakeViewer : DispatchProxy
     protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name switch
     {
         "get_VisiblePages" => new[] { 0 },
+        "get_PageCount" => 1,
         "PageSize" => new Size(200, 300),
         "Overlay" => Overlay,
+        "get_Zoom" => 1.0,
+        "get_View" => View,
+        "get_HasSelection" => Selected.Count > 0,
+        "GetSelectionAsync" => Task.FromResult<IReadOnlyList<SelectedRun>>([.. Selected]),
+        "GetSelectionEndAsync" => Task.FromResult(Selected.Count > 0 ? Selected[^1] : null),
+        "ClearSelection" => Clear(),
+        "add_SelectionChanged" => Subscribe((EventHandler)args![0]!),
+        "remove_SelectionChanged" => Unsubscribe((EventHandler)args![0]!),
+        "PageToView" => (Matrix?)Matrix.Identity,
+        "Geometry" => new PageGeometry(new PdfRect(0, 0, 200, 300), 0),
+        "get_Search" => Search,
+        "get_Tab" => Tab,
+        "get_PageIndex" => PageIndex,
+        "set_PageIndex" => Show((int)args![0]!),
         _ when method.ReturnType == typeof(void) || !method.ReturnType.IsValueType => null,
         _ => Activator.CreateInstance(method.ReturnType),
     };
+
+    private object? Show(int page)
+    {
+        PageIndex = page;
+        return null;
+    }
+
+    private object? Clear()
+    {
+        Select();
+        return null;
+    }
+
+    private object? Subscribe(EventHandler handler)
+    {
+        _selectionChanged += handler;
+        return null;
+    }
+
+    private object? Unsubscribe(EventHandler handler)
+    {
+        _selectionChanged -= handler;
+        return null;
+    }
 }

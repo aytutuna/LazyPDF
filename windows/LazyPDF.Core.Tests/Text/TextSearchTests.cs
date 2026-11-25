@@ -182,6 +182,18 @@ public class TextSearchTests
         Assert.Empty(hits);
     }
 
+    [Fact]
+    public void ATimedOutPageIsReported()
+    {
+        var page = Text(Line(100, 700, string.Concat(Enumerable.Repeat("a", 40)) + "!"));
+        var timeouts = new SearchTimeouts();
+        Assert.Empty(TextSearch.Find(page, @"^(a+)+$", new TextSearchOptions(Regex: true), timeouts: timeouts));
+        Assert.Equal([0], timeouts.Pages);
+        var quiet = new SearchTimeouts();
+        Assert.Single(TextSearch.Find(page, "a+!", new TextSearchOptions(Regex: true), timeouts: quiet));
+        Assert.Empty(quiet.Pages);
+    }
+
     private static PdfDocument ThreePages()
     {
         var pdf = new TestPdf();

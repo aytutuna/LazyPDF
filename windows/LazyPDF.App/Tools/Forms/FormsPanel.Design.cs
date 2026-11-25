@@ -15,18 +15,49 @@ public sealed partial class FormsPanel
     private string? _selected;
     private int _selectedIndex;
     private int _selectedOrdinal;
+    private HashSet<(string Name, int Index, int Ordinal)> _picked = [];
     private List<FoundRow> _found = [];
 
     internal FieldKind? NewKind => (KindBox.SelectedItem as KindChoice)?.Kind;
 
     /// <param name="ordinal">Which of the fields that share the name; most names have one.</param>
-    internal void Select(string? name, int index, int ordinal = 0)
+    internal void Select(string? name, int index, int ordinal = 0) => Pick(name is null ? [] : [(name, index, ordinal)]);
+
+    internal int PickedCount => _picked.Count;
+
+    internal bool IsPicked(string name, int index, int ordinal) => _picked.Contains((name, index, ordinal));
+
+    /// <summary>Picks the widgets, all on one page; the last one is the primary whose card and handles show.</summary>
+    internal void Pick(IReadOnlyList<(string Name, int Index, int Ordinal)> widgets)
     {
-        _selected = name;
-        _selectedIndex = index;
-        _selectedOrdinal = ordinal;
+        _picked = [.. widgets];
+        (_selected, _selectedIndex, _selectedOrdinal) = widgets.Count == 0 ? (null, 0, 0) : widgets[^1];
         if (SelectedField(Form) is { Kind: FieldKind.Radio } radio) GroupBox.Text = radio.Name;
         ShowDesign(Form);
+    }
+
+    /// <summary>Adds the widget to the pick or takes it out; a widget of another page starts the pick again.</summary>
+    internal void Toggle(string name, int index, int ordinal)
+    {
+        var key = (name, index, ordinal);
+        int? page = Form.FindAll(name).ElementAtOrDefault(ordinal)?.Widgets.ElementAtOrDefault(index)?.PageIndex;
+        bool elsewhere = SelectedBox() is { } primary && primary.Page != page;
+        var kept = _picked.Where(k => k != key && !elsewhere).ToList();
+        if (elsewhere || !_picked.Contains(key)) kept.Add(key);
+        Pick(kept);
+    }
+
+    internal void PickIn(int page, Rect area) =>
+        Pick([.. FormEdits.Widgets(Form, page, BoxOf).Where(w => w.Box.IntersectsWith(area)).Select(w => (w.Name, w.Index, w.Ordinal))]);
+
+    // A reload can remove what was picked, as an undo does.
+    private void DropGone(PdfForm form)
+    {
+        var kept = FormEdits.Existing(form, _picked);
+        if (kept.Count == _picked.Count) return;
+        var primary = (_selected ?? "", _selectedIndex, _selectedOrdinal);
+        _picked = kept;
+        (_selected, _selectedIndex, _selectedOrdinal) = kept.Contains(primary) ? primary : kept.Count == 0 ? (null, 0, 0) : kept.Last();
     }
 
     private FormField? SelectedField(PdfForm form) => _selected is null ? null : form.FindAll(_selected).ElementAtOrDefault(_selectedOrdinal);
@@ -40,20 +71,8 @@ public sealed partial class FormsPanel
     /// <summary>The field under a point of a page; the smallest wins, so a check box on a large text field can be picked.</summary>
     internal (string Name, int Index, int Ordinal, Rect Box)? WidgetAt(int page, Point point)
     {
-        (string, int, int, Rect)? best = null;
-        var seen = new Dictionary<string, int>();
-        foreach (var field in Form.Fields)
-        {
-            int ordinal = seen.GetValueOrDefault(field.Name);
-            seen[field.Name] = ordinal + 1;
-            for (int i = 0; i < field.Widgets.Count; i++)
-            {
-                if (field.Widgets[i].PageIndex != page) continue;
-                var box = BoxOf(field.Widgets[i]);
-                if (box.Contains(point) && (best is null || box.Width * box.Height < best.Value.Item4.Width * best.Value.Item4.Height)) best = (field.Name, i, ordinal, box);
-            }
-        }
-        return best;
+        var hits = FormEdits.Widgets(Form, page, BoxOf).Where(w => w.Box.Contains(point)).ToList();
+        return hits.Count == 0 ? null : hits.MinBy(w => w.Box.Width * w.Box.Height);
     }
 
     internal void Draw(int page, Rect box)
@@ -70,9 +89,43 @@ public sealed partial class FormsPanel
 
     internal void Reshape(int page, Rect box)
     {
+        if (_selected is null || SelectedField(Form) is null) return;
         var rect = UserRect(page, box);
         int index = _selectedIndex;
         ChangeField(Loc.T("Move form field"), (form, field) => form.Resize(field.Widgets[index], rect));
+    }
+
+    internal void ReshapeMany(int page, Vector offset)
+    {
+        var moves = new List<(string Name, int Index, int Ordinal, PdfRect Rect)>();
+        foreach (var (name, index, ordinal) in _picked)
+        {
+            if (Form.FindAll(name).ElementAtOrDefault(ordinal)?.Widgets.ElementAtOrDefault(index) is not { } widget) return;
+            var box = BoxOf(widget);
+            box.Offset(offset);
+            moves.Add((name, index, ordinal, UserRect(page, box)));
+        }
+        Edit(Loc.T("Move form fields"), form =>
+        {
+            FormEdits.ResizeAll(form, moves);
+            return true;
+        });
+    }
+
+    // The first picked field is the reference, as the primary is in Acrobat.
+    private void Arrange_Click(object sender, RoutedEventArgs e)
+    {
+        if (_picked.Count < 2 || sender is not Button { Tag: AlignKind kind }) return;
+        var picked = _picked.ToList();
+        var widgets = picked.Select(k => Form.FindAll(k.Name).ElementAtOrDefault(k.Ordinal)?.Widgets.ElementAtOrDefault(k.Index)).ToList();
+        if (widgets.Any(w => w is null)) return;
+        var boxes = FormEdits.Align([.. widgets.Select(w => BoxOf(w!))], kind);
+        var moves = picked.Select((k, i) => (k.Name, k.Index, k.Ordinal, UserRect(widgets[i]!.PageIndex, boxes[i]))).ToList();
+        Edit(kind is AlignKind.SpaceAcross or AlignKind.SpaceDown ? Loc.T("Space form fields") : Loc.T("Align form fields"), form =>
+        {
+            FormEdits.ResizeAll(form, moves);
+            return true;
+        });
     }
 
     private Rect BoxOf(FormWidget widget)
@@ -91,16 +144,34 @@ public sealed partial class FormsPanel
 
     private void ShowDesign(PdfForm form)
     {
-        _frames!.Show(form, _selected, _selectedIndex, _selectedOrdinal, [.. _found.Where(f => f.IsChecked).Select(f => f.Proposal)]);
+        _frames!.Show(form, _picked, [.. _found.Where(f => f.IsChecked).Select(f => f.Proposal)]);
         ShowCard(form);
         ShowTabOrder();
+        ShowPicked();
+    }
+
+    // The list follows the pick without moving the view.
+    private void ShowPicked()
+    {
+        var rows = _rows.Where(r => _picked.Any(k => k.Name == r.Name && k.Ordinal == r.Ordinal)).ToList();
+        if (rows.Count == FieldList.SelectedItems.Count && rows.All(FieldList.SelectedItems.Contains)) return;
+        _loading = true;
+        FieldList.SelectedItems.Clear();
+        foreach (var row in rows) FieldList.SelectedItems.Add(row);
+        _loading = false;
     }
 
     private void ShowCard(PdfForm form)
     {
         var field = SelectedField(form);
-        Card.Visibility = field is null ? Visibility.Collapsed : Visibility.Visible;
-        if (field is null) return;
+        bool many = _picked.Count > 1;
+        Card.Visibility = field is null || many ? Visibility.Collapsed : Visibility.Visible;
+        PickedText.Visibility = ArrangeRow.Visibility = many ? Visibility.Visible : Visibility.Collapsed;
+        SpaceAcrossButton.IsEnabled = SpaceDownButton.IsEnabled = _picked.Count > 2;
+        CopyButton.IsEnabled = DuplicateButton.IsEnabled = _picked.Count > 0;
+        PasteButton.IsEnabled = _clip.Count > 0;
+        if (many) PickedText.Text = Loc.Plural(_picked.Count, "{0} field selected", "{0} fields selected");
+        if (field is null || many) return;
         bool text = field.Kind == FieldKind.Text;
         bool choice = field.Kind is FieldKind.ComboBox or FieldKind.ListBox;
         _loading = true;
@@ -199,6 +270,7 @@ public sealed partial class FormsPanel
         if (!ChangeField(Loc.T("Rename field"), (form, f) => form.Rename(f, name))) return false;
         _selected = name;
         _selectedOrdinal = Form.FindAll(name).Count - 1;
+        _picked = [(name, _selectedIndex, _selectedOrdinal)];
         if (SelectedField(Form) is { Kind: FieldKind.Radio } radio) GroupBox.Text = radio.Name;
         ShowDesign(Form);
         return true;
@@ -218,9 +290,34 @@ public sealed partial class FormsPanel
         if (!ChangeField(label, (form, f) => form.SetFlag(f, flag, on))) ShowCard(Form);
     }
 
+    private void View_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!Designing || !_canEdit || _working || _tool?.Dragging == true) return;
+        if (Keyboard.FocusedElement is TextBox or ComboBox or PasswordBox) return;
+        if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control)
+            Pick([.. FormEdits.Widgets(Form, Viewer!.PageIndex, BoxOf).Select(w => (w.Name, w.Index, w.Ordinal))]);
+        else if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control && _picked.Count > 0) Copy_Click(sender, e);
+        else if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control && _clip.Count > 0) Paste_Click(sender, e);
+        else if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control && _picked.Count > 0) Duplicate_Click(sender, e);
+        else if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None && _picked.Count > 0) Select(null, 0);
+        else if (e.Key == Key.Delete && Keyboard.Modifiers == ModifierKeys.None && _picked.Count > 0) Delete_Click(sender, e);
+        else return;
+        e.Handled = true;
+    }
+
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null) return;
+        if (_picked.Count > 1)
+        {
+            var picked = _picked.ToList();
+            if (Edit(Loc.T("Delete form fields"), form =>
+            {
+                FormEdits.RemoveAll(form, picked);
+                return true;
+            })) Select(null, 0);
+            return;
+        }
         int index = _selectedIndex;
         // A radio button of a group of several goes alone; the last one takes the field with it.
         if (!ChangeField(Loc.T("Delete form field"), (form, field) =>
@@ -229,6 +326,46 @@ public sealed partial class FormsPanel
             else form.Remove(field);
         })) return;
         Select(null, 0);
+    }
+
+    // Kept here and not on the system clipboard so the fields can go into another file.
+    private static List<FieldSpec> _clip = [];
+    private static int _pasted;
+
+    private bool CopyPicked()
+    {
+        var specs = new List<FieldSpec>();
+        foreach (var (name, index, ordinal) in _picked)
+        {
+            if (Form.FindAll(name).ElementAtOrDefault(ordinal) is not { } field || field.Widgets.ElementAtOrDefault(index) is not { } widget) return false;
+            specs.Add(FormEdits.CopySpec(Form, field, widget));
+        }
+        _clip = specs;
+        _pasted = 0;
+        PasteButton.IsEnabled = true;
+        return true;
+    }
+
+    private void Copy_Click(object sender, RoutedEventArgs e) => CopyPicked();
+
+    private void Paste_Click(object sender, RoutedEventArgs e) => PasteClip(false);
+
+    private void Duplicate_Click(object sender, RoutedEventArgs e)
+    {
+        if (CopyPicked()) PasteClip(true);
+    }
+
+    private void PasteClip(bool duplicate)
+    {
+        if (_clip.Count == 0) return;
+        var specs = _clip;
+        int view = Viewer!.PageIndex;
+        int step = _pasted + 1;
+        var added = Edit(duplicate ? Loc.T("Duplicate form fields") : Loc.T("Paste form fields"), form => FormEdits.Paste(form, specs, view, duplicate, step));
+        if (added is null) return;
+        _pasted = step;
+        Pick([.. added.Select(a => (a.Name, a.Widget, 0))]);
+        Host!.SetStatus(Loc.Plural(added.Count, "Pasted {0} field.", "Pasted {0} fields."));
     }
 
     private bool ChangeField(string label, Action<PdfForm, FormField> edit)
@@ -248,6 +385,7 @@ public sealed partial class FormsPanel
         IReadOnlyList<FieldProposal>? found = null;
         await Host!.RunBusyAsync(Loc.T("Looking for fields"), async token =>
         {
+            await tab.Drawing.WaitAsync(token);
             found = await Task.Run(() => FormEdits.Detect(tab, token), token).WaitAsync(token);
         });
         if (found is null || !ReferenceEquals(Tab, tab)) return;

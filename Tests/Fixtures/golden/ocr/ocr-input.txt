@@ -9,6 +9,9 @@
 # add <page entries or -> ;; <language> ;; <word> ...: PdfOcrLayer.Add on a one-page scan (400 x 600, picture /Im1, font /F1), the layer's stream
 #   and the font objects as written, with the streams decoded.
 # triage <page entries or -> ;; <content>: the kind of the scan page that draws the content.
+# layer <page entries or -> ;; <content>: the words read back from a layer stream written by hand with that content.
+# correct <page entries or -> ;; <index> ;; <text> ;; <word> ...: PdfOcrLayer.Add on the scan, then Correct; the words read back, the
+#   layer's stream decoded and the characters beyond the BMP the font carries.
 font program
 font map
 font ranges
@@ -78,3 +81,22 @@ triage - ;; BT /F1 12 Tf 50 500 Td (   ) Tj ET
 triage - ;; q q q BT BT ET ET Q Q Q Q Q /Nope Do /F9 12 Tf (x) Tj [ ( )
 triage - ;; 0 0 m 100 100 l S
 triage - ;; q 0.5 g 0 0 10 10 re f Q BT /F1 12 Tf 50 500 Td (Hi) Tj ET
+layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<00480069> Tj\nET\n
+layer - ;; BT\n/LPOcrF 24 Tf\n100 Tz\n1 0 0 1 40 100 Tm\n<00480069> Tj\n1 0 0 1 100 100 Tm\n<0020> Tj\n1 0 0 1 120 100 Tm\n<00770078> Tj\nET\nBT\n/LPOcrF 12 Tf\n200 Tz\n1 0 0 1 40 200 Tm\n<0079> Tj\n<007A007B> Tj\nET\n
+layer - ;; <00480069> Tj\nBT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<00480069> Tj\nET\n<004A> Tj\n
+layer - ;; BT\n1 0 0 1 40 100 Tm\n<00480069> Tj\nET\n
+layer - ;; BT\n/LPOcrF 24 Tf\n(a) (b) (c) (d) (e) (f) Tm\n<00480069> Tj\nET\n
+layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 Tm\n<00480069> Tj\n/Z Tz\n<0041> Tj\nET\n
+layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<004100> Tj\n<0041> Tj\n() Tj\n(A) Tj\n<D83DDE00> Tj\n<0041D83DDE00> Tj\nET\n
+layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<00480069> Tj\nET\nBT\nET\nBT\n/LPOcrF 12 Tf\nET\n
+layer /Rotate 90 ;; BT\n/LPOcrF 24 Tf\n0 1 -1 0 100 40 Tm\n<00480069> Tj\nET\n
+layer - ;; BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<00480069 Tj\nET\n
+layer - ;; \n
+layer - ;; BT BT BT\n/LPOcrF 1e9 Tf\n1 0 0 1 1e9 -1e9 Tm\n<00480069> Tj\nET\n
+correct - ;; 1 ;; earth ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+correct /Rotate 90 ;; 0 ;; \u011f\u00fc\u015f ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+correct - ;; 1 ;; \ud83d\ude00 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+correct - ;; 2 ;; \ud83d\ude01x ;; \ud840\udc00@10,10,40,20 ;; \ud83d\ude00@60,10,40,20 ;; x@110,10,40,20 ;; y@160,10,40,20
+correct - ;; 0 ;; \x01 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+correct - ;; 3 ;; \x20\x20 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+correct - ;; 0 ;; a\tb\x00c ;; Hello@40,100,100,24

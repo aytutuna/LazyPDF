@@ -2,7 +2,8 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
-                 xmlns:tools="clr-namespace:LazyPDF.App.Tools">
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:fill="clr-namespace:LazyPDF.App.Tools.FillSign">
     <tools:ToolPanel.Resources>
         <Style x:Key="SwatchStyle" TargetType="RadioButton">
             <Setter Property="Width" Value="26" />
@@ -52,7 +53,33 @@
         <TextBlock x:Name="Hint" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" Visibility="Collapsed" />
         <StackPanel x:Name="StampRow" Margin="0,8,0,0" Visibility="Collapsed">
             <TextBlock Text="{loc:T Stamp text}" Style="{StaticResource FieldLabelText}" />
-            <ComboBox x:Name="StampName" IsEditable="True" AutomationProperties.Name="{loc:T Stamp text}" SelectionChanged="Stamp_Changed" LostFocus="Stamp_Changed" />
+            <ComboBox x:Name="StampName" IsEditable="True" AutomationProperties.Name="{loc:T Stamp text}" SelectionChanged="Stamp_Changed" LostFocus="Stamp_Changed"
+                      DropDownClosed="Stamp_Touched" GotKeyboardFocus="Stamp_Touched" TextBoxBase.TextChanged="Stamp_Touched" />
+            <CheckBox x:Name="StampDate" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" />
+            <TextBlock Text="{loc:T Pictures}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+            <ListBox x:Name="PictureList" MaxHeight="168" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Pictures}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch"
+                     SelectionChanged="PictureList_SelectionChanged">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type fill:SavedRow}">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" ToolTip="{loc:T Remove}"
+                                    AutomationProperties.Name="{loc:T Remove}" Click="RemovePicture_Click" />
+                            <Border Background="White" CornerRadius="4" Height="40" Margin="0,2,8,2" Padding="4">
+                                <Image Source="{Binding Picture}" Stretch="Uniform" HorizontalAlignment="Left" />
+                            </Border>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="NonePictures" Style="{StaticResource ReasonText}" Margin="0,0,0,4" Text="{loc:T Nothing is saved yet.}" />
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" Content="{loc:T Add a picture}" AutomationProperties.Name="{loc:T Add a picture}" Padding="10,3,10,4"
+                    HorizontalAlignment="Left" Margin="0,4,0,0" Click="AddPicture_Click" />
         </StackPanel>
 
         <StackPanel x:Name="SelectedRow" Visibility="Collapsed">
@@ -63,17 +90,32 @@
                 <Button x:Name="DeleteMark" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Delete}" Margin="4,0,0,0" HorizontalAlignment="Stretch"
                         AutomationProperties.Name="{loc:T Delete}" ToolTip="{loc:T Delete the selected mark.}" Click="DeleteMark_Click" />
             </UniformGrid>
+            <TextBlock x:Name="PointHint" Style="{StaticResource ReasonText}" Margin="0,8,0,0" Visibility="Collapsed" />
         </StackPanel>
 
         <TextBlock Text="{loc:T Look}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />
-        <TextBlock Text="{loc:T Colour}" Style="{StaticResource FieldLabelText}" />
+        <TextBlock Text="{loc:T Color}" Style="{StaticResource FieldLabelText}" />
         <WrapPanel x:Name="Swatches" />
+        <TextBlock Text="{loc:T Fill}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+        <ComboBox x:Name="FillBox" AutomationProperties.Name="{loc:T Fill}" SelectionChanged="Look_Changed" />
         <DockPanel Margin="0,6,0,0">
             <TextBlock x:Name="WidthReadout" DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Width="48" />
             <TextBlock Text="{loc:T Width}" Style="{StaticResource FieldLabelText}" VerticalAlignment="Center" />
         </DockPanel>
         <Slider x:Name="WidthSlider" Minimum="0.5" Maximum="12" Value="2" SmallChange="0.5" LargeChange="1" TickFrequency="0.5" IsSnapToTickEnabled="True"
                 AutomationProperties.Name="{loc:T Width}" ValueChanged="Look_Changed" />
+        <TextBlock Text="{loc:T Line}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+        <ComboBox x:Name="LineStyleBox" AutomationProperties.Name="{loc:T Line}" SelectionChanged="Look_Changed" />
+        <StackPanel x:Name="HeadRow" Visibility="Collapsed">
+            <TextBlock Text="{loc:T Start head}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+            <ComboBox x:Name="StartHeadBox" AutomationProperties.Name="{loc:T Start head}" SelectionChanged="Look_Changed" />
+            <TextBlock Text="{loc:T Arrow head}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+            <ComboBox x:Name="HeadBox" AutomationProperties.Name="{loc:T Arrow head}" SelectionChanged="Look_Changed" />
+        </StackPanel>
+        <StackPanel x:Name="IconRow" Visibility="Collapsed">
+            <TextBlock Text="{loc:T Note icon}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+            <ComboBox x:Name="IconBox" AutomationProperties.Name="{loc:T Note icon}" SelectionChanged="Look_Changed" />
+        </StackPanel>
         <DockPanel Margin="0,6,0,0">
             <TextBlock x:Name="OpacityReadout" DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Width="48" />
             <TextBlock Text="{loc:T Opacity}" Style="{StaticResource FieldLabelText}" VerticalAlignment="Center" />

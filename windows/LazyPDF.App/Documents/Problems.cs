@@ -10,6 +10,8 @@ public static class Problems
 {
     public static Problem Open(Exception error, string name) => error switch
     {
+        PdfReadException { Problem: PdfReadProblem.Unsupported, Message: DocumentOpener.TooLarge } or OutOfMemoryException =>
+            new(Loc.T("File is too large"), Loc.T("{0} is too large for Lazy PDF to open.", name)),
         PdfReadException { Problem: PdfReadProblem.NotPdf } => new(Loc.T("Not a PDF"), Loc.T("{0} is not a PDF file. Pick a PDF, a picture or a text file.", name)),
         PdfReadException { Problem: PdfReadProblem.Damaged } => new(Loc.T("File is damaged"), Loc.T("{0} cannot be repaired. Try an earlier copy of it.", name)),
         PdfReadException { Problem: PdfReadProblem.Unsupported } => new(Loc.T("Not supported yet"), Loc.T("{0} uses something Lazy PDF cannot read yet.", name)),
@@ -17,14 +19,30 @@ public static class Problems
         FileNotFoundException or DirectoryNotFoundException => new(Loc.T("File not found"), Loc.T("{0} is not there any more. It may have been moved or deleted.", name)),
         UnauthorizedAccessException => new(Loc.T("No access"), Loc.T("Windows does not let Lazy PDF read {0}. Check who may open it.", name)),
         IOException => new(Loc.T("File cannot be read"), Loc.T("{0} could not be read. Close any program that has it open and try again.", name)),
+        InvalidDataException { Message: DocumentOpener.IsFolder } => new(Loc.T("That is a folder"), Loc.T("{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder.", name)),
         InvalidDataException => new(Loc.T("Nothing to open"), Loc.T("{0} has no picture Lazy PDF can read.", name)),
         InvalidOperationException => new(Loc.T("Nothing to open"), Loc.T("No font on this computer can draw the text of {0}.", name)),
         _ => new(Loc.T("File cannot be opened"), Loc.T("{0} could not be opened.", name)),
     };
 
     /// <summary>What Core's <see cref="UnauthorizedAccessException"/> means in a tool: the file's own permissions forbid the change.</summary>
-    public static Problem Restricted() =>
-        new(Loc.T("This file cannot be changed"), Loc.T("Its permissions do not allow it. Open it with the owner password."));
+    public static Problem Restricted(string? file = null) => file is null
+        ? new(Loc.T("This file cannot be changed"), Loc.T("Its permissions do not allow it. Open it with the owner password."))
+        : new(Loc.T("{0} cannot be changed", file), Loc.T("The permissions of {0} do not allow it. Open it with the owner password.", file));
+
+    public static Problem Tool(Exception error, string action) => error switch
+    {
+        PdfPermissionException => Restricted(),
+        PdfReadException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished because the file could not be read back. If part of it was done, Undo takes it back.", action)),
+        UnauthorizedAccessException => new(Loc.T("No access"), Loc.T("Windows did not let Lazy PDF finish {0}. Check who may change the file and its folder.", action)),
+        FileNotFoundException or DirectoryNotFoundException => new(Loc.T("File not found"), Loc.T("{0} could not be finished because the file is not there any more. It may have been moved or deleted.", action)),
+        EndOfStreamException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", action)),
+        IOException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. Check that the disk has room and that no other program has the file open.", action)),
+        _ => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", action)),
+    };
+
+    public static Problem Crashed() =>
+        new(Loc.T("Something went wrong"), Loc.T("Lazy PDF could not finish what it was doing. Your changes are still open. Use Save as to keep a copy, then close and reopen the app."));
 
     public static Problem Save(Exception error, string name) => error switch
     {

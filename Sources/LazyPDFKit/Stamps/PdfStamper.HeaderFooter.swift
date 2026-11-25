@@ -57,7 +57,7 @@ extension PdfStamper {
             case 1: x = (canvas.width - width) / 2
             default: x = canvas.width - marginX - width
             }
-            writer.textMatrix(PdfMatrix.translate(x, baseline)).show(font.encode(text))
+            writer.textMatrix(PdfMatrix.translate(x, baseline)).show(font, text, size)
         }
         writer.endText()
         canvas.endArtifact()

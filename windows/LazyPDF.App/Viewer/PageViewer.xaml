@@ -6,6 +6,19 @@
              IsTabStop="False" PreviewKeyDown="Viewer_PreviewKeyDown"
              AutomationProperties.Name="{loc:T Page viewer}">
 
+    <UserControl.Resources>
+        <Style x:Key="PageFocusVisual">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="3" Stroke="{DynamicResource AccentFillColorDefaultBrush}" StrokeThickness="2"
+                                   RadiusX="2" RadiusY="2" IsHitTestVisible="False" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -24,6 +37,10 @@
                     <TextBlock x:Name="PageCountText" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="2,0,6,0" />
                     <Button x:Name="NextButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70D;"
                             ToolTip="{loc:T Next page}" AutomationProperties.Name="{loc:T Next page}" Click="Next_Click" />
+                    <Button x:Name="BackButton" Style="{StaticResource IconButtonStyle}" Content="&#xE72B;" Visibility="Collapsed"
+                            ToolTip="{loc:T Back (Alt+Left)}" AutomationProperties.Name="{loc:T Back}" Click="Back_Click" />
+                    <Button x:Name="ForwardButton" Style="{StaticResource IconButtonStyle}" Content="&#xE72A;" Visibility="Collapsed"
+                            ToolTip="{loc:T Forward (Alt+Right)}" AutomationProperties.Name="{loc:T Go forward}" Click="Forward_Click" />
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" KeyboardNavigation.TabIndex="3">
                     <Button x:Name="FindButton" Style="{StaticResource IconButtonStyle}" Content="&#xE721;"
@@ -34,6 +51,8 @@
                             <ContextMenu Placement="Bottom" Opened="MoreMenu_Opened">
                                 <MenuItem x:Name="SelectItem" Header="{loc:T Select text}" IsCheckable="True" Click="Select_Click" />
                                 <MenuItem x:Name="HandItem" Header="{loc:T Hand tool}" IsCheckable="True" Click="Hand_Click" />
+                                <MenuItem x:Name="ZoomAreaItem" Header="{loc:T Zoom to area}" IsCheckable="True" Click="ZoomArea_Click" />
+                                <MenuItem x:Name="SnapshotItem" Header="{loc:T Copy area as picture}" IsCheckable="True" Click="Snapshot_Click" />
                                 <Separator />
                                 <MenuItem x:Name="OnePageItem" Header="{loc:T One page}" IsCheckable="True" Click="Arrangement_Click" Tag="single" />
                                 <MenuItem x:Name="ContinuousItem" Header="{loc:T Scroll continuously}" IsCheckable="True" Click="Arrangement_Click" Tag="continuous" />
@@ -48,7 +67,11 @@
                                 <MenuItem x:Name="TintSepiaItem" Header="{loc:T Sepia pages}" IsCheckable="True" Click="Tint_Click" Tag="Sepia" />
                                 <Separator />
                                 <MenuItem x:Name="ReadingItem" Header="{loc:T Reading mode}" IsCheckable="True" Click="Reading_Click" />
+                                <MenuItem x:Name="ReadAloudItem" Header="{loc:T Read aloud (Ctrl+Shift+Y)}" IsCheckable="True" Click="ReadAloud_Click" />
                                 <MenuItem x:Name="FullScreenItem" Header="{loc:T Full screen (F11)}" IsCheckable="True" Click="FullScreen_Click" />
+                                <MenuItem x:Name="PresentItem" Header="{loc:T Present (Ctrl+L)}" IsCheckable="True" Click="Present_Click" />
+                                <Separator />
+                                <MenuItem x:Name="ForgetLinksItem" Header="{loc:T Ask about links again}" Click="ForgetLinks_Click" />
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
@@ -62,8 +85,11 @@
                 <StackPanel x:Name="ZoomGroup" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8,0" KeyboardNavigation.TabIndex="1">
                     <Button x:Name="ZoomOutButton" Style="{StaticResource IconButtonStyle}" Content="&#xE71F;"
                             ToolTip="{loc:T Zoom out (Ctrl+Minus)}" AutomationProperties.Name="{loc:T Zoom out}" Click="ZoomOut_Click" />
-                    <Button x:Name="ZoomButton" Style="{StaticResource SubtleButtonStyle}" MinWidth="64" Height="32" Click="Zoom_Click"
-                            ToolTip="{loc:T Zoom}">
+                    <TextBox x:Name="ZoomBox" Width="64" Height="28" TextAlignment="Center" VerticalContentAlignment="Center" Margin="2,0"
+                             ToolTip="{loc:T Zoom}" AutomationProperties.Name="{loc:T Zoom}"
+                             PreviewKeyDown="ZoomBox_PreviewKeyDown" GotKeyboardFocus="ZoomBox_GotKeyboardFocus" LostKeyboardFocus="ZoomBox_LostKeyboardFocus" />
+                    <Button x:Name="ZoomMenuButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70D;" Click="Zoom_Click"
+                            ToolTip="{loc:T Zoom presets}" AutomationProperties.Name="{loc:T Zoom presets}">
                         <Button.ContextMenu>
                             <ContextMenu Placement="Bottom">
                                 <MenuItem Header="{loc:T Fit width}" Click="FitWidth_Click" />
@@ -90,19 +116,31 @@
         <Grid Grid.Row="1">
             <ScrollViewer x:Name="Scroller" CanContentScroll="True" PanningMode="None" Focusable="False" IsTabStop="False" AutomationProperties.Name="{loc:T Pages}"
                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <v:PageSurface x:Name="Surface" AutomationProperties.Name="{loc:T Pages}" />
+                <v:PageSurface x:Name="Surface" FocusVisualStyle="{StaticResource PageFocusVisual}" AutomationProperties.Name="{loc:T Pages}" ContextMenuOpening="Surface_ContextMenuOpening">
+                    <v:PageSurface.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="CopyItem" Header="{loc:T Copy}" Click="CopyItem_Click" />
+                            <MenuItem Header="{loc:T Select all}" Click="SelectAllItem_Click" />
+                            <Separator />
+                            <MenuItem x:Name="BackItem" Header="{loc:T Back}" Click="BackItem_Click" />
+                            <MenuItem x:Name="ForwardItem" Header="{loc:T Go forward}" Click="ForwardItem_Click" />
+                            <Separator />
+                            <MenuItem Header="{loc:T Search (Ctrl+F)}" Click="FindItem_Click" />
+                        </ContextMenu>
+                    </v:PageSurface.ContextMenu>
+                </v:PageSurface>
             </ScrollViewer>
 
             <v:FindBar x:Name="Find" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12,8,24,0" />
 
             <Border x:Name="LinkCard" Style="{StaticResource CardStyle}" Background="{DynamicResource ControlSolidFillColorDefaultBrush}" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                    Margin="12,0,12,16" Padding="12" MaxWidth="480" Effect="{DynamicResource CardHoverShadow}"
-                    AutomationProperties.Name="{loc:T Open this link?}">
+                    Margin="12,0,12,16" Padding="12" MaxWidth="480" Effect="{DynamicResource CardHoverShadow}">
                 <StackPanel>
                     <TextBlock x:Name="LinkTitle" Style="{StaticResource BodyStrongText}" />
                     <TextBlock x:Name="LinkAddress" Style="{StaticResource SecondaryBodyText}" TextWrapping="Wrap" Margin="0,4,0,10" />
+                    <CheckBox x:Name="LinkRemember" Visibility="Collapsed" Margin="0,0,0,10" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button x:Name="LinkCancel" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" Padding="12,4" Click="LinkCancel_Click" />
+                        <Button x:Name="LinkCancel" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Cancel}" Padding="12,4" Click="LinkCancel_Click" />
                         <Button x:Name="LinkOpen" Style="{StaticResource AccentIconTextButtonStyle}" Content="{loc:T Open}" AutomationProperties.Name="{loc:T Open}" Margin="8,0,0,0" Padding="12,4" Click="LinkOpen_Click" />
                     </StackPanel>
                 </StackPanel>
@@ -113,6 +151,13 @@
                 <TextBlock x:Name="PlaceCueText" Style="{StaticResource BodyText}" TextWrapping="Wrap" Text="{loc:T Arrow keys move it. Enter places it. Escape cancels.}"
                            AutomationProperties.LiveSetting="Assertive" />
             </Border>
+
+            <Border x:Name="Toast" Style="{StaticResource CardStyle}" Background="{DynamicResource ControlSolidFillColorDefaultBrush}" Visibility="Collapsed"
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12,0,12,60" Padding="12,6" IsHitTestVisible="False">
+                <TextBlock x:Name="ToastText" Style="{StaticResource BodyText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+            </Border>
+
+            <TextBlock x:Name="Speech" Opacity="0" Width="1" Height="1" IsHitTestVisible="False" AutomationProperties.LiveSetting="Assertive" />
 
             <TextBlock x:Name="Note" Style="{StaticResource BodyText}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="340"
                        HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />

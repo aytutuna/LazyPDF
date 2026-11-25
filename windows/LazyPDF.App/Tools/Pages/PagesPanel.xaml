@@ -36,7 +36,18 @@
             <ListBox x:Name="Thumbs" Height="340" BorderThickness="0" Background="Transparent" SelectionMode="Extended" AllowDrop="True"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
                      AutomationProperties.Name="{loc:T Pages}" SelectionChanged="Thumbs_SelectionChanged"
-                     ScrollViewer.ScrollChanged="Thumbs_ScrollChanged" SizeChanged="Thumbs_SizeChanged" KeyDown="Thumbs_KeyDown">
+                     ScrollViewer.ScrollChanged="Thumbs_ScrollChanged" SizeChanged="Thumbs_SizeChanged" KeyDown="Thumbs_KeyDown"
+                     PreviewMouseRightButtonDown="Thumbs_PreviewMouseRightButtonDown" ContextMenuOpening="Thumbs_ContextMenuOpening">
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="{loc:T Rotate left}" Click="TurnLeft_Click" />
+                        <MenuItem Header="{loc:T Rotate right}" Click="TurnRight_Click" />
+                        <MenuItem Header="{loc:T Delete}" InputGestureText="Del" Click="Remove_Click" />
+                        <MenuItem Header="{loc:T Extract to a new file}" Click="Extract_Click" />
+                        <Separator />
+                        <MenuItem x:Name="CopyToTab" Header="{loc:T Copy to tab}" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <pages:TilePanel CellWidth="{x:Static pages:PagesPanel.ColumnStep}" CellHeight="{x:Static pages:PagesPanel.RowStep}" />
@@ -101,6 +112,39 @@
                           AutomationProperties.Name="{loc:T Draw a box on the page}" Checked="CropDraw_Changed" Unchecked="CropDraw_Changed" />
                 <TextBlock x:Name="CropHint" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
                 <CheckBox x:Name="CropAll" Content="{loc:T Every page}" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Crop every page}" Click="CropAll_Click" />
+                <TextBlock Text="{loc:T Or cut a margin from each side}" Style="{StaticResource FieldLabelText}" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock x:Name="CropLeftLabel" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CropLeft" TextChanged="Fields_Changed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock x:Name="CropRightLabel" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CropRight" TextChanged="Fields_Changed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,0,8">
+                        <TextBlock x:Name="CropTopLabel" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CropTop" TextChanged="Fields_Changed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Grid.Row="1" Margin="0,0,0,8">
+                        <TextBlock x:Name="CropBottomLabel" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CropBottom" TextChanged="Fields_Changed" />
+                    </StackPanel>
+                </Grid>
+                <Button x:Name="CropMargins" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Crop by margins}"
+                        loc:Icon.Glyph="&#xE7A8;" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Crop by margins}" Click="CropMargins_Click" />
+                <Button x:Name="TrimWhite" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Trim white margins}"
+                        loc:Icon.Glyph="&#xE7A8;" AutomationProperties.Name="{loc:T Trim white margins}" Click="TrimWhite_Click" />
+                <TextBlock x:Name="TrimHint" Style="{StaticResource ReasonText}" Margin="0,4,0,8" />
                 <Button x:Name="CropReset" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Remove the crop}"
                         loc:Icon.Glyph="&#xE7A7;" AutomationProperties.Name="{loc:T Remove the crop}" Click="CropReset_Click" />
             </StackPanel>
@@ -161,6 +205,25 @@
                 <TextBlock x:Name="LabelHint" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
                 <Button x:Name="LabelClear" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Remove all labels}"
                         loc:Icon.Glyph="&#xE74D;" AutomationProperties.Name="{loc:T Remove all labels}" Click="LabelClear_Click" />
+            </StackPanel>
+        </Expander>
+
+        <Expander x:Name="BlankSection" Header="{loc:T Blank pages}" AutomationProperties.Name="{loc:T Blank pages}"
+                  Expanded="Section_Expanded" Collapsed="Section_Collapsed">
+            <StackPanel Margin="0,4,0,8">
+                <TextBlock Style="{StaticResource ReasonText}" Margin="0,0,0,8"
+                           Text="{loc:T 'Finds pages with nothing on them, or only white. You check the list before anything is deleted.'}" />
+                <Button x:Name="FindBlank" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Find blank pages}"
+                        loc:Icon.Glyph="&#xE721;" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Find blank pages}" Click="FindBlank_Click" />
+                <ListBox x:Name="BlankList" MaxHeight="160" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Blank pages found}"
+                         Focusable="False" KeyboardNavigation.TabNavigation="Continue" ButtonBase.Click="BlankCheck_Click">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="Focusable" Value="False" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+                <TextBlock x:Name="BlankHint" Style="{StaticResource ReasonText}" />
             </StackPanel>
         </Expander>
     </StackPanel>

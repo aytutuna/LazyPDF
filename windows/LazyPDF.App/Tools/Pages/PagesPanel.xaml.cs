@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using LazyPDF.App.Services;
@@ -24,16 +25,19 @@ public partial class PagesPanel : ToolPanel
 
     private OrganizeView? _organize;
     private bool _syncing;
+    private bool _boxSelected;
     private IEnumerable<int>? _reselect;
     private double _dpr = 1;
+    private bool _stale;
 
     public PagesPanel()
     {
         InitializeComponent();
-        _ = new PageDrag(Thumbs, () => Cells, Selected, (pages, before) => MoveTo(pages, before));
+        _ = new PageDrag(Thumbs, () => Tab, () => Cells, Selected, (pages, before) => MoveTo(pages, before));
         foreach (var size in PaperSize.All) Paper.Items.Add(size.Name);
         Paper.Items.Add(Loc.T("Custom size"));
         Paper.SelectedIndex = 0;
+        NameMarginFields();
     }
 
     private List<PageCell> Cells => Thumbs.ItemsSource as List<PageCell> ?? [];
@@ -41,8 +45,12 @@ public partial class PagesPanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
+        Tab!.Drawn += Tab_Drawn;
+        _stale = !Tab.Drawing.IsCompleted;
+        _pages = PageNumbers();
         _dpr = VisualTreeHelper.GetDpi(this).DpiScaleX;
         Build();
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
         Arm();
     }
 
@@ -51,6 +59,7 @@ public partial class PagesPanel : ToolPanel
         CloseOrganize();
         Disarm();
         Tab!.Changed -= Tab_Changed;
+        Tab!.Drawn -= Tab_Drawn;
         foreach (var cell in Cells) cell.Release();
         Thumbs.ItemsSource = null;
     }
@@ -77,10 +86,35 @@ public partial class PagesPanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
+        _stale = true;
         var select = _reselect;
         _reselect = null;
+        int[] pages = PageNumbers();
+        if (!pages.SequenceEqual(_pages) || Tab!.Revision != _blankRevision) ClearBlank();
         Build(select);
+        // The box holds a page index and display points, which an edit to the page list or to its page's shape moves.
+        if (!pages.SequenceEqual(_pages) || _crop?.Box is { } box && BoxSpace(box.Page) != _boxSpace) _crop?.Clear();
+        _pages = pages;
     }
+
+    // The renderer draws the new pages only once the tab says so; a picture made before would be of the old ones.
+    private void Tab_Drawn(object? sender, EventArgs e)
+    {
+        _stale = false;
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
+    }
+
+    private (PdfRect, PdfRect, int, double) _boxSpace;
+
+    private (PdfRect, PdfRect, int, double) BoxSpace(int index)
+    {
+        var page = Tab!.Document.Pages[index];
+        return (page.MediaBox, page.CropBox, page.Rotate, page.UserUnit);
+    }
+
+    private int[] _pages = [];
+
+    private int[] PageNumbers() => [.. Tab!.Document.Pages.Select(p => p.Reference.Number)];
 
     private void Build(IEnumerable<int>? select = null)
     {
@@ -101,11 +135,19 @@ public partial class PagesPanel : ToolPanel
         }
         _syncing = false;
         if (select is not null && Thumbs.SelectedItems.Count > 0) Thumbs.ScrollIntoView(Thumbs.SelectedItems[0]);
-        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
         Refresh();
     }
 
     private List<int> Selected() => [.. Thumbs.SelectedItems.Cast<PageCell>().Select(c => c.Index).Order()];
+
+    private void Thumbs_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) => PageDrag.SelectUnder(Thumbs, e.OriginalSource);
+
+    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        bool any = Selected().Count > 0;
+        foreach (var item in Thumbs.ContextMenu.Items.OfType<MenuItem>()) item.IsEnabled = any;
+        CopyToTab.IsEnabled = any && Tab is { } tab && Host is { } host && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
+    }
 
     // Pages a job covers: the selection, else every page.
     private List<int> SelectedOrAll()
@@ -117,6 +159,7 @@ public partial class PagesPanel : ToolPanel
     private void Thumbs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_syncing) return;
+        _boxSelected = false;
         if (Thumbs.SelectedItems.Count == 1 && Viewer is { } viewer && Thumbs.SelectedItem is PageCell cell && viewer.PageIndex != cell.Index) viewer.GoToPage(cell.Index);
         Refresh();
     }
@@ -138,8 +181,8 @@ public partial class PagesPanel : ToolPanel
         int total = Cells.Count;
         bool any = pages.Count > 0;
         TurnLeft.IsEnabled = TurnRight.IsEnabled = Copy.IsEnabled = Extract.IsEnabled = Remove.IsEnabled = any;
-        Earlier.IsEnabled = any && pages[0] > 0;
-        Later.IsEnabled = any && pages[^1] < total - 1;
+        Earlier.IsEnabled = PageEdits.CanNudge(pages, -1, total);
+        Later.IsEnabled = PageEdits.CanNudge(pages, 1, total);
         Replace.IsEnabled = any;
         SignedRow.Visibility = Tab.Document.IsSigned ? Visibility.Visible : Visibility.Collapsed;
         Summary.Text = any ? Loc.T("{0} of {1} selected", pages.Count, total) : Loc.Plural(total, "{0} page", "{0} pages", total);
@@ -150,7 +193,7 @@ public partial class PagesPanel : ToolPanel
     // Tiles in view and one row either side get a picture; the rest let theirs go.
     private void LoadVisible()
     {
-        if (Tab?.Renderer is not WindowsPageRenderer renderer || Scroller() is not { } scroll) return;
+        if (_stale || Tab?.Renderer is not WindowsPageRenderer renderer || Scroller() is not { } scroll) return;
         int columns = Math.Max(1, (int)(scroll.ViewportWidth / ColumnStep));
         int first = Math.Max(0, (int)(scroll.VerticalOffset / RowStep) - 1) * columns;
         int last = ((int)((scroll.VerticalOffset + scroll.ViewportHeight) / RowStep) + 2) * columns;

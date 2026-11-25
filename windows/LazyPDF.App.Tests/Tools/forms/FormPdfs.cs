@@ -50,4 +50,11 @@ internal static class FormPdfs
         "3 0 obj\n<</Type /Page /Parent 2 0 R /MediaBox [0 0 200 200]>>\nendobj\n" +
         "4 0 obj\n<</Length 6>>\nstream\n<xdp/>\nendstream\nendobj\n" +
         "trailer\n<</Root 1 0 R /Size 5>>\n%%EOF\n");
+
+    /// <summary>A file whose open action runs JavaScript.</summary>
+    public static byte[] Scripted() => System.Text.Encoding.ASCII.GetBytes(
+        "%PDF-1.7\n1 0 obj\n<</Type /Catalog /Pages 2 0 R /OpenAction <</S /JavaScript /JS (this.dirty = true;)>>>>\nendobj\n" +
+        "2 0 obj\n<</Type /Pages /Kids [3 0 R] /Count 1>>\nendobj\n" +
+        "3 0 obj\n<</Type /Page /Parent 2 0 R /MediaBox [0 0 200 200]>>\nendobj\n" +
+        "trailer\n<</Root 1 0 R /Size 4>>\n%%EOF\n");
 }

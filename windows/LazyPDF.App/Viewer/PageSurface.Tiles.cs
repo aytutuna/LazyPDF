@@ -42,6 +42,7 @@ internal sealed partial class PageSurface
         {
             _settle.Stop();
             _settling = false;
+            _failed.RemoveWhere(key => !key.IsPreview);
             PlanTiles();
         };
         NewScheduler();
@@ -83,6 +84,9 @@ internal sealed partial class PageSurface
             : renderer.RenderTileAsync(key.Page, key.Scale, spec.X, spec.Y, spec.Width, spec.Height);
     }
 
+    public Task<PdfRgbaImage?> RenderAreaAsync(int page, Rect area, double dpi) =>
+        Active?.RenderRegionAsync(page, new DisplayRect(area.X, area.Y, area.Width, area.Height), dpi) ?? Task.FromResult<PdfRgbaImage?>(null);
+
     // On a worker thread: the pixels become a bitmap here so the UI thread only has to file it.
     private void Deliver(int generation, TileSpec spec, PdfRgbaImage? image)
     {
@@ -98,8 +102,12 @@ internal sealed partial class PageSurface
         Dispatcher.InvokeAsync(() =>
         {
             if (generation != _generation) return;
-            if (bitmap is null) _failed.Add(spec.Key);
-            else _cache.Add(spec.Key, bitmap);
+            var key = spec.Key;
+            if (bitmap is null)
+            {
+                if ((uint)key.Page < _versions.Length && _versions[key.Page] == key.Version && key.Tint == _tint) _failed.Add(key);
+            }
+            else _cache.Add(key, bitmap);
             InvalidateVisual();
         }, DispatcherPriority.Input);
     }

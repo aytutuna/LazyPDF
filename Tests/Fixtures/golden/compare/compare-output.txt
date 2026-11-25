@@ -169,7 +169,7 @@
 < text 
 > compare - ;; first line of the page stays plain and the same | second line is where the format changes now | third line also stays exactly as it was ;; first li...
 < pages 1 1: 0/0/1
-< change Changed Format 0 0 old=second line is where the format changes now new=second line is where the format changes now detail=Colour #000000 to #FF0000
+< change Changed Format 0 0 old=second line is where the format changes now new=second line is where the format changes now detail=Color #000000 to #FF0000
 <   old [72 717.516 312.108 717.516 312.108 728.616 72 728.616]
 <   new [72 717.516 312.108 717.516 312.108 728.616 72 728.616]
 < summary 0 0 1 0 | 0 1 0 0 0 0 | 0 0
@@ -179,7 +179,7 @@
 < text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
 < text 
 < text Pages 1
-< text   Changed format (Colour #000000 to #FF0000): second line is where the format changes now
+< text   Changed format (Color #000000 to #FF0000): second line is where the format changes now
 < text 
 > compare - ;; first line of the page stays plain and the same | second line is where the format changes now | third line also stays exactly as it was ;; first li...
 < pages 1 1: 0/0/0.92

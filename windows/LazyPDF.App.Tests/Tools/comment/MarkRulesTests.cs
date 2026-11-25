@@ -185,6 +185,40 @@ public sealed class MarkRulesTests
     }
 
     [Fact]
+    public void TheEraserLeavesHighlightsNotesAndTextBoxes()
+    {
+        using var f = new CommentFixture();
+        var quad = new TextQuad(100, 700, 180, 700, 180, 712, 100, 712);
+        f.Marker.Markup(AnnotationType.Highlight, [new SelectedRun(0, default, "Hello", [quad])], MarkStyle.Default);
+        var (_, top) = f.Geometry.ToDisplay(0, 706);
+        f.Marker.Add(MarkTool.Note, 0, [new Point(300, top)], Red, "Check");
+        f.Marker.Add(MarkTool.TextBox, 0, [new Point(400, top - 20), new Point(520, top + 20)], Red, "Look");
+
+        var hit = f.Marker.Along(0, [new Point(90, top), new Point(540, top)], 4);
+
+        Assert.Equal(3, hit.Count);
+        Assert.DoesNotContain(hit, Marker.Erasable);
+    }
+
+    [Fact]
+    public void TheEraserTakesInkAndShapesButNotMeasurements()
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Pencil, 0, [new Point(100, 100), new Point(100, 200)], Red);
+        f.Marker.Add(MarkTool.Rectangle, 0, [new Point(50, 120), new Point(350, 250)], Red);
+        var measured = f.Marker.Add(MarkTool.Line, 0, [new Point(200, 50), new Point(200, 250)], Red);
+        measured.Dictionary["Measure"] = new PdfDictionary();
+
+        var hit = f.Marker.Along(0, [new Point(30, 150), new Point(370, 150)], 4);
+
+        Assert.Equal(3, hit.Count);
+        var erased = hit.Where(Marker.Erasable).Select(a => a.Type).ToList();
+        Assert.Equal(2, erased.Count);
+        Assert.Contains(AnnotationType.Ink, erased);
+        Assert.Contains(AnnotationType.Square, erased);
+    }
+
+    [Fact]
     public void ATextBoxIsReadBackAsTheFontItWasSetIn()
     {
         using var f = new CommentFixture();

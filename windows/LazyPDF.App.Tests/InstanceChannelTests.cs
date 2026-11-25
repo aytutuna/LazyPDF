@@ -104,6 +104,14 @@ public sealed class InstanceChannelTests
     }
 
     [Fact]
+    public void AnArgumentThatIsNotAPathIsLeftOut()
+    {
+        Assert.Equal([@"C:\x\ok.pdf"], App.FilesOf(["a\0b.pdf", @"C:\x\ok.pdf"]));
+        Assert.Empty(App.FilesOf(["\0"]));
+        Assert.Equal([Path.GetFullPath("rel.pdf")], App.FilesOf(["rel.pdf"]));
+    }
+
+    [Fact]
     public void AnAddressStandsForTheFilesInIt()
     {
         string file = Path.Combine(Path.GetTempPath(), "b.pdf");

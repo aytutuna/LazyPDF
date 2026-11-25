@@ -23,6 +23,13 @@ public struct LayerNode {
 public struct LayerSet {
     public let layers: [PdfLayer]
     public let order: [LayerNode]
+    public let radioGroups: [[PdfReference]]
+
+    public init(layers: [PdfLayer], order: [LayerNode], radioGroups: [[PdfReference]] = []) {
+        self.layers = layers
+        self.order = order
+        self.radioGroups = radioGroups
+    }
 }
 
 public enum PdfLayers {
@@ -58,7 +65,7 @@ public enum PdfLayers {
         for layer in layers where !placed.contains(layer.reference.number) {
             order.append(LayerNode(label: nil, layer: layer, children: []))
         }
-        return LayerSet(layers: layers, order: order)
+        return LayerSet(layers: layers, order: order, radioGroups: radioGroups(document, config, byNumber))
     }
 
     /// Shows or hides a layer in the default configuration and writes /ON, /OFF and /BaseState anew: base state ON and
@@ -71,7 +78,9 @@ public enum PdfLayers {
         var off = Set(current.layers.filter { !$0.isOn }.map { $0.reference.number })
         if visible {
             off.remove(layer.number)
-            for group in groups(document, layer.number) { off.formUnion(group.filter { $0 != layer.number }) }
+            for group in current.radioGroups where group.contains(where: { $0.number == layer.number }) {
+                off.formUnion(group.map { $0.number }.filter { $0 != layer.number })
+            }
         } else {
             off.insert(layer.number)
         }
@@ -123,6 +132,21 @@ public enum PdfLayers {
         return result
     }
 
+    private static func radioGroups(_ document: PdfDocument, _ config: PdfDictionary?, _ layers: [Int: PdfLayer]) -> [[PdfReference]] {
+        var result: [[PdfReference]] = []
+        var seen = Set<Int>()
+        var budget = maxLayers
+        for group in (document.array(config, "RBGroups")?.items ?? []).prefix(maxLayers) {
+            if let g = group as? PdfReference, !seen.insert(g.number).inserted { continue }
+            guard let members = document.resolve(group) as? PdfArray else { continue }
+            budget -= members.items.count
+            if budget < 0 { break }
+            let known = members.items.compactMap { $0 as? PdfReference }.filter { layers[$0.number] != nil }
+            if known.count >= 2 { result.append(known) }
+        }
+        return result
+    }
+
     private static func numbers(_ document: PdfDocument, _ config: PdfDictionary?, _ key: String) -> Set<Int> {
         Set((document.array(config, key)?.items ?? []).prefix(maxLayers).compactMap { ($0 as? PdfReference)?.number })
     }
@@ -135,17 +159,6 @@ public enum PdfLayers {
             return nil
         default: return nil
         }
-    }
-
-    private static func groups(_ document: PdfDocument, _ number: Int) -> [Set<Int>] {
-        let config = document.dict(document.dict(document.catalog, "OCProperties"), "D")
-        var result: [Set<Int>] = []
-        for group in (document.array(config, "RBGroups")?.items ?? []).prefix(maxLayers) {
-            guard let members = document.resolve(group) as? PdfArray else { continue }
-            let found = Set(members.items.compactMap { ($0 as? PdfReference)?.number })
-            if found.contains(number) { result.append(found) }
-        }
-        return result
     }
 }
 

@@ -1,5 +1,6 @@
 // The files, the results folder, running the steps and the watched folder.
 
+using System.IO.Enumeration;
 using System.Windows;
 using System.Windows.Controls;
 using LazyPDF.App.Documents;
@@ -9,9 +10,12 @@ namespace LazyPDF.App.Tools.Batch;
 
 public partial class BatchPanel
 {
+    private const int MaxFiles = 5000;
+
     // One file at a time, so a run and the watcher never share the Bates numbers or the output names.
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Queue<string> _arrived = new();
+    private readonly Dictionary<string, string> _roots = new(StringComparer.OrdinalIgnoreCase);
     private FolderWatcher? _watcher;
     private CancellationTokenSource? _watchCancel;
     private bool _draining;
@@ -46,6 +50,8 @@ public partial class BatchPanel
         if (!_loading) _set.NameTemplate = TemplateBox.Text;
     }
 
+    private void Stop_Click(object sender, RoutedEventArgs e) => _set.StopOnError = StopBox.IsChecked == true;
+
     private void BrowseOutput_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFolderDialog { Title = Loc.T("Results folder"), InitialDirectory = _set.OutputFolder };
@@ -63,18 +69,114 @@ public partial class BatchPanel
         AddFiles(dialog.FileNames);
     }
 
-    private void AddFolder_Click(object sender, RoutedEventArgs e)
+    private async void AddFolder_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFolderDialog { Title = Loc.T("Folder of PDFs") };
         if (dialog.ShowDialog() != true) return;
-        AddFiles(Directory.EnumerateFiles(dialog.FolderName, "*.pdf"));
+        AddFiles(await PdfsInAsync(dialog.FolderName, IncludeSubfolders.IsChecked == true), dialog.FolderName);
     }
 
-    internal void AddFiles(IEnumerable<string> paths)
+    private void Panel_DragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        e.Effects = DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    private async void Panel_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+        e.Handled = true;
+        _folderFailed = false;
+        bool added = false;
+        foreach (var folder in paths.Where(Directory.Exists))
+        {
+            var inside = await PdfsInAsync(folder, IncludeSubfolders.IsChecked == true);
+            AddFiles(inside, folder);
+            added |= inside.Count > 0;
+        }
+        var singles = paths.Where(p => !Directory.Exists(p) && string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
+        AddFiles(singles);
+        if (!added && singles.Count == 0 && !_folderFailed) Host?.SetStatus(Loc.T("Only PDF files can be added."));
+    }
+
+    internal async Task<List<string>> PdfsInAsync(string folder, bool recurse)
+    {
+        string? results = _set.OutputFolder.Length > 0 ? Path.TrimEndingDirectorySeparator(Path.GetFullPath(_set.OutputFolder)) : null;
+        try
+        {
+            List<string>? found = null;
+            bool leftOut = false;
+            if (Host is null) found = Walk(folder, recurse, results, out leftOut, CancellationToken.None);
+            else if (_running) (found, leftOut) = await Task.Run(() => (Walk(folder, recurse, results, out bool skipped, CancellationToken.None), skipped)); // the run owns the host's busy state
+            else await Host.RunBusyAsync(Loc.T("Looking for PDFs"), async token =>
+            {
+                var walked = await Task.Run(() => (Files: Walk(folder, recurse, results, out bool skipped, token), Skipped: skipped));
+                (found, leftOut) = (walked.Files, walked.Skipped);
+            });
+            if (found is null)
+            {
+                _folderFailed = true;
+                return [];
+            }
+            if (found.Count > MaxFiles)
+            {
+                found.RemoveAt(MaxFiles);
+                Host?.SetStatus(Loc.T("Only the first 5000 files were added."));
+            }
+            else if (leftOut)
+            {
+                _folderFailed = true;
+                Host?.SetStatus(Loc.T("The results folder was left out."));
+            }
+            found.Sort((a, b) => string.Compare(Path.GetRelativePath(folder, a), Path.GetRelativePath(folder, b), StringComparison.CurrentCultureIgnoreCase));
+            return found;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            _folderFailed = true;
+            var leaf = Path.GetFileName(folder.TrimEnd('\\', '/'));
+            Host?.ShowProblem(new Problem(Loc.T("Folder not read"),
+                Loc.T("{0} could not be read. Check that it is there and that you may open it.", leaf.Length > 0 ? leaf : folder)));
+            return [];
+        }
+    }
+
+    // Links to folders are not followed so a folder that points back up cannot loop, and the results folder is left out so results never run again.
+    internal static List<string> Walk(string folder, bool recurse, string? results, out bool leftOut, CancellationToken token)
+    {
+        bool skipped = false;
+        var options = new EnumerationOptions { RecurseSubdirectories = recurse, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.Hidden | FileAttributes.System };
+        var files = new FileSystemEnumerable<string>(folder, (ref FileSystemEntry e) => e.ToFullPath(), options)
+        {
+            ShouldIncludePredicate = (ref FileSystemEntry e) =>
+            {
+                token.ThrowIfCancellationRequested();
+                if (e.IsDirectory || !e.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) return false;
+                bool inResults = results is not null && e.ToFullPath().StartsWith(results + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+                skipped |= inResults;
+                return !inResults;
+            },
+            ShouldRecursePredicate = (ref FileSystemEntry e) =>
+            {
+                if ((e.Attributes & FileAttributes.ReparsePoint) != 0) return false;
+                bool inResults = results is not null && string.Equals(e.ToFullPath(), results, StringComparison.OrdinalIgnoreCase);
+                skipped |= inResults;
+                return !inResults;
+            },
+        };
+        var found = files.Take(MaxFiles + 1).ToList();
+        leftOut = skipped;
+        return found;
+    }
+
+    internal void AddFiles(IEnumerable<string> paths, string? root = null)
     {
         foreach (var path in paths)
         {
-            if (!_files.Contains(path, StringComparer.OrdinalIgnoreCase)) _files.Add(path);
+            if (!_known.Add(path)) continue;
+            _files.Add(path);
+            if (root is not null) _roots[path] = root;
         }
         ShowFiles();
     }
@@ -83,6 +185,8 @@ public partial class BatchPanel
     {
         if (((FrameworkElement)sender).DataContext is not FileRow row) return;
         _files.Remove(row.Path);
+        _known.Remove(row.Path);
+        _roots.Remove(row.Path);
         ShowFiles();
     }
 
@@ -100,11 +204,18 @@ public partial class BatchPanel
 
     private async Task RunAsync()
     {
+        if (BatchRunner.Check(_set) is { } refused)
+        {
+            Host?.ShowProblem(refused);
+            return;
+        }
         var set = _set.Copy();
         var live = _set.Steps.ToList();
         var files = _files.ToList();
         int failed = 0;
         bool cancelled = false;
+        string? stoppedAt = null;
+        int rest = 0;
         _running = true;
         RaiseActionChanged();
         try
@@ -117,7 +228,7 @@ public partial class BatchPanel
                     BatchResult result;
                     try
                     {
-                        result = await RunOneAsync(files[i], set, live, i + 1, token);
+                        result = await RunOneAsync(files[i], set, live, i + 1, token, RelativeDir(files[i]));
                     }
                     catch (OperationCanceledException)
                     {
@@ -125,8 +236,22 @@ public partial class BatchPanel
                         return;
                     }
                     AddLog(result);
-                    if (result.Ok) _files.Remove(files[i]);
-                    else failed++;
+                    if (result.Ok)
+                    {
+                        _files.Remove(files[i]);
+                        _known.Remove(files[i]);
+                        _roots.Remove(files[i]);
+                    }
+                    else
+                    {
+                        failed++;
+                        if (set.StopOnError && i + 1 < files.Count)
+                        {
+                            stoppedAt = Path.GetFileName(files[i]);
+                            rest = files.Count - i - 1;
+                            return;
+                        }
+                    }
                 }
             });
         }
@@ -135,21 +260,42 @@ public partial class BatchPanel
             _running = false;
             ShowFiles();
         }
-        Host?.SetStatus(cancelled ? Loc.T("Cancelled.") : failed == 0 ? Loc.T("All files done") : Loc.Plural(failed, "{0} file failed", "{0} files failed"));
+        if (stoppedAt is not null)
+        {
+            Host?.SetStatus(Loc.T("Stopped at {0}. {1}", stoppedAt, Loc.Plural(rest, "{0} file was not run.", "{0} files were not run.")));
+            return;
+        }
+        Host?.SetStatus(cancelled ? Loc.T("Canceled.") : failed == 0 ? Loc.T("All files done") : Loc.Plural(failed, "{0} file failed", "{0} files failed"));
+    }
+
+    // A watched folder and a run go on while another tool is open, and they need the password.
+    private void Panel_Unloaded(object sender, RoutedEventArgs e)
+    {
+        if (_watcher is null && !_running) ClearPassword();
+    }
+
+    internal void ClearPassword() => OpenPassword.Clear();
+
+    private string RelativeDir(string path)
+    {
+        if (!_roots.TryGetValue(path, out var root)) return "";
+        var dir = System.IO.Path.GetRelativePath(root, System.IO.Path.GetDirectoryName(path)!);
+        return dir == "." ? "" : dir;
     }
 
     // <paramref name="live"/> are the steps on screen that <paramref name="set"/> was copied from, in the same order.
-    private async Task<BatchResult> RunOneAsync(string path, BatchSet set, IReadOnlyList<BatchStep> live, int number, CancellationToken token)
+    internal async Task<BatchResult> RunOneAsync(string path, BatchSet set, IReadOnlyList<BatchStep> live, int number, CancellationToken token, string relativeDir = "")
     {
         await _gate.WaitAsync(token);
         try
         {
+            string password = OpenPassword.Password;
             for (int i = 0; i < live.Count; i++)
             {
                 if (live[i].Kind == BatchStepKind.Bates) set.Steps[i].Start = live[i].Start;
             }
-            var result = await Task.Run(() => Runner.RunAsync(path, set, number, DateTimeOffset.Now, token), token);
-            ContinueNumbers(set, live);
+            var result = await Task.Run(() => Runner.RunAsync(path, set, number, DateTimeOffset.Now, token, relativeDir, password), token);
+            if (result.Ok) ContinueNumbers(set, live);
             return result;
         }
         finally
@@ -225,6 +371,7 @@ public partial class BatchPanel
     private Problem? WatchProblem()
     {
         if (_set.Steps.Count == 0) return new Problem(Loc.T("No steps"), Loc.T("Add at least one step, then watch the folder."));
+        if (BatchRunner.Check(_set) is { } refused) return refused;
         if (!Directory.Exists(_set.WatchFolder)) return new Problem(Loc.T("No folder to watch"), Loc.T("Choose an existing folder to watch."));
         if (_set.OutputFolder.Length == 0) return new Problem(Loc.T("No results folder"), Loc.T("Choose where the results go, then watch the folder."));
         if (SameFolder(_set.OutputFolder, _set.WatchFolder)) return new Problem(Loc.T("Same folder"), Loc.T("Choose a results folder other than the watched one, or the results would run again."));

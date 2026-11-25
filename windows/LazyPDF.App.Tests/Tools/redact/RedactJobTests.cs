@@ -1,6 +1,7 @@
 using System.Windows;
 using LazyPDF.App.Tools.Redact;
 using LazyPDF.App.Services;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
 
@@ -38,7 +39,107 @@ public sealed class RedactJobTests
     }
 
     private static RedactionResult Apply(byte[] pdf, IReadOnlyList<MarkItem> marks, RedactSettings settings, IFontSource? fonts = null) =>
-        RedactJob.Apply(pdf, null, null, [.. marks.Select(m => m.Mark)], settings, new BlankPages(pdf), fonts ?? new FakeFonts(), new FakeCodec());
+        RedactJob.Apply(pdf, null, null, [.. marks.Where(m => m.Value is null).Select(m => m.Mark)], settings, new BlankPages(pdf), fonts ?? new FakeFonts(), new FakeCodec(),
+                        [.. marks.Where(m => m.Value is not null).Select(m => m.Value!)]);
+
+    private static byte[] WithNoteAndField(string text)
+    {
+        using var document = PdfDocument.Open(Pdfs.Text(1, Line));
+        new PdfAnnotationWriter(document).AddNote(document.Pages[0], new PdfRect(400, 100, 420, 120), new AnnotationInfo("Reviewer", text));
+        PdfForm.Read(document).AddField(new FieldSpec(FieldKind.Text, "contact", 0, new PdfRect(100, 490, 400, 510)) { Value = text });
+        return document.SaveRewrite();
+    }
+
+    [Fact]
+    public void CommentsAndFieldValuesAreFoundAndSayWhere()
+    {
+        var found = FindAddresses(WithNoteAndField("mail bob@example.com"));
+
+        Assert.Equal(3, found.Count);
+        var comment = Assert.Single(found, m => m.Value?.Source == RedactionValueSource.Comment);
+        Assert.Equal("Comment on page 1", comment.PageText);
+        Assert.Equal("bob@example.com", comment.Label);
+        var field = Assert.Single(found, m => m.Value?.Source == RedactionValueSource.Field);
+        Assert.Equal("Field contact, page 1", field.PageText);
+        Assert.Equal("bob@example.com, Field contact, page 1", field.Spoken);
+        Assert.Contains(new PdfRect(100, 490, 400, 510), field.Mark.Quads.Select(q => q.Bounds));
+    }
+
+    [Fact]
+    public void APatternThatRunsOutOfTimeIsReportedByPage()
+    {
+        using var document = RedactJob.Open(Pdfs.Text(2, new string('a', 40) + "!"), null, null);
+
+        var slow = RedactJob.FindPatterns(document, [@"^(a+)+$"], false, CancellationToken.None);
+        var quick = RedactJob.FindPatterns(document, ["a+!"], false, CancellationToken.None);
+
+        Assert.Empty(slow.Items);
+        Assert.Equal([0, 1], slow.TimedOut);
+        Assert.Equal(2, quick.Items.Count);
+        Assert.Empty(quick.TimedOut ?? []);
+    }
+
+    [Fact]
+    public void TimedOutPagesDoNotHideThePagesWithNoText()
+    {
+        var hit = new MarkItem(RedactionMark.FromRect(0, new PdfRect(10, 10, 50, 20)), "x");
+
+        var both = RedactPanel.Notice(new Found([hit], 2, 0, [3]))!.Value;
+        var onlySlow = RedactPanel.Notice(new Found([hit], 0, 0, [3]))!.Value;
+
+        Assert.Equal("2 pages have no text", both.Title);
+        Assert.True(both.MakeSearchable);
+        Assert.EndsWith(TimedOutText.For([3])!, both.Text);
+        Assert.Equal("Some pages were not searched", onlySlow.Title);
+        Assert.Null(RedactPanel.Notice(new Found([], 0, 0, [3])));
+    }
+
+    [Fact]
+    public void WordsAndPatternsSearchTheValuesToo()
+    {
+        using var document = RedactJob.Open(WithNoteAndField("mail bob@example.com"), null, null);
+
+        var words = RedactJob.Find(document, ["bob"], false, false, CancellationToken.None);
+        var patterns = RedactJob.FindPatterns(document, ["b.b@"], false, CancellationToken.None);
+
+        Assert.Equal(2, words.Items.Count(m => m.Value is not null));
+        Assert.Equal(2, patterns.Items.Count(m => m.Value is not null));
+    }
+
+    [Fact]
+    public void ValueHitsAreRewrittenWithThePageMarksAndTheReportCountsThem()
+    {
+        var pdf = WithNoteAndField("mail bob@example.com");
+        var found = FindAddresses(pdf);
+
+        var result = Apply(pdf, found, Plain);
+
+        Assert.True(result.Verification.IsClean);
+        Assert.DoesNotContain("example.com", TextOf(result.Bytes));
+        using var output = PdfDocument.Open(result.Bytes);
+        Assert.Equal("mail ", Assert.Single(PdfAnnotations.Read(output, output.Pages[0]), a => a.Type != AnnotationType.Widget).Contents);
+        Assert.Equal("mail ", Assert.Single(PdfForm.Read(output).Fields).Value);
+        Assert.Equal(2, Assert.Single(result.Report.Pages).Values);
+        Assert.Contains("text in 2 notes or fields", RedactSummary.Of(result).Report);
+    }
+
+    [Fact]
+    public void AWholePageIsMarkedByItsMediaBoxWhateverTheCropBoxAndTurn()
+    {
+        using var document = PdfDocument.Open(Pdfs.Text(3));
+        PageOperations.Rotate(document, [1], 90);
+        PageOperations.SetBox(document, [1], PageBox.Crop, new PdfRect(100, 100, 200, 200));
+
+        var marks = RedactJob.WholePages(document, [0, 1, 1, 2]);
+
+        Assert.Equal([0, 1, 2], marks.Select(m => m.Page));
+        Assert.All(marks, m => Assert.True(m.IsWholePage));
+        for (int page = 0; page < 3; page++)
+        {
+            Assert.Equal(RedactionMark.FromRect(page, document.Pages[page].MediaBox).Quads, marks[page].Mark.Quads);
+        }
+        Assert.NotEqual(document.Pages[1].CropBox, document.Pages[1].MediaBox);
+    }
 
     [Fact]
     public void AKindOfDataIsFoundOnEveryPage()
@@ -55,13 +156,63 @@ public sealed class RedactJobTests
         var pdf = Pdfs.Text(1, Line);
         using var document = RedactJob.Open(pdf, null, null);
 
-        var inside = RedactJob.Find(document, "to", false, false, CancellationToken.None).Items;
-        var whole = RedactJob.Find(document, "to", false, true, CancellationToken.None).Items;
-        var wrongCase = RedactJob.Find(document, "WRITE", true, true, CancellationToken.None).Items;
+        var inside = RedactJob.Find(document, ["to"], false, false, CancellationToken.None).Items;
+        var whole = RedactJob.Find(document, ["to"], false, true, CancellationToken.None).Items;
+        var wrongCase = RedactJob.Find(document, ["WRITE"], true, true, CancellationToken.None).Items;
 
         Assert.Equal(2, inside.Count);
         Assert.Single(whole);
         Assert.Empty(wrongCase);
+    }
+
+    [Fact]
+    public void SeveralWordsAreFoundInOneCall()
+    {
+        var pdf = PdfFromText.Create("alpha onebeta two", new FakeFonts()).Bytes;
+        using var document = RedactJob.Open(pdf, null, null);
+
+        var both = RedactJob.Find(document, ["alpha", "beta"], false, false, CancellationToken.None).Items;
+        var oneWrongCase = RedactJob.Find(document, ["alpha", "BETA"], true, true, CancellationToken.None).Items;
+
+        Assert.Equal([0, 1], both.Select(m => m.Page));
+        Assert.Equal([0], oneWrongCase.Select(m => m.Page));
+    }
+
+    [Fact]
+    public void PatternsMarkWhatTheyMatch()
+    {
+        var pdf = PdfFromText.Create("code 1234 and 56 and Beta", new FakeFonts()).Bytes;
+        using var document = RedactJob.Open(pdf, null, null);
+
+        var digits = RedactJob.FindPatterns(document, [@"\d{4}"], false, CancellationToken.None).Items;
+        var wrongCase = RedactJob.FindPatterns(document, ["beta"], true, CancellationToken.None).Items;
+        var anyCase = RedactJob.FindPatterns(document, ["beta"], false, CancellationToken.None).Items;
+
+        Assert.Equal(["1234"], digits.Select(m => m.Label));
+        Assert.Empty(wrongCase);
+        Assert.Single(anyCase);
+    }
+
+    [Fact]
+    public void ABadPatternIsNamedByLineAndPlace()
+    {
+        Assert.Equal("Line 2 is not a valid pattern. The problem is at character 1.", RedactJob.CheckPatterns(["a", "(", "b"]));
+    }
+
+    [Fact]
+    public void APatternThatMatchesNothingInParticularIsRefused()
+    {
+        Assert.Equal("Line 1 would match everywhere. Make it more specific.", RedactJob.CheckPatterns(["a*"]));
+    }
+
+    [Fact]
+    public void GoodPatternsAndBlankLinesPass() => Assert.Null(RedactJob.CheckPatterns([@"\d{3}-\d{4}", "", "  ", "ab+"]));
+
+    [Fact]
+    public void ALineOfOnlySpacesIsNoTermInEitherMode()
+    {
+        Assert.Equal([@"\d{4}", " a "], RedactJob.Terms("""\d{4}""" + "\r\n \n a \n", true));
+        Assert.Equal(["a", "b"], RedactJob.Terms(" a \n  \n\nb\na", false));
     }
 
     [Fact]
@@ -215,6 +366,17 @@ public sealed class RedactJobTests
 
         Assert.Single(found.Items);
         Assert.Equal(1, found.Pictures);
+    }
+
+    [Fact]
+    public void PagesSearchedInRecognizedTextAreCounted()
+    {
+        using var document = RedactJob.Open(Pdfs.Text(2), null, null);
+        PdfOcrLayer.Add(document, [new OcrPageWords(1, [new OcrWord("Hello", new OcrBox(10, 10, 100, 20))], 400, 600)], "en");
+
+        var found = RedactJob.Find(document, ["Hello"], false, false, CancellationToken.None);
+
+        Assert.Equal(1, found.Recognized);
     }
 
     [Fact]

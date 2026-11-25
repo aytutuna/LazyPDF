@@ -9,7 +9,7 @@ public enum SignatureText {
     public static var fieldLocked: String { L10n.t("An earlier signature locked this field. Choose another one.") }
     public static var fieldTaken: String { L10n.t("This field is already signed. Choose another one.") }
     public static var noFont: String { L10n.t("No font can draw the signature text. Choose another font.") }
-    public static var noPage: String { L10n.t("The page is not in the document.") }
+    public static var noPage: String { L10n.t("The page is not in the file.") }
     public static var noTimestamp: String { L10n.t("The time stamp server gave no answer. Try again later.") }
     public static var noTimestampServer: String { L10n.t("This signature needs a time stamp server.") }
     public static var noRoom: String { L10n.t("The signature does not fit in the space kept for it.") }
@@ -38,6 +38,10 @@ public enum SignatureText {
         }
     }
 
+    public static func status(_ report: SignatureReport) -> String {
+        onlyExpired(report) ? L10n.t("Certificate has expired") : status(report.verdict)
+    }
+
     /// One line a person can read.
     public static func sentence(_ report: SignatureReport) -> String {
         let when = date(report.timestampTime ?? report.signingTime)
@@ -53,7 +57,7 @@ public enum SignatureText {
         case .valid:
             return report.changes.isEmpty ? head + " " + L10n.t("Not changed since.") : head + " " + L10n.t("Changed only as the signer allowed.")
         case .validButUntrusted:
-            return head + " " + (report.changes.isEmpty ? "" : L10n.t("Changed only as allowed.") + " ") + L10n.t("The signer is not trusted.")
+            return head + " " + (report.changes.isEmpty ? "" : L10n.t("Changed only as allowed.") + " ") + (onlyExpired(report) ? L10n.t("The certificate has expired since.") : L10n.t("The signer is not trusted."))
         case .changedAfterSigning:
             return head + " " + L10n.t("Changed since.")
         case .broken:
@@ -73,11 +77,13 @@ public enum SignatureText {
         case .noCertificate: return L10n.t("Signer's certificate is missing")
         case .untrustedSigner: return L10n.t("Signer is not trusted")
         case .certificateNotValid: return L10n.t("Certificate was not valid when signing")
+        case .certificateExpired: return L10n.t("Certificate has expired since")
         case .certificateRevoked: return L10n.t("Certificate was revoked")
         case .changedAfterSigning: return L10n.t("File changed after signing")
         case .damagedStructure: return L10n.t("File structure is damaged")
         case .timestampInvalid: return L10n.t("Time stamp is not valid")
         case .weakDigest: return L10n.t("Signature uses a weak digest")
+        case .weakKey: return L10n.t("Signature uses a weak key")
         }
     }
 
@@ -91,11 +97,13 @@ public enum SignatureText {
         case .noCertificate: return L10n.t("Ask the signer to sign again with the certificate included.")
         case .untrustedSigner: return L10n.t("Trust the signer's certificate only after checking it with them.")
         case .certificateNotValid: return L10n.t("Check the date on the signature and the certificate.")
+        case .certificateExpired: return L10n.t("The signing time is the signer's own claim. Check that the file was signed before the certificate expired.")
         case .certificateRevoked: return L10n.t("Do not rely on this signature.")
         case .changedAfterSigning: return L10n.t("Open the signed version from the file's history.")
         case .damagedStructure: return L10n.t("Open the signed version from the file's history.")
         case .timestampInvalid: return L10n.t("Treat the signing time as the signer's claim.")
         case .weakDigest: return L10n.t("Ask the signer to sign again with SHA-256.")
+        case .weakKey: return L10n.t("Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve.")
         }
     }
 
@@ -119,8 +127,12 @@ public enum SignatureText {
         case .pageStructure: return L10n.t("Pages changed") + place
         case .form: return L10n.t("Form changed") + place
         case .unreadable: return L10n.t("Added data cannot be checked")
-        case .other: return L10n.t("Document changed") + place
+        case .other: return L10n.t("File changed") + place
         }
+    }
+
+    private static func onlyExpired(_ report: SignatureReport) -> Bool {
+        report.verdict == .validButUntrusted && report.problems == [.certificateExpired]
     }
 
     // The abbreviated month names are those of the language in use: English or Turkish, as the culture type knows them.

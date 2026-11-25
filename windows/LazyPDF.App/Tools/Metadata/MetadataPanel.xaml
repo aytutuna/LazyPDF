@@ -3,7 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools">
-    <StackPanel Margin="12,4,12,12" LostKeyboardFocus="Fields_LostKeyboardFocus">
+    <StackPanel Margin="12,4,12,12" IsKeyboardFocusWithinChanged="Fields_FocusWithinChanged">
         <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Title}" />
         <TextBox x:Name="TitleBox" AutomationProperties.Name="{loc:T Title}" TextChanged="Field_Changed" />
 
@@ -24,6 +24,30 @@
         <CheckBox x:Name="TouchModifiedBox" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" IsChecked="True"
                   Content="{loc:T Update the changed date}" AutomationProperties.Name="{loc:T Update the changed date}" />
         <TextBlock x:Name="MakerText" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Visibility="Collapsed" />
+        <TextBlock x:Name="XmpText" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Visibility="Collapsed" />
+
+        <TextBlock Style="{StaticResource SectionHeaderText}" Margin="0,20,0,8" Text="{loc:T Custom properties}" AutomationProperties.HeadingLevel="Level3" />
+        <ItemsControl x:Name="CustomList" KeyboardNavigation.TabNavigation="Continue">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding Name, Mode=OneTime}" AutomationProperties.Name="{loc:T Property name}" TextChanged="CustomName_Changed" />
+                        <TextBox Grid.Column="1" Margin="6,0,0,0" Text="{Binding Value, Mode=OneTime}" AutomationProperties.Name="{loc:T Property value}"
+                                 TextChanged="CustomValue_Changed" />
+                        <Button Grid.Column="2" Margin="6,0,0,0" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;" ToolTip="{loc:T Remove property}"
+                                AutomationProperties.Name="{loc:T Remove property}" Click="RemoveCustom_Click" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button x:Name="AddCustomButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" Content="{loc:T Add property}"
+                HorizontalAlignment="Left" AutomationProperties.Name="{loc:T Add property}" Click="AddCustom_Click" />
+        <TextBlock x:Name="CustomNote" Style="{StaticResource ReasonText}" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite" />
 
         <TextBlock Style="{StaticResource SectionHeaderText}" Margin="0,20,0,8" Text="{loc:T When it opens}" AutomationProperties.HeadingLevel="Level3" />
         <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Show beside the page}" />
@@ -43,8 +67,8 @@
                   AutomationProperties.Name="{loc:T Hide window controls}" Click="Field_Changed" />
         <CheckBox x:Name="FitBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Size window to page}"
                   AutomationProperties.Name="{loc:T Size window to page}" Click="Field_Changed" />
-        <CheckBox x:Name="CentreBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Centre the window}"
-                  AutomationProperties.Name="{loc:T Centre the window}" Click="Field_Changed" />
+        <CheckBox x:Name="CentreBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Center the window}"
+                  AutomationProperties.Name="{loc:T Center the window}" Click="Field_Changed" />
         <CheckBox x:Name="RightToLeftBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Read right to left}"
                   AutomationProperties.Name="{loc:T Read right to left}" Click="Field_Changed" />
 

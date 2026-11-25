@@ -4,7 +4,9 @@ using Xunit;
 
 namespace LazyPDF.App.Tests;
 
-// The settings files: lenient decoding, a file that does not decode moved aside.
+// The settings files: lenient decoding, a file that does not decode moved aside. In the Application collection because
+// WindowCloseTests points DefaultDirectory at a temporary folder while it runs.
+[Collection("Application")]
 public sealed class StoreFilesTests
 {
     private static byte[] Bytes(string text) => Encoding.UTF8.GetBytes(text);
@@ -23,6 +25,99 @@ public sealed class StoreFilesTests
     }
 
     [Fact]
+    public void ThumbnailWidthDefaultsAndIsClamped()
+    {
+        using var dir = new TempDir();
+        Assert.Equal(132, AppPreferencesStore.Load(dir.Path).ThumbnailWidth);
+
+        AppPreferencesStore.Update(p => p.ThumbnailWidth = 500, dir.Path);
+        Assert.Equal(192, AppPreferencesStore.Load(dir.Path).ThumbnailWidth);
+    }
+
+    [Fact]
+    public void FileInformationIsShownUntilHidden()
+    {
+        using var dir = new TempDir();
+        Assert.True(AppPreferencesStore.Load(dir.Path).ShowFileInfo);
+
+        AppPreferencesStore.Update(p => p.ShowFileInfo = false, dir.Path);
+
+        Assert.False(AppPreferencesStore.Load(dir.Path).ShowFileInfo);
+    }
+
+    [Fact]
+    public void PanelWidthsAreReadBackAndAnOldFileGetsTheDefaults()
+    {
+        using var dir = new TempDir();
+        dir.File("preferences.json", Bytes("{\"appearance\":\"dark\"}"));
+        var old = AppPreferencesStore.Load(dir.Path);
+        Assert.Equal(260, old.SidePanelWidth);
+        Assert.Equal(280, old.InspectorWidth);
+
+        AppPreferencesStore.Update(p => { p.SidePanelWidth = 310; p.InspectorWidth = 340.5; }, dir.Path);
+
+        var loaded = AppPreferencesStore.Load(dir.Path);
+        Assert.Equal(310, loaded.SidePanelWidth);
+        Assert.Equal(340.5, loaded.InspectorWidth);
+    }
+
+    [Fact]
+    public void TheSessionIsReadBackAsWritten()
+    {
+        using var dir = new TempDir();
+        Assert.False(AppPreferencesStore.Load(dir.Path).ReopenLast);
+
+        AppPreferencesStore.Update(p => { p.ReopenLast = true; p.LastFiles = ["a.pdf", "b.pdf"]; p.LastActive = "b.pdf"; }, dir.Path);
+
+        var loaded = AppPreferencesStore.Load(dir.Path);
+        Assert.True(loaded.ReopenLast);
+        Assert.Equal(["a.pdf", "b.pdf"], loaded.LastFiles);
+        Assert.Equal("b.pdf", loaded.LastActive);
+    }
+
+    [Fact]
+    public void LanguageIsReadBackAsWrittenAndAnOldFileHasNone()
+    {
+        using var dir = new TempDir();
+        dir.File("preferences.json", Bytes("{\"appearance\":\"dark\"}"));
+        Assert.Equal("", AppPreferencesStore.Load(dir.Path).Language);
+
+        AppPreferencesStore.Update(p => p.Language = "tr", dir.Path);
+
+        Assert.Equal("tr", AppPreferencesStore.Load(dir.Path).Language);
+    }
+
+    [Fact]
+    public void ViewSettingsAreReadBackAsWritten()
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(p => { p.Tint = Viewer.PageTint.Sepia; p.Columns = 2; p.Cover = true; p.Continuous = false; }, dir.Path);
+
+        var loaded = AppPreferencesStore.Load(dir.Path);
+
+        Assert.Equal(Viewer.PageTint.Sepia, loaded.Tint);
+        Assert.Equal(2, loaded.Columns);
+        Assert.True(loaded.Cover);
+        Assert.False(loaded.Continuous);
+    }
+
+    [Fact]
+    public void TheWindowPlacementIsReadBackAsWritten()
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(p => p.Window = new WindowPlacement { Left = -20, Top = 30, Width = 900, Height = 600, Maximized = true }, dir.Path);
+
+        var window = AppPreferencesStore.Load(dir.Path).Window;
+
+        Assert.NotNull(window);
+        Assert.Equal(-20, window.Left);
+        Assert.Equal(30, window.Top);
+        Assert.Equal(900, window.Width);
+        Assert.Equal(600, window.Height);
+        Assert.True(window.Maximized);
+    }
+
+    [Fact]
     public void NoFileGivesTheDefaults()
     {
         using var dir = new TempDir();
@@ -31,6 +126,10 @@ public sealed class StoreFilesTests
 
         Assert.Equal(AppAppearance.System, loaded.Appearance);
         Assert.Equal("pages", loaded.SidePanel);
+        Assert.Equal(Viewer.PageTint.None, loaded.Tint);
+        Assert.Equal(1, loaded.Columns);
+        Assert.False(loaded.Cover);
+        Assert.True(loaded.Continuous);
     }
 
     [Fact]

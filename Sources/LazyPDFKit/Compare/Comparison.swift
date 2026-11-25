@@ -238,11 +238,13 @@ final class Comparison {
                 removed[hunk.key, default: []].append(hunk)
             }
         }
+        var taken: [String: Int] = [:]
         for item in work {
             for hunk in item.hunks where hunk.range.oldCount == 0 && hunk.range.newCount >= minMoveWords {
-                guard var queue = removed[hunk.key], !queue.isEmpty else { continue }
-                let source = queue.removeFirst()
-                removed[hunk.key] = queue
+                let next = taken[hunk.key, default: 0]
+                guard let queue = removed[hunk.key], next < queue.count else { continue }
+                let source = queue[next]
+                taken[hunk.key] = next + 1
                 hunk.partner = source
                 source.partner = hunk
             }

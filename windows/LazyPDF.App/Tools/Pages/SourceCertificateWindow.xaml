@@ -11,9 +11,9 @@
     <DockPanel>
         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="OpenButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Open}" MinWidth="88" Margin="0,0,8,0" IsDefault="True" IsEnabled="False"
+                <Button x:Name="OpenButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T _Open}" MinWidth="88" Margin="0,0,8,0" IsDefault="True" IsEnabled="False"
                         AutomationProperties.Name="{loc:T Open}" Click="Open_Click" />
-                <Button Content="{loc:T Cancel}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Cancel}" />
+                <Button Content="{loc:T _Cancel}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Cancel}" />
             </StackPanel>
         </Border>
         <StackPanel Margin="24,20,24,20">

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using LazyPDF.App.Tools.Protect;
+using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests.Tools.Protect;
@@ -42,13 +43,41 @@ public sealed class RecipientSourceTests
         Assert.Null(RecipientSource.FromFile(dir.File("notes.cer", "not a certificate"u8.ToArray())));
     }
 
-    [Fact]
-    public void ACertificateWithoutAnRsaKeyIsRefused()
+    [Theory]
+    [InlineData("nistP256")]
+    [InlineData("nistP384")]
+    public void ACertificateWithAKeyAgreementCurveIsRead(string curve)
     {
         using var dir = new TempDir();
-        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var ec = ECDsa.Create(ECCurve.CreateFromFriendlyName(curve));
+        var request = new CertificateRequest("CN=Grace Hopper", ec, HashAlgorithmName.SHA256);
+        string file = dir.File("ec.cer", request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(1)).RawData);
+
+        var recipient = RecipientSource.FromFile(file)!;
+
+        Assert.Equal("Grace Hopper", recipient.Name);
+        Assert.NotNull(recipient.ToPdfRecipient(PdfPermissions.All));
+    }
+
+    [Fact]
+    public void ACertificateWithAnUnsupportedCurveIsRefused()
+    {
+        using var dir = new TempDir();
+        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP521);
         var request = new CertificateRequest("CN=Curve", ec, HashAlgorithmName.SHA256);
         string file = dir.File("ec.cer", request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(1)).RawData);
+
+        Assert.Null(RecipientSource.FromFile(file));
+    }
+
+    [Fact]
+    public void ASigningOnlyCertificateIsRefused()
+    {
+        using var dir = new TempDir();
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest("CN=Signer", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation, true));
+        string file = dir.File("sign.cer", request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(1)).RawData);
 
         Assert.Null(RecipientSource.FromFile(file));
     }

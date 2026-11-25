@@ -17,12 +17,14 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         Touch(path, 2, 10);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         f.Vm.DismissMessage();
 
         Touch(path, 3, 20);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Equal("File changed", f.Vm.Message?.Title);
         Assert.NotNull(f.Vm.Message?.Action);
@@ -34,12 +36,15 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         Touch(path, 2, 10);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
+        // A quiet reload switches tabs, which starts a check of its own.
+        await f.SettledAsync();
         f.Vm.DismissMessage();
 
         File.Delete(path);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Equal("File is gone", f.Vm.Message?.Title);
     }
@@ -50,10 +55,13 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string a = f.Pdf("a.pdf");
         await f.Vm.OpenFilesAsync([a, f.Pdf("b.pdf")]);
+        f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         Touch(a, 2, 10);
         f.Vm.DismissMessage();
 
         f.Vm.ActiveTab = f.Vm.Documents.First();
+        await f.SettledAsync();
 
         Assert.Equal("File changed", f.Vm.Message?.Title);
     }
@@ -64,16 +72,18 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         Touch(path, 2, 10);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         await f.Vm.ReloadAsync(f.Vm.ActiveDocument!);
         f.Vm.DismissMessage();
 
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         Assert.Null(f.Vm.Message);
 
         Touch(path, 3, 20);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         Assert.Equal("File changed", f.Vm.Message?.Title);
     }
 }

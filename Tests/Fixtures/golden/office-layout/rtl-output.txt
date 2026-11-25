@@ -1,0 +1,511 @@
+> alignment of a right to left paragraph
+page 1 200.00 200.00
+text 136.33 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג דהו"
+text 20.00 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "אבג דהו"
+text 78.17 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "אבג דהו"
+text 20.00 66.20 Carlito/Regular 11.00 000000 +0.00 rtl "אבג דהו"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 136.33 170.1 Td
+| <0007000600050001000400030002> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 158 Td
+| <0007000600050001000400030002> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 78.17 145.9 Td
+| <0007000600050001000400030002> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 133.8 Td
+| <0007000600050001000400030002> Tj
+| ET
+> mixed text in a left to right paragraph
+page 1 200.00 200.00
+text 20.00 29.90 Carlito/Regular 11.00 000000 +0.00 "abc "
+text 42.55 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג"
+text 61.03 29.90 Carlito/Regular 11.00 000000 +0.00 " def 12 "
+text 97.22 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "דהו"
+text 95.19 42.00 Carlito/Regular 11.00 000000 +0.00 "abc "
+text 117.74 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "אבג דהו"
+text 161.41 42.00 Carlito/Regular 11.00 000000 +0.00 " def"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 170.1 Td
+| <0004000500060001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 42.55 170.1 Td
+| <000C000B000A> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 61.03 170.1 Td
+| <00010007000800090001000200030001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 97.22 170.1 Td
+| <000F000E000D> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 95.19 158 Td
+| <0004000500060001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 117.74 158 Td
+| <000F000E000D0001000C000B000A> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 161.41 158 Td
+| <0001000700080009> Tj
+| ET
+> digits and brackets in right to left text
+page 1 200.00 200.00
+text 142.38 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אב (גד) "
+text 107.73 29.90 Carlito/Regular 11.00 000000 +0.00 "abc 12"
+text 158.77 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "אבג "
+text 137.32 42.00 Carlito/Regular 11.00 000000 +0.00 "12.5"
+text 112.13 42.00 Carlito/Regular 11.00 000000 +0.00 rtl " דהו"
+text 176.70 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "("
+text 156.90 54.10 Carlito/Regular 11.00 000000 +0.00 "abc"
+text 132.37 54.10 Carlito/Regular 11.00 000000 +0.00 rtl ") אבג"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 142.38 170.1 Td
+| /Span <</ActualText <FEFF05D005D10020002805D205D300290020>>> BDC
+| <00010002000E000D00030001000C000B> Tj
+| EMC
+| ET
+| BT
+| /F1 11 Tf
+| 107.73 170.1 Td
+| <00080009000A000100050006> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 158.77 158 Td
+| <0001000D000C000B> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 137.32 158 Td
+| <0005000600040007> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 112.13 158 Td
+| <0010000F000E0001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 176.7 145.9 Td
+| /Span <</ActualText <FEFF0028>>> BDC
+| <0003> Tj
+| EMC
+| ET
+| BT
+| /F1 11 Tf
+| 156.9 145.9 Td
+| <00080009000A> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 132.37 145.9 Td
+| /Span <</ActualText <FEFF0029002005D005D105D2>>> BDC
+| <000D000C000B00010002> Tj
+| EMC
+| ET
+> wrapped lines count from the start edge
+page 1 120.00 200.00
+text 26.33 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג דהו"
+text 43.37 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "זחט יכל"
+text 39.41 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "מנס עפצ"
+text 42.93 66.20 Carlito/Regular 11.00 000000 +0.00 rtl "קרש תאב"
+text 38.97 78.30 Carlito/Regular 11.00 000000 +0.00 rtl "גדה וזח"
+text 39.85 90.40 Carlito/Regular 11.00 000000 +0.00 rtl "טיכ למנ"
+text 70.20 102.50 Carlito/Regular 11.00 000000 +0.00 "abc"
+text 23.78 102.50 Carlito/Regular 11.00 000000 +0.00 rtl " אבג דהו"
+text 22.58 114.60 Carlito/Regular 11.00 000000 +0.00 rtl "זחט יכל מנס"
+text 20.38 126.70 Carlito/Regular 11.00 000000 +0.00 rtl "עפצ קרש תאב"
+text 58.88 138.80 Carlito/Regular 11.00 000000 +0.00 rtl "גדה"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 26.33 170.1 Td
+| <000A000900080001000700060005> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 43.37 158 Td
+| <0010000F000E0001000D000C000B> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 39.41 145.9 Td
+| <0016001500140001001300120011> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 42.93 133.8 Td
+| <00060005001A0001001900180017> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 38.97 121.7 Td
+| <000C000B000A0001000900080007> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 39.85 109.6 Td
+| <0012001100100001000F000E000D> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 70.2 97.5 Td
+| <000200030004> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 23.78 97.5 Td
+| <000A0009000800010007000600050001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 22.58 85.4 Td
+| <00130012001100010010000F000E0001000D000C000B> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20.38 73.3 Td
+| <00060005001A00010019001800170001001600150014> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 58.88 61.2 Td
+| <000900080007> Tj
+| ET
+> justified right to left
+page 1 120.00 200.00
+text 78.77 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג "
+text 44.05 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "דהו "
+text 20.00 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "זחט"
+text 77.89 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "יכל "
+text 48.45 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "מנס "
+text 20.00 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "עפצ"
+text 80.09 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "קרש "
+text 50.65 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "תאב "
+text 20.00 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "גדה"
+text 80.09 66.20 Carlito/Regular 11.00 000000 +0.00 rtl "וזח "
+text 49.77 66.20 Carlito/Regular 11.00 000000 +0.00 rtl "טיכ "
+text 20.00 66.20 Carlito/Regular 11.00 000000 +0.00 rtl "למנ"
+text 82.40 78.30 Carlito/Regular 11.00 000000 +0.00 rtl "סעפ"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 78.77 170.1 Td
+| <0001000400030002> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 44.05 170.1 Td
+| <0001000700060005> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 170.1 Td
+| <000A00090008> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 77.89 158 Td
+| <0001000D000C000B> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 48.45 158 Td
+| <00010010000F000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 158 Td
+| <001300120011> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 80.09 145.9 Td
+| <0001001600150014> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 50.65 145.9 Td
+| <0001000300020017> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 145.9 Td
+| <000600050004> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 80.09 133.8 Td
+| <0001000900080007> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 49.77 133.8 Td
+| <0001000C000B000A> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 133.8 Td
+| <000F000E000D> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 82.4 121.7 Td
+| <001200110010> Tj
+| ET
+> several runs in a right to left paragraph
+page 1 200.00 200.00
+rect 116.31 20.00 17.27 12.10 ffff00
+text 158.77 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג "
+text 133.58 29.90 Carlito/Bold 11.00 ff0000 +0.00 rtl "דהו "
+text 116.31 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "זחט "
+text 96.51 29.90 Carlito/Regular 11.00 000000 +0.00 "abc"
+rect 133.58 31.00 25.19 0.55 ff0000
+rect 116.31 26.60 17.27 0.55 000000
+| 1 1 0 rg
+| 116.31 167.9 17.27 12.1 re
+| f
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 158.77 170.1 Td
+| <0001000700060005> Tj
+| ET
+| 1 0 0 rg
+| BT
+| /F2 11 Tf
+| 133.58 170.1 Td
+| <0001000400030002> Tj
+| ET
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 116.31 170.1 Td
+| <0001000A00090008> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 96.51 170.1 Td
+| <000200030004> Tj
+| ET
+| 1 0 0 rg
+| 133.58 168.45 25.19 0.55 re
+| f
+| 0 0 0 rg
+| 116.31 172.85 17.27 0.55 re
+| f
+> a right to left run in a left to right paragraph
+page 1 200.00 200.00
+text 20.00 29.90 Carlito/Regular 11.00 000000 +0.00 "abc "
+text 57.95 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "("
+text 45.85 29.90 Carlito/Regular 11.00 000000 +0.00 "12"
+text 42.55 29.90 Carlito/Regular 11.00 000000 +0.00 rtl ")"
+text 61.25 29.90 Carlito/Regular 11.00 000000 +0.00 "def"
+text 20.00 42.00 Carlito/Regular 11.00 000000 +0.00 "12"
+text 32.10 42.00 Carlito/Regular 11.00 000000 +0.00 "abc"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 170.1 Td
+| <0006000700080001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 57.95 170.1 Td
+| /Span <</ActualText <FEFF0028>>> BDC
+| <0003> Tj
+| EMC
+| ET
+| BT
+| /F1 11 Tf
+| 45.85 170.1 Td
+| <00040005> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 42.55 170.1 Td
+| /Span <</ActualText <FEFF0029>>> BDC
+| <0002> Tj
+| EMC
+| ET
+| BT
+| /F1 11 Tf
+| 61.25 170.1 Td
+| <0009000A000B> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 158 Td
+| <00040005> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 32.1 158 Td
+| <000600070008> Tj
+| ET
+> arabic letters in logical order
+page 1 200.00 200.00
+text 142.49 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "ابلم ابل"
+text 20.00 42.00 Carlito/Regular 11.00 000000 +0.00 "abc "
+text 54.65 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "ابل "
+text 42.55 42.00 Carlito/Regular 11.00 000000 +0.00 "12"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 142.49 170.1 Td
+| <0009000800070001000A000900080007> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 158 Td
+| <0004000500060001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 54.65 158 Td
+| <0001000900080007> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 42.55 158 Td
+| <00020003> Tj
+| ET
+> a bullet and tabs
+page 1 200.00 200.00
+text 174.50 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "•"
+text 29.61 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג דהו זחט יכל מנס עפצ"
+text 95.06 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "קרש תאב גדה"
+text 161.52 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "אבג"
+text 121.56 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "דהו"
+text 88.20 54.10 Carlito/Regular 11.00 000000 +0.00 "abc"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 174.5 170.1 Td
+| <0000> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 29.61 170.1 Td
+| <001600150014000100130012001100010010000F000E0001000D000C000B0001000A000900080001000700060005> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 95.06 158 Td
+| <000900080007000100060005001A0001001900180017> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 161.52 145.9 Td
+| <000700060005> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 121.56 145.9 Td
+| <000A00090008> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 88.2 145.9 Td
+| <000200030004> Tj
+| ET
+missing 2022
+> a line break and spaces at the end
+page 1 200.00 200.00
+text 161.52 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג"
+text 152.06 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "דהו  "
+text 132.26 42.00 Carlito/Regular 11.00 000000 +0.00 "abc"
+text 165.48 54.10 Carlito/Regular 11.00 000000 +0.00 rtl "זחט"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 161.52 170.1 Td
+| <000700060005> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 152.06 158 Td
+| <00010001000A00090008> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 132.26 158 Td
+| <000200030004> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 165.48 145.9 Td
+| <000D000C000B> Tj
+| ET
+> header and footer
+page 1 200.00 200.00
+text 161.52 19.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג"
+text 20.00 187.80 Carlito/Regular 11.00 000000 +0.00 rtl "דהו"
+text 165.48 32.00 Carlito/Regular 11.00 000000 +0.00 rtl "זחט"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 161.52 180.1 Td
+| <000300020001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 12.2 Td
+| <000600050004> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 165.48 168 Td
+| <000900080007> Tj
+| ET
+> right to left cell text
+page 1 200.00 200.00
+text 33.66 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג דהו זחט"
+text 54.45 42.00 Carlito/Regular 11.00 000000 +0.00 rtl "יכל מנס"
+text 105.40 29.90 Carlito/Regular 11.00 000000 +0.00 "abc "
+text 127.95 29.90 Carlito/Regular 11.00 000000 +0.00 rtl "אבג"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 33.66 170.1 Td
+| <000D000C000B0001000A000900080001000700060005> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 54.45 158 Td
+| <00130012001100010010000F000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 105.4 170.1 Td
+| <0002000300040001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 127.95 170.1 Td
+| <000700060005> Tj
+| ET

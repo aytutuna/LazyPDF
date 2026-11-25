@@ -13,7 +13,17 @@ internal sealed partial class AppearanceBuilder(PdfDocument document, IFontSourc
 
     private PdfFontEmbedder? _embedder;
 
+    private readonly SortedSet<int> _undrawn = [];
+
     private PdfFontEmbedder Embedder => _embedder ??= new PdfFontEmbedder(document, fonts);
+
+    /// <summary>The characters no font could draw since the last call, once each in code point order; clears them.</summary>
+    public string TakeUndrawn()
+    {
+        string text = string.Concat(_undrawn.Select(char.ConvertFromUtf32));
+        _undrawn.Clear();
+        return text;
+    }
 
     /// <summary>True for the subtypes this builder can draw.</summary>
     public static bool CanDraw(AnnotationType type) =>

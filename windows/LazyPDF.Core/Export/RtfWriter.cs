@@ -85,7 +85,7 @@ public static class RtfWriter
             }
             for (int c = 0; c < columns; c++)
             {
-                string cell = c == columns - 1 && columns < row.Count ? string.Join(" ", row.Skip(c).Where(t => t.Length > 0)) : row[c];
+                string cell = DocxWriter.Cell(row, c, columns);
                 sb.Append(@"\pard\intbl\fs20 ").Append(Text(cell)).Append(@"\cell");
             }
             sb.Append(@"\row").Append('\n');

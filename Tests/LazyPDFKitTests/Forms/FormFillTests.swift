@@ -74,6 +74,81 @@ final class FormFillTests: XCTestCase {
         try AnnotationFixtures.reopen(form.document)
     }
 
+    private final class CjkSource: FontSource {
+        private let lacking: [UInt8]
+        private let covering: [UInt8]?
+
+        init(covering: Bool) throws {
+            lacking = try SyntheticFonts.onlyA()
+            self.covering = covering ? try SyntheticFonts.ttf() : nil
+        }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            if family == "Microsoft YaHei", let covering { return FontFile(covering) }
+            return FontFile(lacking)
+        }
+    }
+
+    func test_textTheFormFontLacksIsDrawnInAFallbackFont() throws {
+        let form = try open(fonts: try CjkSource(covering: true))
+
+        let result = try form.setValue("name", "AğB A")
+
+        XCTAssertEqual(result.undrawn, "")
+        XCTAssertEqual(try FormFixtures.drawn(form.document, try widget(form, "name")), "AğB A")
+        let stream = try normal(form, try widget(form, "name"))
+        let fonts = try XCTUnwrap(form.document.dict(form.document.dict(stream.dictionary, "Resources"), "Font"))
+        let used = try XCTUnwrap(form.document.resolve(try XCTUnwrap(fonts.entries.first).value) as? PdfDictionary)
+        XCTAssertEqual(form.document.name(used, "Subtype"), "Type0")
+    }
+
+    private final class ScriptSource: FontSource {
+        private let data: [UInt8]
+
+        init() throws { data = try ShapingGolden.font() }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? { FontFile(data) }
+    }
+
+    func test_hebrewIsNotShownInASimpleFormFontThatEncodesIt() throws {
+        let form = try open(fonts: try ScriptSource())
+        let helv = try XCTUnwrap(form.document.resolve(try XCTUnwrap(form.document.dict(form.document.dict(form.acroForm, "DR"), "Font"))["Helv"]) as? PdfDictionary)
+        let encoding = PdfDictionary()
+        encoding["Differences"] = PdfArray([PdfNumber(224), PdfName("uni05E9"), PdfName("uni05DC"), PdfName("uni05D5"), PdfName("uni05DD")])
+        helv["Encoding"] = encoding
+
+        try form.setValue("name", "\u{05E9}\u{05DC}\u{05D5}\u{05DD}")
+
+        let stream = try normal(form, try widget(form, "name"))
+        let fonts = try XCTUnwrap(form.document.dict(form.document.dict(stream.dictionary, "Resources"), "Font"))
+        let used = try XCTUnwrap(form.document.resolve(try XCTUnwrap(fonts.entries.first).value) as? PdfDictionary)
+        XCTAssertEqual(form.document.name(used, "Subtype"), "Type0")
+    }
+
+    func test_charactersNoFontHasAreReportedAndTheFillSucceeds() throws {
+        let form = try open(fonts: try CjkSource(covering: false))
+
+        let result = try form.setValue("name", "BğBğA")
+
+        XCTAssertEqual(result.filled, 1)
+        XCTAssertEqual(result.undrawn, "Bğ")
+        XCTAssertEqual(try XCTUnwrap(form.find("name")).value, "BğBğA")
+    }
+
+    func test_ordinaryTurkishFillLeavesNothingUndrawn() throws {
+        let form = try open(fonts: try AnnotationFixtures.ArialSource())
+
+        XCTAssertEqual(try form.setValue("name", "AğB İA").undrawn, "")
+    }
+    func test_fontNameWithReplacementSyntaxGoesIntoTheDefaultAppearanceLiterally() throws {
+        let form = try open()
+        let holder = PdfDictionary()
+
+        form.setFontName(holder, "/Helv 12 Tf 0 g", "A$1B")
+
+        XCTAssertEqual(PdfText.read(form.document, holder, "DA"), "/A$1B 12 Tf 0 g")
+    }
+
     func test_fieldsOfOneBatchShareOneAddedFont() throws {
         let form = try open(fonts: try AnnotationFixtures.ArialSource())
 

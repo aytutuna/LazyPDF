@@ -10,12 +10,13 @@ internal static class OptimizeStreams
     private static readonly string[] PredictorKeys = ["Predictor", "Colors", "BitsPerComponent", "Columns"];
 
     /// <summary>Returns (streams recompressed, streams converted from the old filters).</summary>
-    public static (int Recompressed, int Converted) Run(PdfDocument document, bool recompress, bool convert)
+    public static (int Recompressed, int Converted) Run(PdfDocument document, bool recompress, bool convert, CancellationToken cancel)
     {
         int recompressed = 0, converted = 0;
         foreach (var (_, value) in PdfGraph.Objects(document))
         {
             if (value is not PdfStream stream) continue;
+            cancel.ThrowIfCancellationRequested();
             var filters = Filters(document, stream);
             if (filters is null || filters.Count == 0) continue;
             bool old = filters.Any(Old.Contains);

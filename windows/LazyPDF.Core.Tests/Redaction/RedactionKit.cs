@@ -10,7 +10,7 @@ internal sealed record DrawnGlyph(string Text, double X, double Y);
 
 internal sealed class FakeCodec(PdfRgbaImage? image) : IImageCodec
 {
-    public PdfRgbaImage? Decode(byte[] data, string codec) => image;
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => image;
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => null;
     public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
 }

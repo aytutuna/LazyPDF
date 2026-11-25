@@ -50,6 +50,24 @@ public static class MeasureShape
         return Math.Abs(twice) / 2;
     }
 
+    /// <summary>Degrees as seen on the page: a line against the horizontal, or the inner angle at the latest corner of a shape.</summary>
+    public static double? Angle(IReadOnlyList<Point> points, MeasureKind kind)
+    {
+        if (kind == MeasureKind.Distance)
+        {
+            if (points.Count < 2) return null;
+            var d = points[^1] - points[0];
+            if (d.Length == 0) return null;
+            double degrees = Math.Atan2(-d.Y, d.X) * 180 / Math.PI;
+            return (degrees % 180 + 180) % 180;
+        }
+        if (points.Count < 3) return null;
+        var u = points[^3] - points[^2];
+        var v = points[^1] - points[^2];
+        if (u.Length == 0 || v.Length == 0) return null;
+        return Math.Acos(Math.Clamp(u * v / (u.Length * v.Length), -1, 1)) * 180 / Math.PI;
+    }
+
     public static Point? Nearest(IEnumerable<Point> candidates, Point at, double radius)
     {
         Point? best = null;
@@ -59,6 +77,24 @@ public static class MeasureShape
             double d = (c - at).Length;
             if (d > near) continue;
             near = d;
+            best = c;
+        }
+        return best;
+    }
+
+    /// <summary>The closest point of any of the segments within <paramref name="radius"/> of <paramref name="at"/>.</summary>
+    public static Point? NearestOnLines(IEnumerable<(Point From, Point To)> lines, Point at, double radius)
+    {
+        Point? best = null;
+        double near = radius;
+        foreach (var (a, b) in lines)
+        {
+            var d = b - a;
+            double t = Math.Clamp((at - a) * d / (d * d), 0, 1);
+            var c = a + t * d;
+            double distance = (c - at).Length;
+            if (distance > near) continue;
+            near = distance;
             best = c;
         }
         return best;

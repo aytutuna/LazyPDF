@@ -1,20 +1,62 @@
+using System.Windows;
 using LazyPDF.App.Documents;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Forms;
 
+public enum AlignKind { Left, Centre, Right, Top, Middle, Bottom, SpaceAcross, SpaceDown }
+
 /// <summary>Changes to the form of a tab, each one undoable step. Core's exceptions pass through to the caller.</summary>
+/// <summary>
+/// Typing into one field, or changing it again and again, is one undo step. Another field, another tool, an undo or a
+/// redo starts a new one: the tab's revision moves with each of those, and Core refuses a merge after a save.
+/// </summary>
+internal sealed class FillMerge
+{
+    private DocumentTab? _tab;
+    private int _revision;
+
+    public T Apply<T>(DocumentTab tab, IFontSource fonts, string label, Func<PdfForm, T> edit)
+    {
+        bool merge = ReferenceEquals(tab, _tab) && tab.Revision == _revision;
+        int before = tab.Revision;
+        var result = FormEdits.Apply(tab, fonts, label, edit, merge);
+        if (tab.Revision != before) (_tab, _revision) = (tab, tab.Revision);
+        return result;
+    }
+
+    public void Forget() => _tab = null;
+}
+
 internal static class FormEdits
 {
     public static PdfForm Read(DocumentTab tab, IFontSource fonts) => PdfForm.Read(tab.Document, fonts);
 
+    // What a person should hear when the file opens.
+    public static (string Title, string Text, bool Xfa)? OpenNotice(PdfDocument document, string title)
+    {
+        PdfForm form;
+        try
+        {
+            form = PdfForm.Read(document);
+        }
+        catch (PdfReadException)
+        {
+            return null;
+        }
+        if (form.Xfa == XfaKind.Dynamic) return (Loc.T("XFA form"), Loc.T("Lazy PDF shows the pages this file keeps for other viewers. Open it in an app that supports XFA to see the whole form."), true);
+        if (form.Scripts.Any(s => !s.Ran))
+            return (Loc.T("Form scripts will not run"), Loc.T("{0} has scripts in its form. Lazy PDF does not run them, so some fields may not calculate or check what is typed.", title), false);
+        return null;
+    }
+
     // A refused edit may have changed the document before it threw; those changes go, so they do not ride into the next step.
-    public static T Apply<T>(DocumentTab tab, IFontSource fonts, string label, Func<PdfForm, T> edit)
+    public static T Apply<T>(DocumentTab tab, IFontSource fonts, string label, Func<PdfForm, T> edit, bool merge = false)
     {
         try
         {
             var result = edit(Read(tab, fonts));
-            tab.Commit(label);
+            tab.Commit(label, merge);
             return result;
         }
         catch
@@ -71,6 +113,79 @@ internal static class FormEdits
         }
     }
 
+    /// <summary>Every widget on a page with its box, in the order of the fields; the ordinal tells apart fields that share a name.</summary>
+    public static List<(string Name, int Index, int Ordinal, Rect Box)> Widgets(PdfForm form, int page, Func<FormWidget, Rect> boxOf)
+    {
+        var found = new List<(string, int, int, Rect)>();
+        var seen = new Dictionary<string, int>();
+        foreach (var field in form.Fields)
+        {
+            int ordinal = seen.GetValueOrDefault(field.Name);
+            seen[field.Name] = ordinal + 1;
+            for (int i = 0; i < field.Widgets.Count; i++)
+            {
+                if (field.Widgets[i].PageIndex == page) found.Add((field.Name, i, ordinal, boxOf(field.Widgets[i])));
+            }
+        }
+        return found;
+    }
+
+    /// <summary>Gives each widget its rectangle.</summary>
+    public static void ResizeAll(PdfForm form, IEnumerable<(string Name, int Index, int Ordinal, PdfRect Rect)> moves)
+    {
+        foreach (var (name, index, ordinal, rect) in moves) form.Resize(WidgetOf(form, name, index, ordinal), rect);
+    }
+
+    /// <summary>The boxes after aligning to the first one, or after spacing the gaps evenly between the two outermost; sizes stay.</summary>
+    public static Rect[] Align(IReadOnlyList<Rect> boxes, AlignKind kind)
+    {
+        var result = boxes.ToArray();
+        if (boxes.Count == 0) return result;
+        var first = boxes[0];
+        if (kind is AlignKind.SpaceAcross or AlignKind.SpaceDown)
+        {
+            bool across = kind == AlignKind.SpaceAcross;
+            var order = Enumerable.Range(0, boxes.Count).OrderBy(i => across ? boxes[i].X : boxes[i].Y).ToList();
+            double start = across ? boxes[order[0]].X : boxes[order[0]].Y;
+            double end = across ? boxes[order[^1]].Right : boxes[order[^1]].Bottom;
+            double gap = (end - start - order.Sum(i => across ? boxes[i].Width : boxes[i].Height)) / Math.Max(1, boxes.Count - 1);
+            double at = start;
+            foreach (int i in order)
+            {
+                if (across) result[i].X = at; else result[i].Y = at;
+                at += (across ? boxes[i].Width : boxes[i].Height) + gap;
+            }
+            return result;
+        }
+        for (int i = 0; i < result.Length; i++)
+        {
+            switch (kind)
+            {
+                case AlignKind.Left: result[i].X = first.X; break;
+                case AlignKind.Centre: result[i].X = first.X + (first.Width - result[i].Width) / 2; break;
+                case AlignKind.Right: result[i].X = first.Right - result[i].Width; break;
+                case AlignKind.Top: result[i].Y = first.Y; break;
+                case AlignKind.Middle: result[i].Y = first.Y + (first.Height - result[i].Height) / 2; break;
+                default: result[i].Y = first.Bottom - result[i].Height; break;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>Takes the widgets out. Each removal reads the form again, so the last widgets go first and a radio group loses its buttons from the end.</summary>
+    public static void RemoveAll(PdfForm form, IEnumerable<(string Name, int Index, int Ordinal)> picked)
+    {
+        foreach (var (name, index, ordinal) in picked.OrderByDescending(p => p.Ordinal).ThenByDescending(p => p.Index))
+            form.Remove(WidgetOf(form, name, index, ordinal));
+    }
+
+    /// <summary>The picked widgets the form still has.</summary>
+    public static HashSet<(string Name, int Index, int Ordinal)> Existing(PdfForm form, IEnumerable<(string Name, int Index, int Ordinal)> picked) =>
+        [.. picked.Where(p => form.FindAll(p.Name).ElementAtOrDefault(p.Ordinal)?.Widgets.ElementAtOrDefault(p.Index) is not null)];
+
+    private static FormWidget WidgetOf(PdfForm form, string name, int index, int ordinal) =>
+        form.FindAll(name).ElementAtOrDefault(ordinal)?.Widgets.ElementAtOrDefault(index) ?? throw new InvalidOperationException(FormText.NotAField);
+
     /// <summary>Points, for a field drawn with a click instead of a drag.</summary>
     public static (double Width, double Height) DefaultSize(FieldKind kind) => kind switch
     {
@@ -114,6 +229,66 @@ internal static class FormEdits
             for (int n = 2; Taken(form, name); n++) name = stem + "_" + n;
             form.AddField(spec with { Name = name, Rotation = PageRotation(form, spec.PageIndex) });
             added++;
+        }
+        return added;
+    }
+
+    /// <summary>What it takes to make the widget again: the field's settings and the look the widget itself carries.</summary>
+    public static FieldSpec CopySpec(PdfForm form, FormField field, FormWidget widget)
+    {
+        var document = form.Document;
+        var look = form.GetTextLook(field);
+        var mk = document.Dict(widget.Dictionary, "MK");
+        var bs = document.Dict(widget.Dictionary, "BS");
+        double[]? Colour(string key) => document.Array(mk, key) is { Items.Count: 1 or 3 or 4 } array
+            ? [.. array.Items.Select(i => (document.Resolve(i) as PdfNumber)?.Value ?? 0)] : null;
+        return new FieldSpec(field.Kind, field.Name, widget.PageIndex, widget.Rect)
+        {
+            DefaultValue = field.DefaultValue,
+            Options = field.Options,
+            Flags = field.Flags,
+            MaxLength = field.MaxLength,
+            Tooltip = field.Tooltip,
+            Font = look.Font,
+            FontSize = look.Size,
+            TextColor = look.Color,
+            BorderColor = Colour("BC"),
+            Background = Colour("BG"),
+            BorderWidth = document.Number(bs, "W") ?? 1,
+            BorderStyle = document.Name(bs, "S") switch { "D" => BorderStyle.Dashed, "B" => BorderStyle.Beveled, "I" => BorderStyle.Inset, "U" => BorderStyle.Underline, _ => BorderStyle.Solid },
+            Alignment = field.Alignment,
+            Caption = CaptionOf(form, field) is { Length: > 0 } caption ? caption : null,
+            ExportValue = field.Kind is FieldKind.CheckBox or FieldKind.Radio ? widget.Export : null,
+        };
+    }
+
+    /// <summary>
+    /// Adds the copies 12 points right and down for each step, kept on the page. They go on their own page when
+    /// <paramref name="ownPage"/> is set and the file has it, else on <paramref name="view"/>. A radio button joins
+    /// the group of its name. Returns the name and widget index of each.
+    /// </summary>
+    public static List<(string Name, int Widget)> Paste(PdfForm form, IEnumerable<FieldSpec> specs, int view, bool ownPage, int step)
+    {
+        var added = new List<(string, int)>();
+        foreach (var spec in specs)
+        {
+            int page = ownPage && spec.PageIndex < form.Document.Pages.Count ? spec.PageIndex : view;
+            var crop = form.Document.Pages[page].CropBox;
+            var r = spec.Rect;
+            double left = Math.Clamp(r.Left + 12 * step, crop.Left, Math.Max(crop.Left, crop.Right - (r.Right - r.Left)));
+            double bottom = Math.Clamp(r.Bottom - 12 * step, crop.Bottom, Math.Max(crop.Bottom, crop.Top - (r.Top - r.Bottom)));
+            var rect = new PdfRect(left, bottom, left + (r.Right - r.Left), bottom + (r.Top - r.Bottom));
+            if (spec.Kind == FieldKind.Radio && form.Find(spec.Name) is { Kind: FieldKind.Radio } group)
+            {
+                bool free = spec.ExportValue is not null && group.Widgets.All(w => w.OnState != spec.ExportValue);
+                form.AddWidget(group, page, rect, free ? spec.ExportValue : null);
+                added.Add((group.Name, form.Find(group.Name)!.Widgets.Count - 1));
+                continue;
+            }
+            string stem = spec.Name.Replace('.', '_');
+            string name = Taken(form, spec.Name) ? stem : spec.Name;
+            for (int n = 2; Taken(form, name); n++) name = stem + "_" + n;
+            added.Add((form.AddField(spec with { Name = name, PageIndex = page, Rect = rect, Rotation = PageRotation(form, page) }).Name, 0));
         }
         return added;
     }

@@ -18,7 +18,19 @@ extension PdfDocument {
     /// permissions, and throws `PdfPermissionException` without them.
     public func saveRewrite(_ options: PdfSaveOptions = PdfSaveOptions()) throws -> [UInt8] {
         try requireEncryptionRights(options.security)
-        return PdfRewriter(self, options).run()
+        return try PdfRewriter(self, options).run()
+    }
+
+    /// As `saveRewrite(_:)`, and says in `dropped` how many objects the rewrite reached that the file's table
+    /// lists but that could not be read, and so are left out. A free or unlisted object is not counted. The
+    /// bytes are the same.
+    public func saveRewrite(_ options: PdfSaveOptions? = nil, dropped: inout Int) throws -> [UInt8] {
+        let options = options ?? PdfSaveOptions()
+        try requireEncryptionRights(options.security)
+        let rewriter = PdfRewriter(self, options)
+        let bytes = try rewriter.run()
+        dropped = rewriter.dropped.count
+        return bytes
     }
 
     /// The file had an /Info and the trailer has none now. Readers fill a missing key in from an older trailer,
@@ -34,6 +46,6 @@ extension PdfDocument {
     /// The place of object `number` in its object stream; 0 when that cannot be told.
     func indexInObjectStream(_ number: Int) -> Int {
         guard let entry = entries[number], entry.kind == .compressed else { return 0 }
-        return Swift.max(0, loadObjectStream(entry.streamNumber)?.numbers.firstIndex(of: number) ?? 0)
+        return loadObjectStream(entry.streamNumber)?.numberIndex[number] ?? 0
     }
 }

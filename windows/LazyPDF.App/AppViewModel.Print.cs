@@ -1,6 +1,7 @@
 // Printing: Lazy Print gets the file when it is there, otherwise the window opens the Windows print dialog.
 
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App;
@@ -10,14 +11,36 @@ public sealed partial class AppViewModel
     /// <summary>Raised when Lazy Print did not take the document: the window prints it itself.</summary>
     public event EventHandler<DocumentTab>? SystemPrintRequested;
 
-    public void Print()
+    /// <summary>Print hands the document to Lazy Print, so the control says so.</summary>
+    public bool PrintsInLazyPrint => _sisters.LazyPrintInstalled;
+
+    /// <summary>A renderer for a document that is not a tab, such as the sheets made for printing.</summary>
+    public IDocumentRenderer NewRenderer() => _renderers();
+
+    /// <summary>Set by the window: flushes typed text into the file and gives false while it waits for an answer, in which case nothing is printed.</summary>
+    public Func<bool> HandIn { get; set; } = () => true;
+
+    /// <summary>The system print dialog even when Lazy Print is installed and Print would hand the file over.</summary>
+    public void PrintHere()
     {
-        if (ActiveDocument is not { } tab) return;
+        if (PrintableTab() is { } tab) SystemPrintRequested?.Invoke(this, tab);
+    }
+
+    // The tab to print, or null when nothing is open, typed text is waiting or the owner forbids printing.
+    private DocumentTab? PrintableTab()
+    {
+        if (!HandIn() || ActiveDocument is not { } tab) return null;
         if (tab.Document.Security is { OpenedAsOwner: false } security && !security.Permissions.HasFlag(PdfPermissions.Print))
         {
             ShowProblem(new Problem(Loc.T("Printing is not allowed"), Loc.T("The owner of {0} did not allow it to be printed.", tab.Title)));
-            return;
+            return null;
         }
+        return tab;
+    }
+
+    public void Print()
+    {
+        if (PrintableTab() is not { } tab) return;
         string file;
         try
         {
@@ -29,7 +52,13 @@ public sealed partial class AppViewModel
             return;
         }
         if (_sisters.TryPrint(file)) SetStatus(Loc.T("Sent to Lazy Print."));
-        else SystemPrintRequested?.Invoke(this, tab);
+        else
+        {
+            // The system dialog prints from the renderer, so the copy is no use.
+            try { Directory.Delete(System.IO.Path.GetDirectoryName(file)!, recursive: true); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            SystemPrintRequested?.Invoke(this, tab);
+        }
     }
 
     // The file as it stands now, unsaved changes included, in a folder of its own so the name stays the document's.

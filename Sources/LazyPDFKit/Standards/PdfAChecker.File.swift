@@ -21,9 +21,10 @@ extension PdfAChecker {
     }
 
     // Nothing refers to an object stream as a value, so the walk of the objects never meets one; the strings in it are read here.
-    // The entries are a Dictionary in Swift, so the streams are taken in the order of their numbers.
+    // The streams are taken in the order the file lists their members, as the C# walks its entries.
     private func checkObjectStreams() {
-        let numbers = Set(document.entries.values.filter { $0.kind == .compressed }.map { $0.streamNumber }).sorted()
+        var listed = Set<Int>()
+        let numbers = document.entryOrder.compactMap { document.entries[$0] }.filter { $0.kind == .compressed }.map { $0.streamNumber }.filter { listed.insert($0).inserted }
         for number in numbers {
             if overBudget { return }
             guard let stream = document.get(number) as? PdfStream else { continue }
@@ -69,15 +70,15 @@ extension PdfAChecker {
     }
 
     /// The keyword line before the data and the bytes after it (6.1.7 in part 1, 6.1.7.1 in part 2).
-    func checkStreamSyntax(_ stream: PdfStream, _ place: String) {
+    func checkStreamSyntax(_ stream: PdfStream, _ place: @autoclosure () -> String) {
         let data = document.source
         let start = stream.dataOffset
         if start < 0 || start > data.count { return }
         let keyword = start >= 2 && data[start - 1] == 10 ? (data[start - 2] == 13 ? start - 2 : start - 1) : -1
-        if keyword < 6 || Array(data[(keyword - 6)..<keyword]) != Array("stream".utf8) { add("6.1.7", place, PdfAText.streamKeyword) }
+        if keyword < 6 || Array(data[(keyword - 6)..<keyword]) != Array("stream".utf8) { add("6.1.7", place(), PdfAText.streamKeyword) }
 
         guard let declared = document.integer(stream.dictionary, "Length"), declared >= 0, declared <= data.count - start else {
-            add("6.1.7", place, PdfAText.streamLength)
+            add("6.1.7", place(), PdfAText.streamLength)
             return
         }
         let end = start + declared
@@ -89,7 +90,7 @@ extension PdfAChecker {
         } else {
             after = end
         }
-        if after == end || !data.hasPattern(Array("endstream".utf8), at: after) { add("6.1.7", place, PdfAText.streamLength) }
+        if after == end || !data.hasPattern(Array("endstream".utf8), at: after) { add("6.1.7", place(), PdfAText.streamLength) }
     }
 
     // 6.1.6: a hex string has an even number of hex digits and nothing but white space besides. The parser drops the difference, so this

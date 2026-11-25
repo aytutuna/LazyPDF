@@ -11,6 +11,14 @@
             <TextBlock x:Name="LanguageGlyph" DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
             <TextBlock x:Name="LanguageNote" Style="{StaticResource ReasonText}" />
         </DockPanel>
+        <Expander x:Name="MoreLanguagesSection" Header="{loc:T More languages}" Margin="0,8,0,0" Visibility="Collapsed"
+                  AutomationProperties.Name="{loc:T More languages}">
+            <StackPanel>
+                <ListBox x:Name="MoreLanguages" DisplayMemberPath="Name" MaxHeight="110" SelectionMode="Multiple"
+                         AutomationProperties.Name="{loc:T More languages}" />
+                <TextBlock Style="{StaticResource ReasonText}" Margin="0,6,0,0" Text="{loc:T Each page is read in the language that finds the most words. This takes longer.}" />
+            </StackPanel>
+        </Expander>
 
         <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Pages}" Margin="0,16,0,4" />
         <TextBlock x:Name="PagesSummary" Style="{StaticResource BodyText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />

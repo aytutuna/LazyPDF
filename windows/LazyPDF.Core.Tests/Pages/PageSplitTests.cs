@@ -50,7 +50,9 @@ public class PageSplitTests
     }
 
     // Pages of about a kilobyte of data nothing can compress, so that a page weighs what its data does.
-    private static PdfDocument Heavy(int count, int perPage)
+    private static PdfDocument Heavy(int count, int perPage) => Weighted(count, i => i == 4 ? perPage * 6 : perPage);
+
+    private static PdfDocument Weighted(int count, Func<int, int> bytes)
     {
         var random = new Random(11);
         byte[] Noise(int n) => [.. Enumerable.Range(0, n).Select(_ => (byte)random.Next(256))];
@@ -58,7 +60,7 @@ public class PageSplitTests
         pdf.Obj(2, $"<</Type /Pages /Kids [{string.Join(" ", Enumerable.Range(0, count).Select(i => $"{3 + i} 0 R"))}] /Count {count} /MediaBox [0 0 100 100]>>");
         for (int i = 0; i < count; i++) pdf.Obj(3 + i, $"<</Type /Page /Parent 2 0 R /Contents {3 + count + i} 0 R /Resources <</XObject <</X {3 + 2 * count + i} 0 R>>>>>>");
         for (int i = 0; i < count; i++) pdf.Stream(3 + count + i, "", $"BT ({i + 1}) Tj ET /X Do");
-        for (int i = 0; i < count; i++) pdf.Stream(3 + 2 * count + i, "/Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode", Noise(i == 4 ? perPage * 6 : perPage));
+        for (int i = 0; i < count; i++) pdf.Stream(3 + 2 * count + i, "/Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode", Noise(bytes(i)));
         return PdfDocument.Open(pdf.Finish());
     }
 
@@ -78,6 +80,53 @@ public class PageSplitTests
         Assert.Equal([3, 1, 1, 3, 3, 1], parts.Select(p => p.Pages.Count));
         Assert.All(parts, p => Assert.True(p.SaveRewrite().Length <= limit || p.Pages.Count == 1));
         Assert.True(parts[2].SaveRewrite().Length > limit);
+    }
+
+    // The old search: the longest run from each start that fits, found one page at a time.
+    private static string Greedy(PdfDocument document, long limit)
+    {
+        var parts = new List<string>();
+        for (int at = 0; at < document.Pages.Count;)
+        {
+            int length = 1;
+            while (at + length < document.Pages.Count && PageAssembly.Extract(document, [.. Enumerable.Range(at, length + 1)]).SaveRewrite().Length <= limit) length++;
+            parts.Add(string.Join(",", Enumerable.Range(at + 1, length)));
+            at += length;
+        }
+        return string.Join(" | ", parts);
+    }
+
+    [Fact]
+    public void BySizeMakesTheSamePartsAsAScanOnePageAtATime()
+    {
+        var random = new Random(5);
+        var document = Weighted(40, _ => random.Next(100, 3000));
+        long whole = document.SaveRewrite().Length;
+        foreach (long limit in new[] { whole / 40, whole / 12, whole / 5, whole / 2, whole })
+        {
+            Assert.Equal(Greedy(document, limit), string.Join(" | ", PageAssembly.SplitBySize(document, limit).Select(p => string.Join(",", Numbers(p)))));
+        }
+    }
+
+    private sealed class CountingRandom : Random
+    {
+        public int Calls;
+        public override void NextBytes(Span<byte> buffer) { Calls++; base.NextBytes(buffer); }
+    }
+
+    [Fact]
+    public void BySizeSavesAPartOnlyAFewTimes()
+    {
+        // With AES each stream written draws random bytes once and a page has two, so the calls tell how many pages were saved.
+        var document = Weighted(100, _ => 1000);
+        var random = new CountingRandom();
+        var options = new PdfSaveOptions(Security: PdfSecurity.Create("", "owner", PdfPermissions.All, PdfCryptStrength.Aes128, new byte[16], random), DocumentId: new byte[16]);
+        long one = PageAssembly.Extract(document, [0]).SaveRewrite(options).Length;
+        long ten = PageAssembly.Extract(document, [.. Enumerable.Range(0, 10)]).SaveRewrite(options).Length;
+        random.Calls = 0;
+        var parts = PageAssembly.SplitBySize(document, ten + (ten - one) / 2, options);
+        Assert.Equal(100, parts.Sum(p => p.Pages.Count));
+        Assert.True(random.Calls <= 2 * 5 * 100, $"{random.Calls / 2} pages saved");
     }
 
     [Fact]
@@ -138,5 +187,30 @@ public class PageSplitTests
     {
         Assert.Equal("1,2", Order(PageAssembly.SplitEvery(PageTestFiles.Open(2), int.MaxValue)));
         Assert.Equal("1,2", Order(PageAssembly.SplitEvery(PageTestFiles.Open(2), int.MaxValue - 1)));
+    }
+
+    private static PdfDocument WithUnreadableObject() => PageTestFiles.Open(2, pageExtra: _ => "/Thumb 8 0 R", add: pdf => pdf.Obj(8, "<</Broken (never closed"));
+
+    [Fact]
+    public void AnAnnotationOrActionThatCannotBeReadIsCounted()
+    {
+        var annotation = PageTestFiles.Open(2, pageExtra: _ => "/Annots [8 0 R]", add: pdf => pdf.Obj(8, "<</Broken (never closed"));
+        Assert.Equal(1, PageAssembly.Extract(annotation, [0]).DroppedObjects);
+        var action = PageTestFiles.Open(2, pageExtra: _ => "/Annots [9 0 R]", add: pdf =>
+        {
+            pdf.Obj(8, "<</Broken (never closed");
+            pdf.Obj(9, "<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /A 8 0 R>>");
+        });
+        Assert.Equal(1, PageAssembly.Extract(action, [0]).DroppedObjects);
+    }
+
+    [Fact]
+    public void ObjectsThatCannotBeReadAreCountedWhereTheyAreLeftOut()
+    {
+        Assert.Equal(0, PageAssembly.Extract(PageTestFiles.Open(2), [0, 1]).DroppedObjects);
+        Assert.Equal(1, PageAssembly.Extract(WithUnreadableObject(), [0, 1]).DroppedObjects);
+        Assert.Equal(1, PageAssembly.Merge([new MergeSource(WithUnreadableObject()), new MergeSource(PageTestFiles.Open(1))]).DroppedObjects);
+        Assert.Equal(2, PageAssembly.Merge([new MergeSource(WithUnreadableObject()), new MergeSource(WithUnreadableObject())]).DroppedObjects);
+        Assert.All(PageAssembly.SplitEvery(WithUnreadableObject(), 1), p => Assert.Equal(1, p.DroppedObjects));
     }
 }

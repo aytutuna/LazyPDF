@@ -1,0 +1,258 @@
+import Foundation
+
+// Twin of windows/LazyPDF.Core/Redaction/ImageRedactor.cs: makes a private copy of an image with the pixels under the marks
+// overwritten in the samples, so the covered picture is gone rather than hidden. The copy is stored with Flate. Pictures in a
+// lossy codec go through the system's decoder; with none, or when it fails, nothing is returned and the caller
+// removes the image.
+
+final class ImageRedactor {
+    private static let maxSamples = 256 << 20
+    private static let maxMaskDepth = 2
+    private static let maskKeys = ["SMask", "Mask"]
+    // What describes the picture itself (ISO 32000-1 8.9.5); anything else on the dictionary can lead back to the original.
+    private static let kept = ["Type", "Subtype", "Width", "Height", "ColorSpace", "BitsPerComponent", "Intent", "ImageMask", "Mask", "Decode", "Interpolate", "SMask", "SMaskInData", "Matte", "StructParent", "OC"]
+
+    private let document: PdfDocument
+    private let codec: ImageCodec?
+
+    init(_ document: PdfDocument, _ codec: ImageCodec?) {
+        self.document = document
+        self.codec = codec
+    }
+
+    /// The soft mask and stencil mask of a picture, and theirs in turn as far as `redact` copies: the streams a cut makes private copies of.
+    static func masks(_ document: PdfDocument, _ image: PdfStream, _ depth: Int = 0) -> [PdfStream] {
+        if depth > maxMaskDepth { return [] }
+        var found: [PdfStream] = []
+        for key in maskKeys {
+            guard let mask = document.stream(image.dictionary, key) else { continue }
+            found.append(mask)
+            found.append(contentsOf: masks(document, mask, depth + 1))
+        }
+        return found
+    }
+
+    func redact(_ image: PdfStream, _ areas: [MarkArea], _ placement: PdfMatrix) -> PdfReference? {
+        guard let back = placement.invert() else { return nil }
+        let unit = areas.map { a in a.points.map { back.transform($0.x, $0.y) } }
+        do {
+            return try copy(image, unit, 0)
+        } catch {
+            // Whatever goes wrong with one picture, it is removed from the page rather than kept.
+            return nil
+        }
+    }
+
+    private func copy(_ image: PdfStream, _ unit: [[MarkPoint]], _ depth: Int, soft: Bool = false) throws -> PdfReference? {
+        // A mask has no masks of its own to speak of; a loop of them is a trap.
+        if depth > Self.maxMaskDepth { return nil }
+        let d = image.dictionary
+        let (filter, parameters, _) = try document.decodeSpec(image, decoding: true)
+        let decoded = try PdfFilters.decodeToCodecWhole(document.rawData(image), filter, parameters, Self.maxSamples)
+        let copy = PdfDictionary()
+        for key in Self.kept {
+            if let value = d[key] { copy[key] = value }
+        }
+        copy["Filter"] = PdfName("FlateDecode")
+        // A coded soft mask is written back as plain gray, which has no soft mask of its own to cut.
+        if try !(soft && decoded.codec != nil) && !copyMasks(d, copy, unit, depth) { return nil }
+
+        guard let name = decoded.codec else {
+            let width = Int(Int32(truncatingIfNeeded: document.integer(d, "Width") ?? 0))
+            let height = Int(Int32(truncatingIfNeeded: document.integer(d, "Height") ?? 0))
+            if !Self.fits(width, height) { return nil }
+            let mask = document.bool(d, "ImageMask") == true
+            let bits = mask ? 1 : Int(Int32(truncatingIfNeeded: document.integer(d, "BitsPerComponent") ?? 8))
+            let components = try mask ? 1 : SampleColorSpace.parse(d["ColorSpace"], { self.document.resolve($0) }, { try self.document.data($0) }).components
+            var samples = decoded.data
+            // The C# multiplies in long without a check; a size that does not fit, or is negative, is no picture to keep.
+            let (perPixel, o1) = components.multipliedReportingOverflow(by: bits)
+            let (row, o2) = width.multipliedReportingOverflow(by: perPixel)
+            let (padded, o3) = row.addingReportingOverflow(7)
+            let (used, o4) = (padded / 8).multipliedReportingOverflow(by: height)
+            if o1 || o2 || o3 || o4 || used < 0 { return nil }
+            // A JBIG2 page is fitted to the picture's size, but not to a depth or colour space it does not have; other rows would put the marks in the wrong place.
+            if PdfFilters.uses(filter, "JBIG2Decode") && samples.count != used { return nil }
+            if samples.count > used { samples = Array(samples[0..<used]) }
+            Self.zero(&samples, width, height, perPixel, unit)
+            return try document.add(PdfStream(copy, data: PdfFilterEncoders.flate(samples)))
+        }
+
+        // A picture whose colour space the pixels cannot show is not rewritten: the caller removes it.
+        let jpx = name == "JPXDecode"
+        if jpx && !JpxImage.readable(document, d) { return nil }
+        if !jpx && !soft && !DctImage.readable(document, d) { return nil }
+        if !soft, let colourKey = document.resolve(d["Mask"]) as? PdfArray {
+            guard let mapped = self.colourKey(d, colourKey, jpx) else { return nil }
+            copy["Mask"] = mapped
+        }
+        guard let decodedPixels = codec?.decode(decoded.data, name, jpx ? JpxImage.components(document, d) : 0), Self.fits(decodedPixels.width, decodedPixels.height),
+              decodedPixels.rgba.count == decodedPixels.width * decodedPixels.height * 4 else { return nil }
+        var pixels = decodedPixels
+        if jpx {
+            let mode = JpxImage.maskInData(document, d)
+            if mode <= 0 && !JpxImage.opaque(pixels) { return nil }
+            pixels = JpxImage.alpha(pixels, mode)
+        } else if !soft {
+            guard let decodedPixels = withDecode(d, decoded.data, pixels) else { return nil }
+            pixels = decodedPixels
+        }
+        var rgba = pixels.rgba
+        for (row, from, to) in Self.cells(pixels.width, pixels.height, pixels.height, unit) {
+            for x in from..<to {
+                let i = (row * pixels.width + x) * 4
+                (rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]) = (0, 0, 0, 255)
+            }
+        }
+        if soft {
+            // ISO 32000-1 11.6.5.2: a soft mask is a DeviceGray image, 8 bits, with no /SMask or /Mask; /Matte stays.
+            var gray = [UInt8](repeating: 0, count: pixels.width * pixels.height)
+            for i in 0..<gray.count { gray[i] = rgba[4 * i] }
+            copy["Width"] = PdfNumber(pixels.width)
+            copy["Height"] = PdfNumber(pixels.height)
+            copy["ColorSpace"] = PdfName("DeviceGray")
+            copy["BitsPerComponent"] = PdfNumber(8)
+            for key in ["SMask", "Mask", "SMaskInData"] { copy.remove(key) }
+            if jpx { copy.remove("Decode") }
+            return try document.add(PdfStream(copy, data: PdfFilterEncoders.flate(gray)))
+        }
+        fitMatte(copy, JpxImage.components(document, d))
+        let reference = try ContentImages.addRgba(document, pixels.width, pixels.height, rgba)
+        guard let made = document.get(reference.number) as? PdfStream else { return nil }
+        for key in Self.maskKeys {
+            if let mask = copy[key] { made.dictionary[key] = mask }
+        }
+        return reference
+    }
+
+    // A picture of a DCT file is written back as RGB with no /Decode, so the /Decode goes onto the codec's samples first. That
+    // works where a codec channel is a component of the colour space: gray, which the codec gives as R = G = B, and RGB. A CMYK
+    // picture keeps what the codec made of it only where the page shows the same (see DctImage.cmykAsShown): the RGB inverse
+    // cannot stand in for the ink inverse otherwise, and any other /Decode on a picture the codec converted cannot be carried
+    // over, so the picture is one that cannot be decoded here.
+    private func withDecode(_ image: PdfDictionary, _ jpeg: [UInt8], _ pixels: PdfRgbaImage) -> PdfRgbaImage? {
+        let decode = PdfFunction.numbers(image["Decode"], { self.document.resolve($0) })
+        let (family, components) = ImageKit.describe(document, image["ColorSpace"])
+        if family == .cmyk { return DctImage.cmykAsShown(document, image, jpeg) ? pixels : nil }
+        guard let decode, !ImageKit.defaultDecode(document, image, decode) else { return pixels }
+        if family != .gray && family != .rgb { return nil }
+        if decode.count < 2 * components { return pixels }
+        var rgba = pixels.rgba
+        var i = 0
+        while i < rgba.count {
+            for c in 0..<3 {
+                let j = components == 1 ? 0 : c
+                let value = decode[2 * j] + Double(rgba[i + c]) * (decode[2 * j + 1] - decode[2 * j]) / 255
+                rgba[i + c] = UInt8(min(max(value, 0), 1) * 255 + 0.5)
+            }
+            i += 4
+        }
+        return PdfRgbaImage(pixels.width, pixels.height, rgba, dpiX: pixels.dpiX, dpiY: pixels.dpiY)
+    }
+
+    // The picture is written back as RGB with /Decode applied, so a colour key (matched on the raw samples, ISO 32000-1 8.9.6.4)
+    // becomes an RGB key on the decoded ones: a gray key is repeated for the three channels and a component with a reversing
+    // /Decode swaps its range end for end. Any other /Decode, a CMYK key, a key on a JPEG 2000 picture, whose samples may be of
+    // any depth, and a key that does not fit its colour space cannot be carried over.
+    private func colourKey(_ image: PdfDictionary, _ key: PdfArray, _ jpx: Bool) -> PdfArray? {
+        let (family, components) = ImageKit.describe(document, image["ColorSpace"])
+        guard !jpx, family == .gray || family == .rgb, let values = PdfFunction.numbers(key, { self.document.resolve($0) }),
+              values.count == 2 * components, (document.integer(image, "BitsPerComponent") ?? 8) == 8 else { return nil }
+        let decode = PdfFunction.numbers(image["Decode"], { self.document.resolve($0) })
+        let decoded = decode.map { $0.count >= 2 * components && !ImageKit.defaultDecode(document, image, $0) } ?? false
+        var mapped: [PdfObject] = []
+        for c in 0..<3 {
+            let j = components == 1 ? 0 : c
+            var (low, high) = (values[2 * j], values[2 * j + 1])
+            if decoded, let decode {
+                if decode[2 * j] == 1 && decode[2 * j + 1] == 0 { (low, high) = (255 - high, 255 - low) }
+                else if decode[2 * j] != 0 || decode[2 * j + 1] != 1 { return nil }
+            }
+            mapped.append(PdfNumber(low))
+            mapped.append(PdfNumber(high))
+        }
+        return PdfArray(mapped)
+    }
+
+    // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is
+    // dropped. With no colour space (0 components) the length of the matte is all there is to go by.
+    private func fitMatte(_ image: PdfDictionary, _ components: Int) {
+        guard let soft = document.stream(image, "SMask"), let matte = document.array(soft.dictionary, "Matte"), matte.items.count != 3 else { return }
+        if matte.items.count == 1 && (components == 0 || components == 1) {
+            soft.dictionary["Matte"] = PdfArray([PdfObject](repeating: matte.items[0], count: 3))
+        } else {
+            soft.dictionary.remove("Matte")
+        }
+    }
+
+    private static func fits(_ width: Int, _ height: Int) -> Bool {
+        width > 0 && height > 0 && width * height <= PdfImageSamples.maxPixels
+    }
+
+    // The soft mask and the stencil mask hold picture data of their own, at their own size.
+    private func copyMasks(_ source: PdfDictionary, _ copy: PdfDictionary, _ unit: [[MarkPoint]], _ depth: Int) throws -> Bool {
+        for key in Self.maskKeys {
+            guard let mask = document.stream(source, key) else { continue }
+            guard let reference = try self.copy(mask, unit, depth + 1, soft: key == "SMask") else { return false }
+            copy[key] = reference
+        }
+        return true
+    }
+
+    private static func zero(_ data: inout [UInt8], _ width: Int, _ height: Int, _ bitsPerPixel: Int, _ unit: [[MarkPoint]]) {
+        let (wide, o1) = width.multipliedReportingOverflow(by: bitsPerPixel)
+        let (padded, o2) = wide.addingReportingOverflow(7)
+        if o1 || o2 { return }
+        let stride = padded / 8
+        let rows = min(height, (data.count + stride - 1) / max(stride, 1))
+        for (row, from, to) in cells(width, rows, height, unit) {
+            let (start, o3) = row.multipliedReportingOverflow(by: stride)
+            if o3 || start >= data.count { continue }
+            let bitFrom = from * bitsPerPixel, bitTo = to * bitsPerPixel
+            var b = bitFrom / 8
+            while b <= (bitTo - 1) / 8 {
+                if start + b >= data.count { break }
+                let lo = max(bitFrom, b * 8) - b * 8, hi = min(bitTo, b * 8 + 8) - b * 8
+                let mask = (0xFF >> lo) & (0xFF << (8 - hi))
+                data[start + b] &= UInt8(truncatingIfNeeded: ~mask)
+                b += 1
+            }
+        }
+    }
+
+    /// The runs of pixels, per row, that any part of a marked polygon touches. The polygons are in the unit square, y up.
+    private static func cells(_ width: Int, _ rows: Int, _ height: Int, _ unit: [[MarkPoint]]) -> [(row: Int, from: Int, to: Int)] {
+        var runs: [(row: Int, from: Int, to: Int)] = []
+        for polygon in unit {
+            let pixels: [MarkPoint] = polygon.map { ($0.x * Double(width), (1 - $0.y) * Double(height)) }
+            let top = Int(saturating32: nanMax(0, Geometry.minimum(pixels.map { $0.y }).rounded(.down)))
+            let bottom = Int(saturating32: nanMin(Double(rows), Geometry.maximum(pixels.map { $0.y }).rounded(.up)))
+            var row = top
+            while row < bottom {
+                defer { row += 1 }
+                let above = half(pixels) { $0.y - Double(row) }
+                let strip = half(above) { Double(row) + 1 - $0.y }
+                if strip.count < 3 || Geometry.area(strip) < 1e-6 { continue }
+                let from = Int(saturating32: nanMax(0, Geometry.minimum(strip.map { $0.x }).rounded(.down)))
+                let to = Int(saturating32: nanMin(Double(width), Geometry.maximum(strip.map { $0.x }).rounded(.up)))
+                if to > from { runs.append((row, from, to)) }
+            }
+        }
+        return runs
+    }
+
+    // The part of a polygon on the side where the measure is not negative.
+    private static func half(_ polygon: [MarkPoint], _ measure: (MarkPoint) -> Double) -> [MarkPoint] {
+        var output: [MarkPoint] = []
+        for i in 0..<polygon.count {
+            let (cur, prev) = (polygon[i], polygon[(i + polygon.count - 1) % polygon.count])
+            let mc = measure(cur), mp = measure(prev)
+            if (mc >= 0) != (mp >= 0) {
+                let t = mp / (mp - mc)
+                output.append((prev.x + t * (cur.x - prev.x), prev.y + t * (cur.y - prev.y)))
+            }
+            if mc >= 0 { output.append(cur) }
+        }
+        return output
+    }
+}

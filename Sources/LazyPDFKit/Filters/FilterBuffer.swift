@@ -20,11 +20,13 @@ final class FilterBuffer {
 
     func add(_ value: UInt8) throws {
         if bytes.count >= max { throw FilterBuffer.tooBig() }
+        try grow(bytes.count + 1)
         bytes.append(value)
     }
 
     func add(_ values: ArraySlice<UInt8>) throws {
         if values.count > max - bytes.count { throw FilterBuffer.tooBig() }
+        try grow(bytes.count + values.count)
         bytes.append(contentsOf: values)
     }
 
@@ -35,6 +37,7 @@ final class FilterBuffer {
     /// Counts `length` more bytes, all `value`.
     func append(_ length: Int, filling value: UInt8) throws {
         if length > max - bytes.count { throw FilterBuffer.tooBig() }
+        try grow(bytes.count + length)
         bytes.append(contentsOf: repeatElement(value, count: length))
     }
 
@@ -59,4 +62,15 @@ final class FilterBuffer {
     func toArray() -> [UInt8] {
         bytes
     }
+
+    // Doubles like the array would, but never past the cap plus one or the largest array the C# side can make.
+    private func grow(_ needed: Int) throws {
+        if needed > bytes.capacity {
+            let size = Swift.min(Swift.max(needed, bytes.capacity * 2), Swift.min(max + 1, FilterBuffer.maxArray))
+            if size < needed { throw FilterBuffer.tooBig() }
+            bytes.reserveCapacity(size)
+        }
+    }
+
+    private static let maxArray = 0x7FFF_FFC7
 }

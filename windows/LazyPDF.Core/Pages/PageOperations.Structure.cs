@@ -84,9 +84,11 @@ public static partial class PageOperations
     /// <summary>
     /// Copies pages of <paramref name="source"/> into <paramref name="target"/> so that the first is
     /// page <paramref name="at"/>. Everything a page needs is copied once per call, however many
-    /// pages share it; the source's tree, tags, bookmarks and article threads stay behind. Links to
+    /// pages share it; the source's tree, tags and article threads stay behind. Links to
     /// pages that did not come across are dropped; form fields join the target's /AcroForm and are
-    /// renamed on a clash. The source may be the target.
+    /// renamed on a clash. The source's bookmarks that point at the pages come across at the end of the
+    /// target's top level (a parent stays when something under it does). The source may be the target,
+    /// which then gets no bookmarks.
     /// </summary>
     public static void ImportPages(PdfDocument target, PdfDocument source, IReadOnlyList<int> sourcePages, int at)
     {
@@ -95,6 +97,9 @@ public static partial class PageOperations
         InsertAt(target, at, new PageImporter(source, target).Import(sourcePages));
         if (!ReferenceEquals(source, target))
         {
+            var newIndex = new Dictionary<int, int>();
+            for (int i = 0; i < sourcePages.Count; i++) newIndex.TryAdd(sourcePages[i], at + i);
+            PageCarry.Bookmarks(source, target, newIndex, null);
             StampRuns.Separate(target, [.. target.Pages.Select((p, i) => (p, i >= at && i < at + sourcePages.Count ? (object)source : target))]);
         }
     }

@@ -1,5 +1,11 @@
+using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
@@ -50,6 +56,87 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void ATabComesBackWithItsRotationAndPlace()
+    {
+        OnSta(() =>
+        {
+            var (surface, a) = Open(4);
+            surface.SetRotation(90);
+            surface.GoToPage(2);
+            var place = surface.TopPlace();
+            int rotation = surface.Rotation;
+
+            var b = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), new WindowsPageRenderer(), null, "b.pdf");
+            surface.Show(b);
+            Assert.Equal(0, surface.Rotation);
+
+            surface.Show(a, rotation);
+            surface.GoToPage(place!.Value.Page, place.Value.Point);
+            Assert.Equal(90, surface.Rotation);
+            Assert.Equal(place, surface.TopPlace());
+        });
+    }
+
+    [Theory]
+    [InlineData(0, 1.57, 1)]
+    [InlineData(0, 1.25, 1.25)]
+    [InlineData(0, 2.5, 1.5)]
+    [InlineData(90, 1.57, 1)]
+    [InlineData(90, 1.25, 1.25)]
+    [InlineData(90, 2.5, 1.5)]
+    [InlineData(90, 1.57, 1.5)]
+    [InlineData(0, 1.57, 1.25)]
+    public void TilesMeetOnTheSameDevicePixelEdge(int rotation, double zoom, double dpi)
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            VisualTreeHelper.SetRootDpi(surface, new DpiScale(dpi, dpi));
+            surface.SetRotation(rotation);
+            surface.SetZoom(zoom);
+            double ppp = surface.Zoom * PageSpace.DipPerPoint * dpi;
+            for (int page = 0; page < 3; page++)
+            {
+                var size = surface.PageSize(page);
+                var matrix = surface.PageMatrix(page)!.Value;
+                var area = new Rect(0, 0, size.Width * ppp, size.Height * ppp);
+                var tiles = TilePlan.Cover(page, 0, PageTint.None, size, ppp, area, WindowsPageRenderer.Reachable);
+                var snapped = new Dictionary<(int, int), Rect>();
+                var pixels = new Dictionary<(int, int), int>();
+                foreach (var tile in tiles)
+                {
+                    var bitmap = BitmapSource.Create(tile.Width, tile.Height, 96, 96, PixelFormats.Gray8, null, new byte[tile.Width * tile.Height], tile.Width);
+                    snapped[(tile.Key.Column, tile.Key.Row)] = PageSurface.SnapRect(PageSurface.Destination(tile.Key, bitmap, matrix, size), dpi);
+                    pixels[(tile.Key.Column, tile.Key.Row)] = tile.Width;
+                }
+
+                int columns = tiles.Max(t => t.Key.Column) + 1, rows = tiles.Max(t => t.Key.Row) + 1;
+                for (int row = 0; row < rows; row++)
+                {
+                    for (int column = 0; column < columns; column++)
+                    {
+                        var a = snapped[(column, row)];
+                        if (column + 1 < columns)
+                        {
+                            var b = snapped[(column + 1, row)];
+                            if (rotation == 0) Assert.Equal(a.Right, b.Left, 6);
+                            else Assert.Equal(a.Bottom, b.Top, 6);
+                            double across = rotation == 0 ? a.Width : a.Height;
+                            Assert.Equal(pixels[(column, row)], Math.Round(across * dpi));
+                        }
+                        if (row + 1 < rows)
+                        {
+                            var b = snapped[(column, row + 1)];
+                            if (rotation == 0) Assert.Equal(a.Bottom, b.Top, 6);
+                            else Assert.Equal(b.Right, a.Left, 6);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    [Fact]
     public void AFileOpensFittedToTheWidth()
     {
         OnSta(() =>
@@ -77,6 +164,40 @@ public sealed class PageSurfaceTests
             Assert.Equal(3, tab.PageIndex);
             Assert.Equal(1.5, surface.Zoom);
             Assert.Equal(FitMode.None, surface.Fit);
+        });
+    }
+
+    [Fact]
+    public void ChangingTheDirectionKeepsThePage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(2, false, continuous: true);
+            surface.GoToPage(3);
+
+            surface.SetRightToLeft(true);
+
+            Assert.Equal(3, surface.CurrentPage);
+            Assert.True(surface.Layout.PageRect(2).Left > surface.Layout.PageRect(3).Left);
+        });
+    }
+
+    [Fact]
+    public void GoingBackKeepsTheColumnWhenZoomedIn()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(4);
+            surface.SetZoom(3);
+            surface.SetHorizontalOffset(surface.HorizontalOffset + 150);
+            double offset = surface.HorizontalOffset;
+            var place = surface.TopPlace()!.Value;
+
+            surface.GoToPage(0);
+            surface.GoToPage(place.Page, place.Point, keepX: true);
+
+            Assert.Equal(offset, surface.HorizontalOffset, 3);
         });
     }
 
@@ -209,6 +330,69 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void WheelNotchesTurnOnePageEach()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.SetFit(FitMode.Page);
+
+            for (int i = 0; i < 3; i++) surface.ScrollBy(0, 120, smooth: false);
+
+            Assert.Equal(3, surface.CurrentPage);
+        });
+    }
+
+    [Fact]
+    public void SmoothWheelEventsInARowTurnOnePage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.SetFit(FitMode.Page);
+
+            for (int i = 0; i < 5; i++) surface.ScrollBy(0, 30, smooth: true);
+
+            Assert.Equal(1, surface.CurrentPage);
+        });
+    }
+
+    [Fact]
+    public void ANotchUpAtTheTopLandsAtTheBottomOfThePageBefore()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.SetZoom(2);
+            surface.GoToPage(2);
+
+            surface.ScrollBy(0, -120, smooth: false);
+
+            Assert.Equal(1, surface.CurrentPage);
+            Assert.True(surface.VerticalOffset > 0);
+        });
+    }
+
+    [Fact]
+    public void ScrollsOtherThanTheWheelTurnEveryTime()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.GoToPage(1);
+            surface.SetZoom(2);
+
+            for (int i = 0; i < 4; i++) surface.ScrollBy(0, 1_000_000);
+
+            Assert.Equal(3, surface.CurrentPage);
+        });
+    }
+
+    [Fact]
     public void FacingPagesWithACoverGoByTheirSpreads()
     {
         OnSta(() =>
@@ -320,6 +504,53 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void AnOverlayDoesNotClipWhatTouchesThePageEdge()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(2);
+            surface.SetZoom(1);
+            var overlay = surface.Overlay(0);
+            var mark = new System.Windows.Shapes.Rectangle { Width = 10, Height = 10 };
+            System.Windows.Controls.Canvas.SetLeft(mark, -5);
+            overlay.Children.Add(mark);
+
+            surface.Measure(Window);
+            surface.Arrange(new Rect(Window));
+
+            Assert.False(overlay.ClipToBounds);
+            Assert.Contains(mark, overlay.Children.Cast<UIElement>());
+        });
+    }
+
+    [Fact]
+    public void AnOverlayChildOutsideThePageReachesTheScreen()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(2);
+            surface.SetZoom(1);
+            var overlay = surface.Overlay(0);
+            var size = surface.PageSize(0);
+            var mark = new System.Windows.Shapes.Rectangle { Width = 8, Height = 8, Fill = Brushes.Black };
+            System.Windows.Controls.Canvas.SetLeft(mark, size.Width - 4);
+            System.Windows.Controls.Canvas.SetTop(mark, -4);
+            overlay.Children.Add(mark);
+
+            surface.Measure(Window);
+            surface.Arrange(new Rect(Window));
+            surface.UpdateLayout();
+            var bitmap = new RenderTargetBitmap((int)Window.Width, (int)Window.Height, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(surface);
+            var outside = surface.PageMatrix(0)!.Value.Transform(new Point(size.Width + 2, -2));
+            var pixel = new byte[4];
+            bitmap.CopyPixels(new Int32Rect((int)outside.X, (int)outside.Y, 1, 1), pixel, 4, 0);
+
+            Assert.Equal(new byte[] { 0, 0, 0, 255 }, pixel);
+        });
+    }
+
+    [Fact]
     public void AFileTheSystemCannotDrawStillHasItsPagesLaidOut()
     {
         OnSta(() =>
@@ -349,6 +580,178 @@ public sealed class PageSurfaceTests
 
             Assert.Null(surface.Hit(gap));
             Assert.Equal(0, surface.Hit(gap, nearest: true)!.Value.Page);
+        });
+    }
+
+    [Fact]
+    public void ZoomingToAQuarterOfAPageGivesAboutFourTimesFitPage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            surface.SetFit(FitMode.Page);
+            double fit = surface.Zoom;
+            var size = surface.PageSize(0);
+
+            surface.ZoomToArea(0, new Rect(0, 0, size.Width / 4, size.Height / 4));
+
+            Assert.Equal(FitMode.None, surface.Fit);
+            Assert.InRange(surface.Zoom / fit, 3.6, 4.4);
+        });
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    public void TheAreaZoomedToLiesInsideTheView(int rotation)
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            surface.SetRotation(rotation);
+            var size = surface.PageSize(1);
+            var area = new Rect(size.Width / 2, size.Height / 2, size.Width / 3, size.Height / 4);
+
+            surface.ZoomToArea(1, area);
+
+            var shown = PageSpace.Transform(surface.PageMatrix(1)!.Value, area);
+            Assert.True(new Rect(Window).Contains(shown));
+        });
+    }
+
+    [Fact]
+    public void ADragOfTwoPixelsIsAClickAndOneOfTwentyIsNot()
+    {
+        Assert.True(ZoomMath.IsClick(new Rect(10, 10, 2, 2)));
+        Assert.False(ZoomMath.IsClick(new Rect(10, 10, 20, 2)));
+    }
+
+    private static T Private<T>(PageSurface surface, string name)
+    {
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var type = typeof(PageSurface);
+        object? value = type.GetField(name, flags)?.GetValue(surface) ?? type.GetProperty(name, flags)!.GetValue(surface);
+        return (T)value!;
+    }
+
+    private static TileKey SharpKey(PageSurface surface, int version) =>
+        new(0, version, Private<double>(surface, "Scale") * Private<double>(surface, "Dpi"), 0, 0, surface.Tint);
+
+    [Fact]
+    public void AFailedTileOfAnOlderVersionShowsNoNote()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(1);
+            var failed = Private<HashSet<TileKey>>(surface, "_failed");
+
+            failed.Add(SharpKey(surface, surface.VersionOf(0) - 1));
+            Assert.False(surface.NoteShown(0));
+
+            failed.Add(SharpKey(surface, surface.VersionOf(0)));
+            Assert.True(surface.NoteShown(0));
+        });
+    }
+
+    [Fact]
+    public void TheSettleTickForgetsFailedTilesAndAsksForTilesAgain()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(1);
+            var cache = Private<TileCache>(surface, "_cache");
+            var failed = Private<HashSet<TileKey>>(surface, "_failed");
+            cache.Add(new TileKey(0, surface.VersionOf(0), 0.25, 0, 0, surface.Tint), BitmapSource.Create(1, 1, 96, 96, PixelFormats.Gray8, null, new byte[1], 1));
+
+            surface.SetZoom(surface.Zoom * 3);
+            failed.Add(SharpKey(surface, surface.VersionOf(0)));
+            Assert.True(Private<bool>(surface, "_settling"));
+
+            int pending = -1;
+            var frame = new DispatcherFrame();
+            var poll = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(5) };
+            poll.Tick += (_, _) =>
+            {
+                if (Private<bool>(surface, "_settling")) return;
+                pending = surface.TilesPending;
+                poll.Stop();
+                frame.Continue = false;
+            };
+            poll.Start();
+            Dispatcher.PushFrame(frame);
+
+            Assert.Empty(failed);
+            Assert.True(pending > 0);
+        });
+    }
+
+    [Fact]
+    public void ThePeerListsLinksAndFollowsThem()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(2);
+            int followed = 0;
+            surface.PageLinks = page => page == 0 ? [new LinkTarget(new Rect(50, 100, 100, 40), "Go to page 2", () => followed++, () => { })] : [];
+
+            var peer = UIElementAutomationPeer.CreatePeerForElement(surface);
+            var link = Assert.Single(peer.GetChildren());
+            Assert.Equal(AutomationControlType.Hyperlink, link.GetAutomationControlType());
+            Assert.Equal("Go to page 2", link.GetName());
+            Assert.True(link.IsKeyboardFocusable());
+
+            ((IInvokeProvider)link.GetPattern(PatternInterface.Invoke)).Invoke();
+            Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Background, () => { });
+            Assert.Equal(1, followed);
+        });
+    }
+
+    [Fact]
+    public void ThePeerStillListsTheControlsOnAPage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(1);
+            surface.PageLinks = _ => [new LinkTarget(new Rect(50, 100, 100, 40), "Go to page 1", () => { }, () => { })];
+            surface.Overlay(0).Children.Add(new System.Windows.Controls.TextBox());
+
+            var peer = UIElementAutomationPeer.CreatePeerForElement(surface);
+
+            Assert.Contains(peer.GetChildren(), c => c.GetClassName() == "TextBox");
+            Assert.Contains(peer.GetChildren(), c => c.GetAutomationControlType() == AutomationControlType.Hyperlink);
+        });
+    }
+
+    [Fact]
+    public void ThePeerFollowsTheLinksToAnotherPage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.PageLinks = page => [new LinkTarget(new Rect(50, 100, 100, 40), $"Link {page}", () => { }, () => { })];
+            var peer = UIElementAutomationPeer.CreatePeerForElement(surface);
+            Assert.Equal("Link 0", Assert.Single(peer.GetChildren()).GetName());
+
+            surface.GoToPage(2);
+
+            Assert.Equal("Link 2", Assert.Single(peer.GetChildren()).GetName());
+        });
+    }
+
+    [Fact]
+    public void ThePeerNamesThePageByItsLabelWhenItDiffers()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            var peer = UIElementAutomationPeer.CreatePeerForElement(surface);
+            Assert.Equal(Loc.T("Page {0} of {1}", 1, 3), peer.GetName());
+
+            surface.PageLabel = page => new[] { "i", "ii", "1" }[page];
+            Assert.Equal(Loc.T("Page {0} ({1} of {2})", "i", 1, 3), peer.GetName());
+            surface.GoToPage(2);
+            Assert.Equal(Loc.T("Page {0} ({1} of {2})", "1", 3, 3), peer.GetName());
         });
     }
 }

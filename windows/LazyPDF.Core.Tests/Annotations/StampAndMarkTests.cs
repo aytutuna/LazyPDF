@@ -54,6 +54,23 @@ public class StampAndMarkTests
     }
 
     [Fact]
+    public void CustomStampNameKeepsEveryLetterThroughASave()
+    {
+        var (document, writer, page) = Start(new ArialSource());
+        writer.AddStamp(page, new PdfRect(100, 600, 360, 660), "ŞİFRELİ GİZLİ");
+        writer.AddStamp(page, new PdfRect(100, 500, 360, 560), "Approved");
+        byte[] saved = document.SaveRewrite();
+        string raw = System.Text.Encoding.Latin1.GetString(saved);
+        Assert.Contains("#C5#9E", raw);
+        Assert.DoesNotContain("#5E", raw);
+        Assert.Contains("/Approved", raw);
+        var reopened = PdfDocument.Open(saved);
+        var stamps = PdfAnnotations.Read(reopened, reopened.Pages[0]);
+        Assert.Equal(["ŞİFRELİ GİZLİ", "Approved"], stamps.Select(a => a.IconName));
+        Assert.Equal("ŞİFRELİ GİZLİ", AnnotationText.StampLabel(stamps[0].IconName!));
+    }
+
+    [Fact]
     public void ImageStampPaintsItsPicture()
     {
         var (document, writer, page) = Start();

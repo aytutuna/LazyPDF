@@ -133,13 +133,20 @@ public partial class MainWindow
         CloseOverlay.Visibility = Visibility.Visible;
         bool marksOnly = !tab.IsDirty;
         CloseTitle.Text = marksOnly ? Loc.T("Close {0}?", tab.Title) : Loc.T("Save changes to {0}?", tab.Title);
-        string lost = Loc.T("Your changes are lost if you do not save them.");
-        string marks = Loc.Plural(tab.PendingMarks, "{0} redaction mark is not applied yet.", "{0} redaction marks are not applied yet.");
-        CloseBody.Text = marksOnly ? marks : tab.PendingMarks > 0 ? $"{lost} {marks}" : lost;
+        var parts = new List<string>();
+        if (!marksOnly) parts.Add(Loc.T("Your changes are lost if you do not save them."));
+        if (tab.PendingMarks > 0) parts.Add(Loc.Plural(tab.PendingMarks, "{0} redaction mark is not applied yet.", "{0} redaction marks are not applied yet."));
+        if (tab.PendingMeasurements > 0) parts.Add(Loc.Plural(tab.PendingMeasurements, "{0} measurement is not added to the page yet.", "{0} measurements are not added to the page yet."));
+        if (tab.PendingWords > 0) parts.Add(Loc.T("A corrected word is not applied yet."));
+        if (tab.PendingDescriptions > 0) parts.Add(Loc.Plural(tab.PendingDescriptions, "{0} figure description is not saved yet.", "{0} figure descriptions are not saved yet."));
+        CloseBody.Text = string.Join(" ", parts);
+        CloseAllGroup.Visibility = _vm.IsExiting && _vm.Unsettled >= 2 && _vm.Documents.Any(d => d.IsDirty) ? Visibility.Visible : Visibility.Collapsed;
         CloseSaveButton.Visibility = marksOnly ? Visibility.Collapsed : Visibility.Visible;
-        string discard = marksOnly ? Loc.T("Close") : Loc.T("Don't save");
-        CloseDiscardButton.Content = discard;
-        AutomationProperties.SetName(CloseDiscardButton, discard);
+        CloseDiscardButton.Content = marksOnly ? Loc.T("C_lose") : Loc.T("Do_n't save");
+        AutomationProperties.SetName(CloseDiscardButton, marksOnly ? Loc.T("Close") : Loc.T("Don't save"));
+        string discardAll = Loc.T("Don't save any");
+        CloseDiscardAllButton.Content = discardAll;
+        AutomationProperties.SetName(CloseDiscardAllButton, discardAll);
         if (!ReferenceEquals(_shownQuestion, tab)) (marksOnly ? CloseCancelButton : CloseSaveButton).Focus();
         _shownQuestion = tab;
     }
@@ -155,11 +162,22 @@ public partial class MainWindow
         }
         else
         {
-            saved = _vm.Save(tab);
+            saved = _vm.Save(tab, closeAfter: true);
+            if (!saved && _vm.Message is { IsError: true } && _vm.LastSaveError is IOException or UnauthorizedAccessException) saved = SaveAsWithDialog();
         }
         if (saved) _vm.Close(tab);
         else if (_vm.Message is { Action: not null }) _vm.CancelClose();
     }
+
+    private void CloseSaveAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.CloseQuestion is not { } tab) return;
+        if (SaveAllWithDialogs()) _vm.RequestClose(tab);
+        else if (_vm.Message is { Action: not null }) _vm.CancelClose();
+        else if (_vm.ActiveDocument is { } stopped) _vm.RequestClose(stopped);
+    }
+
+    private void CloseDiscardAll_Click(object sender, RoutedEventArgs e) => _vm.DiscardAll();
 
     private void CloseDiscard_Click(object sender, RoutedEventArgs e)
     {
@@ -184,13 +202,43 @@ public partial class MainWindow
             return;
         }
         RecoveryOverlay.Visibility = Visibility.Visible;
-        if (!_recoveryShown) RestoreButton.Focus();
-        _recoveryShown = true;
         RecoveryTitle.Text = Loc.Plural(offer.Count, "Restore {0} file?", "Restore {0} files?");
-        RecoveryList.Text = string.Join(Environment.NewLine, offer.Select(entry => entry.Meta.Title));
+        // The boxes are made once per offer, so a refresh does not undo what was unticked.
+        if (_recoveryShown) return;
+        _recoveryShown = true;
+        RecoveryList.Items.Clear();
+        foreach (var entry in offer)
+        {
+            string title = entry.Meta.Title;
+            var box = new CheckBox
+            {
+                IsChecked = true,
+                Tag = entry.Id,
+                Margin = new Thickness(0, 2, 0, 2),
+                ToolTip = title,
+                Content = new TextBlock { Text = $"{title} · {entry.Meta.Saved.LocalDateTime:g}", TextTrimming = TextTrimming.CharacterEllipsis },
+            };
+            AutomationProperties.SetName(box, title);
+            box.Checked += RecoveryBox_Changed;
+            box.Unchecked += RecoveryBox_Changed;
+            RecoveryList.Items.Add(box);
+        }
+        RecoveryBox_Changed(null, null!);
+        RestoreButton.Focus();
     }
 
-    private void Restore_Click(object sender, RoutedEventArgs e) => _ = _vm.RestoreAsync();
+    private void RecoveryBox_Changed(object? sender, RoutedEventArgs e)
+    {
+        int ticked = RecoveryList.Items.OfType<CheckBox>().Count(box => box.IsChecked == true);
+        RestoreButton.IsEnabled = ticked > 0;
+        RecoveryUntickedNote.Visibility = ticked < RecoveryList.Items.Count ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void Restore_Click(object sender, RoutedEventArgs e)
+    {
+        var chosen = RecoveryList.Items.OfType<CheckBox>().Where(box => box.IsChecked == true).Select(box => (Guid)box.Tag).ToHashSet();
+        _ = _vm.RestoreAsync(chosen);
+    }
 
     private void DiscardRecovery_Click(object sender, RoutedEventArgs e) => _vm.DiscardRecovery();
 
@@ -203,9 +251,16 @@ public partial class MainWindow
             AppAppearance.Dark => AppearanceDark,
             _ => AppearanceSystem,
         }).IsChecked = true;
+        (AppPreferencesStore.Load().Language switch
+        {
+            "en" => LanguageEnglish,
+            "tr" => LanguageTurkish,
+            _ => LanguageSystem,
+        }).IsChecked = true;
         // In the Store package the manifest registers the Open with entry and the address.
         OpenWithSection.Visibility = Packaging.IsPackaged ? Visibility.Collapsed : Visibility.Visible;
         OpenWithToggle.IsChecked = !Packaging.IsPackaged && FileAssociation.IsRegisteredForCurrentUser();
+        ReopenLastToggle.IsChecked = AppPreferencesStore.Load().ReopenLast;
         _loadingSettings = false;
         _settingsOpen = true;
         RefreshOverlays();
@@ -216,6 +271,7 @@ public partial class MainWindow
     {
         _settingsOpen = false;
         RefreshOverlays();
+        ReleaseHeld();
     }
 
     private void SettingsOverlay_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -229,7 +285,7 @@ public partial class MainWindow
     {
         AboutVersion.Text = Loc.T("Version {0}", AppInfo.Version);
         AboutCopyright.Text = AppInfo.Copyright;
-        SetLink(SiteLink, new Uri(AppInfo.Site).Host, Loc.T("Website"));
+        SetLink(SiteLink, new Uri(AppInfo.Site).Host + new Uri(AppInfo.Site).AbsolutePath.TrimEnd('/'), Loc.T("Website"));
         SetLink(SupportLink, AppInfo.SupportAddress, Loc.T("Email support"));
         AboutNotices.Text = AppInfo.Notices() ?? Loc.T("The notices file is missing from this copy of Lazy PDF. Reinstall the app to get it back.");
         _settingsOpen = false;
@@ -248,6 +304,7 @@ public partial class MainWindow
     {
         _aboutOpen = false;
         RefreshOverlays();
+        ReleaseHeld();
     }
 
     private void AboutOverlay_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -262,6 +319,8 @@ public partial class MainWindow
     private void PrivacyLink_Click(object sender, RoutedEventArgs e) => Launch(AppInfo.PrivacyPage);
 
     private void SupportLink_Click(object sender, RoutedEventArgs e) => Launch("mailto:" + AppInfo.SupportAddress);
+
+    private void DefaultApps_Click(object sender, RoutedEventArgs e) => Launch("ms-settings:defaultapps");
 
     private void Launch(string address)
     {
@@ -279,6 +338,19 @@ public partial class MainWindow
     {
         if (_loadingSettings) return;
         _vm.SetAppearance(sender == AppearanceLight ? AppAppearance.Light : sender == AppearanceDark ? AppAppearance.Dark : AppAppearance.System);
+    }
+
+    private void Language_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings) return;
+        _vm.SetLanguage(sender == LanguageEnglish ? "en" : sender == LanguageTurkish ? "tr" : "");
+    }
+
+    private void ReopenLast_Click(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings) return;
+        bool want = ReopenLastToggle.IsChecked == true;
+        AppPreferencesStore.Update(p => p.ReopenLast = want);
     }
 
     private void OpenWith_Click(object sender, RoutedEventArgs e)

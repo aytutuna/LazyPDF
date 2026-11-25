@@ -55,6 +55,24 @@ public sealed class BatchSetTests
     }
 
     [Fact]
+    public void ANewCleanStepKeepsWhatPeopleCanSee()
+    {
+        var step = BatchStep.Of(BatchStepKind.Clean);
+        Assert.Equal((true, true, true, false), (step.KeepComments, step.KeepForms, step.KeepLinks, step.KeepAttachments));
+    }
+
+    [Fact]
+    public void ASavedCleanStepKeepsItsOwnFlags()
+    {
+        using var dir = new TempDir();
+        dir.File("batch-sets.json", Encoding.UTF8.GetBytes("""{"sets":[{"name":"Strip","steps":[{"kind":"clean"}]}]}"""));
+        var step = new BatchSetStore(dir.Path).Load().Single().Steps.Single();
+        Assert.Equal((false, false, false), (step.KeepComments, step.KeepForms, step.KeepLinks));
+        var fresh = BatchStep.Of(BatchStepKind.Clean);
+        Assert.Equal((true, true, true), (fresh.KeepComments, fresh.KeepForms, fresh.KeepLinks));
+    }
+
+    [Fact]
     public void AnUnreadableSetsFileGivesNoSets()
     {
         using var dir = new TempDir();
@@ -73,6 +91,17 @@ public sealed class BatchSetTests
         set.Steps.Add(new BatchStep());
 
         Assert.Equal("A", Assert.Single(copy.Steps).Text);
+    }
+
+    [Fact]
+    public void StopOnErrorSurvivesTheStoreAndACopy()
+    {
+        using var dir = new TempDir();
+        new BatchSetStore(dir.Path).Save(new BatchSet { Name = "Cases", StopOnError = true });
+
+        Assert.True(new BatchSetStore(dir.Path).Load().Single().StopOnError);
+        Assert.True(new BatchSet { StopOnError = true }.Copy().StopOnError);
+        Assert.False(new BatchSet().StopOnError);
     }
 
     [Fact]

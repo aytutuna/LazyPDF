@@ -6,7 +6,7 @@ namespace LazyPDF.Core;
 // A rewrite keeps what the trailer can reach, numbers it afresh and lays the file out again, with
 // no history in it. Reachability is a walk from /Root and /Info; the numbers come out in the order
 // the walk meets the objects, which puts the catalog first.
-internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options)
+internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options, CancellationToken cancel = default)
 {
     // The size qpdf and most writers pack to; an object stream is parsed whole to read one object.
     private const int ObjectsPerStream = 100;
@@ -17,6 +17,9 @@ internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options)
     private readonly Dictionary<int, int> _numbers = [];
     private readonly List<PdfObject> _items = [];
     private int _followed;
+
+    /// <summary>The numbers reached that the table lists and that could not be read.</summary>
+    public HashSet<int> Dropped { get; } = [];
 
     public byte[] Run()
     {
@@ -51,6 +54,7 @@ internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options)
 
         for (int n = 1; n <= _items.Count; n++)
         {
+            if (n % 256 == 0) cancel.ThrowIfCancellationRequested();
             if (packedSet.Contains(n)) continue;
             long at;
             if (_items[n - 1] is PdfStream stream)
@@ -68,6 +72,7 @@ internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options)
         }
         for (int s = 0; s * ObjectsPerStream < packed.Count; s++)
         {
+            cancel.ThrowIfCancellationRequested();
             var members = packed.Skip(s * ObjectsPerStream).Take(ObjectsPerStream).ToList();
             int number = firstStream + s;
             var (dictionary, data) = Pack(members);
@@ -122,7 +127,11 @@ internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options)
         if (entry is PdfReference reference)
         {
             if (_numbers.TryGetValue(reference.Number, out int known)) return known;
-            if (document.Get(reference.Number) is not { } value || value is PdfNull) return 0;
+            if (document.Get(reference.Number) is not { } value || value is PdfNull)
+            {
+                if (document.Entries.TryGetValue(reference.Number, out var listed) && listed.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed) Dropped.Add(reference.Number);
+                return 0;
+            }
             _items.Add(value);
             return _numbers[reference.Number] = _items.Count;
         }

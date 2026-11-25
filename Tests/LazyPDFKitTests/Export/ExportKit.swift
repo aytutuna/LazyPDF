@@ -20,13 +20,19 @@ final class ExportArialSource: FontSource {
 final class ExportFakeCodec: ImageCodec {
     var decoded: [String] = []
 
-    func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? {
+    func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? {
         decoded.append(codec)
         return PdfRgbaImage(2, 2, [255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255])
     }
 
-    // A "picture file" of the tests is the bytes P, width, height, then width * height gray levels.
+    // A "picture file" of the tests is the bytes P, width, height, then width * height gray levels and optionally the two densities as 16 bits.
+    // The bytes B, n are n small frames with a frame too big to decode among them (alone when n is 0).
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
+        if file.count == 2, file[0] == UInt8(ascii: "B") {
+            var frames = [PdfRgbaImage](repeating: PdfRgbaImage(4, 4, [UInt8](repeating: 0, count: 64)), count: Int(file[1]))
+            frames.insert(PdfRgbaImage(20000, 20000, []), at: Int(file[1]) / 2)
+            return frames
+        }
         if file.count < 3 || file[0] != UInt8(ascii: "P") { return nil }
         let w = Int(file[1]), h = Int(file[2])
         var rgba = [UInt8](repeating: 0, count: w * h * 4)
@@ -37,15 +43,19 @@ final class ExportFakeCodec: ImageCodec {
             rgba[4 * i + 2] = g
             rgba[4 * i + 3] = 255
         }
-        return [PdfRgbaImage(w, h, rgba)]
+        let at = 3 + w * h
+        let dpiX = file.count >= at + 4 ? Double(Int(file[at]) << 8 | Int(file[at + 1])) : 0
+        let dpiY = file.count >= at + 4 ? Double(Int(file[at + 2]) << 8 | Int(file[at + 3])) : 0
+        return [PdfRgbaImage(w, h, rgba, dpiX: dpiX, dpiY: dpiY)]
     }
 
     func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] {
         [0xFF, 0xD8, UInt8(truncatingIfNeeded: quality), image.rgba[3] == 255 ? 1 : 0, 0xFF, 0xD9]
     }
 
-    static func picture(_ w: Int, _ h: Int, _ gray: UInt8 = 128) -> [UInt8] {
-        [UInt8(ascii: "P"), UInt8(truncatingIfNeeded: w), UInt8(truncatingIfNeeded: h)] + [UInt8](repeating: gray, count: w * h)
+    static func picture(_ w: Int, _ h: Int, _ gray: UInt8 = 128, dpiX: Int = 0, dpiY: Int = 0) -> [UInt8] {
+        let density = dpiX == 0 && dpiY == 0 ? [] : [UInt8(truncatingIfNeeded: dpiX >> 8), UInt8(truncatingIfNeeded: dpiX), UInt8(truncatingIfNeeded: dpiY >> 8), UInt8(truncatingIfNeeded: dpiY)]
+        return [UInt8(ascii: "P"), UInt8(truncatingIfNeeded: w), UInt8(truncatingIfNeeded: h)] + [UInt8](repeating: gray, count: w * h) + density
     }
 }
 

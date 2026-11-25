@@ -25,7 +25,7 @@ internal static class OptimizeJob
         using var document = Open(file, password, certificate);
         // The older handlers make their keys from the first /ID, which the optimizer's unencrypted working copy no longer shows.
         var options = choice.Options(document.Security) with { DocumentId = document.Security is null ? null : document.FirstId };
-        var result = new PdfOptimizer(document, codec).Run(options);
+        var result = new PdfOptimizer(document, codec).Run(options, token);
         token.ThrowIfCancellationRequested();
         if (!choice.FastWebView) return new OptimizeOutcome(result.Bytes, result);
 

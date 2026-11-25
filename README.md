@@ -1,8 +1,8 @@
 # Lazy PDF
 
-A PDF app for Windows: read, fill, sign, edit, redact, rearrange, compare and convert PDF files, offline and without an account. It is the third of the Lazy apps, after Lazy Scan and Lazy Print, and shares their layout and conventions. It is free, and the source is public to read.
+A PDF app for Windows: read, fill, sign, edit, redact, rearrange, compare and convert PDF files, offline and without an account. It is the third of the Lazy apps, after Lazy Scan and Lazy Print, and shares their layout and conventions. It is free, and the source is available.
 
-The window has a Home tab with the jobs people come for and the files opened last, and a tab for each open document. A document has a tool strip (comment, measure, edit text and pictures, stamps, pages, forms, fill and sign, certificates, protect, redact, clean for sharing, make smaller, export, batch, make searchable, compare, accessibility, PDF/A), a rail of side panels (pages, bookmarks, attachments, layers, comments, signatures, search) and the page. Changes are steps that can be undone one at a time, and an unsaved copy is kept so a crash does not lose them.
+The window has a Home tab with the jobs people come for and the files opened last, and a tab for each open document. A tab can be dragged out of the strip into a window of its own, onto another window's strip, or moved from its menu (Move to new window, Move to window); it keeps its unsaved changes and undo history, and a file is open in one tab in all windows. A document has a tool strip (comment, measure, edit text and pictures, stamps, pages, forms, fill and sign, certificates, protect, redact, clean for sharing, make smaller, export, batch, make searchable, compare, accessibility, PDF/A), a rail of side panels (pages, bookmarks, attachments, layers, comments, signatures, search) and the page. Changes are steps that can be undone one at a time, and an unsaved copy is kept so a crash does not lose them.
 
 The engine is written here and reads, repairs, changes and writes PDF files itself. Turning a page into pixels, recognizing text and reading images is left to Windows. Print hands the open file to Lazy Print when it is installed, and the Scan tile starts Lazy Scan.
 
@@ -19,7 +19,7 @@ windows/              C# solution
   LazyPDF.App         the WPF app
   *.Tests             one test project for each
 store/windows/        Microsoft Store package: manifest, tiles, listing text and screenshots
-scripts/              icon and tile drawing, string tables, package script
+scripts/              string tables, package script
 l10n/                 shared.json (English and Turkish texts) and the Turkish glossary
 site/                 the web pages
 Tests/Fixtures        files the tests read
@@ -48,7 +48,7 @@ The app is published on the Microsoft Store, which signs the package and deliver
 
 The version is `Version` in `windows/Directory.Build.props`. The package version is that with a `.0` added, and the Store wants it higher for every submission.
 
-`store/windows/Package.appxmanifest` holds the package identity as three names taken from Partner Center, which the workflow replaces from repository variables: `STORE_IDENTITY_NAME`, `STORE_PUBLISHER` (the `CN=...` string) and `STORE_PUBLISHER_DISPLAY_NAME`. The workflow stops at its first step when one is missing. The tiles and logos in `store/windows/Assets` are drawn by `scripts/make_store_assets.py` from the same drawing as the icon (`scripts/make_ico.py`).
+`store/windows/Package.appxmanifest` holds the package identity as three names taken from Partner Center, which the workflow replaces from repository variables: `STORE_IDENTITY_NAME`, `STORE_PUBLISHER` (the `CN=...` string) and `STORE_PUBLISHER_DISPLAY_NAME`. The workflow stops at its first step when one is missing. The tiles and logos in `store/windows/Assets` are drawn by `python brand/make_icons.py pdf <this repo>` in the alazy repo (aytutuna/alazy).
 
 To check a package on a PC without the Store: publish with `dotnet publish windows/LazyPDF.App -c Release -r win-x64 --self-contained -o <folder>`, run `scripts/make_msix.ps1 -X64 <folder> -Out <folder>` and sign the `.msix` with a test certificate whose subject matches the identity. The script with no identity values keeps the placeholder names, which is enough to see that the package builds.
 

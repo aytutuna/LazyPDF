@@ -63,7 +63,7 @@ public static class PdfSigner
 
         var target = SignatureField.Resolve(document, job);
         if (SignatureField.Refusal(document, target) is { } refusal) throw new InvalidOperationException(refusal);
-        if (job.Certify != CertificationLevel.None && SignatureScan.Find(SourceBytes(document)).Count > 0) throw new InvalidOperationException(SignatureText.NotCertifiable);
+        if (job.Certify != CertificationLevel.None && SignatureField.Attached(document).Count > 0) throw new InvalidOperationException(SignatureText.NotCertifiable);
         if (job.Level >= PadesLevel.T && request.Timestamp is null) throw new InvalidOperationException(SignatureText.NoTimestampServer);
         string? url = job.TimestampUrl;
         if (request.Timestamp is not null && url is null) throw new InvalidOperationException(SignatureText.NoTimestampServer);
@@ -72,8 +72,9 @@ public static class PdfSigner
         bool visible = !target.Rect.IsEmpty;
         var look = request.Look ?? new SignatureLook();
         string text = visible ? SignatureAppearance.Text(job, look) : "";
-        var font = visible ? SignatureAppearance.AddFont(document, job, look, text) : null;
-        var appearance = visible ? SignatureAppearance.Draw(document, target.Rect, target.Page.Rotate, look, text, font) : null;
+        var layout = SignatureAppearance.Plan(target.Rect, target.Page.Rotate, look, text);
+        var font = visible ? SignatureAppearance.AddFont(document, job, look, layout.ShowText ? text : "") : null;
+        var appearance = visible ? SignatureAppearance.Draw(document, layout, target.Page.Rotate, look, text, font) : null;
 
         var chain = EmbeddedChain(request);
         int reserve = request.ReserveBytes > 0

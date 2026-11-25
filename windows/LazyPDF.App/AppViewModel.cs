@@ -25,41 +25,83 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private readonly DocumentOpener _opener;
     private readonly ISisterApps _sisters;
     private readonly RecoveryStore _recovery;
+    private readonly DocumentRegistry _registry;
     private readonly RecentFiles _recentFiles;
     private readonly string? _settingsDirectory;
     private readonly string _printDirectory;
     private ITab _activeTab = HomeTab.Instance;
     private DocumentTab? _lastDocument;
     private string? _activeToolId;
+    private string? _signingField;
+    private string? _returnTool;
+    private bool _taggingRequested;
     private string _sidePanelId;
     private string _lastSidePanelId;
+    private double _sidePanelWidth;
+    private double _inspectorWidth;
+    private bool _showFileInfo;
     private InfoMessage? _message;
+    private DocumentTab? _messageTab;
     private UIElement? _stage;
     private string _status = "";
     private CancellationTokenSource? _busy;
     private string _busyText = "";
+    private readonly SynchronizationContext? _context = SynchronizationContext.Current;
 
     public AppViewModel(Func<IDocumentRenderer> renderers, IImageCodec codec, IFontSource fonts, ISisterApps sisters,
-                        string? settingsDirectory = null, string? recoveryDirectory = null, string? printDirectory = null)
+                        string? settingsDirectory = null, string? recoveryDirectory = null, string? printDirectory = null,
+                        RecoveryStore? recovery = null, DocumentRegistry? registry = null)
     {
         _renderers = renderers;
         _opener = new DocumentOpener(codec, fonts);
         _sisters = sisters;
         _settingsDirectory = settingsDirectory;
         _printDirectory = printDirectory ?? AppFolders.PrintCopies;
-        _recovery = new RecoveryStore(recoveryDirectory);
+        _recovery = recovery ?? new RecoveryStore(recoveryDirectory);
+        _registry = registry ?? new DocumentRegistry();
+        _registry.Add(this);
         _recentFiles = new RecentFiles(settingsDirectory);
-        _sidePanelId = AppPreferencesStore.Load(settingsDirectory ?? StoreFiles.DefaultDirectory).SidePanel;
+        var preferences = AppPreferencesStore.Load(settingsDirectory ?? StoreFiles.DefaultDirectory);
+        _sidePanelId = preferences.SidePanel;
+        _sidePanelWidth = preferences.SidePanelWidth;
+        _inspectorWidth = preferences.InspectorWidth;
+        _showFileInfo = preferences.ShowFileInfo;
         _lastSidePanelId = _sidePanelId.Length > 0 ? _sidePanelId : "pages";
         Recent = BuildRecent();
+        _sisters.Changed += (_, _) =>
+        {
+            if (_context is null) NotifyAll();
+            else _context.Post(_ => NotifyAll(), null);
+        };
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    internal DocumentRegistry Registry => _registry;
+
+    internal RecoveryStore Recovery => _recovery;
+
+    /// <summary>Raised as a tab is about to go to another window, so the window drops what it holds for it.</summary>
+    internal event EventHandler<DocumentTab>? Released;
+
+    /// <summary>Set by the window: the owner of the dialogs this view model starts.</summary>
+    public Window? DialogOwner { get; set; }
+
+    /// <summary>Set by the window: brings it and the tab to the front when a file is opened that this view model already holds.</summary>
+    internal Action<DocumentTab?>? BringForward { get; set; }
 
     /// <summary>The Home tab first, then the open documents in the order shown.</summary>
     public ObservableCollection<ITab> Strip { get; } = [HomeTab.Instance];
 
     public IEnumerable<DocumentTab> Documents => Strip.OfType<DocumentTab>();
+
+    /// <summary>The files of the open tabs in strip order; a tab made from pictures or text has none.</summary>
+    public IEnumerable<string> SessionPaths() => Documents.Where(d => d.Path is not null).Select(d => d.Path!);
+
+    IReadOnlyList<DocumentTab> IToolHost.OpenDocuments => [.. Documents];
+
+    // The check a change of tab started, for tests to wait on.
+    internal Task DiskCheck { get; private set; } = Task.CompletedTask;
 
     public ITab ActiveTab
     {
@@ -69,9 +111,10 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
             if (value is null || ReferenceEquals(_activeTab, value) || !Strip.Contains(value)) return;
             _activeTab = value;
             DropAction();
+            if (_message is { IsError: false } && !ReferenceEquals(_messageTab, value as DocumentTab)) _message = null;
             if (value is DocumentTab document) _lastDocument = document;
             NotifyAll();
-            CheckDisk();
+            DiskCheck = CheckDiskAsync();
         }
     }
 
@@ -86,6 +129,12 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     /// <summary>The id of the side panel open beside the stage; empty when the rail is collapsed.</summary>
     public string SidePanelId => _sidePanelId;
+
+    public double SidePanelWidth => _sidePanelWidth;
+
+    public double InspectorWidth => _inspectorWidth;
+
+    public bool ShowFileInfo => _showFileInfo;
 
     public InfoMessage? Message => _message;
 
@@ -112,8 +161,62 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     {
         if (id is not null && ToolCatalog.Find(id) is null) return;
         _activeToolId = id == _activeToolId ? null : id;
+        _returnTool = null;
         DropAction();
         NotifyAll();
+    }
+
+    public void OpenTool(string id)
+    {
+        if (ToolCatalog.Find(id) is null || ActiveDocument is null || IsBusy) return;
+        _returnTool = null;
+        if (_activeToolId != id)
+        {
+            _activeToolId = id;
+            DropAction();
+            NotifyAll();
+        }
+        ToolOpened?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void OpenToolReturning(string id, string back)
+    {
+        OpenTool(id);
+        if (_activeToolId == id) _returnTool = back;
+    }
+
+    public string? TakeReturnTool()
+    {
+        var back = _returnTool;
+        _returnTool = null;
+        return back;
+    }
+
+    public void OpenSigning(string field)
+    {
+        _signingField = field;
+        OpenTool("certificates");
+    }
+
+    public string? TakeSigningField()
+    {
+        var field = _signingField;
+        _signingField = null;
+        return field;
+    }
+
+    public void OpenTagging()
+    {
+        _taggingRequested = true;
+        OpenTool("accessibility");
+        if (_activeToolId != "accessibility") _taggingRequested = false;
+    }
+
+    public bool TakeTaggingRequest()
+    {
+        var requested = _taggingRequested;
+        _taggingRequested = false;
+        return requested;
     }
 
     /// <summary>Opens the side panel <paramref name="id"/>, or closes the rail's panel when that one is open already.</summary>
@@ -128,6 +231,24 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     /// <summary>Collapses the rail's panel, or opens the one that was open last.</summary>
     public void ToggleSidePanel() => SetSidePanel(_sidePanelId.Length > 0 ? _sidePanelId : _lastSidePanelId);
 
+    public void SetSidePanelWidth(double width)
+    {
+        _sidePanelWidth = width;
+        AppPreferencesStore.Update(preferences => preferences.SidePanelWidth = width, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
+
+    public void SetInspectorWidth(double width)
+    {
+        _inspectorWidth = width;
+        AppPreferencesStore.Update(preferences => preferences.InspectorWidth = width, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
+
+    public void SetShowFileInfo(bool show)
+    {
+        _showFileInfo = show;
+        AppPreferencesStore.Update(preferences => preferences.ShowFileInfo = show, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
+
     public void SetAppearance(AppAppearance appearance)
     {
         ThemeService.Apply(appearance);
@@ -135,8 +256,13 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         NotifyAll();
     }
 
+    public void SetLanguage(string language)
+    {
+        AppPreferencesStore.Update(preferences => preferences.Language = language, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
+
     // A button on the info bar acts on the tab and tool it was made for, so it goes when they do.
-    private void DropAction()
+    internal void DropAction()
     {
         if (_message?.Action is not null) _message = null;
     }
@@ -144,6 +270,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     public void ShowNotice(string title, string text, NoticeAction? action = null)
     {
         _message = new InfoMessage(title, text, false, action);
+        _messageTab = ActiveDocument;
         NotifyAll();
     }
 
@@ -178,7 +305,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         }
         catch (OperationCanceledException)
         {
-            SetStatus(Loc.T("Cancelled."));
+            SetStatus(Loc.T("Canceled."));
         }
         catch (PdfPermissionException)
         {
@@ -209,6 +336,12 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     /// <summary>The window raises this once everything that had unsaved changes has been dealt with.</summary>
     public event EventHandler? ExitRequested;
+
+    /// <summary>Raised when a tool asked for another one: the window moves the keyboard into it.</summary>
+    public event EventHandler? ToolOpened;
+
+    /// <summary>Raised when Save anyway has saved a tab that was being closed (not during an exit): the window closes it through its own checks.</summary>
+    public event EventHandler<DocumentTab>? CloseRequested;
 
     private void NotifyAll() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
 

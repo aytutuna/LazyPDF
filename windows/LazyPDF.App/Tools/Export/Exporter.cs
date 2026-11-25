@@ -69,24 +69,35 @@ public static class Exporter
     {
         var pages = options.Pages ?? [.. Enumerable.Range(0, document.Pages.Count)];
         int digits = document.Pages.Count.ToString().Length;
-        string extension = options.Picture == PictureFormat.Png ? ".png" : ".jpg";
+        string extension = options.Picture switch { PictureFormat.Png => ".png", PictureFormat.Jpeg => ".jpg", PictureFormat.Tiff => ".tif", _ => ".bmp" };
         int written = 0, skipped = 0;
         foreach (int page in pages)
         {
             cancel.ThrowIfCancellationRequested();
-            byte[]? bytes = options.Picture == PictureFormat.Png
-                ? PageImages.Png(source.Renderer, page, options.Dpi)
-                : PageImages.Jpeg(source.Renderer, source.Codec, page, options.Dpi, options.Quality);
+            byte[]? bytes = options.Colour == PictureColour.Colour && options.Picture == PictureFormat.Png ? PageImages.Png(source.Renderer, page, options.Dpi)
+                : options.Colour == PictureColour.Colour && options.Picture == PictureFormat.Jpeg ? PageImages.Jpeg(source.Renderer, source.Codec, page, options.Dpi, options.Quality)
+                : Encoded(source, page, options);
             if (bytes is null)
             {
                 skipped++;
                 continue;
             }
-            Save(Unique(folder, $"{source.Stem} page {(page + 1).ToString().PadLeft(digits, '0')}{extension}"), bytes);
+            string name = ExportNames.Apply(options.NamePattern, source.Stem, page + 1, digits) + extension;
+            Save(options.Replace ? Path.Combine(folder, name) : Unique(folder, name), bytes);
             written++;
         }
         return new ExportResult(written, folder, skipped);
     }
+
+    private static byte[]? Encoded(ExportSource source, int page, ExportOptions options)
+    {
+        if (source.Renderer.Render(page, options.Dpi) is not { } image) return null;
+        var codec = source.Codec as WicImageCodec ?? new WicImageCodec();
+        return codec.Encode(image, options.Picture, options.Colour, options.Quality, options.Dpi);
+    }
+
+    // A JPEG has no 1-bit form.
+    internal static bool Allows(PictureFormat picture, PictureColour colour) => !(picture == PictureFormat.Jpeg && colour == PictureColour.BlackWhite);
 
     // One page at a time: the extractor holds every picture of a call in memory under one budget, which a long scan would use up.
     private static ExportResult Images(PdfDocument document, ExportSource source, ExportOptions options, string folder, CancellationToken cancel)
@@ -115,7 +126,7 @@ public static class Exporter
 
     private static void SaveText(string path, string text) => Save(path, new UTF8Encoding(false).GetBytes(text));
 
-    private static void Save(string path, byte[] bytes)
+    internal static void Save(string path, byte[] bytes)
     {
         string temp = $"{path}.{Guid.NewGuid():N}.tmp";
         try
@@ -128,5 +139,27 @@ public static class Exporter
             File.Delete(temp);
             throw;
         }
+    }
+}
+
+internal static class ExportNames
+{
+    private static string Default => Loc.T("{name} page {n}");
+
+    public static string Apply(string pattern, string stem, int page, int digits)
+    {
+        string name = Fill(pattern, stem, page, digits);
+        return name.Length > 0 ? name : Fill(Default, stem, page, digits);
+    }
+
+    /// <summary>Null when every page gets a file of its own.</summary>
+    public static string? Error(string pattern, int pages) =>
+        pages > 1 && !pattern.Contains("{n}") ? Loc.T("Add {0} to the name so each page gets its own file.", "{n}") : null;
+
+    private static string Fill(string pattern, string stem, int page, int digits)
+    {
+        string name = pattern.Replace("{name}", stem).Replace("{n}", page.ToString().PadLeft(digits, '0'));
+        foreach (char c in Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
+        return name.Trim(' ', '.');
     }
 }

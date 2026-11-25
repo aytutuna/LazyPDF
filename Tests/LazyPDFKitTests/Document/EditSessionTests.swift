@@ -82,6 +82,50 @@ final class EditSessionTests: XCTestCase {
         XCTAssertNil(session.redoLabel)
     }
 
+    func test_mergedCommitUndoesWithThePreviousOne() throws {
+        let original = SaveFixtures.table()
+        let session = try PdfEditSession.open(original)
+        retitle(session, "One")
+        try session.commit("Fill")
+        retitle(session, "Two")
+        XCTAssertTrue(try session.commit("Fill", mergeWithPrevious: true))
+        XCTAssertEqual(title(session), "Two")
+
+        XCTAssertTrue(try session.undo())
+        XCTAssertEqual(session.current, original)
+        XCTAssertFalse(session.canUndo)
+        XCTAssertTrue(try session.redo())
+        XCTAssertEqual(title(session), "Two")
+        XCTAssertFalse(session.canRedo)
+    }
+
+    func test_mergeIsRefusedWithoutAStepAfterASaveAndForAnotherLabel() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        retitle(session, "One")
+        try session.commit("Fill", mergeWithPrevious: true)
+        try session.undo()
+        XCTAssertFalse(session.canUndo)
+        try session.redo()
+
+        retitle(session, "Two")
+        try session.commit("Other", mergeWithPrevious: true)
+        retitle(session, "Three")
+        try session.commit("Other")
+        try session.save(path("a.pdf"))
+        retitle(session, "Four")
+        try session.commit("Other", mergeWithPrevious: true)
+
+        try session.undo()
+        XCTAssertEqual(title(session), "Three")
+        try session.undo()
+        XCTAssertEqual(title(session), "Two")
+        try session.undo()
+        XCTAssertEqual(title(session), "One")
+        try session.undo()
+        XCTAssertEqual(title(session), "Original title")
+        XCTAssertFalse(session.canUndo)
+    }
+
     func test_commitWithNothingChangedAddsNothing() throws {
         let session = try PdfEditSession.open(SaveFixtures.table())
         let before = session.current
@@ -283,6 +327,42 @@ final class EditSessionTests: XCTestCase {
         XCTAssertEqual(try PdfEditSession.open(session.current).versions.count, 1)
     }
 
+    func test_anEditMadeOnACopyLandsAsOneStep() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        let copy = try PdfDocument.open(session.current)
+        copy.info?["Title"] = PdfString(bytes: Latin1.bytes("From a copy"), isHex: false)
+
+        let update = try PdfEditSession.update(of: copy)
+        XCTAssertTrue(try session.commit("Copy", update: update, over: session.current.count))
+
+        XCTAssertEqual(title(session), "From a copy")
+        XCTAssertEqual(session.undoLabel, "Copy")
+        XCTAssertTrue(try session.undo())
+        XCTAssertEqual(title(session), "Original title")
+    }
+
+    func test_anEditFromACopyOfAnEarlierStateIsRefused() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        let copy = try PdfDocument.open(session.current)
+        let length = session.current.count
+        copy.info?["Title"] = PdfString(bytes: Latin1.bytes("Late"), isHex: false)
+        retitle(session, "Meanwhile")
+        XCTAssertTrue(try session.commit("Meanwhile"))
+
+        let update = try PdfEditSession.update(of: copy)
+        XCTAssertThrowsError(try session.commit("Copy", update: update, over: length))
+        XCTAssertEqual(title(session), "Meanwhile")
+    }
+
+    func test_aCopyThatChangedNothingAddsNoStep() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        let copy = try PdfDocument.open(session.current)
+
+        let update = try PdfEditSession.update(of: copy)
+        XCTAssertFalse(try session.commit("Copy", update: update, over: session.current.count))
+        XCTAssertFalse(session.canUndo)
+    }
+
     func test_versionIsNotMadeOfAStartxrefInsideStreamData() throws {
         let pdf = TestPdf()
         pdf.obj(1, "<</Type /Catalog /Pages 2 0 R>>")
@@ -291,5 +371,63 @@ final class EditSessionTests: XCTestCase {
         pdf.stream(4, "", "startxref\n9\n%%EOF\n")
         let session = try PdfEditSession.open(pdf.finish())
         XCTAssertEqual(session.versions.count, 1)
+    }
+
+    func test_pastTheSectionLimitTheNextUpdateIsAFullSection() throws {
+        for kind in ["table", "stream"] {
+            let session = try PdfEditSession.open(try SaveFixtures.make(kind))
+            for i in 1...(PdfDocument.maxSections + 4) {
+                retitle(session, "Title \(i)")
+                XCTAssertTrue(try session.commit("Title"), kind)
+                if i % 500 == 0 { XCTAssertFalse(session.document.xrefRebuilt, kind) }
+            }
+            XCTAssertFalse(session.document.xrefRebuilt, kind)
+            XCTAssertLessThan(session.document.sectionOffsets.count, PdfDocument.maxSections, kind)
+
+            let reopened = try PdfDocument.open(session.current)
+            XCTAssertFalse(reopened.xrefRebuilt, kind)
+            XCTAssertEqual(SaveFixtures.title(reopened), "Title \(PdfDocument.maxSections + 4)", kind)
+            XCTAssertEqual(reopened.pages.count, 2, kind)
+        }
+    }
+
+    func test_commitPastTheLimitIsRefusedAndKeepsTheChanges() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        retitle(session, "One")
+        XCTAssertTrue(try session.commit("Title one"))
+        let afterOne = session.current
+
+        session.maxBytes = afterOne.count + 10
+        retitle(session, "Two")
+        do {
+            _ = try session.commit("Title two")
+            XCTFail("expected a refusal")
+        } catch let e as PdfReadException {
+            XCTAssertEqual(e.problem, .unsupported)
+            XCTAssertEqual(e.message, "The file is too large to change further.")
+        }
+        XCTAssertTrue(session.isDirty)
+        XCTAssertTrue(session.canUndo)
+        XCTAssertEqual(session.undoLabel, "Title one")
+        XCTAssertEqual(session.current, afterOne)
+
+        session.maxBytes = Int.max
+        XCTAssertTrue(try session.commit("Title two"))
+        XCTAssertEqual(title(session), "Two")
+    }
+
+    func test_fileLargerThanTheLimitIsNotRead() throws {
+        let huge = path("huge.pdf")
+        FileManager.default.createFile(atPath: huge, contents: nil)
+        let file = try FileHandle(forWritingTo: URL(fileURLWithPath: huge))
+        try file.truncate(atOffset: UInt64(Int32.max) + 1)
+        try file.close()
+        do {
+            _ = try PdfEditSession.open(path: huge)
+            XCTFail("expected a refusal")
+        } catch let e as PdfReadException {
+            XCTAssertEqual(e.problem, .unsupported)
+            XCTAssertEqual(e.message, "The file is too large.")
+        }
     }
 }

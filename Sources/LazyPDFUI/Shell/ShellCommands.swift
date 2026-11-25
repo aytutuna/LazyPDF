@@ -1,0 +1,88 @@
+#if canImport(SwiftUI)
+import Foundation
+import LazyPDFApp
+
+public extension Notification.Name {
+    /// Posted by the platform's menu with the window's AppViewModel as the object; that window answers with its About sheet.
+    static let showAbout = Notification.Name("LazyPDFShowAbout")
+    /// Posted by the platform's menu with the window's AppViewModel as the object; that window answers with its Settings sheet.
+    static let showSettings = Notification.Name("LazyPDFShowSettings")
+}
+
+/// Another window of the app that a tab can be moved to, as the tab's menu lists it.
+public struct TabMoveTarget: Identifiable {
+    public let id: UUID
+    public let name: String
+    public let move: @MainActor (DocumentTab) -> Void
+
+    public init(id: UUID, name: String, move: @escaping @MainActor (DocumentTab) -> Void) {
+        self.id = id
+        self.name = name
+        self.move = move
+    }
+}
+
+/// What the window asks of the platform shell because it needs a system panel or a security-scoped grant: choosing files,
+/// naming a copy, printing. The shell starts access to a chosen file before it opens it, as AppViewModel.open expects.
+public struct ShellCommands {
+    public var open: @MainActor () -> Void
+    public var create: @MainActor () -> Void
+    public var batch: @MainActor () -> Void
+
+    /// Asks for a name and saves the tab there; true when it was saved.
+    public var saveAs: @MainActor (DocumentTab) async -> Bool
+    public var saveCompact: @MainActor (DocumentTab) -> Void
+    /// Shows the system's print dialog for the tab, once Lazy Print has not taken it (AppViewModel.print).
+    public var print: @MainActor (DocumentTab) -> Void
+
+    /// Hands the tab's current file to the share sheet; nil where the platform has none.
+    public var share: (@MainActor (DocumentTab) -> Void)?
+
+    /// Offers the tab's file to an app other than this one; the XFA notice's button asks for it. Nil where the platform has none.
+    public var openElsewhere: (@MainActor (DocumentTab) -> Void)?
+
+    /// Chooses a .p12 or .pfx, imports it through PdfDigitalId into the keychain and returns the identity; nil when the
+    /// person gave up. The password question offers it for a file encrypted for recipients.
+    public var importCertificate: (@MainActor () async -> CertificateChoice?)?
+
+    /// The imported identities with a way to delete them; nil where the system keychain is the person's to manage.
+    public var certificateList: CertificateListModel?
+
+    /// Opens files dropped on the window; nil lets the window open them without a grant of their own.
+    public var openFiles: (@MainActor ([URL]) -> Void)?
+
+    /// Moves the tab into a window of its own, and the other windows it can go to; nil where there is only one window.
+    public var moveToNewWindow: (@MainActor (DocumentTab) -> Void)?
+    public var windowTargets: (@MainActor () -> [TabMoveTarget])?
+    /// The Mac's drag of a tab onto another strip or out of the window; nil keeps the String drag.
+    public var tabDragging: TabDragging?
+
+    public init(open: @escaping @MainActor () -> Void = {}, create: @escaping @MainActor () -> Void = {},
+                batch: @escaping @MainActor () -> Void = {}, saveAs: @escaping @MainActor (DocumentTab) async -> Bool = { _ in false },
+                saveCompact: @escaping @MainActor (DocumentTab) -> Void = { _ in },
+                print: @escaping @MainActor (DocumentTab) -> Void = { _ in },
+                share: (@MainActor (DocumentTab) -> Void)? = nil,
+                openElsewhere: (@MainActor (DocumentTab) -> Void)? = nil,
+                importCertificate: (@MainActor () async -> CertificateChoice?)? = nil,
+                certificateList: CertificateListModel? = nil,
+                openFiles: (@MainActor ([URL]) -> Void)? = nil,
+                moveToNewWindow: (@MainActor (DocumentTab) -> Void)? = nil,
+                windowTargets: (@MainActor () -> [TabMoveTarget])? = nil,
+                tabDragging: TabDragging? = nil) {
+        self.open = open
+        self.create = create
+        self.batch = batch
+        self.saveAs = saveAs
+        self.saveCompact = saveCompact
+        self.print = print
+        self.share = share
+        self.openElsewhere = openElsewhere
+        self.importCertificate = importCertificate
+        self.certificateList = certificateList
+        self.openFiles = openFiles
+        self.moveToNewWindow = moveToNewWindow
+        self.windowTargets = windowTargets
+        self.tabDragging = tabDragging
+    }
+}
+#endif

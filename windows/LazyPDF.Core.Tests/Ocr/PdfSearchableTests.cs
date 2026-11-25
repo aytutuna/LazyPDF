@@ -171,6 +171,38 @@ public class PdfSearchableTests
     }
 
     [Fact]
+    public async Task CancelKeepsTheFinishedPagesWhenAsked()
+    {
+        var session = PdfEditSession.Open(OcrKit.ScanBytes(3));
+        using var cancel = new CancellationTokenSource();
+        var recognizer = new FakeRecognizer(OcrKit.Words()) { Before = call => { if (call == 2) cancel.Cancel(); cancel.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; } };
+        var read = await PdfSearchable.ReadAsync(session.Document, recognizer, new FakeRenderer(session.Document), new OcrOptions(Dpi: 72), cancellation: cancel.Token, keepPartial: true);
+
+        Assert.True(read.Stopped);
+        Assert.Equal([0, 1], read.Pages.Select(p => p.PageIndex));
+        Assert.Equal(new OcrResult(2, 0, 0, 0, 0, false), read.Result);
+        Assert.False(session.Document.HasChanges);
+
+        using var other = new CancellationTokenSource();
+        var plain = new FakeRecognizer(OcrKit.Words()) { Before = call => { if (call == 2) other.Cancel(); other.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; } };
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            PdfSearchable.ReadAsync(session.Document, plain, new FakeRenderer(session.Document), new OcrOptions(Dpi: 72), cancellation: other.Token));
+    }
+
+    [Fact]
+    public async Task CancelBeforeStartKeepsNothingWhenAsked()
+    {
+        var session = PdfEditSession.Open(OcrKit.ScanBytes(2));
+        var recognizer = new FakeRecognizer(OcrKit.Words());
+        var read = await PdfSearchable.ReadAsync(session.Document, recognizer, new FakeRenderer(session.Document), new OcrOptions(Dpi: 72),
+                                                 cancellation: new CancellationToken(true), keepPartial: true);
+        Assert.True(read.Stopped);
+        Assert.Empty(read.Pages);
+        Assert.Equal(new OcrResult(0, 0, 0, 0, 0, false), read.Result);
+        Assert.Empty(recognizer.Calls);
+    }
+
+    [Fact]
     public async Task RecognizerFailureLeavesTheDocumentAsItWas()
     {
         var session = PdfEditSession.Open(OcrKit.ScanBytes(3));

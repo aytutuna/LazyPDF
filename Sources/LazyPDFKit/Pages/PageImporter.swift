@@ -42,6 +42,16 @@ final class PageImporter {
     var map = OrderedMap<PdfReference>()
     var newPages: [Int: PdfReference] = [:]
     var pending: [(source: Int, target: Int)] = []
+    var droppedNumbers = Set<Int>()
+    var skip = Set<Int>()
+    var cut = Set<ObjectIdentifier>()
+
+    /// Whether the pages and annotations keep their keys into the tag tree, which `copyTree` then copies.
+    var keepTags = false
+
+    /// How many objects the source lists that were referenced by what came across but could not be read, so they are left out.
+    var dropped: Int { droppedNumbers.count }
+    var taggedCopies = OrderedMap<PdfReference>()
 
     var layersAdded = Set<Int>()
 
@@ -111,6 +121,32 @@ final class PageImporter {
         return made
     }
 
+    /// A copy of the source's structure tree in which a page that did not come across is `ghost`, and an element with
+    /// nothing left on the pages taken is not copied. The parent and ID trees are left to the caller.
+    func copyTree(_ root: PdfObject, _ ghost: PdfReference) throws -> PdfObject {
+        let taken = Set(sourcePages.filter { newPages[$0] != nil })
+        skip.formUnion(TagCut.dead(source, root, taken, sourcePages))
+        if let top = source.resolve(root) as? PdfDictionary {
+            for key in ["ParentTree", "IDTree"] {
+                if let tree = top[key] { cut.insert(ObjectIdentifier(tree)) }
+            }
+        }
+        let added = sourcePages.sorted().filter { newPages[$0] == nil }
+        for number in added { newPages[number] = ghost }
+        for entry in taggedCopies.entries where map[entry.key] == nil { map[entry.key] = entry.value }
+        // An annotation the importer dropped must not come back through the tree as a copy that is on no page.
+        for page in source.pages {
+            guard let annots = source.resolve(page.dictionary["Annots"]) as? PdfArray else { continue }
+            for item in annots.items {
+                if let r = item as? PdfReference, taggedCopies[r.number] == nil { skip.insert(r.number) }
+            }
+        }
+        let made = try copyValue(root)
+        for number in added { newPages[number] = nil }
+        cut.removeAll()
+        return made
+    }
+
     private func fillPage(_ page: PdfPage, _ reference: PdfReference, _ dict: PdfDictionary) throws {
         dict["Type"] = PdfName("Page")
         // Written out even when equal to the default, so that nothing is inherited from the new tree (7.7.3.4).
@@ -125,7 +161,7 @@ final class PageImporter {
         }
         dict["Resources"] = try copy(try pruned(page, resources))
         for (key, value) in page.dictionary.entries {
-            if Self.pageOnly.contains(key) || page.dictionary[key] !== value { continue }
+            if (Self.pageOnly.contains(key) && !(keepTags && key == "StructParents")) || page.dictionary[key] !== value { continue }
             let made = try copy(value)
             if !(made is PdfNull) { dict.add(key, made) }
         }
@@ -158,7 +194,7 @@ final class PageImporter {
     func copyDictionary(_ original: PdfDictionary) throws -> PdfDictionary {
         let made = PdfDictionary()
         for (key, value) in original.entries {
-            if original[key] !== value { continue }
+            if original[key] !== value || cut.contains(ObjectIdentifier(value)) { continue }
             let item = try copy(value)
             if !(item is PdfNull) { made.add(key, item) }
         }
@@ -166,14 +202,29 @@ final class PageImporter {
     }
 
     private func copyReference(_ reference: PdfReference) throws -> PdfObject {
+        if skip.contains(reference.number) { return PdfNull.instance }
         if let done = map[reference.number] ?? newPages[reference.number] { return done }
         // A page that did not come across, the tree above it and the catalog would drag the whole file in.
-        guard let value = source.get(reference.number), !(value is PdfNull), !sourcePages.contains(reference.number),
-              !isStructure(value) else { return PdfNull.instance }
+        guard let value = source.get(reference.number), !(value is PdfNull) else {
+            noteUnreadable(reference)
+            return PdfNull.instance
+        }
+        guard !sourcePages.contains(reference.number), !isStructure(value) else { return PdfNull.instance }
         let made = try target.add(PdfNull.instance)
         map[reference.number] = made
         pending.append((reference.number, made.number))
         return made
+    }
+
+    // The source's object for a value, counting a reference it lists but cannot read among the dropped.
+    func read(_ value: PdfObject?) -> PdfObject? {
+        let found = source.resolve(value)
+        if found == nil, let reference = value as? PdfReference { noteUnreadable(reference) }
+        return found
+    }
+
+    private func noteUnreadable(_ reference: PdfReference) {
+        if let listed = source.entries[reference.number], listed.kind == .inUse || listed.kind == .compressed { droppedNumbers.insert(reference.number) }
     }
 
     private func isStructure(_ value: PdfObject) -> Bool {

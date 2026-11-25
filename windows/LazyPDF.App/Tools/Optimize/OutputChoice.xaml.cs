@@ -8,6 +8,7 @@ namespace LazyPDF.App.Tools.Optimize;
 public sealed partial class OutputChoice : UserControl
 {
     private bool _signed;
+    private bool _readOnly;
 
     public OutputChoice()
     {
@@ -23,7 +24,8 @@ public sealed partial class OutputChoice : UserControl
     {
         bool signed = tab.Document.IsSigned;
         _signed = signed;
-        ThisFile.IsEnabled = tab.Path is not null && !signed;
+        _readOnly = tab.ReadOnly && tab.Path is not null;
+        ThisFile.IsEnabled = tab.Path is not null && !signed && !tab.ReadOnly;
         if (!ThisFile.IsEnabled) NewFile.IsChecked = true;
         SignedRow.Visibility = signed ? Visibility.Visible : Visibility.Collapsed;
         SignedNote.Text = removesSignatures
@@ -38,6 +40,7 @@ public sealed partial class OutputChoice : UserControl
     {
         if (Note is null) return;
         Note.Text = _signed ? Loc.T("A signed file is not replaced. The result opens in a new tab.")
+            : _readOnly ? Loc.T("This file is read-only. The result opens in a new tab.")
             : !ThisFile.IsEnabled ? Loc.T("This file is not saved yet.")
             : Replace ? Loc.T("Replaces the file on disk and clears Undo.")
             : Loc.T("Opens in a new tab. You name it when you save.");

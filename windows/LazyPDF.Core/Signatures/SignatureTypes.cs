@@ -69,11 +69,13 @@ public enum SignatureProblem
     NoCertificate,
     UntrustedSigner,
     CertificateNotValid,
+    CertificateExpired,
     CertificateRevoked,
     ChangedAfterSigning,
     DamagedStructure,
     TimestampInvalid,
     WeakDigest,
+    WeakKey,
 }
 
 /// <summary>Signs a digest for a key that is not in this process: a smart card, a token, a remote service.</summary>
@@ -200,6 +202,9 @@ public sealed record VerifyOptions
 
     /// <summary>The time used for certificates when a signature carries no time of its own; the caller's clock.</summary>
     public DateTimeOffset? Now { get; init; }
+
+    /// <summary>When given, asked for the certificate of an issuer a chain lacks; without it verifying never downloads.</summary>
+    public ISignatureTransport? Transport { get; init; }
 
     public string? Password { get; init; }
 

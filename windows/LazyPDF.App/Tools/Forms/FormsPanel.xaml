@@ -26,7 +26,7 @@
 
         <StackPanel x:Name="FieldsPane" Margin="0,12,0,0">
             <TextBlock Text="{loc:T Fields}" Style="{StaticResource FieldLabelText}" />
-            <ListBox x:Name="FieldList" MaxHeight="160" SelectionChanged="FieldList_SelectionChanged" AutomationProperties.Name="{loc:T Fields}">
+            <ListBox x:Name="FieldList" MaxHeight="160" SelectionMode="Extended" SelectionChanged="FieldList_SelectionChanged" AutomationProperties.Name="{loc:T Fields}">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                         <Setter Property="AutomationProperties.Name" Value="{Binding Summary}" />
@@ -63,6 +63,7 @@
             </StackPanel>
             <TextBlock x:Name="DrawHint" Style="{StaticResource ReasonText}" Margin="0,6,0,12" Text="{loc:T Drag on the page to draw a field. Click a field to change it.}" />
 
+            <TextBlock x:Name="PickedText" Style="{StaticResource BodyText}" Margin="0,0,0,12" Visibility="Collapsed" />
             <Border x:Name="Card" Style="{StaticResource CardStyle}" Margin="0,0,0,12" Visibility="Collapsed">
                 <StackPanel>
                     <TextBlock Text="{loc:T Name}" Style="{StaticResource FieldLabelText}" />
@@ -106,8 +107,8 @@
                         <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T Leave it empty to fit the text to the field.}" />
                     </StackPanel>
                     <StackPanel x:Name="ColourRow">
-                        <TextBlock Text="{loc:T Text colour}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
-                        <ComboBox x:Name="ColourBox" SelectionChanged="Look_SelectionChanged" AutomationProperties.Name="{loc:T Text colour}" />
+                        <TextBlock Text="{loc:T Text color}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
+                        <ComboBox x:Name="ColourBox" SelectionChanged="Look_SelectionChanged" AutomationProperties.Name="{loc:T Text color}" />
                     </StackPanel>
                     <StackPanel x:Name="ActionRow">
                         <TextBlock Text="{loc:T Button action}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
@@ -118,9 +119,40 @@
                         </StackPanel>
                     </StackPanel>
                     <Button x:Name="DeleteButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74D;" HorizontalAlignment="Left" Margin="0,12,0,0"
-                            Content="{loc:T Delete field}" AutomationProperties.Name="{loc:T Delete field}" Click="Delete_Click" />
+                            ToolTip="{loc:T Delete (Del)}" Content="{loc:T Delete field}" AutomationProperties.Name="{loc:T Delete field}" Click="Delete_Click" />
                 </StackPanel>
             </Border>
+
+            <StackPanel x:Name="ArrangeRow" Margin="0,0,0,12" Visibility="Collapsed">
+                <TextBlock Text="{loc:T Arrange}" Style="{StaticResource FieldLabelText}" />
+                <UniformGrid Columns="3">
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Left}"
+                        ToolTip="{loc:T Align left edges}" Content="{loc:T Left}" AutomationProperties.Name="{loc:T Align left edges}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Centre}"
+                        ToolTip="{loc:T Align centers}" Content="{loc:T Center}" AutomationProperties.Name="{loc:T Align centers}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Right}"
+                        ToolTip="{loc:T Align right edges}" Content="{loc:T Right}" AutomationProperties.Name="{loc:T Align right edges}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Top}"
+                        ToolTip="{loc:T Align top edges}" Content="{loc:T Top}" AutomationProperties.Name="{loc:T Align top edges}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Middle}"
+                        ToolTip="{loc:T Align middles}" Content="{loc:T Middle}" AutomationProperties.Name="{loc:T Align middles}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Bottom}"
+                        ToolTip="{loc:T Align bottom edges}" Content="{loc:T Bottom}" AutomationProperties.Name="{loc:T Align bottom edges}" Click="Arrange_Click" />
+                <Button x:Name="SpaceAcrossButton" Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.SpaceAcross}"
+                        ToolTip="{loc:T Space evenly across}" Content="{loc:T Space across}" AutomationProperties.Name="{loc:T Space evenly across}" Click="Arrange_Click" />
+                <Button x:Name="SpaceDownButton" Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.SpaceDown}"
+                        ToolTip="{loc:T Space evenly down}" Content="{loc:T Space down}" AutomationProperties.Name="{loc:T Space evenly down}" Click="Arrange_Click" />
+                </UniformGrid>
+            </StackPanel>
+
+            <UniformGrid Rows="1" Margin="0,0,0,12">
+                <Button x:Name="CopyButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8C8;" Margin="0,0,4,0"
+                        ToolTip="{loc:T Copy (Ctrl+C)}" Content="{loc:T Copy}" AutomationProperties.Name="{loc:T Copy}" Click="Copy_Click" />
+                <Button x:Name="PasteButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE77F;" Margin="0,0,4,0"
+                        ToolTip="{loc:T Paste (Ctrl+V)}" Content="{loc:T Paste}" AutomationProperties.Name="{loc:T Paste}" Click="Paste_Click" />
+                <Button x:Name="DuplicateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE923;"
+                        ToolTip="{loc:T Duplicate (Ctrl+D)}" Content="{loc:T Duplicate}" AutomationProperties.Name="{loc:T Duplicate}" Click="Duplicate_Click" />
+            </UniformGrid>
 
             <TextBlock Text="{loc:T Tab order on this page}" Style="{StaticResource FieldLabelText}" />
             <ComboBox x:Name="TabBox" HorizontalAlignment="Stretch" SelectionChanged="TabBox_SelectionChanged" AutomationProperties.Name="{loc:T Tab order on this page}" />

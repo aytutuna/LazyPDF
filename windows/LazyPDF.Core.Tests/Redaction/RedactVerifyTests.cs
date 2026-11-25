@@ -27,14 +27,16 @@ public class RedactVerifyTests
     }
 
     [Fact]
-    public void PacketIsSearchedByItsTextNotItsElementNames()
+    public void PacketIsSearchedByItsTextAndByItsBytes()
     {
         using var document = RedactionKit.Page("BT /F1 12 Tf 100 700 Td (plain) Tj ET");
         var packet = document.Add(new PdfStream(new PdfDictionary { ["Type"] = new PdfName("Metadata"), ["Subtype"] = new PdfName("XML") },
             Encoding.UTF8.GetBytes("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><rdf:RDF><rdf:Description><xmpG:mode>RGB</xmpG:mode><dc:title>a &#103;izli b</dc:title></rdf:Description></rdf:RDF></x:xmpmeta>")));
         document.Catalog["Metadata"] = packet;
         byte[] bytes = document.SaveRewrite();
-        Assert.True(PdfRedactor.Verify(bytes, [], ["mode"]).IsClean);
+        // A name holds a word as much as a text does, and the bytes are searched besides the text.
+        Assert.False(PdfRedactor.Verify(bytes, [], ["mode"]).IsClean);
+        Assert.True(PdfRedactor.Verify(bytes, [], ["absent"]).IsClean);
         Assert.False(PdfRedactor.Verify(bytes, [], ["gizli"]).IsClean);
     }
 

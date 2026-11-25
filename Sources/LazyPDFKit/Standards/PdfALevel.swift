@@ -1,7 +1,8 @@
 import Foundation
 
 // Twin of windows/LazyPDF.Core/Standards/PdfALevel.cs: a PDF/A part and conformance level (ISO 19005). Part 4 has no
-// level B or U; the plain "4" is meant. The C# PdfALevels extension methods are methods of the enum here.
+// level A, B or U; the plain "4" is meant. The level A cases come last because a saved batch holds the numbers. The C#
+// PdfALevels extension methods are methods of the enum here.
 
 public enum PdfALevel {
     case a1b
@@ -10,27 +11,34 @@ public enum PdfALevel {
     case a3b
     case a3u
     case a4
+    case a1a
+    case a2a
+    case a3a
 
     public func part() -> Int {
         switch self {
-        case .a1b: return 1
-        case .a2b, .a2u: return 2
-        case .a3b, .a3u: return 3
+        case .a1a, .a1b: return 1
+        case .a2a, .a2b, .a2u: return 2
+        case .a3a, .a3b, .a3u: return 3
         case .a4: return 4
         }
     }
 
-    /// "B" or "U"; nil for part 4, which has none.
+    /// "A", "B" or "U"; nil for part 4, which has none.
     public func conformance() -> String? {
         switch self {
+        case .a1a, .a2a, .a3a: return "A"
         case .a1b, .a2b, .a3b: return "B"
         case .a2u, .a3u: return "U"
         case .a4: return nil
         }
     }
 
-    /// The level asks for Unicode text mappings (level U).
-    public func needsUnicode() -> Bool { self == .a2u || self == .a3u }
+    /// The level asks for Unicode text mappings (levels A and U).
+    public func needsUnicode() -> Bool { self == .a1a || self == .a2a || self == .a3a || self == .a2u || self == .a3u }
+
+    /// The level asks for a tagged file (level A).
+    public func needsTags() -> Bool { conformance() == "A" }
 
     public func name() -> String {
         guard let conformance = conformance() else { return "PDF/A-4" }
@@ -48,6 +56,17 @@ public struct PdfAIssue: Hashable {
         self.clause = clause
         self.where = place
         self.message = message
+    }
+
+    // Ordinal, as the C# record compares: String's own == equates canonical equivalents, and the texts here are arbitrary Unicode from the XMP.
+    public static func == (a: PdfAIssue, b: PdfAIssue) -> Bool {
+        a.clause.utf8.elementsEqual(b.clause.utf8) && a.where.utf8.elementsEqual(b.where.utf8) && a.message.utf8.elementsEqual(b.message.utf8)
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(Array(clause.utf8))
+        hasher.combine(Array(`where`.utf8))
+        hasher.combine(Array(message.utf8))
     }
 }
 
@@ -73,5 +92,13 @@ public enum PdfAValidator {
         let checker = PdfAChecker(document, level)
         checker.run()
         return checker.report()
+    }
+
+    /// The level A rules of the logical structure that the file breaks; empty for the levels that need no tags.
+    public static func taggingIssues(_ document: PdfDocument, _ level: PdfALevel) -> [PdfAIssue] {
+        if !level.needsTags() { return [] }
+        let checker = PdfAChecker(document, level)
+        checker.run()
+        return checker.structureIssues
     }
 }

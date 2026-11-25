@@ -60,7 +60,7 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
             if (width > MaxPixels / height) return Dropped();
 
             PdfObject? filter, parameters;
-            if (stream is not null) (filter, parameters, _) = document.DecodeSpec(stream);
+            if (stream is not null) (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
             else (filter, parameters) = (dictionary["Filter"], dictionary["DecodeParms"]);
             var decoded = PdfFilters.DecodeToCodec(raw, filter, parameters, Math.Max(0, byteLimit - _total));
 
@@ -118,11 +118,14 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
             return _merge.FromSamples(dictionary, decoded.Data);
         }
         if (codec is null) return null;
+        bool jpx = decoded.Codec == "JPXDecode";
+        if (jpx && !JpxImage.Readable(document, dictionary)) return null;
         _merge.Charge(0);
-        if (codec.Decode(decoded.Data, decoded.Codec) is not { } coded) return null;
+        if (codec.Decode(decoded.Data, decoded.Codec, jpx ? JpxImage.Components(document, dictionary) : 0) is not { } coded) return null;
         long size = (long)coded.Width * coded.Height;
         _merge.Charge(size);
         if (size > MaxPixels) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
+        if (coded.Width < 1 || coded.Height < 1 || coded.Rgba.Length != size * 4) return null;
         return _merge.FromPixels(dictionary, coded, decoded.Codec, decoded.Data);
     }
 

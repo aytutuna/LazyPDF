@@ -1,0 +1,115 @@
+# One line is "<op> <words>". Bytes are escaped (\n \r \t \ \xHH) as in the other golden inputs.
+# parse <bytes>: the tree of a part with the default limits. limits <depth> <elements> <attributes> <bytes>: the same with other limits.
+# The tree is shown one node per line, two spaces per level: E {uri}name, A {uri}name="value" and T "text" (UTF-16 units outside printable ASCII as \uXXXX). A failure is "error <problem>".
+parse <a/>
+parse <?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<a b="1" c='2'><d/>text<e>more</e></a>
+parse \xEF\xBB\xBF<a>caf\xC3\xA9 \xE2\x82\xAC \xF0\x9F\x98\x80</a>
+parse \xFF\xFE<\x00a\x00>\x00\xE9\x00<\x00/\x00a\x00>\x00
+parse \xFE\xFF\x00<\x00a\x00>\x00\xE9\x00<\x00/\x00a\x00>
+parse \x00<\x00a\x00>\xD8\x3D\xDE\x00\x00<\x00/\x00a\x00>
+parse <\x00a\x00>\x00x\x00<\x00/\x00a\x00>\x00
+parse <a>\xFF</a>
+parse <a>\xC3</a>
+parse \xFF\xFE<\x00a\x00>\x00<
+parse <?xml version="1.0" encoding="UTF-16"?><a>x</a>
+parse <?xml version="1.0" encoding="us-ascii"?><a>x</a>
+parse <?xml version="1.0" encoding="ISO-8859-1"?><a>cafe</a>
+parse <?xml version="1.0" encoding='utf-8'?><a>x</a>
+parse <?xml version="1.0"?><?pi data?><!-- c --><a/><!-- after --><?pi?>
+parse  <?xml version="1.0"?><a/>
+parse <a><?xml version="1.0"?></a>
+parse <a><?XML x?></a>
+parse <a>&lt;&gt;&amp;&quot;&apos;</a>
+parse <a b="&lt;&amp;&quot;&apos;&gt;"/>
+parse <a>&#65;&#x42;&#x1F600;&#9;&#xD;</a>
+parse <a b="&#10;&#9;&#13;"/>
+parse <a>&#0;</a>
+parse <a>&#xD800;</a>
+parse <a>&#x110000;</a>
+parse <a>&#xFFFE;</a>
+parse <a>&#x;</a>
+parse <a>&#12a;</a>
+parse <a>&#1234567890;</a>
+parse <a>&nbsp;</a>
+parse <a>&amp</a>
+parse <a>&</a>
+parse <a>x\r\ny\rz\n</a>
+parse <a b="x\r\ny\rz\nw\tv"/>
+parse <a>one<![CDATA[ <two> & ]]>three</a>
+parse <a><![CDATA[]]></a>
+parse <a><![CDATA[x\r\ny\rz]]></a>
+parse <a><![CDATA[x</a>
+parse <![CDATA[x]]><a/>
+parse <a>ab<!-- c -->cd<?p x?>ef</a>
+parse <a><!-- open</a>
+parse <a><?p open</a>
+parse <!DOCTYPE a><a/>
+parse <?xml version="1.0"?><!DOCTYPE a [<!ENTITY x "y">]><a>&x;</a>
+parse <!DOCTYPE a SYSTEM "http://example.com/a.dtd"><a/>
+parse <!ELEMENT a ANY><a/>
+parse <a xmlns="urn:d"><b/><c xmlns="" d="1"><e/></c><f/></a>
+parse <p:a xmlns:p="urn:p" xmlns:q="urn:q" p:x="1" q:x="2" y="3"><p:b/><q:b/></p:a>
+parse <a xmlns="urn:d" xmlns:p="urn:p" p:x="1" x="2" xml:lang="tr"/>
+parse <p:a xmlns:p="urn:one"><p:b xmlns:p="urn:two"><p:c/></p:b><p:d/></p:a>
+parse <a><p:b xmlns:p="urn:p"/><p:c/></a>
+parse <p:a/>
+parse <a p:x="1"/>
+parse <a xmlns:p="urn:p" p:x="1" p:x="2"/>
+parse <a xmlns:p="urn:p" xmlns:q="urn:p" p:x="1" q:x="2"/>
+parse <a x="1" x="2"/>
+parse <a xmlns:p="urn:a" xmlns:p="urn:b"/>
+parse <a xmlns:p=""/>
+parse <a xmlns:xmlns="urn:x"/>
+parse <a xmlns:xml="urn:x"/>
+parse <a xmlns:xml="http://www.w3.org/XML/1998/namespace" xml:space="preserve"/>
+parse <a:b:c/>
+parse <:a/>
+parse <a:/>
+parse <a x:="1" xmlns:x="urn:x"/>
+parse <a></b>
+parse <a><b></a></b>
+parse <a>
+parse <a><b>
+parse </a>
+parse <a/><b/>
+parse <a/>text
+parse text<a/>
+parse <a/>&amp;
+parse   \n<a/>\n  \r\n
+parse 
+parse   
+parse <a b=1/>
+parse <a b="1/>
+parse <a b="<"/>
+parse <a b/>
+parse <a b="1"c="2"/>
+parse <a\tb="1"\n c = '2' />
+parse <a / >
+parse <a/ >
+parse <a >x</a >
+parse <1a/>
+parse <a-b.c_d:e xmlns:a-b.c_d="urn:x"/>
+parse <\xC3\xA9l\xC3\xA9ment \xC3\xA0="1"/>
+parse <a><b/><b/>text<c/>\n</a>
+parse < a/>
+parse <a
+parse <a b
+parse <a b=
+parse <a b="1
+parse <
+parse <!
+parse <!-
+parse <!--
+parse <?
+parse <?x
+parse <a>&#x41
+parse <a>]]></a>
+limits 3 100 10 <a><b><c/></b></a>
+limits 3 100 10 <a><b><c><d/></c></b></a>
+limits 2 100 10 <a><b/><b/><b/></a>
+limits 5 3 10 <a><b/><c/></a>
+limits 5 3 10 <a><b/><c/><d/></a>
+limits 5 100 2 <a x="1" y="2"/>
+limits 5 100 2 <a x="1" y="2" z="3"/>
+limits 5 100 2 <a xmlns="urn:a" xmlns:p="urn:p" x="1"/>
+limits 5 100 2 <a xmlns="urn:a" xmlns:p="urn:p"/>

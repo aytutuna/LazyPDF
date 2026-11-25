@@ -19,7 +19,16 @@ public sealed class SigningSettingsTests
 
         Assert.True(loaded.TrustWindowsStore);
         Assert.Empty(loaded.TrustedCertificates);
-        Assert.Equal("", loaded.TimestampUrl);
+        Assert.Equal("http://timestamp.digicert.com", loaded.TimestampUrl);
+    }
+
+    [Fact]
+    public void An_emptied_time_stamp_address_stays_empty()
+    {
+        using var dir = new TempDir();
+        SigningSettingsStore.Update(s => s.TimestampUrl = "", dir.Path);
+
+        Assert.Equal("", SigningSettingsStore.Load(dir.Path).TimestampUrl);
     }
 
     [Fact]

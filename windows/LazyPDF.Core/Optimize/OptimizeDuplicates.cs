@@ -9,7 +9,7 @@ internal static class OptimizeDuplicates
 {
     private const int Rounds = 8;
 
-    public static int Run(PdfDocument document)
+    public static int Run(PdfDocument document, CancellationToken cancel)
     {
         int merged = 0;
         var hashes = new Dictionary<int, string>();
@@ -19,6 +19,7 @@ internal static class OptimizeDuplicates
             var live = Reachable(document);
             foreach (var (number, value) in PdfGraph.Objects(document))
             {
+                cancel.ThrowIfCancellationRequested();
                 if (!live.Contains(number) || !Mergeable(document, value)) continue;
                 string key = PdfGraph.Canonical(value, n => n, true);
                 if (value is PdfStream stream)

@@ -36,6 +36,16 @@ public class AttachmentTests
     }
 
     [Fact]
+    public void ExtractReadsPastTheDefaultDecodeCap()
+    {
+        var document = StructureFixtures.Open();
+        byte[] big = new byte[300 << 20];
+        PdfAttachments.Add(document, "big.bin", big);
+        var reopened = StructureFixtures.Reopen(document);
+        Assert.Equal(big.Length, PdfAttachments.Extract(reopened, PdfAttachments.List(reopened)[0]).Length);
+    }
+
+    [Fact]
     public void EmptyFile()
     {
         var document = StructureFixtures.Open();

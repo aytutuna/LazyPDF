@@ -1,4 +1,5 @@
 using LazyPDF.App.Services;
+using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
@@ -80,10 +81,149 @@ public sealed class ThumbnailsTests
         string path = dir.File("a.pdf", Pdfs.Text());
         await Make(dir).GetAsync(path);
         string cached = Directory.GetFiles(dir.Sub("thumbs")).Single();
-        File.SetLastAccessTimeUtc(cached, DateTime.UtcNow.AddDays(-90));
+        File.SetLastWriteTimeUtc(cached, DateTime.UtcNow.AddDays(-90));
 
         _ = Make(dir);
 
         Assert.Empty(Directory.GetFiles(dir.Sub("thumbs")));
+    }
+
+    [Fact]
+    public async Task ForgettingAFileDeletesOnlyItsPicture()
+    {
+        using var dir = new TempDir();
+        string a = dir.File("a.pdf", Pdfs.Text());
+        string b = dir.File("b.pdf", Pdfs.Text(line: "Other"));
+        var thumbnails = Make(dir);
+        await thumbnails.GetAsync(a);
+        await thumbnails.GetAsync(b);
+        var both = Directory.GetFiles(dir.Sub("thumbs"));
+
+        thumbnails.Forget(a);
+
+        var left = Directory.GetFiles(dir.Sub("thumbs")).Single();
+        Assert.Contains(left, both);
+        thumbnails.Forget(b);
+        Assert.Empty(Directory.GetFiles(dir.Sub("thumbs")));
+    }
+
+    [Fact]
+    public async Task ClearingEmptiesTheFolder()
+    {
+        using var dir = new TempDir();
+        var thumbnails = Make(dir);
+        await thumbnails.GetAsync(dir.File("a.pdf", Pdfs.Text()));
+        await thumbnails.GetAsync(dir.File("b.pdf", Pdfs.Text(line: "Other")));
+
+        thumbnails.Clear();
+
+        Assert.Empty(Directory.GetFiles(dir.Sub("thumbs")));
+    }
+
+    [Fact]
+    public async Task AFileWithAnOwnerPasswordHasNoPicture()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("owner.pdf", Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy));
+
+        Assert.Null(await Make(dir).GetAsync(path));
+        Assert.False(Directory.Exists(dir.Sub("thumbs")) && Directory.GetFiles(dir.Sub("thumbs")).Length > 0);
+    }
+
+    [Fact]
+    public async Task AFileOverTheSizeLimitHasNoPicture()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("a.pdf", Pdfs.Text());
+        long limit = Thumbnails.MaxFileBytes;
+        Thumbnails.MaxFileBytes = 10;
+        try
+        {
+            Assert.Null(await Make(dir).GetAsync(path));
+        }
+        finally
+        {
+            Thumbnails.MaxFileBytes = limit;
+        }
+    }
+
+    [Fact]
+    public async Task FilesAskedForTogetherAllGetAPicture()
+    {
+        using var dir = new TempDir();
+        var thumbnails = Make(dir);
+
+        var pngs = await Task.WhenAll(
+            thumbnails.GetAsync(dir.File("a.pdf", Pdfs.Text())),
+            thumbnails.GetAsync(dir.File("b.pdf", Pdfs.Text(line: "Other"))));
+
+        Assert.All(pngs, png => Assert.Equal(PngSignature, png!.AsSpan(0, 4).ToArray()));
+    }
+
+    [Fact]
+    public async Task NoMoreThanTwoPicturesAreDrawnAtOnce()
+    {
+        using var dir = new TempDir();
+        int now = 0, peak = 0;
+        var thumbnails = new Thumbnails(() => new SlowRenderer(() =>
+        {
+            int n = Interlocked.Increment(ref now);
+            lock (dir) peak = Math.Max(peak, n);
+            Thread.Sleep(150);
+            Interlocked.Decrement(ref now);
+        }), dir.Sub("thumbs"));
+
+        var pngs = await Task.WhenAll(Enumerable.Range(0, 6)
+            .Select(i => thumbnails.GetAsync(dir.File($"f{i}.pdf", Pdfs.Text(line: $"Text {i}")))));
+
+        Assert.All(pngs, Assert.NotNull);
+        // A busy machine may not overlap the two draws, so only the limit is checked.
+        Assert.InRange(peak, 1, 2);
+    }
+
+    [Fact]
+    public async Task AnEncryptedFileIsNotOpenedAgain()
+    {
+        using var dir = new TempDir();
+        int made = 0;
+        var thumbnails = new Thumbnails(() =>
+        {
+            made++;
+            return new FakeRenderer();
+        }, dir.Sub("thumbs"));
+        string path = dir.File("owner.pdf", Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy));
+
+        Assert.Null(await thumbnails.GetAsync(path));
+        Assert.Null(await thumbnails.GetAsync(path));
+        Assert.Equal(1, made);
+
+        thumbnails.Forget(path);
+        Assert.Null(await thumbnails.GetAsync(path));
+        Assert.Equal(2, made);
+    }
+
+    [Fact]
+    public void ForgettingAndClearingWithoutTheFolderDoNotThrow()
+    {
+        using var dir = new TempDir();
+        var thumbnails = Make(dir);
+
+        thumbnails.Forget(dir.Sub("a.pdf"));
+        thumbnails.Clear();
+    }
+
+    private sealed class SlowRenderer(Action onRender) : IDocumentRenderer
+    {
+        public bool Load(PdfEditSession session, string? password) => true;
+
+        public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi)
+        {
+            onRender();
+            return new PdfRgbaImage(4, 6, Enumerable.Repeat((byte)255, 4 * 6 * 4).ToArray());
+        }
+
+        public void Dispose() { }
     }
 }

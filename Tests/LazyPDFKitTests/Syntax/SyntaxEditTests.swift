@@ -70,4 +70,22 @@ final class SyntaxEditTests: XCTestCase {
         XCTAssertEqual(PdfRect(0, 0, 10, 10).intersect(PdfRect(-5, -5, 5, 5)), PdfRect(0, 0, 5, 5))
         XCTAssertTrue(PdfRect(0, 0, 1, 1).intersect(PdfRect(5, 5, 6, 6)).isEmpty)
     }
+
+    func test_aNameFromTextIsWrittenAsEscapedUtf8AndReadsBack() throws {
+        let name = PdfName.fromText("\u{15E} \u{130}")
+        XCTAssertEqual(name.description, "/#C5#9E#20#C4#B0")
+        let read = try XCTUnwrap(try PdfLexer(PdfArrayBytes(Latin1.bytes(name.description))).readObject() as? PdfName)
+        XCTAssertEqual(read.text, "\u{15E} \u{130}")
+        XCTAssertEqual(name, read)
+    }
+
+    func test_aLatin1NameIsWrittenAsBefore() {
+        XCTAssertEqual(PdfName("Caf\u{E9}").description, "/Caf#E9")
+        XCTAssertEqual(PdfName("Caf\u{E9}").text, "Caf\u{E9}")
+    }
+
+    func test_aNameWithCharsAboveLatin1IsNeverTruncated() {
+        XCTAssertEqual(PdfName("\u{15E}").description, "/#C5#9E")
+        XCTAssertEqual(PdfName("A\u{E9}\u{15E}").description, "/A#C3#A9#C5#9E")
+    }
 }

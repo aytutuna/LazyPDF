@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 using Xunit;
 
@@ -47,6 +48,80 @@ public sealed class WicImageCodecTests
         var frame = Assert.Single(back!);
         Assert.Equal((64, 48), (frame.Width, frame.Height));
         Assert.True(Math.Abs(frame.Rgba[(10 * 64 + 20) * 4] - 20 * 255 / 63) < 12);
+    }
+
+    [Fact]
+    public void ATiffIsMadeAndReadBack()
+    {
+        var back = Assert.Single(Codec.DecodeFile(Codec.EncodeTiff(Gradient(64, 48)))!);
+
+        Assert.Equal((64, 48), (back.Width, back.Height));
+        Assert.Equal(20 * 255 / 63, back.Rgba[(10 * 64 + 20) * 4]);
+    }
+
+    [Fact]
+    public void TiffAndBmpCarryTheExportResolution()
+    {
+        foreach (var bytes in new[] { Codec.EncodeTiff(Gradient(64, 48), 300), Codec.EncodeBmp(Gradient(64, 48), 300) })
+        {
+            using var stream = new MemoryStream(bytes);
+            var frame = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad).Frames[0];
+            Assert.InRange(frame.DpiX, 299.9, 300.1);
+        }
+    }
+
+    [Fact]
+    public void ABmpIsMadeAndReadBack()
+    {
+        byte[] bmp = Codec.EncodeBmp(Gradient(64, 48));
+
+        Assert.Equal((byte)'B', bmp[0]);
+        var back = Assert.Single(Codec.DecodeFile(bmp)!);
+        Assert.Equal((64, 48), (back.Width, back.Height));
+        Assert.Equal(20 * 255 / 63, back.Rgba[(10 * 64 + 20) * 4]);
+    }
+
+    [Fact]
+    public void TransparentPixelsAreWhiteInTiffAndBmp()
+    {
+        var clear = Gradient(8, 8, alpha: 0);
+
+        foreach (var bytes in new[] { Codec.EncodeTiff(clear), Codec.EncodeBmp(clear) })
+            Assert.Equal([255, 255, 255, 255], Assert.Single(Codec.DecodeFile(bytes)!).Rgba[..4]);
+    }
+
+    [Fact]
+    public void GrayscaleOfRedIsNearItsLuma()
+    {
+        var red = new PdfRgbaImage(4, 4, Enumerable.Range(0, 16).SelectMany(_ => new byte[] { 255, 0, 0, 255 }).ToArray());
+
+        var back = Assert.Single(Codec.DecodeFile(Codec.Encode(red, PictureFormat.Png, PictureColour.Grayscale, 0))!);
+
+        Assert.InRange(back.Rgba[0], 74, 78);
+        Assert.Equal(back.Rgba[0], back.Rgba[1]);
+    }
+
+    [Fact]
+    public void BlackAndWhiteSplitsAtMiddleGray()
+    {
+        static PdfRgbaImage Flat(byte v) => new(8, 8, Enumerable.Range(0, 64).SelectMany(_ => new byte[] { v, v, v, 255 }).ToArray());
+
+        foreach (var format in new[] { PictureFormat.Png, PictureFormat.Tiff })
+        {
+            var light = Assert.Single(Codec.DecodeFile(Codec.Encode(Flat(200), format, PictureColour.BlackWhite, 0))!);
+            var dark = Assert.Single(Codec.DecodeFile(Codec.Encode(Flat(60), format, PictureColour.BlackWhite, 0))!);
+
+            Assert.Equal([255, 255, 255], light.Rgba[..3]);
+            Assert.Equal([0, 0, 0], dark.Rgba[..3]);
+        }
+    }
+
+    [Fact]
+    public void AGrayscaleTiffIsSmallerThanColour()
+    {
+        var flat = new PdfRgbaImage(400, 400, Enumerable.Range(0, 400 * 400).SelectMany(_ => new byte[] { 90, 140, 200, 255 }).ToArray());
+
+        Assert.True(Codec.Encode(flat, PictureFormat.Tiff, PictureColour.Grayscale, 0).Length < Codec.Encode(flat, PictureFormat.Tiff, PictureColour.Colour, 0).Length);
     }
 
     [Fact]
@@ -102,7 +177,7 @@ public sealed class WicImageCodecTests
         var image = Codec.Decode(jpeg, "DCTDecode");
 
         Assert.Equal((32, 32), (image!.Width, image.Height));
-        Assert.Null(Codec.Decode(jpeg, "JBIG2Decode"));
+        Assert.Null(Codec.Decode(jpeg, "CCITTFaxDecode"));
     }
 
     [Fact]
@@ -125,5 +200,33 @@ public sealed class WicImageCodecTests
         Assert.Equal([2], made.Unreadable);
         using var reopened = PdfDocument.Open(made.Bytes);
         Assert.Equal(2, reopened.Pages.Count);
+    }
+
+    [Fact]
+    public void APictureWithTooManyPixelsComesBackAsAPlaceholder()
+    {
+        const int side = 16384;
+        var bitmap = BitmapSource.Create(side, side, 96, 96, PixelFormats.BlackWhite, null, new byte[side / 8 * side], side / 8);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        var frame = Assert.Single(Codec.DecodeFile(stream.ToArray())!);
+        Assert.True(frame.TooBig);
+        Assert.Equal((side, side), (frame.Width, frame.Height));
+    }
+
+    [Fact]
+    public void AFrameWithTooManyPixelsDoesNotTakeTheOtherFramesWithIt()
+    {
+        const int side = 16384;
+        BitmapSource Blank(int size) => BitmapSource.Create(size, size, 96, 96, PixelFormats.BlackWhite, null, new byte[(size + 7) / 8 * size], (size + 7) / 8);
+        var encoder = new TiffBitmapEncoder();
+        foreach (int size in new[] { 8, side, 16 }) encoder.Frames.Add(BitmapFrame.Create(Blank(size)));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        var frames = Codec.DecodeFile(stream.ToArray());
+        Assert.Equal([8, side, 16], frames!.Select(f => f.Width));
+        Assert.Equal([false, true, false], frames!.Select(f => f.TooBig));
     }
 }

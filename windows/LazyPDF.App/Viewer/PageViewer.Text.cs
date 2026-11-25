@@ -1,8 +1,11 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Viewer;
@@ -15,6 +18,9 @@ public partial class PageViewer
 
     private readonly ViewerSelection _selection = new();
     private PagePoint? _anchorWaiting;
+    private int _press;
+    private int _dragPress;
+    private bool _unitWaiting;
     private (Caret Start, Caret End, int Clicks)? _multi;
     private Brush? _selectionBrush;
     private Color _selectionColor;
@@ -23,6 +29,7 @@ public partial class PageViewer
     private readonly DispatcherTimer _preload = new() { Interval = TimeSpan.FromMilliseconds(150) };
     private Task<TextSource?>? _text;
     private TextSource? _source;
+    private bool _caretMode;
 
     public event EventHandler? SelectionChanged;
 
@@ -51,9 +58,11 @@ public partial class PageViewer
     {
         _selection.Changed += (_, _) =>
         {
+            _automationCaret = null;
             _selectionGeometry.Clear();
             Surface.InvalidateVisual();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
+            Surface.TellSelection();
         };
         _preload.Tick += (_, _) =>
         {
@@ -67,10 +76,14 @@ public partial class PageViewer
     {
         _text = null;
         _source = null;
+        TextReset();
         _links.Clear();
+        _focusLink = null;
         _selectionGeometry.Clear();
         _hitGeometry.Clear();
+        CancelPendingSelection();
         _selection.Clear();
+        _caretMode = false;
     }
 
     private Task<TextSource?> TextAsync()
@@ -99,8 +112,14 @@ public partial class PageViewer
         if (await GetTextAsync(page) is not null) Surface.InvalidateVisual();
     }
 
-    public async Task<TextPage?> GetTextAsync(int page) =>
-        await TextAsync() is { } source ? await source.GetAsync(page) : null;
+    public async Task<TextPage?> GetTextAsync(int page)
+    {
+        if (await TextAsync() is not { } source) return null;
+        bool known = source.Peek(page) is not null;
+        var text = await source.GetAsync(page);
+        if (text is not null && !known && ReferenceEquals(source, _source)) PageArrived(page);
+        return text;
+    }
 
     private TextPage? LoadedText(int page) => _source?.Peek(page);
 
@@ -118,43 +137,76 @@ public partial class PageViewer
 
     private void BeginSelection(Point at, int clicks)
     {
+        int press = _dragPress = ++_press;
         _anchorWaiting = null;
+        _unitWaiting = false;
         _multi = null;
         if (Surface.Hit(at, nearest: true) is not { } hit) return;
         _dragPage = hit.Page;
         bool extend = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && !_selection.IsEmpty;
         if (LoadedText(hit.Page) is not { } text)
         {
+            if (clicks >= 2)
+            {
+                _unitWaiting = true;
+                _ = SelectUnitWhenLoadedAsync(hit, clicks, press);
+                return;
+            }
             _ = LoadPageAsync(hit.Page);
             if (!extend)
             {
-                _selection.Clear();
+                if (_caretMode) _selection.Set(new Caret(hit.Page, 0), new Caret(hit.Page, 0));
+                else _selection.Clear();
                 _anchorWaiting = new PagePoint(hit.Page, hit.Point);
             }
             return;
         }
-        var (x, y) = Surface.Geometry(hit.Page).ToUser(hit.Point.X, hit.Point.Y);
         if (clicks >= 2)
         {
-            var chosen = clicks == 2 ? TextSelection.WordAt(text, x, y) : TextSelection.LineAt(text, x, y);
-            if (chosen.IsEmpty)
-            {
-                _selection.Clear();
-                return;
-            }
-            var (first, last) = (new Caret(hit.Page, chosen.Ranges[0].Start), new Caret(hit.Page, chosen.Ranges[^1].End));
-            _selection.Set(first, last);
-            _multi = (first, last, clicks);
+            SelectUnit(hit, text, clicks);
             return;
         }
+        var (x, y) = Surface.Geometry(hit.Page).ToUser(hit.Point.X, hit.Point.Y);
         var caret = new Caret(hit.Page, text.CaretAt(x, y));
         if (extend) _selection.Extend(caret);
         else _selection.Set(caret, caret);
     }
 
+    private async Task SelectUnitWhenLoadedAsync((int Page, Point Point) hit, int clicks, int press)
+    {
+        var tab = _tab;
+        try
+        {
+            await LoadPageAsync(hit.Page);
+            if (press != _press || !ReferenceEquals(tab, _tab) || LoadedText(hit.Page) is not { } text) return;
+            SelectUnit(hit, text, clicks);
+        }
+        finally
+        {
+            _unitWaiting = false;
+        }
+    }
+
+    // A drag or a double or triple click still waiting for its page text must not select after a later action.
+    private void CancelPendingSelection() => _press++;
+
+    private void SelectUnit((int Page, Point Point) hit, TextPage text, int clicks)
+    {
+        var (x, y) = Surface.Geometry(hit.Page).ToUser(hit.Point.X, hit.Point.Y);
+        var chosen = clicks == 2 ? TextSelection.WordAt(text, x, y) : TextSelection.LineAt(text, x, y);
+        if (chosen.IsEmpty)
+        {
+            _selection.Clear();
+            return;
+        }
+        var (first, last) = (new Caret(hit.Page, chosen.Ranges[0].Start), new Caret(hit.Page, chosen.Ranges[^1].End));
+        _selection.Set(first, last);
+        _multi = (first, last, clicks);
+    }
+
     private void DragSelection(Point at)
     {
-        if (!_moved || Surface.Hit(at, nearest: true) is not { } hit) return;
+        if (_dragPress != _press || _unitWaiting || !_moved || Surface.Hit(at, nearest: true) is not { } hit) return;
         if (LoadedText(hit.Page) is not { } text)
         {
             _ = LoadPageAsync(hit.Page);
@@ -190,17 +242,70 @@ public partial class PageViewer
     public void SelectAll()
     {
         if (_tab is null) return;
+        CancelPendingSelection();
         _selection.SelectAll(Surface.PageCount);
         foreach (int page in VisiblePages) _ = LoadPageAsync(page);
     }
 
-    public void ClearSelection() => _selection.Clear();
+    public void ClearSelection()
+    {
+        CancelPendingSelection();
+        _selection.Clear();
+    }
+
+    // With caret browsing on, the caret stays where it is; clearing would send it back to the start of the file.
+    internal void EscapeSelection()
+    {
+        if (!_caretMode)
+        {
+            ClearSelection();
+            return;
+        }
+        CancelPendingSelection();
+        _selection.Set(_selection.Focus, _selection.Focus);
+    }
+
+    // F7: the caret can be moved, and a selection started, with the arrow keys.
+    internal async Task ToggleCaret()
+    {
+        if (_tab is null) return;
+        if (_caretMode)
+        {
+            _caretMode = false;
+            Surface.InvalidateVisual();
+            ShowToast(Loc.T("Caret browsing is off."));
+            return;
+        }
+        if (_selection.IsEmpty)
+        {
+            var tab = _tab;
+            if (Surface.Hit(new Point(24, 24), nearest: true) is not { } hit) return;
+            await LoadPageAsync(hit.Page);
+            if (!ReferenceEquals(tab, _tab) || LoadedText(hit.Page) is not { } text) return;
+            if (text.Chars.Count == 0)
+            {
+                ShowToast(Loc.T("This page has no text to move through."));
+                return;
+            }
+            var (x, y) = Surface.Geometry(hit.Page).ToUser(hit.Point.X, hit.Point.Y);
+            var caret = new Caret(hit.Page, text.CaretAt(x, y));
+            _selection.Set(caret, caret);
+        }
+        _caretMode = true;
+        Surface.InvalidateVisual();
+        ShowToast(Loc.T("Caret browsing is on. Arrow keys move the caret and Shift selects. F7 turns it off."));
+    }
 
     // Moves the focus end of the selection as a text caret would. False for a key that is not one of its.
-    private bool ExtendSelection(Key key, bool ctrl)
+    internal bool MoveCaret(Key key, bool ctrl, bool extend)
     {
+        if (key is not (Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End)) return false;
         var focus = _selection.Focus;
-        if (LoadedText(focus.Page) is not { } text) return false;
+        if (LoadedText(focus.Page) is not { } text)
+        {
+            _ = LoadPageAsync(focus.Page);
+            return false;
+        }
         int count = text.Chars.Count;
         int index = Math.Min(focus.Index, count);
         Caret? next = key switch
@@ -217,13 +322,24 @@ public partial class PageViewer
             Key.End => new Caret(focus.Page, LineEdge(text, index, start: false)),
             _ => null,
         };
-        if (key is not (Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End)) return false;
         if (next is { } caret)
         {
-            _selection.Extend(caret);
+            CancelPendingSelection();
+            if (extend) _selection.Extend(caret);
+            else _selection.Set(caret, caret);
             RevealCaret(caret);
+            // A reader that follows the selection says the move itself.
+            if (caret.Page == focus.Page && !Surface.Listening(AutomationEvents.TextPatternOnTextSelectionChanged)) Speak(Moved(text, key, index, Math.Min(caret.Index, count)));
         }
         return true;
+    }
+
+    // What the caret went over: the character, the word, or the line it is on now.
+    private static string Moved(TextPage text, Key key, int from, int to)
+    {
+        if (key is Key.Left or Key.Right) return text.GetText(new TextRange(Math.Min(from, to), Math.Max(from, to))).Trim();
+        if (text.Chars.Count == 0) return "";
+        return text.Lines[LineOf(text, to == text.Chars.Count ? to - 1 : to)].Text;
     }
 
     private static int NextWord(TextPage text, int index) =>
@@ -255,15 +371,8 @@ public partial class PageViewer
     // The rectangle of page space that holds the quads (user space).
     private Rect PageBounds(int page, IEnumerable<TextQuad> quads)
     {
-        var geometry = Surface.Geometry(page);
         var area = Rect.Empty;
-        foreach (var quad in quads)
-        {
-            var box = quad.Bounds;
-            var (x1, y1) = geometry.ToDisplay(box.Left, box.Bottom);
-            var (x2, y2) = geometry.ToDisplay(box.Right, box.Top);
-            area.Union(new Rect(new Point(x1, y1), new Point(x2, y2)));
-        }
+        foreach (var quad in quads) area.Union(Surface.QuadArea(page, quad));
         return area;
     }
 
@@ -290,6 +399,14 @@ public partial class PageViewer
         return runs;
     }
 
+    public async Task<SelectedRun?> GetSelectionEndAsync()
+    {
+        if (_selection.IsEmpty) return null;
+        int page = _selection.End.Page;
+        if (await GetTextAsync(page) is not { } text || _selection.On(page, text.Chars.Count) is not { } range) return null;
+        return new SelectedRun(page, range, text.GetText(range), text.Quads(range));
+    }
+
     private string? SelectedOnOnePage()
     {
         int page = _selection.Start.Page;
@@ -297,24 +414,66 @@ public partial class PageViewer
         return text.GetText(range);
     }
 
-    private async Task CopySelectionAsync()
+    public bool CanCopy => _tab is null || Exporter.Allowed(_tab.Document);
+
+    private bool RefuseCopy()
     {
+        if (CanCopy) return false;
+        Tell(Loc.T("The owner of this file does not allow copying."), null);
+        return true;
+    }
+
+    internal async Task CopySelectionAsync()
+    {
+        if (_selection.IsEmpty || RefuseCopy()) return;
         var runs = await GetSelectionAsync();
         if (runs.Count == 0) return;
         string text = string.Join("\n", runs.Select(r => r.Text));
-        // Another program may hold the clipboard for a moment.
+        if (!await TrySetClipboardAsync(() => Clipboard.SetText(text))) ShowToast(Loc.T("Could not copy. Another program is using the clipboard."));
+    }
+
+    internal async Task CopyAreaAsync(int page, Rect area)
+    {
+        if (RefuseCopy()) return;
+        double dpi = Math.Min(192, 6000 * 72 / Math.Max(area.Width, area.Height));
+        var image = await Surface.RenderAreaAsync(page, area, dpi);
+        BitmapSource? bitmap = null;
+        if (image is not null)
+        {
+            try
+            {
+                bitmap = await Task.Run(() => PageTints.ToBitmap(image, PageTint.None));
+            }
+            catch (OutOfMemoryException)
+            {
+                // Told as a picture that could not be drawn.
+            }
+        }
+        if (bitmap is null)
+        {
+            ShowToast(Loc.T("This area could not be drawn."));
+            return;
+        }
+        if (await TrySetClipboardAsync(() => Clipboard.SetImage(bitmap))) ShowToast(Loc.T("Copied the area as a picture."));
+        else ShowToast(Loc.T("Could not copy. Another program is using the clipboard."));
+    }
+
+    // Another program may hold the clipboard for a moment.
+    private static async Task<bool> TrySetClipboardAsync(Action set)
+    {
         for (int attempt = 0; attempt < 3; attempt++)
         {
             try
             {
-                Clipboard.SetText(text);
-                return;
+                set();
+                return true;
             }
             catch (ExternalException)
             {
                 await Task.Delay(50);
             }
         }
+        return false;
     }
 
     // ----- Drawing on the pages
@@ -323,7 +482,9 @@ public partial class PageViewer
     {
         bool hasHits = Search.Hits.Count > 0;
         bool selected = _selection.Covers(page);
-        if (!hasHits && !selected) return;
+        bool caret = _caretMode && _selection.Focus.Page == page;
+        bool ringed = _focusLink is { } ring && ring.Page == page;
+        if (!hasHits && !selected && !caret && !ringed) return;
         dc.PushTransform(new MatrixTransform(matrix));
         if (hasHits)
         {
@@ -343,7 +504,31 @@ public partial class PageViewer
         {
             _ = LoadPageAsync(page);
         }
+        double pixelsPerUnit = Math.Sqrt(matrix.M11 * matrix.M11 + matrix.M12 * matrix.M12) * VisualTreeHelper.GetDpi(Surface).DpiScaleX;
+        if (caret && LoadedText(page) is { } caretText) DrawCaret(dc, page, caretText, pixelsPerUnit);
+        if (ringed) DrawLinkRing(dc, page, pixelsPerUnit);
         dc.Pop();
+    }
+
+    private void DrawLinkRing(DrawingContext dc, int page, double pixelsPerUnit)
+    {
+        var area = Surface.Geometry(page).ToDisplay(_focusLink!.Value.Link.Rect);
+        var ring = new Rect(area.X - 2, area.Y - 2, area.Width + 4, area.Height + 4);
+        dc.DrawRectangle(null, new Pen(Brushes.White, 3 / pixelsPerUnit), ring);
+        dc.DrawRectangle(null, new Pen(Brushes.Black, 1.5 / pixelsPerUnit), ring);
+    }
+
+    private void DrawCaret(DrawingContext dc, int page, TextPage text, double pixelsPerUnit)
+    {
+        int count = text.Chars.Count;
+        if (count == 0) return;
+        int index = Math.Min(_selection.Focus.Index, count);
+        bool atEnd = index == count;
+        var area = PageBounds(page, text.Quads(new TextRange(atEnd ? index - 1 : index, atEnd ? index : index + 1)));
+        if (area.IsEmpty) return;
+        double width = 1.5 / pixelsPerUnit;
+        var brush = Surface.Tint == PageTint.Dark ? Brushes.White : Brushes.Black;
+        dc.DrawRectangle(brush, null, new Rect(atEnd ? area.Right : area.Left, area.Top, width, area.Height));
     }
 
     private (System.Windows.Media.Geometry? Others, System.Windows.Media.Geometry? Current) HitGeometry(int page)

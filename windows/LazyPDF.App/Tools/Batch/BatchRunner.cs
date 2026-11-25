@@ -1,5 +1,9 @@
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Export;
+using LazyPDF.App.Tools.Ocr;
+using LazyPDF.App.Tools.Pages;
+using LazyPDF.App.Tools.Protect;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Batch;
@@ -14,31 +18,60 @@ public sealed record BatchResult(string Input, string? Output, bool Ok, string T
 /// </summary>
 internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRecognizer recognizer, Func<IDocumentRenderer> renderers)
 {
-    public async Task<BatchResult> RunAsync(string path, BatchSet set, int number, DateTimeOffset now, CancellationToken cancellation)
+    public async Task<BatchResult> RunAsync(string path, BatchSet set, int number, DateTimeOffset now, CancellationToken cancellation, string relativeDir = "", string? password = null)
     {
+        if (Check(set) is { } refused) return new(path, null, false, refused.Title, refused.Text);
         string name = Path.GetFileName(path);
         byte[] bytes;
         var notes = new List<string>();
         try
         {
             bytes = await File.ReadAllBytesAsync(path, cancellation);
-            using (var source = PdfDocument.Open(bytes))
+            PdfDocument source;
+            bool unlocked = false;
+            try
+            {
+                source = PdfDocument.Open(bytes);
+            }
+            catch (PdfReadException e) when (e.Problem == PdfReadProblem.PasswordRequired && !string.IsNullOrEmpty(password))
+            {
+                source = PdfDocument.Open(bytes, password);
+                unlocked = true;
+            }
+            using (source)
             {
                 if (source.IsSigned) return new(path, null, false, Loc.T("File is signed"), Loc.T("{0} has a signature that these steps would break. Open it and sign it again afterwards.", name));
                 if (source.Security is { OpenedAsOwner: false, Permissions: not PdfPermissions.All })
                     return new(path, null, false, Loc.T("File is protected"), Loc.T("{0} limits what may be done to it. Ask its owner for a copy without limits.", name));
+                // Every step reopens the bytes with no password.
+                if (unlocked) bytes = source.SaveRewrite();
             }
             for (int i = 0; i < set.Steps.Count; i++)
             {
                 cancellation.ThrowIfCancellationRequested();
-                bytes = await ApplyAsync(set.Steps[i], i == set.Steps.Count - 1, bytes, now, notes, cancellation);
+                // A locked file cannot be read again, so the check runs on what goes into Protect.
+                if (set.Steps[i].Kind == BatchStepKind.Protect) bytes = CheckPdfUa(set, bytes, now, notes, cancellation);
+                bytes = await ApplyAsync(set.Steps[i], i == set.Steps.Count - 1, bytes, now, name, notes, cancellation);
             }
             cancellation.ThrowIfCancellationRequested();
             CheckPdfA(set, bytes, notes);
+            if (set.Steps.LastOrDefault() is not { Kind: BatchStepKind.Protect }) bytes = CheckPdfUa(set, bytes, now, notes, cancellation);
         }
         catch (StepFailed failed)
         {
             return new(path, null, false, failed.Problem.Title, failed.Problem.Text);
+        }
+        catch (PdfReadException e) when (e.Problem == PdfReadProblem.PasswordRequired && !string.IsNullOrEmpty(password))
+        {
+            return new(path, null, false, Loc.T("File is locked"), Loc.T("The password does not open {0}.", name));
+        }
+        catch (PdfReadException e) when (e.Problem == PdfReadProblem.PasswordRequired)
+        {
+            return new(path, null, false, Loc.T("File is locked"), Loc.T("{0} is locked. Type its password in Password for locked files, then run again.", name));
+        }
+        catch (PdfReadException e) when (e.Problem == PdfReadProblem.CertificateRequired)
+        {
+            return new(path, null, false, Loc.T("File is locked"), Loc.T("{0} needs a password or certificate, and Batch cannot ask for one. Take the lock off first, then add the file again.", name));
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
@@ -46,21 +79,101 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             return new(path, null, false, problem.Title, problem.Text);
         }
 
-        string target = Unique(Path.Combine(set.OutputFolder, BatchNames.Apply(set.NameTemplate, Path.GetFileNameWithoutExtension(path), number, now)));
+        if (relativeDir.StartsWith("..") || Path.IsPathRooted(relativeDir)) relativeDir = "";
+        if (set.Steps.LastOrDefault() is { Kind: BatchStepKind.ExportPictures } export)
+            return ExportPictures(path, export, bytes, Path.Combine(set.OutputFolder, relativeDir, Path.GetFileNameWithoutExtension(path)), set.OutputFolder, notes, cancellation);
+        string target = Unique(Path.Combine(set.OutputFolder, relativeDir, BatchNames.Apply(set.NameTemplate, Path.GetFileNameWithoutExtension(path), number, now)));
         try
         {
-            Directory.CreateDirectory(set.OutputFolder);
-            PdfFileSaver.Save(target, bytes);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            PdfFileSaver.Save(target, bytes, set.Steps.FirstOrDefault(s => s.Kind == BatchStepKind.Protect)?.Password);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
             var problem = Problems.Save(e, Path.GetFileName(target));
             return new(path, null, false, problem.Title, problem.Text);
         }
-        return new(path, target, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [Path.GetFileName(target), .. notes]));
+        return new(path, target, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [Path.GetRelativePath(set.OutputFolder, target), .. notes]));
     }
 
-    private async Task<byte[]> ApplyAsync(BatchStep step, bool last, byte[] bytes, DateTimeOffset now, List<string> notes, CancellationToken cancellation)
+    private BatchResult ExportPictures(string path, BatchStep step, byte[] bytes, string folder, string root, List<string> notes, CancellationToken cancellation)
+    {
+        string unique = folder;
+        for (int i = 2; Directory.Exists(unique); i++) unique = $"{folder} ({i})";
+        try
+        {
+            var session = PdfEditSession.Open(bytes);
+            using var renderer = renderers();
+            if (!renderer.Load(session, null))
+                return new(path, null, false, Loc.T("Pages cannot be drawn"), Loc.T("Windows cannot draw {0}, so it cannot be saved as pictures.", Path.GetFileName(path)));
+            var source = new ExportSource(bytes, null, null, renderer, codec, Path.GetFileNameWithoutExtension(path));
+            var options = new ExportOptions(ExportFormat.Pictures, null, Picture: step.Picture, Dpi: step.Dpi, Quality: step.Quality, NamePattern: Loc.T("{name} page {n}"));
+            Directory.CreateDirectory(unique);
+            ExportResult result;
+            try
+            {
+                result = Exporter.Write(source, options, unique, cancellation);
+            }
+            catch
+            {
+                Directory.Delete(unique, true);
+                throw;
+            }
+            if (result.Files == 0)
+            {
+                Directory.Delete(unique);
+                return new(path, null, false, Loc.T("Pages cannot be drawn"), Loc.T("Windows cannot draw {0}, so it cannot be saved as pictures.", Path.GetFileName(path)));
+            }
+            if (result.Skipped > 0) notes.Add(Loc.Plural(result.Skipped, "{0} page could not be drawn.", "{0} pages could not be drawn."));
+            string saved = Loc.Plural(result.Files, "Saved {0} picture in {1}.", "Saved {0} pictures in {1}.", Path.GetRelativePath(root, unique));
+            return new(path, unique, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [saved, .. notes]));
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            var problem = Problems.Save(e, Path.GetFileName(unique));
+            return new(path, null, false, problem.Title, problem.Text);
+        }
+    }
+
+    /// <summary>What stops a set from running as it is; null when it can run.</summary>
+    internal static Problem? Check(BatchSet set)
+    {
+        int at = set.Steps.FindIndex(s => s.Kind == BatchStepKind.Protect);
+        if (at >= 0 && set.Steps.Any(s => s.Kind == BatchStepKind.PdfA)) return PdfALocked();
+        if (at >= 0 && set.Steps.Any(s => s.Kind == BatchStepKind.ExportPictures)) return PicturesLocked();
+        if (at >= 0 && at < set.Steps.Count - 1) return ProtectNotLast();
+        if (set.Steps.Any(s => s.Kind == BatchStepKind.Protect && s.Password.Length == 0))
+            return new(Loc.T("No password"), Loc.T("Type the password in the Protect step, then run again."));
+        if (set.Steps.FindIndex(s => s.Kind == BatchStepKind.ExportPictures) is >= 0 and var export && export < set.Steps.Count - 1) return ExportNotLast();
+        return null;
+    }
+
+    /// <summary>Why a step of this kind cannot join a set that has a Protect step; null when it can go before it.</summary>
+    internal static Problem? CannotAdd(BatchSet set, BatchStepKind kind)
+    {
+        if (!set.Steps.Any(s => s.Kind == BatchStepKind.Protect)) return null;
+        return kind switch
+        {
+            BatchStepKind.Protect => new(Loc.T("Protect is already there"), Loc.T("A set locks its files once. Change the password in the Protect step.")),
+            BatchStepKind.PdfA => PdfALocked(),
+            BatchStepKind.ExportPictures => PicturesLocked(),
+            _ => null,
+        };
+    }
+
+    private static Problem PdfALocked() =>
+        new(Loc.T("PDF/A cannot be locked"), Loc.T("A password breaks PDF/A. Leave out either the PDF/A step or the Protect step."));
+
+    private static Problem PicturesLocked() =>
+        new(Loc.T("Pictures cannot be locked"), Loc.T("Export pictures leaves no PDF to lock. Leave out either Export pictures or the Protect step."));
+
+    internal static Problem ExportNotLast() =>
+        new(Loc.T("Export pictures must be the last step"), Loc.T("There is no PDF left for the steps after it. Move Export pictures to the end."));
+
+    internal static Problem ProtectNotLast() =>
+        new(Loc.T("Protect must be the last step"), Loc.T("The steps after it could not read the locked file. Move Protect to the end."));
+
+    private async Task<byte[]> ApplyAsync(BatchStep step, bool last, byte[] bytes, DateTimeOffset now, string name, List<string> notes, CancellationToken cancellation)
     {
         switch (step.Kind)
         {
@@ -71,10 +184,15 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                     using var document = PdfDocument.Open(bytes);
                     // Keeps the file's own encryption, as Make smaller does.
                     var options = OptimizeOptions.For(step.Preset) with { Security = document.Security, DocumentId = document.Security is null ? null : document.FirstId };
-                    var result = new PdfOptimizer(document, codec).Run(options);
+                    var result = new PdfOptimizer(document, codec).Run(options, cancellation);
                     cancellation.ThrowIfCancellationRequested();
-                    if (result.Bytes.Length >= bytes.Length) return bytes;
+                    if (result.Bytes.Length >= bytes.Length)
+                    {
+                        notes.Add(Loc.T("Could not be made smaller, so it was left as it was."));
+                        return bytes;
+                    }
                     notes.AddRange(result.Notes);
+                    if (result.Dropped > 0) notes.Add(PageJobs.DroppedText(result.Dropped));
                     return result.Bytes;
                 }
             case BatchStepKind.Clean:
@@ -95,6 +213,19 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                 return Watermark(step, bytes, notes);
             case BatchStepKind.Bates:
                 return Bates(step, bytes, notes);
+            case BatchStepKind.PageNumbers:
+                return PageNumbers(step, bytes, now, name, notes);
+            case BatchStepKind.Rotate:
+                return Rotate(step, bytes, notes);
+            case BatchStepKind.Protect:
+                {
+                    using var document = PdfDocument.Open(bytes);
+                    return ProtectWork.WithPassword(document, step.Password, step.Password, PermissionChoices.Everything.ToPermissions(), PdfCryptStrength.Aes256);
+                }
+            case BatchStepKind.ExportPictures:
+                return bytes;
+            case BatchStepKind.PdfUa:
+                return bytes;
             default:
                 {
                     var converted = new PdfAConverter(fonts).Convert(bytes, step.Level, now);
@@ -117,6 +248,27 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         if (left > 0) notes.Add(Loc.Plural(left, "{0} PDF/A rule is left.", "{0} PDF/A rules are left."));
     }
 
+    private static byte[] MarkPdfUa(byte[] bytes, DateTimeOffset now, CancellationToken cancellation)
+    {
+        var session = PdfEditSession.Open(bytes);
+        if (!PdfUaValidator.Mark(session.Document, now, cancellation).Marked) return bytes;
+        session.Commit(Loc.T("Mark as PDF/UA"));
+        return session.Current.ToArray();
+    }
+
+    // Steps after the PDF/UA step can undo it, so the mark and the report are on the finished file.
+    private static byte[] CheckPdfUa(BatchSet set, byte[] bytes, DateTimeOffset now, List<string> notes, CancellationToken cancellation)
+    {
+        if (!set.Steps.Any(s => s.Kind == BatchStepKind.PdfUa)) return bytes;
+        if (set.Steps.Any(s => s.Kind == BatchStepKind.PdfUa && s.MarkPdfUa)) bytes = MarkPdfUa(bytes, now, cancellation);
+        using var made = PdfDocument.Open(bytes);
+        var report = PdfUaValidator.Validate(made);
+        int left = report.Issues.Select(i => (i.Condition, i.Clause)).Distinct().Count();
+        if (left > 0) notes.Add(Loc.Plural(left, "{0} PDF/UA condition is not met.", "{0} PDF/UA conditions are not met."));
+        if (report.Truncated) notes.Add(Loc.T("The PDF/UA check stopped at 1000 findings."));
+        return bytes;
+    }
+
     private async Task<byte[]> OcrAsync(BatchStep step, byte[] bytes, List<string> notes, CancellationToken cancellation)
     {
         var session = PdfEditSession.Open(bytes);
@@ -124,9 +276,17 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         if (!renderer.Load(session, null)) throw new StepFailed(new(Loc.T("Pages cannot be drawn"), Loc.T("Windows cannot draw this file, so its text cannot be read.")));
         var options = new OcrOptions(step.Text.Length == 0 ? "en-US" : step.Text);
         OcrResult result;
+        IReadOnlyDictionary<int, int> turns;
         try
         {
-            result = await PdfSearchable.RunAsync(session, recognizer, renderer, options, cancellation: cancellation);
+            var (read, turned) = await OcrWork.ReadAsync(session.Document, renderer, recognizer, options, null, cancellation);
+            result = read.Result;
+            turns = turned;
+            if (read.Pages.Count > 0)
+            {
+                int words = OcrWork.Write(session.Document, read.Pages, turns, options.Language);
+                result = result with { Words = words, Committed = session.Commit(OcrStatusText.Label) };
+            }
         }
         catch (InvalidOperationException e)
         {
@@ -134,6 +294,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         }
         if (result.NotRendered > 0) notes.Add(Loc.Plural(result.NotRendered, "{0} page could not be drawn.", "{0} pages could not be drawn."));
         if (result.NoWords > 0) notes.Add(Loc.Plural(result.NoWords, "No text found on {0} page. Check the language.", "No text found on {0} pages. Check the language."));
+        if (turns.Count > 0) notes.Add(Loc.Plural(turns.Count, "{0} page was turned upright.", "{0} pages were turned upright."));
         return session.Current.ToArray();
     }
 
@@ -150,6 +311,25 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             Anchor = step.Anchor,
         };
         Stamp(session, notes, "Watermark", stamper => stamper.AddWatermark(spec));
+        return session.Current.ToArray();
+    }
+
+    private static byte[] Rotate(BatchStep step, byte[] bytes, List<string> notes)
+    {
+        var session = PdfEditSession.Open(bytes);
+        var pages = Enumerable.Range(0, session.Document.Pages.Count).Where(i => step.Pages switch
+        {
+            BatchPages.Odd => i % 2 == 0,
+            BatchPages.Even => i % 2 == 1,
+            _ => true,
+        }).ToList();
+        if (pages.Count == 0)
+        {
+            notes.Add(Loc.T("No page matched, so nothing was turned."));
+            return bytes;
+        }
+        PageOperations.Rotate(session.Document, pages, step.Turn);
+        session.Commit(Loc.T("Rotate pages"));
         return session.Current.ToArray();
     }
 
@@ -171,6 +351,30 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         };
         var run = Stamp(session, notes, "Bates numbers", stamper => stamper.AddHeaderFooter(spec));
         step.Start = run.NextBates;
+        return session.Current.ToArray();
+    }
+
+    private byte[] PageNumbers(BatchStep step, byte[] bytes, DateTimeOffset now, string name, List<string> notes)
+    {
+        if (step.Text.Trim().Length == 0)
+            throw new StepFailed(new(Loc.T("Page number text is empty"), Loc.T("Type the text, for example {0}.", BatchStep.PageNumberText)));
+        var session = PdfEditSession.Open(bytes);
+        var band = step.Place switch
+        {
+            BatesPlace.FooterCenter or BatesPlace.HeaderCenter => new HeaderFooterBand(Center: step.Text),
+            BatesPlace.FooterLeft or BatesPlace.HeaderLeft => new HeaderFooterBand(Left: step.Text),
+            _ => new HeaderFooterBand(Right: step.Text),
+        };
+        bool header = step.Place >= BatesPlace.HeaderRight;
+        var spec = new HeaderFooterSpec
+        {
+            Header = header ? band : new(),
+            Footer = header ? new() : band,
+            FontSize = Math.Clamp(step.FontSize, 6, 48),
+            Date = now,
+            FileName = name,
+        };
+        Stamp(session, notes, "Page numbers", stamper => stamper.AddHeaderFooter(spec));
         return session.Current.ToArray();
     }
 

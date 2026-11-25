@@ -2,61 +2,131 @@ using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Redact;
 
-/// <summary>One entry of the review list: the mark and a few words to know it by.</summary>
-public sealed record MarkItem(RedactionMark Mark, string Label)
+/// <summary>
+/// One entry of the review list: the mark and a few words to know it by. A <paramref name="Value"/> is a hit in a
+/// comment or a field; its mark is only where the comment or field sits, and it is not applied as a mark.
+/// </summary>
+public sealed record MarkItem(RedactionMark Mark, string Label, bool IsBox = false, bool IsWholePage = false, RedactionValueMatch? Value = null, string? Where = null)
 {
     public int Page => Mark.Page;
 
-    public string PageText => Loc.T("Page {0}", Page + 1);
+    public string PageText => Where ?? Loc.T("Page {0}", Page + 1);
 
-    public string Spoken => Loc.T("{0}, page {1}", Label, Page + 1);
+    public string Spoken => Where is null ? Loc.T("{0}, page {1}", Label, Page + 1) : Loc.T("{0}, {1}", Label, Where);
 }
 
 /// <summary>What is marked on a document so far, in reading order. Nothing is written to the file until the redaction is applied.</summary>
 public sealed class MarkList
 {
     private const double SamePlace = 0.5;
+    private const int MaxSteps = 20;
 
     // Marks by page and the unit square of their first corner, so that a new one is compared only with its neighbours.
     private readonly Dictionary<(int Page, int X, int Y), List<MarkItem>> _cells = [];
+    private readonly List<IReadOnlyList<MarkItem>> _history = [];
     private List<MarkItem> _items = [];
 
+    // Every change replaces the list, so a reference taken from Items never changes under its holder.
     public IReadOnlyList<MarkItem> Items => _items;
+
+    public bool CanUndo => _history.Count > 0;
 
     public event EventHandler? Changed;
 
     /// <summary>Adds what is not marked already and returns how many were new.</summary>
     public int Add(IEnumerable<MarkItem> items)
     {
-        int added = 0;
+        var fresh = new List<MarkItem>();
         foreach (var item in items)
         {
-            if (Neighbours(item).Any(m => Same(m.Mark, item.Mark))) continue;
+            if (Neighbours(item).Any(m => Same(m, item))) continue;
             var cell = Cell(item);
             if (!_cells.TryGetValue(cell, out var inCell)) _cells[cell] = inCell = [];
             inCell.Add(item);
-            _items.Add(item);
-            added++;
+            fresh.Add(item);
         }
-        if (added == 0) return 0;
-        _items = [.. _items.OrderBy(m => m.Page).ThenByDescending(m => Top(m.Mark)).ThenBy(m => Left(m.Mark))];
+        if (fresh.Count == 0) return 0;
+        Push();
+        _items = Sorted(_items.Concat(fresh));
         Changed?.Invoke(this, EventArgs.Empty);
-        return added;
+        return fresh.Count;
     }
 
     public void Remove(MarkItem item)
     {
-        if (!_items.Remove(item)) return;
+        int index = _items.IndexOf(item);
+        if (index < 0) return;
+        Push();
+        _items = [.. _items.Take(index).Concat(_items.Skip(index + 1))];
         _cells[Cell(item)].Remove(item);
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Puts <paramref name="now"/> where <paramref name="old"/> was, for a box that was moved or resized. One step of Undo.</summary>
+    public void Replace(MarkItem old, MarkItem now)
+    {
+        if (!_items.Contains(old)) return;
+        Push();
+        _items = Sorted(_items.Where(m => m != old).Append(now));
+        RebuildCells();
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
     public void Clear()
     {
         if (_items.Count == 0) return;
-        _items.Clear();
+        Push();
+        _items = [];
         _cells.Clear();
         Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Takes out the hits in comments and fields, which are tied to places in text that may since have changed. One step of Undo.</summary>
+    public bool RemoveValues()
+    {
+        if (!_items.Any(m => m.Value is not null)) return false;
+        Push();
+        _items = [.. _items.Where(m => m.Value is null)];
+        RebuildCells();
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+    public void Undo()
+    {
+        if (_history.Count == 0) return;
+        _items = [.. _history[^1]];
+        _history.RemoveAt(_history.Count - 1);
+        RebuildCells();
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    // Changed is raised so a shown Undo button goes away.
+    public void Forget()
+    {
+        if (_history.Count == 0) return;
+        _history.Clear();
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RebuildCells()
+    {
+        _cells.Clear();
+        foreach (var item in _items)
+        {
+            var cell = Cell(item);
+            if (!_cells.TryGetValue(cell, out var inCell)) _cells[cell] = inCell = [];
+            inCell.Add(item);
+        }
+    }
+
+    private static List<MarkItem> Sorted(IEnumerable<MarkItem> items) =>
+        [.. items.OrderBy(m => m.Page).ThenByDescending(m => Top(m.Mark)).ThenBy(m => Left(m.Mark))];
+
+    private void Push()
+    {
+        _history.Add(_items);
+        if (_history.Count > MaxSteps) _history.RemoveAt(0);
     }
 
     private static (int Page, int X, int Y) Cell(MarkItem item)
@@ -81,6 +151,12 @@ public sealed class MarkList
     private static double Top(RedactionMark mark) => mark.Quads.Max(q => q.Bounds.Top);
 
     private static double Left(RedactionMark mark) => mark.Quads.Min(q => q.Bounds.Left);
+
+    private static bool Same(MarkItem a, MarkItem b)
+    {
+        if (a.Value is not null || b.Value is not null) return a.Value == b.Value;
+        return Same(a.Mark, b.Mark);
+    }
 
     private static bool Same(RedactionMark a, RedactionMark b)
     {

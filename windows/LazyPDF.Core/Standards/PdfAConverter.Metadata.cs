@@ -34,7 +34,7 @@ internal sealed partial class PdfAConversionRun
         try
         {
             return _doc.Integer(profile.Dictionary, "N") is (1 or 3 or 4) and var n
-                && PdfAChecker.IccProblem(_doc.Data(profile, 32L << 20), (int)n, Part == 1 ? 2 : 4) is null;
+                && PdfAChecker.IccProblem(_doc.Data(profile, 32L << 20), (int)n, Part == 1 ? 2 : 4, true) is null;
         }
         catch (PdfReadException)
         {

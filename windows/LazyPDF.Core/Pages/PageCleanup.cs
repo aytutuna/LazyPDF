@@ -209,6 +209,11 @@ internal static class PageCleanup
         bool Tagged(PdfPage page) => page.Dictionary.ContainsKey("StructParents")
             || document.Array(page.Dictionary, "Annots")?.Items.Any(a => document.Resolve(a) is PdfDictionary d && d.ContainsKey("StructParent")) == true;
         if (!doomed.Any(Tagged)) return;
+        if (PageCarry.HasTags(document) && RedactionStructure.Prune(document, [], [], [.. doomed.Select(p => p.Reference.Number)]))
+        {
+            KeepKeys(document, doomed);
+            return;
+        }
         document.Catalog.Remove("StructTreeRoot");
         document.Catalog.Remove("MarkInfo");
         foreach (var page in document.Pages)
@@ -221,6 +226,33 @@ internal static class PageCleanup
                 if (document.Resolve(item) is PdfDictionary annotation) annotation.Remove("StructParent");
             }
         }
+    }
+
+    // Only the keys of the pages and annotations that go are removed; a form or image that owns a key stays mapped.
+    private static void KeepKeys(PdfDocument document, IReadOnlyList<PdfPage> doomed)
+    {
+        if (document.Dict(document.Dict(document.Catalog, "StructTreeRoot"), "ParentTree") is not { } parents) return;
+        var gone = doomed.Select(p => p.Reference.Number).ToHashSet();
+        var used = PageKeys(document, document.Pages.Where(p => !gone.Contains(p.Reference.Number)));
+        var dropped = PageKeys(document, doomed);
+        dropped.ExceptWith(used);
+        if (dropped.Count == 0) return;
+        PdfNumberTree.Write(document, parents, PdfNumberTree.Read(document, parents).Where(e => !dropped.Contains(e.Key)).ToList());
+    }
+
+    private static HashSet<long> PageKeys(PdfDocument document, IEnumerable<PdfPage> pages)
+    {
+        var keys = new HashSet<long>();
+        foreach (var page in pages)
+        {
+            if (document.Integer(page.Dictionary, "StructParents") is { } key) keys.Add(key);
+            if (document.Array(page.Dictionary, "Annots") is not { } annots) continue;
+            foreach (var item in annots.Items)
+            {
+                if (document.Resolve(item) is PdfDictionary annotation && document.Integer(annotation, "StructParent") is { } own) keys.Add(own);
+            }
+        }
+        return keys;
     }
 
     // A bead on a page that goes leaves its article; an article with no bead left goes too.

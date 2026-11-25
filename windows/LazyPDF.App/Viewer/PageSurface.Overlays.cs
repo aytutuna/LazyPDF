@@ -13,8 +13,18 @@ internal sealed partial class PageSurface
     /// <summary>The engine's geometry of a page (user space to page space and back), valid for this revision of the file.</summary>
     public PageGeometry Geometry(int page)
     {
-        if (!_geometry.TryGetValue(page, out var geometry)) _geometry[page] = geometry = new PageGeometry(_tab!.Document.Pages[page]);
+        if (!_geometry.TryGetValue(page, out var geometry)) _geometry[page] = geometry = new PageGeometry(_tab!.Document.Pages[Math.Min(page, _tab.Document.Pages.Count - 1)]);
         return geometry;
+    }
+
+    /// <summary>The area of page space that a text quad (user space) covers.</summary>
+    public Rect QuadArea(int page, TextQuad quad)
+    {
+        var geometry = Geometry(page);
+        var box = quad.Bounds;
+        var (x1, y1) = geometry.ToDisplay(box.Left, box.Bottom);
+        var (x2, y2) = geometry.ToDisplay(box.Right, box.Top);
+        return new Rect(new Point(x1, y1), new Point(x2, y2));
     }
 
     public PageOverlay Overlay(int page)

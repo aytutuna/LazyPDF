@@ -37,6 +37,7 @@ public class RedactImageTests
         foreach (int i in new[] { 0, 1, 8, 9 }) expected[i] = 0;
         Assert.Equal(expected, Samples(output));
         Assert.Equal(1, result.Report.Images);
+        Assert.Equal(0, result.Report.Pages.Single().WholeImages);
     }
 
     [Fact]
@@ -93,6 +94,200 @@ public class RedactImageTests
         Assert.Equal(2, ImageStreams(output).Count());
     }
 
+    [Theory]
+    [InlineData("JPXDecode")]
+    [InlineData("DCTDecode")]
+    public void ACodedSoftMaskIsWrittenBackAsPlainGrayWithItsMatte(string filter)
+    {
+        using var document = WithImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
+            more: pdf => pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /{filter} /Matte [0 0 0]", [1, 2, 3]));
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+        var mask = output.Stream(image.Dictionary, "SMask")!;
+
+        Assert.Equal("DeviceGray", output.Name(mask.Dictionary, "ColorSpace"));
+        Assert.Equal(8, output.Integer(mask.Dictionary, "BitsPerComponent"));
+        Assert.False(mask.Dictionary.ContainsKey("SMask"));
+        Assert.NotNull(mask.Dictionary["Matte"]);
+        Assert.Equal([0, 0, 60], output.Data(mask)[..3].Select(b => (int)b));
+        Assert.Equal(64, output.Data(mask).Length);
+    }
+
+    [Theory]
+    [InlineData("DCTDecode", true)]
+    [InlineData("JPXDecode", false)]
+    public void ACodedSoftMaskKeepsOnlyWhatAPlainGrayMaskHas(string filter, bool decode)
+    {
+        using var document = WithImage("/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
+            more: pdf =>
+            {
+                pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /{filter} /Decode [1 0] /SMask 8 0 R /Mask 9 0 R /SMaskInData 1", [1, 2, 3]);
+                pdf.Stream(8, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8", Gradient());
+                pdf.Stream(9, "/Type /XObject /Subtype /Image /Width 8 /Height 8 /ImageMask true /BitsPerComponent 1", new byte[8]);
+            });
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+        var mask = output.Stream(image.Dictionary, "SMask")!;
+
+        Assert.Equal(decode, mask.Dictionary.ContainsKey("Decode"));
+        foreach (string key in new[] { "SMask", "Mask", "SMaskInData" }) Assert.False(mask.Dictionary.ContainsKey(key), key);
+        Assert.Equal(2, ImageStreams(output).Count());
+    }
+
+    [Theory]
+    [InlineData("/DeviceRGB", "[0 0 0]", "[0 0 0]")]
+    [InlineData("/DeviceRGB", "[0]", null)]
+    [InlineData("/DeviceGray", "[0.5]", "[0.5 0.5 0.5]")]
+    [InlineData("/DeviceCMYK", "[0 0 0 0]", null)]
+    public void TheMatteOfASoftMaskFollowsTheColourSpaceTheImageIsWrittenIn(string space, string matte, string? expected)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
+            more: pdf => pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Matte {matte}", [1, 2, 3]));
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+        var written = output.Stream(image.Dictionary, "SMask")!.Dictionary["Matte"];
+
+        Assert.Equal(expected, written?.ToString());
+    }
+
+    // The codec's samples are what the file stores, and the copy is plain RGB, so /Decode has to be on the samples.
+    [Theory]
+    [InlineData("/DeviceGray", "[1 0]", 60, 60, 60, 195, 195, 195)]
+    [InlineData("/DeviceGray", "[0 1]", 60, 60, 60, 60, 60, 60)]
+    [InlineData("/DeviceRGB", "[1 0 0 1 1 0]", 60, 40, 20, 195, 40, 235)]
+    [InlineData("/DeviceRGB", "[0 1 0 1 0 1]", 60, 40, 20, 60, 40, 20)]
+    public void ADecodeArrayOfAJpegIsAppliedBeforeItIsWrittenAsRgb(string space, string decode, int r, int g, int b, int er, int eg, int eb)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode /Decode {decode}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight((byte)r, (byte)g, (byte)b, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+
+        Assert.False(image.Dictionary.ContainsKey("Decode"));
+        Assert.Equal([0, 0, 0], output.Data(image)[..3].Select(v => (int)v));
+        Assert.Equal([er, eg, eb], output.Data(image)[(5 * 3)..(5 * 3 + 3)].Select(v => (int)v));
+    }
+
+    // Decode does not apply to JPEG 2000 (ISO 32000-1 Table 89).
+    [Fact]
+    public void ADecodeArrayOfAJpxPictureIsNotApplied()
+    {
+        using var document = WithImage("/ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /JPXDecode /Decode [1 0]", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+
+        Assert.Equal([60, 60, 60], output.Data(image)[(5 * 3)..(5 * 3 + 3)].Select(v => (int)v));
+    }
+
+    private static readonly byte[] AdobeJpeg = [0xFF, 0xD8, 0xFF, 0xEE, 0, 14, (byte)'A', (byte)'d', (byte)'o', (byte)'b', (byte)'e', 0, 100, 0, 0, 0, 0, 2, 0xFF, 0xDA];
+
+    [Theory]
+    [InlineData("/DeviceCMYK", "[1 0 1 0 1 0 1 0]", false, false)]
+    [InlineData("/DeviceCMYK", "[0 1 0 1 0 1 0 1]", false, true)]
+    [InlineData("/DeviceCMYK", "[1 0 1 0 1 0 1 0]", true, true)]
+    [InlineData("/DeviceCMYK", "[0 0.5 0 1 0 1 0 1]", true, false)]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]", "[1 0 0 1 0 1]", false, false)]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", "[1 0]", false, false)]
+    public void ADecodeArrayThePixelsCannotCarryRemovesTheJpegWhole(string space, string decode, bool adobe, bool kept)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode /Decode {decode}", adobe ? AdobeJpeg : [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Equal(kept, RedactionKit.Images(output).Count == 1);
+        Assert.Equal(kept ? 0 : 1, result.Report.Pages.Single().WholeImages);
+    }
+
+    // A codec shows an Adobe-marked CMYK file as a JPEG file looks, the page shows the stored inks: the two are inverses unless a
+    // reversing /Decode goes with the marker.
+    [Theory]
+    [InlineData("", false, true)]
+    [InlineData("", true, false)]
+    [InlineData("/Decode [0 1 0 1 0 1 0 1]", false, true)]
+    [InlineData("/Decode [0 1 0 1 0 1 0 1]", true, false)]
+    [InlineData("/Decode [1 0 1 0 1 0 1 0]", true, true)]
+    public void ACmykJpegIsKeptOnlyWhereTheCodecShowsWhatThePageShows(string decode, bool adobe, bool kept)
+    {
+        using var document = WithImage($"/ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /DCTDecode {decode}", adobe ? AdobeJpeg : [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Equal(kept, RedactionKit.Images(output).Count == 1);
+        Assert.Equal(kept ? 0 : 1, result.Report.Pages.Single().WholeImages);
+    }
+
+    [Theory]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", "")]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]", "/Decode [0 255]")]
+    [InlineData("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]", "")]
+    [InlineData("[/DeviceN [/A /B] /DeviceRGB <</FunctionType 4 /Domain [0 1 0 1] /Range [0 1 0 1 0 1] /Length 15>>]", "")]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]", "")]
+    public void ADctPictureInASpaceThePixelsCannotShowIsRemovedWhole(string space, string decode)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode {decode}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(1, 2, 3, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
+    // The key is matched on the raw samples; the copy holds the samples after /Decode, as RGB.
+    [Theory]
+    [InlineData("/DeviceGray", "[10 20]", "", "10 20 10 20 10 20")]
+    [InlineData("/DeviceGray", "[10 20]", "/Decode [1 0]", "235 245 235 245 235 245")]
+    [InlineData("/DeviceGray", "[10 20]", "/Decode [0 1]", "10 20 10 20 10 20")]
+    [InlineData("/DeviceRGB", "[1 2 3 4 5 6]", "", "1 2 3 4 5 6")]
+    [InlineData("/DeviceRGB", "[1 2 3 4 5 6]", "/Decode [1 0 0 1 1 0]", "253 254 3 4 249 250")]
+    public void AColourKeyOfAJpegIsCarriedOverWithItsDecode(string space, string key, string decode, string expected)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /DCTDecode /Mask {key} {decode}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+
+        var written = Assert.IsType<PdfArray>(output.Resolve(image.Dictionary["Mask"]));
+        Assert.Equal(expected, string.Join(" ", written.Items.Select(item => ((PdfNumber)item).Value)));
+    }
+
+    [Theory]
+    [InlineData("/ColorSpace /DeviceCMYK", "[1 2 3 4 5 6 7 8]", "", "DCTDecode")]
+    [InlineData("/ColorSpace /DeviceRGB", "[1 2 3 4 5 6]", "/Decode [0 0.5 0 1 0 1]", "DCTDecode")]
+    [InlineData("/ColorSpace /DeviceRGB", "[1 2 3 4]", "", "DCTDecode")]
+    [InlineData("/ColorSpace /DeviceRGB", "[1 2 3 4 5 6]", "", "JPXDecode")]
+    public void AColourKeyThatCannotBeCarriedOverRemovesThePictureWhole(string space, string key, string decode, string filter)
+    {
+        using var document = WithImage($"{space} /BitsPerComponent 8 /Filter /{filter} /Mask {key} {decode}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
+    // A JPX picture usually has no /ColorSpace, so its component count is not known from the dictionary.
+    [Theory]
+    [InlineData("[0.5]", "[0.5 0.5 0.5]")]
+    [InlineData("[0 0 0]", "[0 0 0]")]
+    [InlineData("[0 0]", null)]
+    [InlineData("[0 0 0 0]", null)]
+    public void WithNoColourSpaceTheMatteIsRepeatedOrKeptByItsLength(string matte, string? expected)
+    {
+        using var document = WithImage("/BitsPerComponent 8 /Filter /JPXDecode /SMask 7 0 R", [1, 2, 3],
+            more: pdf => pdf.Stream(7, $"/Type /XObject /Subtype /Image /Width 8 /Height 8 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Matte {matte}", [1, 2, 3]));
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 60, 60, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+        var written = output.Stream(image.Dictionary, "SMask")!.Dictionary["Matte"];
+
+        Assert.Equal(expected, written?.ToString());
+    }
+
     [Fact]
     public void SharedImageGetsAPrivateCopyForTheMarkedUse()
     {
@@ -145,6 +340,7 @@ public class RedactImageTests
         Assert.Empty(RedactionKit.Images(output));
         Assert.Empty(ImageStreams(output));
         Assert.Equal(1, result.Report.Images);
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
     }
 
     [Fact]
@@ -157,6 +353,76 @@ public class RedactImageTests
         using var output = RedactionKit.Open(result);
         Assert.Empty(RedactionKit.Images(output));
         Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+        Assert.Contains(RedactionText.WholePicture(0, 1), result.Report.ToString());
+    }
+
+    [Theory]
+    [InlineData("JBIG2Decode", false)]
+    [InlineData("JBIG2Decode", true)]
+    [InlineData("JPXDecode", false)]
+    [InlineData("JPXDecode", true)]
+    public void PictureThatCannotBeDecodedIsRemoved(string filter, bool codec)
+    {
+        using var document = RedactionKit.Page(Place, "/XObject <</Im1 6 0 R>>", pdf =>
+            pdf.Stream(6, $"/Type /XObject /Subtype /Image /Width 8 /Height 6 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /{filter}", [1, 2, 3, 4, 5, 6]));
+        var result = new PdfRedactor(document, images: codec ? new FakeCodec(null) : null).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Images);
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
+    private static PdfRgbaImage Eight(byte r, byte g, byte b, byte a) =>
+        new(8, 8, [.. Enumerable.Range(0, 64).SelectMany(_ => new[] { r, g, b, a })]);
+
+    [Theory]
+    [InlineData("[/Indexed /DeviceRGB 1 <000000FFFFFF>]")]
+    [InlineData("[/Separation /Spot /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [1 1 1] /C1 [1 0 0] /N 1>>]")]
+    [InlineData("[/Lab <</WhitePoint [0.95 1 1.09]>>]")]
+    public void AJpxPictureInASpaceThePixelsCannotShowIsRemovedWhole(string space)
+    {
+        using var document = WithImage($"/ColorSpace {space} /BitsPerComponent 8 /Filter /JPXDecode", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(1, 2, 3, 255))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+    }
+
+    [Theory]
+    [InlineData("/SMaskInData 0", 255, false)]
+    [InlineData("", 255, false)]
+    [InlineData("/SMaskInData 1", 128, true)]
+    public void AJpxPictureKeepsItsAlphaAsSMaskInDataSays(string entry, int alpha, bool softMask)
+    {
+        using var document = WithImage($"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode {entry}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, (byte)alpha))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        var image = RedactionKit.Images(output).Single().Stream!;
+
+        Assert.Equal(softMask, output.Stream(image.Dictionary, "SMask") is not null);
+        Assert.False(image.Dictionary.ContainsKey("SMaskInData"));
+        Assert.Equal([60, 40], output.Data(image)[(5 * 3)..(5 * 3 + 2)].Select(b => (int)b));
+        Assert.Equal([0, 0, 0], output.Data(image)[..3].Select(b => (int)b));
+    }
+
+    [Theory]
+    [InlineData("/SMaskInData 2", 128)]
+    [InlineData("/SMaskInData 0", 0)]
+    [InlineData("/SMaskInData -1", 128)]
+    [InlineData("", 100)]
+    public void AJpxPictureWhoseAlphaCannotBeReadAsTheFileSaysIsRemovedWhole(string entry, int alpha)
+    {
+        using var document = WithImage($"/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode {entry}", [1, 2, 3]);
+        var result = new PdfRedactor(document, images: new FakeCodec(Eight(60, 40, 20, (byte)alpha))).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
     }
 
     [Fact]

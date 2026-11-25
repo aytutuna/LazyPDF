@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
 using Xunit;
@@ -19,6 +21,34 @@ public sealed class OneTabPerFileTests
     }
 
     [Fact]
+    public async Task CancelingWhileASecondOpenOfTheFileWaitsOpensNothing()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+
+        var first = f.Vm.OpenAsync(path);
+        var second = f.Vm.OpenAsync(path);
+        f.Vm.CancelOpening();
+        await Task.WhenAll(first, second);
+
+        Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task TheSameFileSpelledAnotherWayOpensNoSecondTab()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var first = f.Vm.ActiveDocument;
+
+        await f.Vm.OpenAsync(@"\\?\" + Path.GetFullPath(path));
+
+        Assert.Single(f.Vm.Documents);
+        Assert.Same(first, f.Vm.ActiveDocument);
+    }
+
+    [Fact]
     public async Task AskingForALockedFileWhileItsQuestionIsUpAddsNoSecondQuestion()
     {
         using var f = new ViewModelFixture();
@@ -29,6 +59,87 @@ public sealed class OneTabPerFileTests
         f.Vm.CancelPending();
 
         Assert.Null(f.Vm.PasswordRequest);
+    }
+
+    [Fact]
+    public async Task AskingAgainForTheSecondLockedFileShowsItsQuestion()
+    {
+        using var f = new ViewModelFixture();
+        byte[] locked = File.ReadAllBytes(Pdfs.Fixture("locked.pdf"));
+        string x = f.Dir.File("x.pdf", locked);
+        string y = f.Dir.File("y.pdf", locked);
+        await f.Vm.OpenAsync(x);
+        await f.Vm.OpenAsync(y);
+        Assert.Equal("x.pdf", f.Vm.PasswordRequest!.Name);
+
+        await f.Vm.OpenAsync(y);
+
+        Assert.Equal("y.pdf", f.Vm.PasswordRequest!.Name);
+    }
+
+    [Fact]
+    public async Task ALockedFileAskedForUnderAnotherSpellingAddsNoSecondQuestion()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Dir.File("locked.pdf", File.ReadAllBytes(Pdfs.Fixture("locked.pdf")));
+        string dir = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(Path.Combine(dir, "sub"));
+        await f.Vm.OpenAsync(path);
+
+        await f.Vm.OpenAsync(Path.Combine(dir, "sub", "..", "locked.pdf"));
+        f.Vm.CancelPending();
+
+        Assert.Null(f.Vm.PasswordRequest);
+    }
+
+    [Fact]
+    public async Task AMovedFileOpenedAtItsNewPathMakesTheTabFollowIt()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        string moved = Path.Combine(Path.GetDirectoryName(path)!, "moved.pdf");
+        File.Move(path, moved);
+
+        await f.Vm.OpenAsync(moved);
+
+        Assert.Single(f.Vm.Documents);
+        Assert.Equal(moved, f.Vm.ActiveDocument!.Path);
+        Assert.Equal("File moved", f.Vm.Message?.Title);
+    }
+
+    [Fact]
+    public async Task AFileChangedInPlaceBeforeItWasMovedStillShowsAsChanged()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
+        File.WriteAllBytes(path, Pdfs.Text(pages: 3));
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(10));
+        string moved = Path.Combine(Path.GetDirectoryName(path)!, "moved.pdf");
+        File.Move(path, moved);
+
+        await f.Vm.OpenAsync(moved);
+
+        Assert.True(f.Vm.ActiveDocument!.ChangedOnDisk);
+        await f.Vm.CheckDiskAsync();
+        Assert.Equal("File changed", f.Vm.Message?.Title);
+    }
+
+    [Fact]
+    public void TwoFilesHaveTwoIdsAndOneFileByTwoSpellingsHasOne()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf();
+        string b = f.Pdf("b.pdf");
+        string dir = Path.GetDirectoryName(a)!;
+        Directory.CreateDirectory(Path.Combine(dir, "sub"));
+
+        Assert.NotNull(DocumentOpener.Identity(a));
+        Assert.NotEqual(DocumentOpener.Identity(a), DocumentOpener.Identity(b));
+        Assert.Equal(DocumentOpener.Identity(a), DocumentOpener.Identity(Path.Combine(dir, "sub", "..", Path.GetFileName(a))));
     }
 
     [Fact]
@@ -43,16 +154,50 @@ public sealed class OneTabPerFileTests
     }
 
     [Fact]
-    public async Task GivingUpWhileThePasswordIsBeingCheckedOpensNothing()
+    public void GivingUpWhileThePasswordIsBeingCheckedOpensNothing()
     {
-        using var f = new ViewModelFixture();
-        await f.Vm.OpenAsync(f.Dir.File("locked.pdf", File.ReadAllBytes(Pdfs.Fixture("locked.pdf"))));
+        // In the app the check comes back on the window's thread, after the click; on the pool it could finish first.
+        OneThread.Run(async () =>
+        {
+            using var f = new ViewModelFixture();
+            await f.Vm.OpenAsync(f.Dir.File("locked.pdf", File.ReadAllBytes(Pdfs.Fixture("locked.pdf"))));
 
-        var submit = f.Vm.SubmitPasswordAsync("secret");
-        f.Vm.CancelPending();
-        await submit;
+            var submit = f.Vm.SubmitPasswordAsync("secret");
+            f.Vm.CancelPending();
+            await submit;
 
-        Assert.Empty(f.Vm.Documents);
+            Assert.Empty(f.Vm.Documents);
+        });
+    }
+
+    internal sealed class OneThread : SynchronizationContext
+    {
+        private readonly BlockingCollection<(SendOrPostCallback, object?)> _queue = new();
+
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            // A load started by the body can finish after the body did; nobody is left to run its callback.
+            try { _queue.Add((d, state)); }
+            catch (InvalidOperationException) { }
+        }
+
+        public static void Run(Func<Task> body)
+        {
+            var before = Current;
+            var context = new OneThread();
+            SetSynchronizationContext(context);
+            try
+            {
+                var task = body();
+                task.ContinueWith(_ => context._queue.CompleteAdding(), TaskScheduler.Default);
+                foreach (var (d, state) in context._queue.GetConsumingEnumerable()) d(state);
+                task.GetAwaiter().GetResult();
+            }
+            finally
+            {
+                SetSynchronizationContext(before);
+            }
+        }
     }
 
     [Fact]

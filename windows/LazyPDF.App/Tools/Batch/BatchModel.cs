@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.App.Tools.Ocr;
 using LazyPDF.Core;
 
@@ -11,7 +13,19 @@ public enum BatchStepKind
     Clean,
     Watermark,
     Bates,
+    PageNumbers,
     PdfA,
+    Rotate,
+    Protect,
+    ExportPictures,
+    PdfUa,
+}
+
+public enum BatchPages
+{
+    All,
+    Odd,
+    Even,
 }
 
 public enum BatesPlace
@@ -29,7 +43,7 @@ public sealed class BatchStep
 {
     public BatchStepKind Kind { get; set; }
 
-    /// <summary>The language tag of Ocr, the text of Watermark, the prefix of Bates.</summary>
+    /// <summary>The language tag of Ocr, the text of Watermark, the prefix of Bates, the format of PageNumbers.</summary>
     public string Text { get; set; } = "";
 
     public OptimizePreset Preset { get; set; } = OptimizePreset.Balanced;
@@ -53,7 +67,21 @@ public sealed class BatchStep
     /// <summary>The width of the watermark as a percentage of the page.</summary>
     public int Size { get; set; } = 60;
 
+    /// <summary>The size of the page numbers in points.</summary>
+    public int FontSize { get; set; } = 10;
+
     public StampAnchor Anchor { get; set; } = StampAnchor.Center;
+
+    /// <summary>Clockwise degrees of Rotate: 90, 180 or 270.</summary>
+    public int Turn { get; set; } = 90;
+
+    public BatchPages Pages { get; set; }
+
+    public PictureFormat Picture { get; set; } = PictureFormat.Png;
+
+    public int Dpi { get; set; } = 150;
+
+    public int Quality { get; set; } = 85;
 
     public bool KeepComments { get; set; }
 
@@ -63,12 +91,29 @@ public sealed class BatchStep
 
     public bool KeepAttachments { get; set; }
 
+    /// <summary>PdfUa: write the PDF/UA-1 identifier into a file that fails only on what marking settles.</summary>
+    public bool MarkPdfUa { get; set; }
+
+    /// <summary>The password of Protect. Kept in memory only: it is left out of the saved set and asked for again.</summary>
+    [JsonIgnore]
+    public string Password { get; set; } = "";
+
+    public static string PageNumberText => Loc.T("Page {page} of {pages}");
+
     public BatchStep Copy() => (BatchStep)MemberwiseClone();
 
     public static BatchStep Of(BatchStepKind kind) => new()
     {
         Kind = kind,
-        Text = kind == BatchStepKind.Ocr ? OcrLanguageState.Read().Preferred()?.Tag ?? "en-US" : "",
+        Text = kind switch
+        {
+            BatchStepKind.Ocr => OcrLanguageState.Read().Preferred()?.Tag ?? "en-US",
+            BatchStepKind.PageNumbers => PageNumberText,
+            _ => "",
+        },
+        KeepComments = kind == BatchStepKind.Clean,
+        KeepForms = kind == BatchStepKind.Clean,
+        KeepLinks = kind == BatchStepKind.Clean,
     };
 }
 
@@ -86,6 +131,8 @@ public sealed class BatchSet
 
     public string WatchFolder { get; set; } = "";
 
+    public bool StopOnError { get; set; }
+
     /// <summary>A copy that later edits to the steps do not reach.</summary>
     public BatchSet Copy() => new()
     {
@@ -94,6 +141,7 @@ public sealed class BatchSet
         OutputFolder = OutputFolder,
         NameTemplate = NameTemplate,
         WatchFolder = WatchFolder,
+        StopOnError = StopOnError,
     };
 }
 

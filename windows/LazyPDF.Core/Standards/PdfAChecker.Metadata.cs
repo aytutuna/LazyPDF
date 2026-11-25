@@ -100,7 +100,7 @@ internal sealed partial class PdfAChecker
             if (xmp.Get(PdfAXmp.Id, "rev")?.Trim() != "2020") Add(clause, PdfAText.Metadata, PdfAText.NoRevision);
             return;
         }
-        string[] accepted = level.NeedsUnicode() ? ["U", "A"] : IsPart1 ? ["B", "A"] : ["B", "U", "A"];
+        string[] accepted = level.NeedsTags() ? ["A"] : level.NeedsUnicode() ? ["U", "A"] : IsPart1 ? ["B", "A"] : ["B", "U", "A"];
         if (conformance is null || !accepted.Contains(conformance)) Add(clause, PdfAText.Metadata, PdfAText.WrongConformance(conformance, level.Conformance()!));
     }
 

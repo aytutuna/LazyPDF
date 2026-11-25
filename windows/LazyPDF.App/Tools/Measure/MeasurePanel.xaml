@@ -20,6 +20,7 @@
                 </UniformGrid>
             </Border>
 
+            <TextBlock x:Name="ScaleHeading" Style="{StaticResource BodyStrongText}" Margin="0,0,0,8" />
             <TextBlock Text="{loc:T On the page}" Style="{StaticResource FieldLabelText}" />
             <Grid Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
@@ -45,14 +46,40 @@
                 <TextBlock Text="{loc:T Enter a scale above zero.}" Style="{StaticResource ReasonText}" />
             </DockPanel>
 
-            <CheckBox x:Name="SnapToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Snap to text}" IsChecked="True"
-                      AutomationProperties.Name="{loc:T Snap to text}" Click="Snap_Click" />
+            <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Use for all pages}" AutomationProperties.Name="{loc:T Use for all pages}"
+                    HorizontalAlignment="Left" Margin="0,0,0,8" Click="UseForAll_Click" />
+            <Button x:Name="CalibrateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE7B8;" Content="{loc:T Calibrate}"
+                    AutomationProperties.Name="{loc:T Calibrate}" HorizontalAlignment="Left" Margin="0,0,0,8" Click="Calibrate_Click" />
+            <StackPanel x:Name="CalibrateRow" Margin="0,0,0,8" Visibility="Collapsed">
+                <TextBlock x:Name="CalibrateDrawn" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                <TextBlock Text="{loc:T Real length}" Style="{StaticResource FieldLabelText}" />
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="96" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="CalibrateValue" AutomationProperties.Name="{loc:T Real length}" KeyDown="CalibrateValue_KeyDown" />
+                    <ComboBox x:Name="CalibrateUnit" Grid.Column="2" AutomationProperties.Name="{loc:T Real unit}" />
+                </Grid>
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Set scale}" AutomationProperties.Name="{loc:T Set scale}" Click="SetScale_Click" />
+                    <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" Click="CancelCalibrate_Click" />
+                </StackPanel>
+                <DockPanel x:Name="CalibrateProblem" Margin="0,8,0,0" Visibility="Collapsed">
+                    <TextBlock Text="&#xE7BA;" Style="{StaticResource ReasonGlyph}" DockPanel.Dock="Left" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+                    <TextBlock Text="{loc:T Type a length above zero.}" Style="{StaticResource ReasonText}" />
+                </DockPanel>
+            </StackPanel>
+
+            <CheckBox x:Name="SnapToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Snap to text and lines}" IsChecked="True"
+                      AutomationProperties.Name="{loc:T Snap to text and lines}" Click="Snap_Click" />
             <DockPanel Margin="0,4,0,12">
                 <TextBlock Text="&#xE946;" Style="{StaticResource ReasonGlyph}" DockPanel.Dock="Left" />
                 <TextBlock x:Name="Hint" Style="{StaticResource ReasonText}" />
             </DockPanel>
 
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                         <Button x:Name="StartOverButton" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Start over}" ToolTip="{loc:T Start over (Esc)}"
@@ -64,6 +91,9 @@
                                AutomationProperties.Name="{loc:T Current measurement}" />
                 </DockPanel>
             </Border>
+
+            <TextBlock Text="{loc:T Angle}" Style="{StaticResource FieldLabelText}" />
+            <TextBlock x:Name="AngleReadout" Style="{StaticResource ReadoutText}" Margin="0,0,0,12" />
 
             <TextBlock Text="{loc:T Waiting to be added}" Style="{StaticResource FieldLabelText}" />
             <ListBox x:Name="Results" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Measurements}"

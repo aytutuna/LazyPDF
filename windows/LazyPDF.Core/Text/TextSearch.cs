@@ -10,7 +10,20 @@ namespace LazyPDF.Core;
 public sealed record TextSearchOptions(bool MatchCase = false, bool WholeWord = false, bool Regex = false, bool FoldDiacritics = false);
 
 /// <summary>A hit: the page, its characters and the boxes to paint, one for each line it crosses.</summary>
-public sealed record SearchMatch(int Page, TextRange Range, string Text, IReadOnlyList<TextQuad> Quads);
+public sealed record SearchMatch(int Page, TextRange Range, string Text, IReadOnlyList<TextQuad> Quads)
+{
+    /// <summary>Where the hit is in the text that was searched, for a replacement that has to cut a character's own text.</summary>
+    internal HitCut? Source { get; init; }
+}
+
+/// <summary>A hit in the searched text: which text (0, or 1 with line-end hyphens dropped), where it starts, and the offsets it cuts in the text of its first and last character. When the hit ends on the space the search adds at a line break, End is 0; OnlyBreak is set when the hit is nothing but that space.</summary>
+internal readonly record struct HitCut(int Order, int Index, int Start, int End, bool OnlyBreak);
+
+/// <summary>Collects the pages where a regular expression ran out of time; hits found before the limit are still given.</summary>
+public sealed class SearchTimeouts
+{
+    public List<int> Pages { get; } = [];
+}
 
 public static class TextSearch
 {
@@ -20,12 +33,12 @@ public static class TextSearch
     /// Finds a query on a page. White space in the query matches any run of white space and line
     /// breaks; a hyphen at a line end can be part of the match or not (<c>in-</c> and <c>formation</c>
     /// match "information", <c>well-</c> and <c>known</c> match "well-known"). A regular expression
-    /// that takes more than two seconds on a page gives no hits for it. Throws <see cref="ArgumentException"/> for a bad pattern.
+    /// that takes more than two seconds on a page stops there and the page is added to <paramref name="timeouts"/>. Throws <see cref="ArgumentException"/> for a bad pattern.
     /// </summary>
-    public static IReadOnlyList<SearchMatch> Find(TextPage page, string query, TextSearchOptions? options = null, CancellationToken cancel = default)
+    public static IReadOnlyList<SearchMatch> Find(TextPage page, string query, TextSearchOptions? options = null, CancellationToken cancel = default, SearchTimeouts? timeouts = null)
     {
         options ??= new TextSearchOptions();
-        return Matcher.Create(query, options) is { } matcher ? matcher.Find(page, cancel) : [];
+        return Matcher.Create(query, options) is { } matcher ? matcher.Find(page, cancel, timeouts) : [];
     }
 
     /// <summary>
@@ -34,22 +47,28 @@ public static class TextSearch
     /// while the rest is searched. Stops with <see cref="OperationCanceledException"/>.
     /// </summary>
     public static IEnumerable<SearchMatch> Find(TextCache cache, string query, TextSearchOptions? options = null,
-        int first = 0, int last = int.MaxValue, CancellationToken cancel = default)
+        int first = 0, int last = int.MaxValue, CancellationToken cancel = default, SearchTimeouts? timeouts = null)
     {
         options ??= new TextSearchOptions();
         var matcher = Matcher.Create(query, options);
-        return matcher is null ? [] : Pages(cache, matcher, first, last, cancel);
+        return matcher is null ? [] : Pages(cache, matcher, first, last, cancel, timeouts);
     }
 
-    private static IEnumerable<SearchMatch> Pages(TextCache cache, Matcher matcher, int first, int last, CancellationToken cancel)
+    /// <summary>Every hit on a page, several in one character included (hits in a span's replacement text), for a replacement that cuts them out of that text.</summary>
+    internal static IReadOnlyList<SearchMatch> FindAll(TextPage page, string query, TextSearchOptions options, CancellationToken cancel) =>
+        Matcher.Create(query, options) is { } matcher ? matcher.Find(page, cancel, null, true) : [];
+
+    private static IEnumerable<SearchMatch> Pages(TextCache cache, Matcher matcher, int first, int last, CancellationToken cancel, SearchTimeouts? timeouts)
     {
         int end = Math.Min(last, cache.PageCount - 1);
         for (int p = Math.Max(first, 0); p <= end; p++)
         {
             cancel.ThrowIfCancellationRequested();
-            foreach (var match in matcher.Find(cache.Get(p), cancel)) yield return match;
+            foreach (var match in matcher.Find(cache.Get(p), cancel, timeouts)) yield return match;
         }
     }
+
+    private readonly record struct Hit(TextRange Range, SearchText Searched, int Order, int Index, int Length);
 
     private sealed class Matcher
     {
@@ -78,27 +97,38 @@ public static class TextSearch
             return plain.Length == 0 ? null : new Matcher(options, plain, null);
         }
 
-        public IReadOnlyList<SearchMatch> Find(TextPage page, CancellationToken cancel)
+        public IReadOnlyList<SearchMatch> Find(TextPage page, CancellationToken cancel, SearchTimeouts? timeouts, bool all = false)
         {
-            var found = new List<TextRange>();
+            var found = new List<Hit>();
             var text = SearchText.Build(page, _options, false);
-            Collect(text, found, cancel);
-            if (text.HasHyphenBreak) Collect(SearchText.Build(page, _options, true), found, cancel);
-            found.Sort((a, b) => a.Start != b.Start ? a.Start.CompareTo(b.Start) : b.End.CompareTo(a.End));
+            bool timedOut = !Collect(text, 0, found, cancel);
+            if (text.HasHyphenBreak) timedOut |= !Collect(SearchText.Build(page, _options, true), 1, found, cancel);
+            if (timedOut) timeouts?.Pages.Add(page.PageIndex);
             var result = new List<SearchMatch>();
             int end = -1;
-            foreach (var range in found)
+            var ordered = all
+                ? found.OrderBy(h => h.Range.Start).ThenBy(h => h.Searched.StartOf(h.Index)).ThenByDescending(h => h.Range.End).ThenBy(h => h.Order).ThenBy(h => h.Index)
+                : found.OrderBy(h => h.Range.Start).ThenByDescending(h => h.Range.End).ThenBy(h => h.Order).ThenBy(h => h.Index);
+            // The search with line-end hyphens dropped finds a copy of every other hit, which would be replaced twice.
+            var seen = all ? found.Where(h => h.Order == 0).Select(Key).ToHashSet() : [];
+            foreach (var hit in ordered)
             {
-                if (range.Start < end) continue;
+                var range = hit.Range;
+                if (all && hit.Order == 1 && seen.Contains(Key(hit))) continue;
+                if (!all && range.Start < end) continue;
                 end = range.End;
-                result.Add(new SearchMatch(page.PageIndex, range, page.GetText(range, true), page.Quads(range)));
+                int tip = hit.Index + hit.Length - 1, tipEnd = hit.Searched.EndOf(tip);
+                var cut = new HitCut(hit.Order, hit.Index, hit.Searched.StartOf(hit.Index), tipEnd, tipEnd == 0 && hit.Length == 1);
+                result.Add(new SearchMatch(page.PageIndex, range, page.GetText(range, true), page.Quads(range)) { Source = cut });
             }
             return result;
         }
 
-        private void Collect(SearchText text, List<TextRange> found, CancellationToken cancel)
+        private static (TextRange, int, int) Key(Hit h) => (h.Range, h.Searched.StartOf(h.Index), h.Searched.EndOf(h.Index + h.Length - 1));
+
+        private bool Collect(SearchText text, int order, List<Hit> found, CancellationToken cancel)
         {
-            if (text.Text.Length == 0) return;
+            if (text.Text.Length == 0) return true;
             if (_regex is null)
             {
                 for (int from = 0; from <= text.Text.Length - _query.Length;)
@@ -111,9 +141,9 @@ public static class TextSearch
                         from = i + 1;
                         continue;
                     }
-                    found.Add(new TextRange(text.Map[i], text.Map[from - 1] + 1));
+                    found.Add(new Hit(new TextRange(text.Map[i], text.Map[from - 1] + 1), text, order, i, from - i));
                 }
-                return;
+                return true;
             }
             try
             {
@@ -121,12 +151,14 @@ public static class TextSearch
                 {
                     cancel.ThrowIfCancellationRequested();
                     if (m.Length == 0) continue;
-                    found.Add(new TextRange(text.Map[m.Index], text.Map[m.Index + m.Length - 1] + 1));
+                    found.Add(new Hit(new TextRange(text.Map[m.Index], text.Map[m.Index + m.Length - 1] + 1), text, order, m.Index, m.Length));
                 }
             }
             catch (RegexMatchTimeoutException)
             {
+                return false;
             }
+            return true;
         }
 
         // The edge of the query decides: a query that starts with a punctuation mark has no word edge there.

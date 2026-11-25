@@ -65,7 +65,13 @@ internal static class RedactionMetadata
                 continue;
             }
             bool changed = Strip(xml);
-            bool holds = false;
+            // Names, instructions and namespace addresses hold words too, and are not text that can be replaced: the packet goes.
+            bool holds = Markup(xml).Any(Holds);
+            if (holds && change)
+            {
+                Emptied(packet, findings);
+                continue;
+            }
             foreach (var (value, replace) in Carriers(xml))
             {
                 if (!Holds(value)) continue;
@@ -254,6 +260,35 @@ internal static class RedactionMetadata
                 runs[0].Value = v;
                 foreach (var rest in runs.Skip(1)) rest.Value = "";
             });
+        }
+    }
+
+    // What an XMP packet says besides the carriers: the names of elements and attributes, the instructions, the declaration and the
+    // addresses of the namespaces.
+    private static IEnumerable<string> Markup(XmlDocument xml)
+    {
+        foreach (var node in Walk(xml))
+        {
+            switch (node)
+            {
+                case XmlProcessingInstruction instruction:
+                    yield return instruction.Target;
+                    yield return instruction.Data;
+                    break;
+                case XmlDeclaration declaration:
+                    yield return declaration.Version;
+                    yield return declaration.Encoding;
+                    yield return declaration.Standalone;
+                    break;
+                case XmlElement element:
+                    yield return element.Name;
+                    foreach (XmlAttribute attribute in element.Attributes)
+                    {
+                        yield return attribute.Name;
+                        if (attribute.Name.StartsWith("xmlns", StringComparison.Ordinal)) yield return attribute.Value;
+                    }
+                    break;
+            }
         }
     }
 

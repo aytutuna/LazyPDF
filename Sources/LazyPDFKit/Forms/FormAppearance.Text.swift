@@ -25,7 +25,7 @@ extension FormAppearance {
             var y = look.height - pad - font.ascent * size
             var placed: [(text: String, x: Double, y: Double)] = []
             for line in lines {
-                placed.append((line, alignedX(look.alignment, look.width, pad, font.width(line, size)), y))
+                placed.append((line, alignedX(aligned(look, font, line), look.width, pad, font.width(line, size)), y))
                 y -= font.lineHeight(size)
             }
             showLines(c, look, font, size, placed)
@@ -36,7 +36,7 @@ extension FormAppearance {
             if look.fontSize <= 0 && width > availableWidth { size = max(Self.minAutoSize, size * availableWidth / width) }
             width = font.width(text, size)
             let baseline = (look.height - font.lineHeight(size)) / 2 - font.descent * size
-            showLines(c, look, font, size, [(text, alignedX(look.alignment, look.width, pad, width), baseline)])
+            showLines(c, look, font, size, [(text, alignedX(aligned(look, font, text), look.width, pad, width), baseline)])
         }
         return finish(c, look)
     }
@@ -59,6 +59,11 @@ extension FormAppearance {
             }
         }
         return String(result)
+    }
+
+    // A field with no /Q starts text on the right when the text is right to left.
+    private func aligned(_ look: Look, _ font: FormFont, _ line: String) -> Int {
+        look.alignment == 0 && font.isRightToLeft(line) ? 2 : look.alignment
     }
 
     private func alignedX(_ alignment: Int, _ width: Double, _ pad: Double, _ textWidth: Double) -> Double {

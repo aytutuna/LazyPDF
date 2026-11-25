@@ -4,6 +4,8 @@
 using System.Security.Cryptography.X509Certificates;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Forms;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
 namespace LazyPDF.App;
@@ -11,15 +13,21 @@ namespace LazyPDF.App;
 /// <summary>What the password overlay shows: which file, whether it wants a certificate, and why the last try failed.</summary>
 public sealed record OpenRequest(string Name, bool NeedsCertificate, int Attempts, string? Problem, IReadOnlyList<CertificateChoice> Certificates);
 
+/// <summary>A file being opened that has taken long enough to show; a null fraction means the bytes are read and the engine is parsing.</summary>
+public sealed record OpeningState(string Name, double? Fraction);
+
 public sealed partial class AppViewModel
 {
     /// <param name="recovery">The recovery entry the bytes came from; it stays until a tab holds them.</param>
     /// <param name="replacing">The tab this open takes the place of: a reload.</param>
-    private sealed class PendingOpen(OpenSource source, Guid? recovery = null, DocumentTab? replacing = null)
+    /// <param name="quiet">A reload nobody asked for: it shows no problem and no password question, and is dropped if the tab has something to lose by then.</param>
+    private sealed class PendingOpen(OpenSource source, Guid? recovery = null, DocumentTab? replacing = null, bool quiet = false)
     {
         public OpenSource Source { get; } = source;
         public Guid? Recovery { get; } = recovery;
         public DocumentTab? Replacing { get; } = replacing;
+        public bool Quiet { get; } = quiet;
+        public int Revision { get; init; }
         public bool NeedsCertificate { get; set; }
         public IReadOnlyList<CertificateChoice> Certificates { get; set; } = [];
         public int Attempts { get; set; }
@@ -29,8 +37,12 @@ public sealed partial class AppViewModel
     }
 
     private readonly List<PendingOpen> _pending = [];
-    private readonly HashSet<string> _opening = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<CancellationTokenSource> _reads = [];
+    private readonly List<PendingOpen> _parsing = [];
     private readonly Dictionary<DocumentTab, DiskStamp?> _warnedAboutDisk = [];
+    private readonly HashSet<DocumentTab> _reloading = [];
+    private readonly List<string> _closedFiles = [];
+    private readonly List<DocumentTab> _closeQueue = [];
     private bool _exiting;
 
     /// <summary>The file that is waiting for a password or a certificate, if any.</summary>
@@ -38,6 +50,9 @@ public sealed partial class AppViewModel
 
     /// <summary>The document that has unsaved changes and is being closed; the window asks what to do with them.</summary>
     public DocumentTab? CloseQuestion { get; private set; }
+
+    /// <summary>The files of the tabs closed lately, the last one closed at the end.</summary>
+    public IReadOnlyList<string> ClosedFiles => _closedFiles;
 
     public bool CanUndo => ActiveDocument?.Session.CanUndo == true;
 
@@ -52,29 +67,95 @@ public sealed partial class AppViewModel
         foreach (string path in paths) await OpenAsync(path);
     }
 
-    public Task OpenNewAsync(byte[] pdf, string title) => OpenNewAsync(pdf, title, null, null);
+    /// <summary>Opens the file closed last that is still there; when none is, tries the first one anyway so the problem says why.</summary>
+    public async Task ReopenClosedAsync()
+    {
+        while (_closedFiles.Count > 0)
+        {
+            string path = _closedFiles[^1];
+            _closedFiles.RemoveAt(_closedFiles.Count - 1);
+            if (File.Exists(path) || _closedFiles.Count == 0)
+            {
+                await OpenAsync(path);
+                return;
+            }
+        }
+    }
 
-    public Task OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) =>
+    public Task<bool> OpenNewAsync(byte[] pdf, string title) => OpenNewAsync(pdf, title, null, null);
+
+    public Task<bool> OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) =>
         OpenAsync(new PendingOpen(new OpenSource(pdf, null, title, Made: true)), password, certificate);
+
+    public OpeningState? Opening { get; private set; }
+
+    /// <summary>Stops every file that is still being read or parsed; nothing happens when none is.</summary>
+    public void CancelOpening()
+    {
+        foreach (var read in _reads.ToList()) read.Cancel();
+        if (_parsing.Count == 0) return;
+        foreach (var pending in _parsing) pending.Cancelled = true;
+        SetStatus(Loc.T("Canceled."));
+    }
 
     public async Task OpenAsync(string path)
     {
         string name = System.IO.Path.GetFileName(path);
-        if (TabOf(path) is { } already)
+        // Registered before the wait for the path, so Cancel also reaches an open that is only waiting behind another.
+        using var reading = new CancellationTokenSource();
+        _reads.Add(reading);
+        IDisposable? pathClaim = null;
+        OpeningState? shown = null;
+        double? fraction = 0;
+        bool finished = false;
+        var progress = new Progress<double>(f =>
         {
-            ActiveTab = already;
-            return;
+            fraction = f;
+            if (shown is null || finished) return;
+            shown = Opening = new OpeningState(name, f);
+            NotifyAll();
+        });
+        async Task ShowLater()
+        {
+            await Task.Delay(300);
+            if (finished) return;
+            shown = Opening = new OpeningState(name, fraction);
+            NotifyAll();
         }
-        if (_pending.Any(p => SamePath(p.Source.Path, path)) || !_opening.Add(path)) return;
+        PendingOpen? pending = null;
+        IDisposable? fileClaim = null;
         try
         {
+            while (true)
+            {
+                if (_registry.FindOpen(path, null) is { } open)
+                {
+                    open.Owner.Reveal(open.Tab, path, null);
+                    return;
+                }
+                if (_registry.ClaimPath(path, out pathClaim) is not { } winner) break;
+                // The open that has the file ends with a tab, a password question or nothing; look again then.
+                await winner;
+                if (reading.IsCancellationRequested)
+                {
+                    SetStatus(Loc.T("Canceled."));
+                    return;
+                }
+            }
+            _ = ShowLater();
             OpenSource source;
             try
             {
-                source = await Task.Run(() => _opener.Read(path));
+                source = await Task.Run(() => _opener.ReadAsync(path, progress, reading.Token));
             }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException or PdfReadException)
+            catch (OperationCanceledException)
             {
+                SetStatus(Loc.T("Canceled."));
+                return;
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Trace.TraceError(e.ToString());
                 ShowProblem(Problems.Open(e, name));
                 if (e is FileNotFoundException or DirectoryNotFoundException)
                 {
@@ -84,15 +165,94 @@ public sealed partial class AppViewModel
                 }
                 return;
             }
-            await OpenAsync(new PendingOpen(source), password: null, certificate: null);
+            // The identity is only known now; claim it in the same stretch as the look, so two spellings of one file cannot both pass.
+            while (source.FileId is { } id)
+            {
+                if (_registry.FindOpen(path, id) is { } open)
+                {
+                    if (open.Tab is { Path: { } old } same && !File.Exists(old)) open.Owner.FollowMove(same, old, path, source);
+                    else open.Owner.Reveal(open.Tab, path, id);
+                    return;
+                }
+                if (_registry.ClaimFile(id, out fileClaim) is not { } waited) break;
+                await waited;
+                if (reading.IsCancellationRequested) break;
+            }
+            if (reading.IsCancellationRequested)
+            {
+                SetStatus(Loc.T("Canceled."));
+                return;
+            }
+            fraction = null;
+            if (shown is not null)
+            {
+                shown = Opening = new OpeningState(name, null);
+                NotifyAll();
+            }
+            pending = new PendingOpen(source);
+            _parsing.Add(pending);
+            await OpenAsync(pending, password: null, certificate: null);
         }
         finally
         {
-            _opening.Remove(path);
+            finished = true;
+            fileClaim?.Dispose();
+            pathClaim?.Dispose();
+            _reads.Remove(reading);
+            if (pending is not null) _parsing.Remove(pending);
+            if (shown is not null && ReferenceEquals(Opening, shown)) Opening = null;
+            // A window waiting on this open looks again, whether or not a progress bar was shown.
+            NotifyAll();
         }
     }
 
-    private DocumentTab? TabOf(string path) => Documents.FirstOrDefault(d => SamePath(d.Path, path));
+    /// <summary>True while a file is being read or parsed, or waits for its password or certificate.</summary>
+    internal bool IsOpening => _reads.Count > 0 || _parsing.Count > 0 || _pending.Count > 0;
+
+    // A file read again under another name where the tab's own file is gone: the tab follows it.
+    private void FollowMove(DocumentTab tab, string old, string path, OpenSource source)
+    {
+        tab.MoveTo(path, source.Stamp, source.Hash);
+        _recentFiles.Remove(old);
+        _recentFiles.Add(path);
+        JumpLists.Note(path);
+        Recent = BuildRecent();
+        Reveal(tab);
+        ShowNotice(Loc.T("File moved"), Loc.T("{0} was moved. This tab now follows it.", tab.Title));
+    }
+
+    /// <summary>The tab this view model holds for the file, or a pending open; null when it holds neither.</summary>
+    internal OpenHit? Holds(string? path, string? fileId)
+    {
+        if (Documents.FirstOrDefault(d => SamePath(d.Path, path) || fileId is not null && d.FileId == fileId) is { } tab) return new(this, tab);
+        return PendingFor(path, fileId) is null ? null : new(this, null);
+    }
+
+    private PendingOpen? PendingFor(string? path, string? fileId) =>
+        _pending.FirstOrDefault(p => SamePath(p.Source.Path, path) || fileId is not null && p.Source.FileId == fileId);
+
+    /// <summary>For a window that has closed: its files are no longer found here, and nothing is brought forward in it.</summary>
+    internal void LeaveRegistry()
+    {
+        _registry.Remove(this);
+        BringForward = null;
+    }
+
+    /// <summary>Brings the tab forward; without one, the question of the file that waits for its password, which has to be the one shown.</summary>
+    internal void Reveal(DocumentTab? tab, string? path = null, string? fileId = null)
+    {
+        if (tab is not null) ActiveTab = tab;
+        else
+        {
+            if (PendingFor(path, fileId) is { } waiting && _pending.IndexOf(waiting) > 0)
+            {
+                _pending.Remove(waiting);
+                _pending.Insert(0, waiting);
+            }
+            NotifyAll();
+        }
+        BringForward?.Invoke(tab);
+    }
 
     private static bool SamePath(string? a, string? b) => a is not null && b is not null && string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
 
@@ -115,13 +275,23 @@ public sealed partial class AppViewModel
         NotifyAll();
     }
 
-    private async Task OpenAsync(PendingOpen pending, string? password, X509Certificate2? certificate)
+    // True when a tab was opened, or the file waits for its password or certificate; false when it failed or was given up on.
+    private async Task<bool> OpenAsync(PendingOpen pending, string? password, X509Certificate2? certificate)
     {
-        if (pending.Submitting) return;
+        if (pending.Submitting) return false;
         pending.Submitting = true;
         try
         {
-            await OpenCoreAsync(pending, password, certificate);
+            return await OpenCoreAsync(pending, password, certificate);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            // OpenCoreAsync has already said what it knows; this is what it did not expect.
+            _pending.Remove(pending);
+            System.Diagnostics.Trace.TraceError(e.ToString());
+            if (!pending.Quiet) ShowProblem(Problems.Open(e, pending.Source.Title));
+            NotifyAll();
+            return false;
         }
         finally
         {
@@ -129,7 +299,7 @@ public sealed partial class AppViewModel
         }
     }
 
-    private async Task OpenCoreAsync(PendingOpen pending, string? password, X509Certificate2? certificate)
+    private async Task<bool> OpenCoreAsync(PendingOpen pending, string? password, X509Certificate2? certificate)
     {
         var source = pending.Source;
         PdfEditSession session;
@@ -139,7 +309,7 @@ public sealed partial class AppViewModel
         }
         catch (PdfReadException e) when (e.Problem is PdfReadProblem.PasswordRequired or PdfReadProblem.CertificateRequired)
         {
-            if (pending.Cancelled) return;
+            if (pending.Cancelled || pending.Quiet) return false;
             bool asked = _pending.Contains(pending);
             if (!asked) _pending.Add(pending);
             pending.NeedsCertificate = e.Problem == PdfReadProblem.CertificateRequired;
@@ -147,33 +317,52 @@ public sealed partial class AppViewModel
             pending.Problem = asked ? (pending.NeedsCertificate ? Loc.T("That certificate does not open this file.") : Loc.T("That password is not right.")) : null;
             if (asked) pending.Attempts++;
             NotifyAll();
-            return;
+            return true;
         }
         catch (PdfReadException e)
         {
             _pending.Remove(pending);
-            ShowProblem(Problems.Open(e, source.Title));
-            return;
+            if (!pending.Quiet) ShowProblem(Problems.Open(e, source.Title));
+            return false;
         }
 
-        if (pending.Cancelled) return;
+        if (pending.Cancelled) return false;
         _pending.Remove(pending);
         if (session.Document.Pages.Count == 0)
         {
-            ShowProblem(new Problem(Loc.T("Nothing to show"), Loc.T("{0} has no pages.", source.Title)));
-            return;
+            if (!pending.Quiet) ShowProblem(new Problem(Loc.T("Nothing to show"), Loc.T("{0} has no pages.", source.Title)));
+            return false;
         }
         string? path = source.Path;
         var tab = await Task.Run(() => new DocumentTab(session, _renderers(), path, source.Title, password, _recovery,
-                                                        unsaved: source.Made || pending.Recovery is not null, source.Stamp, certificate));
+                                                        unsaved: source.Made || pending.Recovery is not null, source.Stamp, certificate, source.Hash));
+        if (pending.Cancelled)
+        {
+            tab.Dispose();
+            return false;
+        }
+        if (pending.Recovery is null) tab.FileId = source.FileId;
+        int at = -1;
+        bool wasActive = false;
+        if (pending.Replacing is { } old)
+        {
+            at = Strip.IndexOf(old);
+            // The tab was closed, or took on work, while the file was read and parsed.
+            if (at < 0 || pending.Quiet && !NothingToLose(old, pending.Revision))
+            {
+                tab.Dispose();
+                return false;
+            }
+            wasActive = ReferenceEquals(_activeTab, old);
+        }
         tab.Changed += Tab_Changed;
-        int at = pending.Replacing is { } old ? Strip.IndexOf(old) : -1;
         if (at >= 0) Replace(at, tab);
         else Strip.Add(tab);
         if (pending.Recovery is { } entry) await Task.Run(() => _recovery.Delete(entry));
         if (path is not null && pending.Recovery is null && pending.Replacing is null)
         {
             _recentFiles.Add(path);
+            JumpLists.Note(path);
             Recent = BuildRecent();
         }
         if (pending.Replacing is { } was)
@@ -181,10 +370,29 @@ public sealed partial class AppViewModel
             tab.PageIndex = Math.Min(was.PageIndex, tab.PageCount - 1);
             tab.Zoom = was.Zoom;
             tab.Fit = was.Fit;
+            tab.Rotation = was.Rotation;
         }
-        ActiveTab = tab;
+        else if (path is not null && pending.Recovery is null
+                 && _recentFiles.Load().FirstOrDefault(f => string.Equals(f.Path, Path.GetFullPath(path), StringComparison.OrdinalIgnoreCase)) is { } seen)
+        {
+            tab.PageIndex = Math.Clamp(seen.Page, 0, tab.PageCount - 1);
+            tab.Zoom = seen.Zoom;
+            tab.Fit = Enum.IsDefined((FitMode)seen.Fit) ? (FitMode)seen.Fit : FitMode.Width;
+        }
+        tab.ReadOnly = source.ReadOnly;
+        if (pending.Replacing is null || wasActive) ActiveTab = tab;
         if (source.Note is not null) ShowNotice(Loc.T("Opened with changes"), source.Note);
+        else if (tab.ReadOnly) ShowNotice(Loc.T("File is read-only"), Loc.T("{0} is read-only. You can work on it, but save your changes with Save as.", tab.Title));
         else if (!tab.CanDraw) ShowNotice(Loc.T("Pages cannot be shown"), Loc.T("{0} opens for editing, but Windows cannot draw its pages.", tab.Title));
+        else if (pending.Replacing is null && FormEdits.OpenNotice(tab.Document, tab.Title) is var (formTitle, formText, xfa))
+            ShowNotice(formTitle, formText, xfa && path is not null ? new NoticeAction(Loc.T("Open in another app"), () => OpenElsewhere(path)) : null);
+        return true;
+    }
+
+    private void OpenElsewhere(string path)
+    {
+        if (!OpenWithPicker.Show(path, DialogOwner))
+            ShowProblem(Problems.Open(new FileNotFoundException(), System.IO.Path.GetFileName(path)));
     }
 
     private OpenRequest Describe(PendingOpen pending) => new(
@@ -215,17 +423,27 @@ public sealed partial class AppViewModel
 
     private void Tab_Changed(object? sender, EventArgs e) => NotifyAll();
 
-    /// <summary>True when <paramref name="tab"/> was made from pictures or text, or has no file yet, so saving needs a name.</summary>
-    public static bool NeedsName(DocumentTab tab) => tab.Path is null;
+    /// <summary>True when <paramref name="tab"/> was made from pictures or text, has no file yet, or was read from a read-only file, so saving needs a name.</summary>
+    public static bool NeedsName(DocumentTab tab) => tab.Path is null || tab.ReadOnly;
 
     /// <summary>Saves over the file the tab was read from. Call <see cref="NeedsName"/> first; false also when the save failed and the info bar says why.</summary>
-    public bool Save(DocumentTab tab)
+    public bool Save(DocumentTab tab, bool closeAfter = false)
     {
         if (tab.Path is null) return false;
         if (tab.ChangedOnDisk && File.Exists(tab.Path))
         {
+            // So a disk check still running does not replace this notice with its own.
+            _warnedAboutDisk[tab] = tab.OnDisk;
             ShowNotice(Loc.T("File changed"), Loc.T("{0} was changed by another program. Saving now replaces that version with yours.", tab.Title),
-                new NoticeAction(Loc.T("Save anyway"), () => Write(tab, tab.Save)));
+                new NoticeAction(Loc.T("Save anyway"), () =>
+                {
+                    if (!Write(tab, tab.Save) || !closeAfter) return;
+                    // The close question already named the marks; they count again if the window leaves the tab open.
+                    int marks = tab.PendingMarks;
+                    tab.PendingMarks = 0;
+                    CloseRequested?.Invoke(this, tab);
+                    if (Strip.Contains(tab)) tab.PendingMarks = marks;
+                }));
             return false;
         }
         return Write(tab, tab.Save);
@@ -233,29 +451,76 @@ public sealed partial class AppViewModel
 
     public bool SaveAs(DocumentTab tab, string path) => !OpenElsewhere(tab, path) && Write(tab, () => tab.SaveAs(path));
 
-    public bool SaveCompact(DocumentTab tab, string path) => !OpenElsewhere(tab, path) && Write(tab, () => tab.SaveCompact(path));
-
-    // Two tabs on one file would each save over the other.
-    private bool OpenElsewhere(DocumentTab tab, string path)
+    public bool SaveCopy(DocumentTab tab, string path)
     {
-        if (TabOf(path) is not { } other || ReferenceEquals(other, tab)) return false;
-        ShowProblem(new Problem(Loc.T("File is open"), Loc.T("{0} is open in another tab. Close that tab first, or pick another name.", other.Title)));
-        return true;
-    }
-
-    private bool Write(DocumentTab tab, Action save)
-    {
+        if (SamePath(tab.Path, path))
+        {
+            ShowProblem(new Problem(Loc.T("File is open"), Loc.T("{0} is the file this copy would replace. Pick another name.", tab.Title)));
+            return false;
+        }
+        if (Replaced(tab) || OpenElsewhere(tab, path)) return false;
         try
         {
-            save();
+            tab.SaveCopy(path);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
         {
             ShowProblem(Problems.Save(e, tab.Title));
             return false;
         }
+        SetStatus(Loc.T("Saved a copy of {0}.", tab.Title));
+        return true;
+    }
+
+    public bool SaveCompact(DocumentTab tab, string path)
+    {
+        if (OpenElsewhere(tab, path) || !Write(tab, () => tab.SaveCompact(path))) return false;
+        ShowNotice(Loc.T("Saved compact"), Loc.T("{0} was saved without its history, so the earlier steps can no longer be undone.", tab.Title));
+        return true;
+    }
+
+    // Two tabs on one file would each save over the other.
+    private bool OpenElsewhere(DocumentTab tab, string path)
+    {
+        if (_registry.FindOpen(path, null) is not { } hit || ReferenceEquals(hit.Tab, tab)) return false;
+        ShowProblem(new Problem(Loc.T("File is open"), Loc.T("{0} is open in another tab. Close that tab first, or pick another name.", hit.Tab?.Title ?? System.IO.Path.GetFileName(path))));
+        return true;
+    }
+
+    /// <summary>Why the last write failed, null after one that worked.</summary>
+    public Exception? LastSaveError { get; private set; }
+
+    // A reload that finished while a dialog was open has put a new tab in place of this one; its file is not the one the user saw.
+    private bool Replaced(DocumentTab tab)
+    {
+        if (Strip.Contains(tab)) return false;
+        ShowNotice(Loc.T("File reloaded"), Loc.T("{0} was reloaded from disk while you were choosing a name, so nothing was saved. Try again.", tab.Title));
+        return true;
+    }
+
+    private bool Write(DocumentTab tab, Action save)
+    {
+        if (Replaced(tab)) return false;
+        try
+        {
+            save();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
+        {
+            LastSaveError = e;
+            ShowProblem(Problems.Save(e, tab.Title));
+            return false;
+        }
+        LastSaveError = null;
         _warnedAboutDisk.Remove(tab);
-        if (tab.Path is { } path) _recentFiles.Add(path);
+        if (tab.Path is { } path)
+        {
+            // A save puts a new file in place, so the index read at open no longer matches.
+            tab.FileId = DocumentOpener.Identity(path);
+            _recentFiles.Add(path);
+            JumpLists.Note(path);
+            _recentFiles.RememberView(path, tab.PageIndex, tab.Zoom, (int)tab.Fit);
+        }
         Recent = BuildRecent();
         _message = null;
         SetStatus(Loc.T("Saved {0}.", tab.Title));
@@ -264,19 +529,28 @@ public sealed partial class AppViewModel
 
     public void Undo()
     {
-        if (ActiveDocument is { } tab && tab.Undo()) NotifyAll();
+        if (ActiveDocument is { } tab && tab.Undo())
+        {
+            if (_message is { IsError: false }) _message = null;
+            NotifyAll();
+        }
     }
 
     public void Redo()
     {
-        if (ActiveDocument is { } tab && tab.Redo()) NotifyAll();
+        if (ActiveDocument is { } tab && tab.Redo())
+        {
+            if (_message is { IsError: false }) _message = null;
+            NotifyAll();
+        }
     }
 
     /// <summary>Closes the tab if it has nothing unsaved and no redaction marks waiting; otherwise sets <see cref="CloseQuestion"/> and returns false.</summary>
     public bool RequestClose(DocumentTab tab)
     {
         if (WaitForJob()) return false;
-        if (!tab.IsDirty && tab.PendingMarks == 0)
+        DropAction();
+        if (!tab.IsDirty && !tab.HasUnappliedWork)
         {
             Close(tab);
             return true;
@@ -300,15 +574,66 @@ public sealed partial class AppViewModel
         DropAction();
         _warnedAboutDisk.Remove(tab);
         tab.Changed -= Tab_Changed;
+        RememberView(tab);
+        if (tab.Path is { } path) RememberClosed(path);
         tab.Dispose();
         NotifyAll();
         if (_exiting) ContinueExit(raise: true);
+        else if (CloseQuestion is null) ContinueClosing();
+    }
+
+    /// <summary>Adds a file to the ones Ctrl+Shift+T brings back, for tabs that were closed along with their window.</summary>
+    internal void RememberClosed(string path)
+    {
+        _closedFiles.Remove(path);
+        _closedFiles.Add(path);
+        if (_closedFiles.Count > 10) _closedFiles.RemoveAt(0);
+    }
+
+    /// <summary>Closes the tabs that have nothing unsaved at once and asks about the first one that has; each answer carries on with the rest.</summary>
+    public void RequestCloseMany(IEnumerable<DocumentTab> tabs)
+    {
+        if (WaitForJob()) return;
+        DropAction();
+        _closeQueue.Clear();
+        _closeQueue.AddRange(tabs);
+        ContinueClosing();
+    }
+
+    private void ContinueClosing()
+    {
+        // Close() carries on with the queue itself, so a question set inside it ends this loop.
+        while (_closeQueue.Count > 0 && CloseQuestion is null)
+        {
+            var tab = _closeQueue[0];
+            _closeQueue.RemoveAt(0);
+            if (!Strip.Contains(tab)) continue;
+            if (tab.IsDirty || tab.HasUnappliedWork)
+            {
+                ActiveTab = tab;
+                CloseQuestion = tab;
+                NotifyAll();
+                return;
+            }
+            Close(tab);
+        }
+    }
+
+    public bool IsExiting => _exiting;
+
+    public int Unsettled => Documents.Count(d => d.IsDirty || d.HasUnappliedWork);
+
+    /// <summary>Closes every document with changes, marks and measurements included; with an exit under way the last one carries it on.</summary>
+    public void DiscardAll()
+    {
+        foreach (var tab in Documents.Where(d => d.IsDirty || d.HasUnappliedWork).ToList()) Close(tab);
     }
 
     /// <summary>The answer to <see cref="CloseQuestion"/> that keeps the document open.</summary>
     public void CancelClose()
     {
         CloseQuestion = null;
+        _closeQueue.Clear();
         _exiting = false;
         NotifyAll();
     }
@@ -323,10 +648,95 @@ public sealed partial class AppViewModel
         NotifyAll();
     }
 
+    /// <summary>
+    /// True when the tab can leave this window now. It cannot while a job runs, it is being reloaded or replaced, or a
+    /// question about closing it is up; the reason says which.
+    /// </summary>
+    internal bool CanRelease(ITab tab, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string? reason)
+    {
+        reason = null;
+        if (tab is not DocumentTab document || !Strip.Contains(document)) reason = Loc.T("The Home tab stays where it is.");
+        else if (IsBusy) reason = Loc.T("Wait for the job to end, or cancel it, then move the tab.");
+        else if (_reloading.Contains(document) || _pending.Any(p => ReferenceEquals(p.Replacing, document)) || _parsing.Any(p => ReferenceEquals(p.Replacing, document)))
+            reason = Loc.T("{0} is being reloaded. Try again in a moment.", document.Title);
+        else if (ReferenceEquals(CloseQuestion, document) || _closeQueue.Contains(document)) reason = Loc.T("Answer the question about {0} first.", document.Title);
+        else if (Tools.Compare.ComparePanel.WindowOpenFor(document)) reason = Loc.T("Close the comparison first.");
+        return reason is null;
+    }
+
+    /// <summary>
+    /// True when a tab can arrive in this window now. <paramref name="windowFree"/> is the window's own answer: false
+    /// while it is disabled by a dialog, runs an action, shows an overlay or holds typed text in a tool.
+    /// </summary>
+    internal bool CanAdopt(bool windowFree, [System.Diagnostics.CodeAnalysis.NotNullWhen(false)] out string? reason)
+    {
+        bool free = windowFree && !IsBusy && !_exiting && CloseQuestion is null && _closeQueue.Count == 0 && _pending.Count == 0;
+        reason = free ? null : Loc.T("The other window is busy. Try again when it is done.");
+        return free;
+    }
+
+    /// <summary>
+    /// Takes the tab out of the strip without closing it: its session, undo history, renderer and recovery copy stay
+    /// with the tab, which is handed to another window. Returns where it was.
+    /// </summary>
+    internal int Release(DocumentTab tab)
+    {
+        // First, so a window that cannot let go leaves this view model as it was.
+        Released?.Invoke(this, tab);
+        int index = Strip.IndexOf(tab);
+        // Everything but the strip is settled first, so a handler that throws on the removal leaves no half-moved state.
+        tab.Changed -= Tab_Changed;
+        if (ReferenceEquals(_activeTab, tab)) _activeTab = Strip[index + 1 < Strip.Count ? index + 1 : index - 1];
+        if (ReferenceEquals(_lastDocument, tab)) _lastDocument = Documents.LastOrDefault(d => !ReferenceEquals(d, tab));
+        DropAction();
+        if (ReferenceEquals(_messageTab, tab))
+        {
+            _message = null;
+            _messageTab = null;
+        }
+        _warnedAboutDisk.Remove(tab);
+        Strip.RemoveAt(index);
+        RememberView(tab);
+        NotifyAll();
+        return index;
+    }
+
+    /// <summary>A running batch or an open comparison window belongs to the window; closing it would end them.</summary>
+    internal bool HasOwnedWork => Tools.Batch.BatchWindow.IsRunning(this) || Documents.Any(Tools.Compare.ComparePanel.WindowOpenFor);
+
+    /// <summary>Notes which tab is active and what the info bar says, for <see cref="DocumentRegistry.Transfer"/> to put back when a move fails.</summary>
+    internal Action KeepView()
+    {
+        var active = _activeTab;
+        var last = _lastDocument;
+        var message = _message;
+        var messageTab = _messageTab;
+        return () =>
+        {
+            if (Strip.Contains(active)) _activeTab = active;
+            if (last is null || Strip.Contains(last)) _lastDocument = last;
+            _message = message;
+            _messageTab = messageTab;
+            NotifyAll();
+        };
+    }
+
+    /// <summary>Puts a tab released by another window into the strip at <paramref name="index"/> and makes it the active one.</summary>
+    internal void Adopt(DocumentTab tab, int index)
+    {
+        tab.Changed -= Tab_Changed;
+        tab.Changed += Tab_Changed;
+        Strip.Insert(Math.Clamp(index, 1, Strip.Count), tab);
+        _lastDocument = tab;
+        ActiveTab = tab;
+        NotifyAll();
+    }
+
     /// <summary>True when the window can close now; otherwise asks about the first document with unsaved changes and goes on from there.</summary>
     public bool RequestExit()
     {
         if (WaitForJob()) return false;
+        DropAction();
         _exiting = true;
         return !ContinueExit(raise: false);
     }
@@ -339,16 +749,25 @@ public sealed partial class AppViewModel
         return true;
     }
 
+    private void RememberView(DocumentTab tab)
+    {
+        if (tab.Path is { } path && tab.PageCount > 1) _recentFiles.RememberView(path, tab.PageIndex, tab.Zoom, (int)tab.Fit);
+    }
+
     private bool ContinueExit(bool raise)
     {
-        if (Documents.FirstOrDefault(d => d.IsDirty || d.PendingMarks > 0) is { } dirty)
+        if (Documents.FirstOrDefault(d => d.IsDirty || d.HasUnappliedWork) is { } dirty)
         {
             ActiveTab = dirty;
             CloseQuestion = dirty;
             NotifyAll();
             return true;
         }
-        foreach (var tab in Documents.ToList()) tab.Dispose();
+        foreach (var tab in Documents.ToList())
+        {
+            RememberView(tab);
+            tab.Dispose();
+        }
         _exiting = false;
         if (raise) RaiseExit();
         return false;
@@ -358,40 +777,96 @@ public sealed partial class AppViewModel
     /// Looks at the active document's file: when another program changed or removed it, the info bar says so
     /// (once for each state the file is found in). Called when the window comes forward and when a tab is picked.
     /// </summary>
-    public void CheckDisk()
+    public async Task CheckDiskAsync()
     {
-        if (ActiveDocument is not { Path: not null } tab || !tab.ChangedOnDisk) return;
-        var found = tab.OnDisk;
-        if (_warnedAboutDisk.TryGetValue(tab, out var seen) && seen == found) return;
+        if (ActiveDocument is not { Path: { } path } tab) return;
+        var known = tab.Known;
+        _warnedAboutDisk.TryGetValue(tab, out var seen);
+        DiskStamp? found;
+        bool touched;
+        try
+        {
+            (found, touched) = await Task.Run(() =>
+            {
+                DiskStamp? now;
+                try
+                {
+                    File.GetAttributes(path);
+                    now = DiskStamp.Of(path);
+                }
+                catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+                {
+                    now = null;
+                }
+                return (now, now is not null && now != seen && tab.IsChangedFrom(now) && tab.IsOnlyTouched(now));
+            });
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+        // A save made while the file was being looked at changes both.
+        if (tab.Path != path || tab.Known != known) return;
+        if (!ReferenceEquals(ActiveDocument, tab) || !Strip.Contains(tab) || !tab.IsChangedFrom(found)) return;
+        if (touched)
+        {
+            tab.AcceptDiskState(found);
+            return;
+        }
+        // Nothing to lose: take the new version without asking. A tool open may write the file itself and reload.
+        if (found is not null && _reloading.Contains(tab)) return;
+        if (found is not null && found != seen && NothingToLose(tab, tab.Revision)
+            && await TryReloadAsync(tab, quiet: true))
+        {
+            SetStatus(Loc.T("Reloaded {0}.", tab.Title));
+            return;
+        }
+        if (_warnedAboutDisk.TryGetValue(tab, out seen) && seen == found) return;
         _warnedAboutDisk[tab] = found;
-        if (!File.Exists(tab.Path))
+        if (found is null)
         {
             ShowNotice(Loc.T("File is gone"), Loc.T("{0} was moved or deleted. Save it again to keep your work.", tab.Title));
             return;
         }
         string text = tab.IsDirty
             ? Loc.T("{0} was changed by another program. Opening that version drops your unsaved changes.", tab.Title)
+            : tab.HasUnappliedWork
+            ? Loc.T("{0} was changed by another program. Opening that version drops the marks, measurements and typed text not applied yet.", tab.Title)
             : Loc.T("{0} was changed by another program.", tab.Title);
         ShowNotice(Loc.T("File changed"), text, new NoticeAction(Loc.T("Open that version"), () => _ = ReloadAsync(tab)));
     }
 
     public Task ReloadAsync(DocumentTab tab) => TryReloadAsync(tab);
 
-    /// <summary>Reads the file again from disk and, once that worked, puts it in the place of the tab, keeping its page and zoom; unsaved changes are dropped then, not before. False when the tab was not replaced.</summary>
-    public async Task<bool> TryReloadAsync(DocumentTab tab)
+    private bool NothingToLose(DocumentTab tab, int revision) =>
+        !tab.IsDirty && !tab.HasUnappliedWork && tab.Revision == revision && _activeToolId is null && !IsBusy;
+
+    /// <summary>Reads the file again from disk and, once that worked, puts it in the place of the tab, keeping its page and zoom; unsaved changes are dropped then, not before. False when the tab was not replaced. Quiet shows nothing when the read fails, as the other program may still be writing.</summary>
+    public Task<bool> TryReloadAsync(DocumentTab tab) => TryReloadAsync(tab, quiet: false);
+
+    private async Task<bool> TryReloadAsync(DocumentTab tab, bool quiet)
     {
-        if (tab.Path is not { } path || !Strip.Contains(tab)) return false;
-        OpenSource source;
+        if (tab.Path is not { } path || !Strip.Contains(tab) || !_reloading.Add(tab)) return false;
         try
         {
-            source = await Task.Run(() => _opener.Read(path));
+            int revision = tab.Revision;
+            OpenSource source;
+            try
+            {
+                source = await Task.Run(() => _opener.Read(path));
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
+            {
+                if (!quiet) ShowProblem(Problems.Open(e, tab.Title));
+                return false;
+            }
+            if (!Strip.Contains(tab)) return false;
+            bool opened = await OpenAsync(new PendingOpen(source, replacing: tab, quiet: quiet) { Revision = revision }, tab.Password, tab.Certificate);
+            return opened && !Strip.Contains(tab);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
+        finally
         {
-            ShowProblem(Problems.Open(e, tab.Title));
-            return false;
+            _reloading.Remove(tab);
         }
-        if (Strip.Contains(tab)) await OpenAsync(new PendingOpen(source, replacing: tab), tab.Password, tab.Certificate);
-        return !Strip.Contains(tab);
     }
 }

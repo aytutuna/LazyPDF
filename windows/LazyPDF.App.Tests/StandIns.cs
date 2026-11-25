@@ -1,3 +1,4 @@
+using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
 
@@ -14,8 +15,8 @@ internal sealed class TempDir : IDisposable
 
     public string File(string name, byte[] bytes)
     {
-        Directory.CreateDirectory(Path);
         string file = Sub(name);
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);
         System.IO.File.WriteAllBytes(file, bytes);
         return file;
     }
@@ -33,6 +34,7 @@ internal sealed class FakeRenderer : IDocumentRenderer
 {
     public int Loads { get; private set; }
     public bool Draws { get; set; } = true;
+    public PdfRgbaImage? Image { get; set; }
     public bool Disposed { get; private set; }
 
     public bool Load(PdfEditSession session, string? password)
@@ -44,7 +46,7 @@ internal sealed class FakeRenderer : IDocumentRenderer
     public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
 
     public PdfRgbaImage? Render(int pageIndex, double dpi) =>
-        Draws ? new PdfRgbaImage(4, 6, Enumerable.Repeat((byte)255, 4 * 6 * 4).ToArray()) : null;
+        Draws ? Image ?? new PdfRgbaImage(4, 6, Enumerable.Repeat((byte)255, 4 * 6 * 4).ToArray()) : null;
 
     public void Dispose() => Disposed = true;
 }
@@ -52,7 +54,7 @@ internal sealed class FakeRenderer : IDocumentRenderer
 /// <summary>Takes pictures as 4 by 4 grey squares, one frame each.</summary>
 internal sealed class FakeCodec : IImageCodec
 {
-    public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+    public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
 
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) =>
         file.Length == 0 ? null : [new PdfRgbaImage(4, 4, Enumerable.Repeat((byte)128, 4 * 4 * 4).ToArray())];
@@ -68,11 +70,22 @@ internal sealed class FakeFonts : IFontSource
 internal sealed class FakeSisters : ISisterApps
 {
     public bool LazyScanInstalled { get; set; }
+    public bool LazyPrintInstalled { get; set; }
     public bool PrintTaken { get; set; }
+
+    public event EventHandler? Changed;
+
+    public void RaiseChanged() => Changed?.Invoke(this, EventArgs.Empty);
     public List<string> Printed { get; } = [];
     public int ScanOpened { get; private set; }
 
-    public void OpenLazyScan() => ScanOpened++;
+    public bool ScanResult { get; set; } = true;
+
+    public bool OpenLazyScan()
+    {
+        ScanOpened++;
+        return ScanResult;
+    }
 
     public bool TryPrint(string path)
     {
@@ -84,11 +97,11 @@ internal sealed class FakeSisters : ISisterApps
 /// <summary>The view model with fakes for the system, and folders of its own for what it writes.</summary>
 internal sealed class ViewModelFixture : IDisposable
 {
-    public ViewModelFixture()
+    public ViewModelFixture(DocumentRegistry? registry = null, RecoveryStore? recovery = null)
     {
         Dir = new TempDir();
         Vm = new AppViewModel(() => NewRenderer(), new FakeCodec(), new FakeFonts(), Sisters,
-                              Dir.Sub("settings"), Dir.Sub("recovery"), Dir.Sub("print"));
+                              Dir.Sub("settings"), Dir.Sub("recovery"), Dir.Sub("print"), recovery, registry);
     }
 
     public TempDir Dir { get; }
@@ -108,7 +121,48 @@ internal sealed class ViewModelFixture : IDisposable
 
     public string Pdf(string name = "a.pdf", int pages = 1) => Dir.File(name, Pdfs.Text(pages));
 
+    /// <summary>Waits for the check a tab coming forward starts, and for the ones a reload in it starts after that.</summary>
+    public async Task SettledAsync()
+    {
+        Task seen;
+        do
+        {
+            seen = Vm.DiskCheck;
+            await seen;
+        }
+        while (!ReferenceEquals(seen, Vm.DiskCheck));
+    }
+
     public void Dispose() => Dir.Dispose();
+}
+
+/// <summary>Two view models as two windows would have them: one registry and one recovery store between them.</summary>
+internal sealed class TwoWindows : IDisposable
+{
+    public TwoWindows()
+    {
+        Registry = new DocumentRegistry();
+        Recovery = new RecoveryStore(Folder.Sub("recovery"));
+        A = new ViewModelFixture(Registry, Recovery);
+        B = new ViewModelFixture(Registry, Recovery);
+        A.Vm.BringForward = tab => ForwardedA.Add(tab);
+        B.Vm.BringForward = tab => ForwardedB.Add(tab);
+    }
+
+    private TempDir Folder { get; } = new();
+    public DocumentRegistry Registry { get; }
+    public RecoveryStore Recovery { get; }
+    public ViewModelFixture A { get; }
+    public ViewModelFixture B { get; }
+    public List<DocumentTab?> ForwardedA { get; } = [];
+    public List<DocumentTab?> ForwardedB { get; } = [];
+
+    public void Dispose()
+    {
+        A.Dispose();
+        B.Dispose();
+        Folder.Dispose();
+    }
 }
 
 /// <summary>PDFs for the tests, built by Core.</summary>
@@ -119,6 +173,15 @@ internal static class Pdfs
         var text = string.Join("\f", Enumerable.Range(0, pages).Select(p => $"{line} Page {p + 1}."));
         return PdfFromText.Create(text, new FakeFonts()).Bytes;
     }
+
+    /// <summary>Two pages, the first naming an object that cannot be read, which a copy has to leave out.</summary>
+    public static byte[] WithUnreadableObject() => System.Text.Encoding.Latin1.GetBytes(
+        "%PDF-1.4\n1 0 obj\n<</Type /Catalog /Pages 2 0 R>>\nendobj\n"
+        + "2 0 obj\n<</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>\nendobj\n"
+        + "3 0 obj\n<</Type /Page /Parent 2 0 R /Thumb 5 0 R>>\nendobj\n"
+        + "4 0 obj\n<</Type /Page /Parent 2 0 R>>\nendobj\n"
+        + "5 0 obj\n<</Broken (never closed\nendobj\n"
+        + "trailer\n<</Root 1 0 R /Size 6>>\n%%EOF\n");
 
     /// <summary>A file whose owner password is "owner" and that allows only <paramref name="allowed"/> to anyone else.</summary>
     public static byte[] Restricted(PdfPermissions allowed, PdfCryptStrength strength = PdfCryptStrength.Aes256)

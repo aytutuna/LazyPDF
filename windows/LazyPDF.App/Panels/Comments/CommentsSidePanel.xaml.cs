@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -20,15 +21,17 @@ public partial class CommentsSidePanel : ToolPanel
     private IReadOnlyList<PdfComment> _all = [];
     private bool _loading = true;
     private bool _allowed = true;
+    private bool _stale;
 
     public CommentsSidePanel()
     {
         InitializeComponent();
-        GroupBy.ItemsSource = new Grouping[] { new(CommentOrder.Page, Loc.T("By page")), new(CommentOrder.Author, Loc.T("By author")), new(CommentOrder.Type, Loc.T("By type")) };
+        GroupBy.ItemsSource = new Grouping[] { new(CommentOrder.Page, Loc.T("By page")), new(CommentOrder.Date, Loc.T("By date")), new(CommentOrder.Author, Loc.T("By author")), new(CommentOrder.Type, Loc.T("By type")) };
         GroupBy.DisplayMemberPath = nameof(Grouping.Name);
         GroupBy.SelectedIndex = 0;
         var statuses = new[] { ReviewStatus.None, ReviewStatus.Accepted, ReviewStatus.Rejected, ReviewStatus.Cancelled, ReviewStatus.Completed };
-        StatusFilter.ItemsSource = new[] { new StatusChoice(null, Loc.T("Any status")) }.Concat(statuses.Select(s => new StatusChoice(s, AnnotationText.StatusName(s)))).ToList();
+        // Marked is a separate model, but the list shows only the newest state, so it can be filtered on and not set.
+        StatusFilter.ItemsSource = new[] { new StatusChoice(null, Loc.T("Any status")) }.Concat(statuses.Concat([ReviewStatus.Marked, ReviewStatus.Unmarked]).Select(s => new StatusChoice(s, AnnotationText.StatusName(s)))).ToList();
         StatusFilter.DisplayMemberPath = nameof(StatusChoice.Name);
         StatusFilter.SelectedIndex = 0;
         StatusBox.ItemsSource = statuses.Select(s => new StatusChoice(s, AnnotationText.StatusName(s))).ToList();
@@ -40,13 +43,22 @@ public partial class CommentsSidePanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
-        _allowed = Exchange.CanComment(Tab.Document);
+        MoreButton.IsEnabled = !MarkWork.Running;
+        if (MarkWork.Running) _stale = true;
+        else Reload();
+    }
+
+    private void Reload()
+    {
+        _allowed = Exchange.CanComment(Tab!.Document);
+        ImportItem.IsEnabled = _allowed;
         Load();
     }
 
     protected override void OnDetach()
     {
         _typing.Stop();
+        MoreButton.IsEnabled = false;
         Tab!.Changed -= Tab_Changed;
         Comments.ItemsSource = null;
         _all = [];
@@ -76,10 +88,22 @@ public partial class CommentsSidePanel : ToolPanel
     // The file is read once per change; filtering and typing in the filter work on what was read.
     private void Load()
     {
+        // The document is being changed on another thread; the list is read again when that ends.
+        if (MarkWork.Running)
+        {
+            _stale = true;
+            return;
+        }
+        _stale = false;
         var order = (GroupBy.SelectedItem as Grouping)?.Order ?? CommentOrder.Page;
-        _all = PdfComments.List(Tab!.Document, null, order);
+        var list = PdfComments.List(Tab!.Document, null, order);
+        _all = order == CommentOrder.Date ? NewestFirst(list) : list;
         Build();
     }
+
+    // OrderByDescending is stable, so comments of one moment stay in page order.
+    internal static IReadOnlyList<PdfComment> NewestFirst(IReadOnlyList<PdfComment> comments) =>
+        [.. comments.Where(c => c.Date is not null).OrderByDescending(c => c.Date), .. comments.Where(c => c.Date is null)];
 
     private IReadOnlyList<PdfComment> Visible()
     {
@@ -114,6 +138,7 @@ public partial class CommentsSidePanel : ToolPanel
 
     private static string GroupOf(PdfComment comment, CommentOrder order, Viewer.IDocumentViewer viewer) => order switch
     {
+        CommentOrder.Date => comment.Date is { } d ? d.ToLocalTime().Date.ToString("d", CultureInfo.CurrentCulture) : Loc.T("No date"),
         CommentOrder.Author => string.IsNullOrEmpty(comment.Author) ? Loc.T("No author") : comment.Author,
         CommentOrder.Type => AnnotationText.KindName(comment.Type),
         _ => Loc.T("Page {0}", viewer.PageLabel(comment.PageIndex)),
@@ -138,6 +163,11 @@ public partial class CommentsSidePanel : ToolPanel
         if (e.Key == Key.Enter && Comments.SelectedItem is CommentRow row)
         {
             Go(row);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Delete)
+        {
+            DeleteSelected();
             e.Handled = true;
         }
     }

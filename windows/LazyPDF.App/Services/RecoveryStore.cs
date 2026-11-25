@@ -15,6 +15,9 @@ public sealed class RecoveryMeta
 
     /// <summary>The process that wrote the entry; one still running is not a crash.</summary>
     public int ProcessId { get; set; }
+
+    /// <summary>When that process started (UTC), since a process id can be given to another process after a restart.</summary>
+    public DateTime ProcessStarted { get; set; }
 }
 
 /// <summary>A document left in the recovery folder.</summary>
@@ -29,16 +32,17 @@ public sealed class RecoveryStore(string? directory = null)
 {
     private readonly string _directory = directory ?? AppFolders.Recovery;
     private readonly object _gate = new();
-    private readonly Dictionary<Guid, (byte[] Bytes, RecoveryMeta Meta)> _waiting = [];
+    private readonly Dictionary<Guid, (ReadOnlyMemory<byte> Bytes, RecoveryMeta Meta)> _waiting = [];
     private Task _worker = Task.CompletedTask;
     private bool _running;
 
     /// <summary>Queues the bytes to be written; a newer write for the same document replaces one still waiting.</summary>
+    // The bytes are not copied, so the caller must not change the array after handing it over.
     public void Write(Guid id, ReadOnlyMemory<byte> bytes, RecoveryMeta meta)
     {
         lock (_gate)
         {
-            _waiting[id] = (bytes.ToArray(), meta);
+            _waiting[id] = (bytes, meta);
             if (!_running)
             {
                 _running = true;
@@ -69,8 +73,11 @@ public sealed class RecoveryStore(string? directory = null)
     public IReadOnlyList<RecoveryEntry> List()
     {
         if (!Directory.Exists(_directory)) return [];
+        List<string> files;
+        try { files = [.. Directory.EnumerateFiles(_directory, "*.json")]; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return []; }
         var entries = new List<RecoveryEntry>();
-        foreach (string meta in Directory.EnumerateFiles(_directory, "*.json"))
+        foreach (string meta in files)
         {
             string pdf = System.IO.Path.ChangeExtension(meta, ".pdf");
             if (!Guid.TryParse(System.IO.Path.GetFileNameWithoutExtension(meta), out var id) || !File.Exists(pdf)) continue;
@@ -81,19 +88,47 @@ public sealed class RecoveryStore(string? directory = null)
     }
 
     /// <summary>The entries whose process is gone: what a crash left, as opposed to the documents of an instance that is still open.</summary>
-    public IReadOnlyList<RecoveryEntry> Abandoned() => [.. List().Where(e => !IsRunning(e.Meta.ProcessId))];
+    public IReadOnlyList<RecoveryEntry> Abandoned() => [.. List().Where(e => !IsRunning(e.Meta))];
 
-    private static bool IsRunning(int processId)
+    private static bool IsRunning(RecoveryMeta meta)
     {
-        if (processId == 0) return false;
+        if (meta.ProcessId == 0) return false;
         try
         {
-            using var process = System.Diagnostics.Process.GetProcessById(processId);
-            return !process.HasExited;
+            using var process = System.Diagnostics.Process.GetProcessById(meta.ProcessId);
+            if (process.HasExited) return false;
+            return meta.ProcessStarted == default || (process.StartTime.ToUniversalTime() - meta.ProcessStarted).Duration() < TimeSpan.FromSeconds(2);
         }
-        catch (ArgumentException)
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             return false;
+        }
+    }
+
+    /// <summary>Removes what a crash or a full disk left behind: half-written temp files and a pdf or json whose partner is gone.</summary>
+    public void Sweep()
+    {
+        if (!Directory.Exists(_directory)) return;
+        List<string> files;
+        try { files = [.. Directory.EnumerateFiles(_directory)]; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return; }
+        var now = DateTime.UtcNow;
+        foreach (string file in files)
+        {
+            try
+            {
+                string extension = System.IO.Path.GetExtension(file);
+                TimeSpan age = now - File.GetLastWriteTimeUtc(file);
+                bool orphan = extension switch
+                {
+                    ".tmp" => age > TimeSpan.FromHours(1),
+                    ".pdf" => age > TimeSpan.FromDays(1) && !File.Exists(System.IO.Path.ChangeExtension(file, ".json")),
+                    ".json" => age > TimeSpan.FromDays(1) && !File.Exists(System.IO.Path.ChangeExtension(file, ".pdf")),
+                    _ => false,
+                };
+                if (orphan) File.Delete(file);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
         }
     }
 
@@ -102,7 +137,7 @@ public sealed class RecoveryStore(string? directory = null)
         while (true)
         {
             Guid id;
-            (byte[] Bytes, RecoveryMeta Meta) job;
+            (ReadOnlyMemory<byte> Bytes, RecoveryMeta Meta) job;
             lock (_gate)
             {
                 if (_waiting.Count == 0)
@@ -127,10 +162,10 @@ public sealed class RecoveryStore(string? directory = null)
         }
     }
 
-    private static void Replace(string path, byte[] bytes)
+    private static void Replace(string path, ReadOnlyMemory<byte> bytes)
     {
         string temp = path + ".tmp";
-        File.WriteAllBytes(temp, bytes);
+        File.WriteAllBytes(temp, bytes.Span);
         File.Move(temp, path, overwrite: true);
     }
 

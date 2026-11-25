@@ -9,7 +9,7 @@ using LazyPDF.Core;
 namespace LazyPDF.App;
 
 /// <summary>A file in the recent list, with the words the Home tab shows for it.</summary>
-public sealed record RecentItem(string Path, string Name, string Folder, string Opened, bool Exists);
+public sealed record RecentItem(string Path, string Name, string Folder, string Opened, bool Pinned);
 
 /// <summary>A job on the Home tab. <paramref name="Reason"/> says why it cannot be started, null when it can.</summary>
 public sealed record HomeTile(string Id, string Title, string Glyph, string Description, bool Available, string? Reason)
@@ -48,14 +48,14 @@ public sealed partial class AppViewModel
 
             // Lazy Scan is a separate app: its tile is there only when it is.
             HomeTile[] scan = _sisters.LazyScanInstalled
-                ? [new(ScanTile, Loc.T("Scan"), "", Loc.T("Scan paper into a PDF with Lazy Scan."), true, null)]
+                ? [new(ScanTile, Loc.T("Lazy Scan"), "", Loc.T("Scan paper into a PDF with Lazy Scan."), true, null)]
                 : [];
 
             return
             [
                 new(OpenTile, Loc.T("Open"), "\uE8E5", Loc.T("Open a PDF, a picture or a text file."), true, null),
                 new(CreateTile, Loc.T("Create"), "\uE8B9", Loc.T("Make a PDF from blank pages, pictures, text or the clipboard."), true, null),
-                ForTool("combine", Loc.T("Combine"), "\uE8F4", Loc.T("Join files into a new one, or split this one.")),
+                new("combine", Loc.T("Combine"), "\uE8F4", Loc.T("Join files into a new one, or split this one."), true, null),
                 ForTool("compress", Loc.T("Make smaller"), "\uE9D9", Loc.T("Make the file smaller.")),
                 ForTool("protect", Loc.T("Protect"), "\uE72E", Loc.T("Set a password and decide what others may do.")),
                 ForTool("sign", Loc.T("Sign"), "\uE76D", Loc.T("Sign the file with your name.")),
@@ -76,7 +76,8 @@ public sealed partial class AppViewModel
     {
         if (id == ScanTile)
         {
-            if (_sisters.LazyScanInstalled) _sisters.OpenLazyScan();
+            if (_sisters.LazyScanInstalled && !_sisters.OpenLazyScan())
+                ShowProblem(new Problem(Loc.T("Lazy Scan did not start"), Loc.T("Windows could not open Lazy Scan. Open it from the Start menu, or reinstall it.")));
             return;
         }
         var tool = ToolTiles.FirstOrDefault(t => t.Tile == id).Tool;
@@ -95,6 +96,14 @@ public sealed partial class AppViewModel
     public void ForgetRecent(string path)
     {
         _recentFiles.Remove(path);
+        JumpLists.Forget(path);
+        Recent = BuildRecent();
+        NotifyAll();
+    }
+
+    public void SetPinned(string path, bool pinned)
+    {
+        _recentFiles.SetPinned(path, pinned);
         Recent = BuildRecent();
         NotifyAll();
     }
@@ -102,13 +111,14 @@ public sealed partial class AppViewModel
     public void ClearRecent()
     {
         _recentFiles.Clear();
+        JumpLists.ForgetAll();
         Recent = BuildRecent();
         NotifyAll();
     }
 
     private IReadOnlyList<RecentItem> BuildRecent() =>
         [.. _recentFiles.Load().Select(f => new RecentItem(
-            f.Path, System.IO.Path.GetFileName(f.Path), FolderName(f.Path), When(f.Opened), File.Exists(f.Path)))];
+            f.Path, System.IO.Path.GetFileName(f.Path), FolderName(f.Path), When(f.Opened), f.Pinned))];
 
     private static string FolderName(string path)
     {
@@ -132,19 +142,21 @@ public sealed partial class AppViewModel
     /// <summary>Looks in the recovery folder: anything there is what a crash left, because a document closed on purpose removes its copy.</summary>
     public void CheckRecovery()
     {
+        _recovery.Sweep();
         var found = _recovery.Abandoned();
         RecoveryOffer = found.Count == 0 ? null : found;
         NotifyAll();
     }
 
-    /// <summary>Opens what <see cref="RecoveryOffer"/> lists, as documents with unsaved changes.</summary>
-    public async Task RestoreAsync()
+    /// <summary>Opens what <see cref="RecoveryOffer"/> lists, as documents with unsaved changes. Entries not in <paramref name="chosen"/> are deleted.</summary>
+    public async Task RestoreAsync(IReadOnlySet<Guid>? chosen = null)
     {
         var offer = RecoveryOffer;
         RecoveryOffer = null;
         NotifyAll();
         foreach (var entry in offer ?? [])
         {
+            if (chosen is not null && !chosen.Contains(entry.Id)) continue;
             byte[] bytes;
             try
             {
@@ -156,11 +168,23 @@ public sealed partial class AppViewModel
                 continue;
             }
             // A file that is open already comes back as a copy that needs a name, not as a second tab on the file.
-            string? path = entry.Meta.OriginalPath is { } original && TabOf(original) is null ? original : null;
+            string? path = entry.Meta.OriginalPath is { } original && _registry.FindOpen(original, null) is null ? original : null;
             DiskStamp? stamp = entry.Meta.OriginalWrite == default ? null : new DiskStamp(entry.Meta.OriginalWrite, entry.Meta.OriginalLength);
-            var source = new OpenSource(bytes, path, entry.Meta.Title, Made: false, Stamp: path is null ? null : stamp);
+            bool readOnly = false;
+            try
+            {
+                readOnly = path is not null && File.Exists(path) && new FileInfo(path).IsReadOnly;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+            }
+            var source = new OpenSource(bytes, path, entry.Meta.Title, Made: false, Stamp: path is null ? null : stamp, ReadOnly: readOnly);
             await OpenAsync(new PendingOpen(source, entry.Id), password: null, certificate: null);
         }
+        if (chosen is null) return;
+        // Deleting waits for the copies the restored tabs are writing, so it stays off the UI thread.
+        var unticked = (offer ?? []).Where(entry => !chosen.Contains(entry.Id)).ToList();
+        await Task.Run(() => unticked.ForEach(entry => _recovery.Delete(entry.Id)));
     }
 
     public void DiscardRecovery()

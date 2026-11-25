@@ -102,15 +102,15 @@ public class PageDeleteReferenceTests
     }
 
     [Fact]
-    public void ATaggedDocumentLosesItsStructureWhenATaggedPageGoes()
+    public void ATaggedDocumentKeepsItsStructureWhenATaggedPageGoes()
     {
         string tags = "/StructTreeRoot 40 0 R /MarkInfo <</Marked true>>";
         Func<int, string> parents = i => $"/StructParents {i}";
         var document = Open(tags, parents, pdf => pdf.Obj(40, "<</Type /StructTreeRoot>>"));
         PageOperations.Delete(document, [1]);
-        Assert.False(document.Catalog.ContainsKey("StructTreeRoot"));
-        Assert.False(document.Catalog.ContainsKey("MarkInfo"));
-        Assert.All(document.Pages, p => Assert.False(p.Dictionary.ContainsKey("StructParents")));
+        Assert.True(document.Catalog.ContainsKey("StructTreeRoot"));
+        Assert.True(document.Catalog.ContainsKey("MarkInfo"));
+        Assert.All(document.Pages, p => Assert.True(p.Dictionary.ContainsKey("StructParents")));
     }
 
     [Fact]

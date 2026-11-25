@@ -6,7 +6,7 @@ public static class EditingText
     public static string NoFont => Loc.T("No font has these letters.");
     public static string NoGlyphs => Loc.T("No font has {0}.");
     public static string FontSetOutside => Loc.T("The font is set outside this form.");
-    public static string ColorOutside => Loc.T("The colour is set outside this form.");
+    public static string ColorOutside => Loc.T("The color is set outside this form.");
     public static string SharedForm => Loc.T("The same form is painted twice.");
     public static string Vertical => Loc.T("Vertical text cannot be changed.");
     public static string ActualText => Loc.T("This text has replacement text.");

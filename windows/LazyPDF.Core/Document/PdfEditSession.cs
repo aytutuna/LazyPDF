@@ -13,6 +13,8 @@ namespace LazyPDF.Core;
 /// </summary>
 public sealed class PdfEditSession
 {
+    private static readonly long FileLimit = Array.MaxLength;
+
     private readonly string? _password;
     private readonly X509Certificate2? _certificate;
     private readonly List<(int End, string Label)> _steps = [];
@@ -22,6 +24,8 @@ public sealed class PdfEditSession
     private int _floor;
     private int _position;
     private int _savedPosition;
+    // Settable so a test need not build a file of 2 GB.
+    internal long MaxBytes = FileLimit;
 
     private PdfEditSession(byte[] bytes, string? password, X509Certificate2? certificate = null)
     {
@@ -35,12 +39,18 @@ public sealed class PdfEditSession
 
     public static PdfEditSession Open(byte[] bytes, string? password = null) => new(bytes, password);
 
-    public static PdfEditSession Open(string path, string? password = null) => new(File.ReadAllBytes(path), password);
+    public static PdfEditSession Open(string path, string? password = null) => new(ReadFile(path), password);
 
     /// <summary>A file encrypted for recipients, opened (and read back after every save) with the private key of <paramref name="certificate"/>.</summary>
     public static PdfEditSession Open(byte[] bytes, X509Certificate2 certificate) => new(bytes, null, certificate);
 
-    public static PdfEditSession Open(string path, X509Certificate2 certificate) => new(File.ReadAllBytes(path), null, certificate);
+    public static PdfEditSession Open(string path, X509Certificate2 certificate) => new(ReadFile(path), null, certificate);
+
+    private static byte[] ReadFile(string path)
+    {
+        if (new FileInfo(path).Length > FileLimit) throw new PdfReadException(PdfReadProblem.Unsupported, "The file is too large.");
+        return File.ReadAllBytes(path);
+    }
 
     private PdfDocument Read(byte[] bytes) => _certificate is null ? PdfDocument.Open(bytes, _password) : PdfDocument.Open(bytes, _certificate);
 
@@ -67,16 +77,18 @@ public sealed class PdfEditSession
     /// <summary>
     /// Appends what changed in <see cref="Document"/> as one undoable step called
     /// <paramref name="label"/>, dropping what could be redone. False, and nothing added, when
-    /// nothing changed.
+    /// nothing changed. With <paramref name="mergeWithPrevious"/> the step joins the one before it, so
+    /// the two undo together, unless that step was saved or has another label; then it is a step of its own.
     /// </summary>
-    public bool Commit(string label)
+    public bool Commit(string label, bool mergeWithPrevious = false)
     {
         byte[] update = PdfUpdate.Build(Document);
         if (update.Length == 0) return false;
+        if ((long)_current.Length + update.Length > MaxBytes) throw TooLarge();
         byte[] next = new byte[_current.Length + update.Length];
         _current.CopyTo(next, 0);
         update.CopyTo(next, _current.Length);
-        return Take(label, next);
+        return Take(label, next, mergeWithPrevious);
     }
 
     /// <summary>
@@ -86,18 +98,23 @@ public sealed class PdfEditSession
     internal bool CommitBytes(string label, byte[] next)
     {
         if (next.Length <= _current.Length || !next.AsSpan(0, _current.Length).SequenceEqual(_current)) throw new ArgumentException("The file does not continue the current one.", nameof(next));
+        if (next.Length > MaxBytes) throw TooLarge();
         return Take(label, next);
     }
 
-    private bool Take(string label, byte[] next)
+    private static PdfReadException TooLarge() => new(PdfReadProblem.Unsupported, "The file is too large to change further.");
+
+    private bool Take(string label, byte[] next, bool merge = false)
     {
         // Reading it back is the check that the update is one a strict parser takes: one that needs a rebuild is not.
         var document = Read(next);
         if (document.XrefRebuilt && !Document.XrefRebuilt) throw PdfReadException.Damaged("The update does not read back.");
 
+        merge = merge && _position > 0 && _position != _savedPosition && _steps[_position - 1].Label == label;
         if (_savedPosition > _position) _savedPosition = -1;
         _steps.RemoveRange(_position, _steps.Count - _position);
-        _steps.Add((next.Length, label));
+        if (merge) _steps[^1] = (next.Length, label);
+        else _steps.Add((next.Length, label));
         _position = _steps.Count;
         _current = _longest = next;
         Document = document;

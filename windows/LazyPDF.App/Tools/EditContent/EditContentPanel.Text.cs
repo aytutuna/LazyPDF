@@ -37,7 +37,7 @@ public sealed partial class EditContentPanel
         SizeBox.Text = Number(text?.Size ?? _newStyle.Size);
         BoldButton.IsChecked = text is null ? _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Bold) : text.Font?.IsBold;
         ItalicButton.IsChecked = text is null ? _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Italic) : text.Font?.IsItalic;
-        var alignment = text?.Alignment ?? _newStyle.Alignment;
+        var alignment = text?.Alignment ?? _newStyle.Alignment ?? TextAlignment.Left;
         AlignLeft.IsChecked = alignment == TextAlignment.Left;
         AlignCenter.IsChecked = alignment == TextAlignment.Center;
         AlignRight.IsChecked = alignment == TextAlignment.Right;
@@ -93,7 +93,7 @@ public sealed partial class EditContentPanel
                 var d = Viewer!.Geometry(page).ToDisplay(area);
                 _pending = Pending.NewBox;
                 (_pendingPage, _pendingArea) = (page, area);
-                _editor!.Open(page, new Rect(d.X, d.Y, d.Width, d.Height), "", NewLook(), wrap: true);
+                _editor!.Open(page, new Rect(d.X, d.Y, d.Width, d.Height), "", NewLook(), wrap: true, lineBreaks: true);
                 RaiseActionChanged();
                 break;
             case EditMode.Link:

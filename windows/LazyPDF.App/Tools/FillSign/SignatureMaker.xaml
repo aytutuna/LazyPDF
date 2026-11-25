@@ -14,6 +14,15 @@
             </UniformGrid>
         </Border>
 
+        <StackPanel x:Name="InkRow">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Ink}" />
+            <ComboBox x:Name="InkColourBox" Margin="0,0,0,12" SelectedIndex="0" AutomationProperties.Name="{loc:T Ink}" SelectionChanged="InkColourBox_SelectionChanged">
+                <ComboBoxItem Content="{loc:T Black}" />
+                <ComboBoxItem Content="{loc:T Blue}" />
+                <ComboBoxItem Content="{loc:T Red}" />
+            </ComboBox>
+        </StackPanel>
+
         <StackPanel x:Name="TypePage">
             <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Name}" />
             <TextBox x:Name="NameBox" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Name}" TextChanged="NameBox_TextChanged" />

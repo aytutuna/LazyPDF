@@ -48,6 +48,15 @@ final class PdfFromPicturesTests: XCTestCase {
         XCTAssertEqual(box.bottom, (841.89 - h) / 2, accuracy: 1e-4)
     }
 
+    func test_customPaperIsClamped() throws {
+        for (w, h, ew, eh) in [(200.0, 300.0, 200.0, 300.0), (1, 99999, 3, 14400), (.nan, 50, 3, 50)] {
+            let setup = PdfPageSetup(paper: .custom, orientation: .portrait, margin: 0, customWidth: w, customHeight: h)
+            let (document, _) = try reopen(PdfFromPictures.create([ExportFakeCodec.picture(2, 2)], codec, setup))
+            let page = document.pages[0].mediaBox
+            XCTAssertEqual([page.width, page.height], [ew, eh])
+        }
+    }
+
     func test_aBigPictureShrinksIntoTheMargin() throws {
         let file = ExportFakeCodec.picture(255, 20)
         let made = try PdfFromPictures.create([file], codec, PdfPageSetup(paper: .letter, orientation: .portrait, margin: 250))
@@ -75,6 +84,19 @@ final class PdfFromPicturesTests: XCTestCase {
         XCTAssertGreaterThan(landscape.width, landscape.height)
     }
 
+    func test_aWideCustomPaperIsTurnedLikeTheNamedOnes() throws {
+        let wide = ExportFakeCodec.picture(40, 10), tall = ExportFakeCodec.picture(10, 40)
+        func box(_ picture: [UInt8], _ orientation: PdfOrientation) throws -> [Double] {
+            let setup = PdfPageSetup(paper: .custom, orientation: orientation, margin: 0, customWidth: 1000, customHeight: 500)
+            let page = try mediaBox(PdfFromPictures.create([picture], codec, setup))
+            return [page.width, page.height]
+        }
+        XCTAssertEqual(try box(wide, .landscape), [1000, 500])
+        XCTAssertEqual(try box(wide, .auto), [1000, 500])
+        XCTAssertEqual(try box(tall, .auto), [500, 1000])
+        XCTAssertEqual(try box(wide, .portrait), [500, 1000])
+    }
+
     func test_onePageForEachFileInOrderAndUnreadableFilesAreReported() throws {
         let made = try PdfFromPictures.create([ExportFakeCodec.picture(4, 4, 10), [1, 2, 3], jpeg(), ExportFakeCodec.picture(4, 4, 200)], codec)
         XCTAssertEqual(made.pages, 3)
@@ -84,6 +106,20 @@ final class PdfFromPicturesTests: XCTestCase {
         let xobjects = try XCTUnwrap(reopened.resolve(reopened.pages[1].resources?["XObject"]) as? PdfDictionary)
         let stream = try XCTUnwrap(reopened.resolve(xobjects["Im1"]) as? PdfStream)
         XCTAssertEqual(reopened.rawData(stream), ExportKit.jpeg)
+    }
+
+    func test_aFrameTooBigToDecodeIsLeftOutAndCounted() throws {
+        let made = try PdfFromPictures.create([[UInt8(ascii: "B"), 2]], codec)
+        XCTAssertEqual(made.pages, 2)
+        XCTAssertEqual(made.skippedFrames, 1)
+        XCTAssertTrue(made.unreadable.isEmpty)
+    }
+
+    func test_aFileOfOnlyTooBigFramesIsCountedOnlyAsSkipped() throws {
+        let made = try PdfFromPictures.create([ExportFakeCodec.picture(4, 4), [UInt8(ascii: "B"), 0]], codec)
+        XCTAssertEqual(made.pages, 1)
+        XCTAssertEqual(made.skippedFrames, 1)
+        XCTAssertTrue(made.unreadable.isEmpty)
     }
 
     func test_aFileOnlyTheCodecKnowsIsDecodedAndKeptLossless() throws {
@@ -155,9 +191,62 @@ final class PdfFromPicturesTests: XCTestCase {
         XCTAssertEqual(box.height, 6 * 72 / 100.0, accuracy: 1e-4)
     }
 
+    func test_aDecodedFrameIsPlacedAtTheDensityItCarries() throws {
+        let cases: [(Int, Int, Double, Double)] = [(300, 300, 24, 24), (72, 72, 100, 100), (300, 150, 24, 48), (0, 0, 75, 75), (5000, 5000, 75, 75), (300, 5000, 75, 75)]
+        for (dpiX, dpiY, width, height) in cases {
+            let made = try PdfFromPictures.create([ExportFakeCodec.picture(100, 100, 128, dpiX: dpiX, dpiY: dpiY)], codec, PdfPageSetup(paper: .picture, margin: 0))
+            let box = try reopen(made).images[0].bounds
+            XCTAssertEqual(box.width, width, accuracy: 1e-4)
+            XCTAssertEqual(box.height, height, accuracy: 1e-4)
+        }
+    }
+
     func test_aMarginThatLeavesNoRoomIsRefused() {
         for margin in [300.0, 297.638] {
             XCTAssertThrowsError(try PdfFromPictures.create([jpeg()], codec, PdfPageSetup(margin: margin)), "margin \(margin)") { XCTAssertTrue($0 is ArgumentException) }
         }
     }
-}
+
+    func test_aCancelledTokenStopsTheMakingOfThePdf() async throws {
+        let codec = codec
+        let file = jpeg()
+        let task = Task { () -> PicturesPdf in
+            while !Task.isCancelled { await Task.yield() }
+            return try PdfFromPictures.create([file], codec)
+        }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+    }
+
+    func test_aCancelDuringTheFirstDecodeStopsBeforeTheThirdFile() async throws {
+        let codec = CancellingCodec(codec)
+        let file = ExportFakeCodec.picture(4, 4)
+        let task = Task { try PdfFromPictures.create([file, file, file], codec) }
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+        XCTAssertEqual(codec.files, 1)
+    }
+
+    private final class CancellingCodec: ImageCodec {
+        private let inner: ImageCodec
+        private(set) var files = 0
+
+        init(_ inner: ImageCodec) { self.inner = inner }
+
+        func decode(_ data: [UInt8], _ codec: String, _ components: Int) -> PdfRgbaImage? { nil }
+
+        func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
+            files += 1
+            withUnsafeCurrentTask { $0?.cancel() }
+            return inner.decodeFile(file)
+        }
+
+        func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
+    }}

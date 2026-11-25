@@ -157,9 +157,13 @@ public static class DocxWriter
     {
         var share = new double[columns];
         double total = table.Widths?.Sum() ?? 0;
-        for (int c = 0; c < table.Columns; c++) share[Math.Min(c, columns - 1)] += total > 0 ? table.Widths![c] : 1;
+        for (int c = 0; c < table.Columns; c++) share[Math.Min(c, columns - 1)] += total > 0 ? (c < table.Widths!.Count ? table.Widths[c] : 0) : 1;
         return share;
     }
+
+    // The cell of a row at a column; the last column holds what lies beyond it, and a row shorter than the table reads as blanks.
+    internal static string Cell(IReadOnlyList<string> row, int c, int columns) =>
+        c == columns - 1 && columns < row.Count ? string.Join(" ", row.Skip(c).Where(t => t.Length > 0)) : c < row.Count ? row[c] : "";
 
     private static void Table(StringBuilder sb, ExportTable table, int contentTwips)
     {
@@ -179,7 +183,7 @@ public static class DocxWriter
             for (int c = 0; c < columns; c++)
             {
                 sb.Append("<w:tc><w:tcPr><w:tcW w:w=\"").Append(I(widths[c])).Append("\" w:type=\"dxa\"/></w:tcPr><w:p>");
-                string cell = c == columns - 1 && columns < row.Count ? string.Join(" ", row.Skip(c).Where(t => t.Length > 0)) : row[c];
+                string cell = Cell(row, c, columns);
                 if (cell.Length > 0) sb.Append("<w:r><w:t xml:space=\"preserve\">").Append(Escape(cell)).Append("</w:t></w:r>");
                 sb.Append("</w:p></w:tc>");
             }

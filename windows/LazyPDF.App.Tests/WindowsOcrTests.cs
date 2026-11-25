@@ -60,4 +60,51 @@ public sealed class WindowsOcrTests
 
     [Fact]
     public void ANonsenseTagIsNotAvailable() => Assert.False(WindowsOcr.IsAvailable("not a language"));
+
+    // 3 by 2 with the top left pixel marked.
+    private static PdfRgbaImage Marked()
+    {
+        var rgba = new byte[3 * 2 * 4];
+        rgba[0] = 200;
+        return new PdfRgbaImage(3, 2, rgba);
+    }
+
+    private static (int X, int Y) MarkAt(PdfRgbaImage image) =>
+        Enumerable.Range(0, image.Width * image.Height).Where(i => image.Rgba[i * 4] == 200).Select(i => (i % image.Width, i / image.Width)).Single();
+
+    [Theory]
+    [InlineData(1, 2, 3, 1, 0)]
+    [InlineData(2, 3, 2, 2, 1)]
+    [InlineData(3, 2, 3, 0, 2)]
+    [InlineData(4, 3, 2, 0, 0)]
+    public void ATurnMovesTheMarkClockwiseAndSwapsTheSizeForQuarterTurns(int turns, int width, int height, int x, int y)
+    {
+        var turned = WindowsOcr.Turn(Marked(), turns);
+
+        Assert.Equal((width, height), (turned.Width, turned.Height));
+        Assert.Equal((x, y), MarkAt(turned));
+    }
+
+    [Fact]
+    public void AWordNearACornerOfATurnedPageMovesAboutTheCentre()
+    {
+        // 2550 by 3300 read at 2 degrees clockwise: the top-left word's baseline start moves about 68 px, and its size stays.
+        double t = 2 * Math.PI / 180;
+        var box = WindowsOcr.Turned(100, 100, 340, 30, t, 1275, 1650);
+
+        double dx = 100 - 1275, dy = 130 - 1650;
+        Assert.Equal(1275 + dx * Math.Cos(t) - dy * Math.Sin(t), box.X, 6);
+        Assert.Equal(1650 + dx * Math.Sin(t) + dy * Math.Cos(t), box.Bottom, 6);
+        Assert.Equal((340, 30), (box.Width, box.Height));
+        Assert.InRange(box.X - 100, 50, 80);
+    }
+
+    [Fact]
+    public void AWordAtTheCentreStaysPut()
+    {
+        var box = WindowsOcr.Turned(550, 400, 100, 20, 0.1, 550, 420);
+
+        Assert.Equal(550, box.X, 6);
+        Assert.Equal(420, box.Bottom, 6);
+    }
 }

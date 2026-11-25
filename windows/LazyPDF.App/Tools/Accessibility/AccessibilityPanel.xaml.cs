@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.App.Tools.Standards;
 using LazyPDF.Core;
 
@@ -41,8 +42,11 @@ public partial class AccessibilityPanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
+        _state = States.GetValue(Tab, tab => new FigureState { Rewrites = tab.Rewrites });
+        SyncPending();
         _checkStale = _treeStale = _readStale = true;
-        ShowCheck.IsChecked = true;
+        if (Host!.TakeTaggingRequest()) ShowTags.IsChecked = true;
+        else ShowCheck.IsChecked = true;
         Refresh();
     }
 
@@ -56,8 +60,10 @@ public partial class AccessibilityPanel : ToolPanel
         _readTicket++;
         StopReading();
         _report = null;
+        StopDraw();
         DropTree();
-        _drafts.Clear();
+        TagFilterBox.Text = "";
+        _view = null;
         _figureNumber = 0;
         CheckList.ItemsSource = null;
         TagTree.Items.Clear();
@@ -81,6 +87,16 @@ public partial class AccessibilityPanel : ToolPanel
         FiguresView.Visibility = Show(ShowFigures);
         ReadView.Visibility = Show(ShowRead);
         if (ShowRead.IsChecked != true) StopReading();
+        if (ShowTags.IsChecked != true)
+        {
+            StopDraw();
+            _boxTicket++;
+            ClearMarks();
+        }
+        else if (_tree is not null)
+        {
+            _ = ShowMarksAsync(SelectedKid);
+        }
         Refresh();
     }
 
@@ -202,7 +218,7 @@ public partial class AccessibilityPanel : ToolPanel
 
     private string CheckStatus() => Loc.T("{0} failed, {1} passed", _report?.Failed ?? 0, _report?.Passed ?? 0);
 
-    private void RowSave_Click(object sender, RoutedEventArgs e)
+    private async void RowSave_Click(object sender, RoutedEventArgs e)
     {
         if (Row(sender) is not { } row || Tab is not { } tab) return;
         if (row.Editor == RowEditor.Title && row.Value.Trim().Length == 0)
@@ -210,10 +226,10 @@ public partial class AccessibilityPanel : ToolPanel
             Host!.ShowProblem(new Problem(Loc.T("Title is empty"), Loc.T("Type a title for the file, then save it.")));
             return;
         }
-        Apply(tab, row, row.EditorName);
+        await Apply(tab, row.Editor, row.Action, row.Value.Trim(), row.EditorName);
     }
 
-    private void RowAction_Click(object sender, RoutedEventArgs e)
+    private async void RowAction_Click(object sender, RoutedEventArgs e)
     {
         if (Row(sender) is not { } row || Tab is not { } tab) return;
         switch (row.Action)
@@ -225,7 +241,7 @@ public partial class AccessibilityPanel : ToolPanel
                 ShowFigures.IsChecked = true;
                 break;
             default:
-                Apply(tab, row, row.ActionText);
+                await Apply(tab, row.Editor, row.Action, row.Value.Trim(), row.ActionText);
                 break;
         }
     }
@@ -241,11 +257,12 @@ public partial class AccessibilityPanel : ToolPanel
 
     private static CheckRow? Row(object sender) => (sender as FrameworkElement)?.DataContext as CheckRow;
 
-    private void Apply(DocumentTab tab, CheckRow row, string label)
+    private Task Apply(DocumentTab tab, RowEditor editor, RowAction action, string value, string label) => ChangeGate.RunAsync(tab, Host!, label, () =>
     {
+        if (!ReferenceEquals(tab, Tab)) return Task.CompletedTask;
         try
         {
-            if (AccessibilityEdits.Apply(tab.Document, row) && tab.Commit(label)) Host!.SetStatus(Loc.T("Saved."));
+            if (AccessibilityEdits.Apply(tab.Document, editor, action, value) && tab.Commit(label)) Host!.SetStatus(Loc.T("Saved."));
             else Host!.SetStatus(Loc.T("Nothing to change."));
         }
         catch (ArgumentException)
@@ -257,5 +274,6 @@ public partial class AccessibilityPanel : ToolPanel
             tab.Session.Discard();
             Host!.ShowProblem(new Problem(Loc.T("Not saved"), Loc.T("The change could not be written. Save a copy of the file and try again.")));
         }
-    }
+        return Task.CompletedTask;
+    });
 }

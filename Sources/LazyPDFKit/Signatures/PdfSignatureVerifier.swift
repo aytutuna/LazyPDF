@@ -35,7 +35,7 @@ public enum PdfSignatureVerifier {
     private static func open(_ pdf: [UInt8], _ options: VerifyOptions) throws -> PdfDocument {
         #if canImport(Security)
         if let certificate = options.certificate, let sec = SecCertificateCreateWithData(nil, Data(certificate.rawData) as CFData) {
-            return try PdfDocument.open(pdf, certificate: PdfCertificate(certificate: sec, privateKey: certificate.privateKey))
+            return try PdfDocument.open(pdf, certificate: PdfCertificate(certificate: sec, privateKey: certificate.privateKey, keyHolder: certificate.keyHolder))
         }
         #endif
         return try PdfDocument.open(pdf, password: options.password)
@@ -50,6 +50,7 @@ final class SignatureChecker {
     private let dss: ValidationData
     private let signatures: Set<Int>
     private var fieldNamesCache: [Int: String]?
+    private var fetched: [String: X509Certificate?] = [:]
 
     init(_ document: PdfDocument, _ file: [UInt8], _ revisions: [PdfRevision], _ options: VerifyOptions, _ found: [FoundSignature]) {
         self.document = document
@@ -109,6 +110,7 @@ final class SignatureChecker {
         case .ok: break
         }
         if cms.digestOid == "1.3.14.3.2.26" { problems.append(.weakDigest) }
+        if Self.hasWeakKey(signer) { problems.append(.weakKey) }
 
         let extra = cms.certificates + dss.certificates
         var stamped: DateTimeOffset?
@@ -116,27 +118,33 @@ final class SignatureChecker {
             stamped = checkToken(first, cms.signature, extra, &problems)
         }
         let signingTime = cms.signingTime() ?? report.signingTime
-        // The signer's own clock proves nothing; without a trusted time stamp the chain is judged now.
-        let time = stamped ?? options.now
+        // Without a trusted time stamp the signer's claim sets the time the chain is judged at; revocation is still judged now.
+        let time = stamped ?? signingTime ?? options.now
 
-        let trust = CertificateTrust.evaluate(signer, extra, time, options)
+        let trust = CertificateTrust.evaluate(signer, extra, time, options, timestamp: false, fetched: &fetched)
         if !trust.trusted { problems.append(.untrustedSigner) }
         var claimedOutside = false
         if stamped == nil, let claimed = signingTime { claimedOutside = claimed < signer.notBefore || claimed > signer.notAfter }
-        if !trust.timeValid || claimedOutside { problems.append(.certificateNotValid) }
+        if !trust.timeValid || claimedOutside {
+            problems.append(.certificateNotValid)
+        } else if stamped == nil, signingTime != nil, time != options.now,
+                  !CertificateTrust.evaluate(signer, extra, options.now, options, timestamp: false, fetched: &fetched).timeValid {
+            problems.append(.certificateExpired)
+        }
 
         let evidence = ValidationData()
         evidence.readArchival(cms)
         evidence.certificates += dss.certificates
         evidence.ocsps += dss.ocsps
         evidence.crls += dss.crls
+        let revocationTime = stamped ?? options.now
         var checkedAll = trust.chain.count > 1
         var i = 0
         while i + 1 < trust.chain.count {
-            let (state, at) = evidence.check(trust.chain[i], trust.chain[i + 1], time)
+            let (state, at) = evidence.check(trust.chain[i], trust.chain[i + 1], revocationTime)
             if state == .revoked {
                 var sinceThen = true
-                if let time, let at { sinceThen = at <= time }
+                if let revocationTime, let at { sinceThen = at <= revocationTime }
                 if sinceThen { problems.append(.certificateRevoked) }
             }
             checkedAll = checkedAll && state == .good
@@ -178,7 +186,7 @@ final class SignatureChecker {
 
         var problems: [SignatureProblem] = []
         let time = token.timestamp
-        let trust = CertificateTrust.evaluate(tsa, dss.certificates + carried, time, options, timestamp: true)
+        let trust = CertificateTrust.evaluate(tsa, dss.certificates + carried, time, options, timestamp: true, fetched: &fetched)
         if !trust.trusted { problems.append(.untrustedSigner) }
         if !trust.timeValid { problems.append(.certificateNotValid) }
         var result = report
@@ -202,7 +210,7 @@ final class SignatureChecker {
             return nil
         }
         let time = token.timestamp
-        let trust = CertificateTrust.evaluate(tsa, extra + token.cms.certificates, time, options, timestamp: true)
+        let trust = CertificateTrust.evaluate(tsa, extra + token.cms.certificates, time, options, timestamp: true, fetched: &fetched)
         if !trust.trusted || !trust.timeValid {
             problems.append(.timestampInvalid)
             return nil
@@ -266,6 +274,30 @@ final class SignatureChecker {
         return (level, reference.number == signatureNumber)
     }
 
+    private static let smallCurves: Set<String> = [
+        "1.2.840.10045.3.1.1",
+        "1.2.840.10045.3.1.2", "1.2.840.10045.3.1.3",
+        "1.3.132.0.1", "1.3.132.0.2", "1.3.132.0.4", "1.3.132.0.5", "1.3.132.0.6", "1.3.132.0.7", "1.3.132.0.8",
+        "1.3.132.0.9", "1.3.132.0.15", "1.3.132.0.22", "1.3.132.0.23", "1.3.132.0.24", "1.3.132.0.25", "1.3.132.0.28",
+        "1.3.132.0.29", "1.3.132.0.30", "1.3.132.0.31",
+        "1.3.36.3.3.2.8.1.1.1", "1.3.36.3.3.2.8.1.1.2", "1.3.36.3.3.2.8.1.1.3", "1.3.36.3.3.2.8.1.1.4",
+    ]
+
+    static func hasWeakKey(_ certificate: X509Certificate) -> Bool {
+        switch certificate.publicKeyAlgorithm {
+        case Oids.rsaEncryption, Oids.rsaPss:
+            var key = AsnReader(certificate.encodedKeyValue)
+            guard var numbers = try? key.readSequence(), let modulus = try? numbers.readInteger(),
+                  let top = modulus.magnitude.first else { return false }
+            return (modulus.magnitude.count - 1) * 8 + top.bitWidth - top.leadingZeroBitCount < 2048
+        case Oids.ecPublicKey:
+            var parameters = AsnReader(certificate.publicKeyParameters)
+            guard let curve = try? parameters.readObjectIdentifier() else { return false }
+            return smallCurves.contains(curve)
+        default:
+            return false
+        }
+    }
     private func fail(_ report: SignatureReport, _ verdict: SignatureVerdict, _ problem: SignatureProblem) -> SignatureReport {
         var result = report
         result.verdict = verdict

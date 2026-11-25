@@ -26,6 +26,59 @@ public sealed class MeasureWriterTests
     }
 
     [Fact]
+    public void TheScaleIsFoundAgainInTheFile()
+    {
+        WriteAndReopen(out var document, Line);
+
+        Assert.Equal(Scale, MeasureScale.Find(document));
+        Assert.Null(MeasureScale.Find(PdfDocument.Open(Pdfs.Text())));
+    }
+
+    [Fact]
+    public void ScalesThePanelCannotShowAreSkipped()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text());
+        var usable = new MeasureScale(1, LengthUnit.Millimetre, 10, LengthUnit.Metre);
+        MeasureWriter.Write(session.Document, [Line], new MeasureScale(1, LengthUnit.Metre, 1, LengthUnit.Metre), "Sam", Date);
+        MeasureWriter.Write(session.Document, [Line], usable, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        Assert.Equal(usable, MeasureScale.Find(PdfDocument.Open(session.Current.ToArray())));
+    }
+
+    [Fact]
+    public void FindOnPageSkipsScalesThePanelCannotShowToo()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text());
+        var usable = new MeasureScale(1, LengthUnit.Millimetre, 10, LengthUnit.Metre);
+        MeasureWriter.Write(session.Document, [Line], new MeasureScale(1, LengthUnit.Metre, 1, LengthUnit.Metre), "Sam", Date);
+        MeasureWriter.Write(session.Document, [Line], usable, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        Assert.Equal(usable, MeasureScale.FindOnPage(reopened, reopened.Pages[0]));
+    }
+
+    [Fact]
+    public void ACalibrationOnATurnedPageReadsTheSameLengthsBack()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text());
+        PageOperations.Rotate(session.Document, [0], 90);
+        var scale = MeasureScale.From(72, 1, LengthUnit.Inch, LengthUnit.Inch);
+        var line = new MeasureItem(MeasureKind.Distance, 0, [new(10, 20), new(154, 20)]);
+        MeasureWriter.Write(session.Document, [line], scale, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        var written = PdfAnnotations.Read(reopened, reopened.Pages[0]).Single(a => a.Type == AnnotationType.Line);
+        double length = Math.Sqrt(Math.Pow(written.Line[2] - written.Line[0], 2) + Math.Pow(written.Line[3] - written.Line[1], 2));
+        var measure = Assert.IsType<PdfDictionary>(written.Dictionary["Measure"]);
+        double c = ((PdfNumber)Assert.IsType<PdfDictionary>(Assert.Single(((PdfArray)measure["X"]!).Items))["C"]!).Value;
+        Assert.Equal(2, length * c, 6);
+        Assert.EndsWith("2 in", written.Contents);
+    }
+
+    [Fact]
     public void ADistanceIsALineWithItsScale()
     {
         var all = WriteAndReopen(out var document, Line);
@@ -106,6 +159,34 @@ public sealed class MeasureWriterTests
         Assert.ThrowsAny<ArgumentException>(() => MeasureWriter.Write(session.Document, [Line, gone], Scale, "Sam", Date));
 
         Assert.False(session.Commit("Measure"));
+    }
+
+    [Fact]
+    public void EachPageKeepsTheScaleOfItsOwnMeasurements()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text(2));
+        var small = new MeasureScale(1, LengthUnit.Millimetre, 50, LengthUnit.Millimetre);
+        var onSecond = Line with { Page = 1 };
+
+        MeasureWriter.Write(session.Document, [Line, onSecond], i => i.Page == 0 ? Scale : small, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        Assert.Equal(Scale, MeasureScale.FindOnPage(reopened, reopened.Pages[0]));
+        Assert.Equal(small, MeasureScale.FindOnPage(reopened, reopened.Pages[1]));
+        var labels = new[] { 0, 1 }.Select(p => Assert.Single(PdfAnnotations.Read(reopened, reopened.Pages[p]), a => a.Type == AnnotationType.FreeText).Contents);
+        Assert.Equal([Line.Value(Scale), Line.Value(small)], labels);
+    }
+
+    [Fact]
+    public void APageWithoutMeasurementsHasNoScaleOfItsOwn()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text(2));
+        MeasureWriter.Write(session.Document, [Line], Scale, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        Assert.Null(MeasureScale.FindOnPage(reopened, reopened.Pages[1]));
     }
 
     [Fact]

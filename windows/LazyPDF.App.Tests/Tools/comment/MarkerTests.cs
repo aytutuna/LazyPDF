@@ -79,6 +79,38 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void APictureStampIsAnImageStampOfTheStampWidth()
+    {
+        using var f = new CommentFixture();
+        var picture = new PdfRgbaImage(2, 1, [255, 0, 0, 255, 0, 255, 0, 255]);
+
+        var made = f.Marker.AddPictureStamp(0, new Point(200, 200), picture);
+
+        var read = Assert.Single(f.Marks());
+        Assert.Equal(AnnotationType.Stamp, read.Type);
+        Assert.Equal(Marker.StampWidth, read.Rect.Width, 0.5);
+        Assert.Equal(Marker.StampWidth / 2, read.Rect.Height, 0.5);
+        Assert.True(read.HasAppearance);
+        Assert.Equal("Ana", made.Title);
+    }
+
+    [Fact]
+    public void APictureStampOnATurnedPageKeepsItsAppearance()
+    {
+        using var f = new CommentFixture();
+        f.Document.Pages[0].Dictionary["Rotate"] = new PdfNumber(90);
+        var picture = new PdfRgbaImage(2, 1, [255, 0, 0, 255, 0, 255, 0, 255]);
+
+        f.Marker.AddPictureStamp(0, new Point(200, 200), picture);
+
+        var read = Assert.Single(f.Marks());
+        Assert.Equal(AnnotationType.Stamp, read.Type);
+        Assert.True(read.HasAppearance);
+        Assert.Equal(Marker.StampWidth / 2, read.Rect.Width, 0.5);
+        Assert.Equal(Marker.StampWidth, read.Rect.Height, 0.5);
+    }
+
+    [Fact]
     public void ACalloutSitsAtTheEndOfTheDragAndPointsBack()
     {
         using var f = new CommentFixture();
@@ -94,6 +126,20 @@ public sealed class MarkerTests
         var box = Marker.BoxOf(MarkTool.Callout, drag);
         Assert.Equal(300, box.X + box.Width / 2, 0.01);
         Assert.Equal(200, box.Y + box.Height / 2, 0.01);
+    }
+
+    [Theory]
+    [InlineData("font-family: 'Calibri', sans-serif", "Calibri")]
+    [InlineData("font-family: 'helvetica'", "Helvetica")]
+    [InlineData("font-family: monospace", "Courier New")]
+    public void TheFirstFontOfAStyleListIsTheFamily(string style, string family)
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.TextBox, 0, Drag, Red, "Look here");
+
+        var read = Marker.TextOf(made with { DefaultStyle = style });
+
+        Assert.Equal(family, read.Family);
     }
 
     [Fact]
@@ -153,6 +199,20 @@ public sealed class MarkerTests
         Assert.Equal(200, f.Marker.BoxOf(stamp).X + Marker.StampWidth / 2, 0.5);
         Assert.Equal(AnnotationType.FileAttachment, file.Type);
         Assert.Equal(400, f.Marker.BoxOf(file).X, 0.5);
+    }
+
+    [Fact]
+    public void ADatedStampIsWiderAndKeepsTheColourOfItsStandardName()
+    {
+        using var f = new CommentFixture();
+
+        var stamp = f.Marker.AddStamp(0, new Point(200, 300), "APPROVED 2026-11-11", MarkStyle.Default with { Color = Marker.StampColor("Approved") }, dated: true);
+
+        var read = f.Marks().Single();
+        Assert.Equal("APPROVED 2026-11-11", read.IconName);
+        Assert.Equal(Marker.DatedStampWidth, f.Marker.BoxOf(stamp).Width, 0.5);
+        Assert.Equal([0, 0.5, 0.15], Marker.StampColor("Approved"));
+        Assert.Equal([0.75, 0, 0], Marker.StampColor("Draft"));
     }
 
     [Fact]
@@ -243,6 +303,133 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void AFilledDashedRectangleKeepsItsFillAndDashAfterReading()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Rectangle, 0, Drag, Red with { Fill = [1, 0.92, 0.2], Dash = LineStyle.Dashed, Width = 2 });
+
+        var read = f.Marks().Single(m => m.Reference?.Number == made.Reference?.Number);
+
+        Assert.Equal([1, 0.92, 0.2], read.InteriorColor!);
+        Assert.Equal(BorderStyle.Dashed, read.Border.Style);
+        Assert.Equal([6.0, 4], read.Border.Dash);
+        Assert.Equal(LineStyle.Dashed, Marker.LineOf(read));
+    }
+
+    [Fact]
+    public void ADottedLineIsReadBackAsDotted()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Line, 0, Drag, Red with { Dash = LineStyle.Dotted });
+
+        Assert.Equal(LineStyle.Dotted, Marker.LineOf(f.Marks().Single(m => m.Reference?.Number == made.Reference?.Number)));
+    }
+
+    [Fact]
+    public void WideningADashedOrDottedMarkKeepsItsLineStyle()
+    {
+        using var f = new CommentFixture();
+        var dashed = f.Marker.Add(MarkTool.Rectangle, 0, Drag, Red with { Dash = LineStyle.Dashed });
+        var dotted = f.Marker.Add(MarkTool.Oval, 0, Drag, Red with { Width = 12, Dash = LineStyle.Dotted });
+
+        Assert.Equal(LineStyle.Dashed, Marker.LineOf(f.Marker.SetWidth(dashed, 6)));
+        Assert.Equal(LineStyle.Dotted, Marker.LineOf(f.Marker.SetWidth(dotted, 2)));
+        Assert.Equal(LineStyle.Solid, Marker.LineOf(f.Marker.SetWidth(f.Marker.Add(MarkTool.Line, 0, Drag, Red), 6)));
+    }
+
+    [Fact]
+    public void ACalloutTakesAFillAndALineStyleLikeAShape()
+    {
+        using var f = new CommentFixture();
+        var callout = f.Marker.Add(MarkTool.Callout, 0, Drag, Red, "See the chart");
+        var box = f.Marker.Add(MarkTool.TextBox, 0, Drag, Red, "Plain");
+
+        Assert.True(Marker.TakesFill(callout));
+        Assert.True(Marker.TakesLine(callout));
+        Assert.False(Marker.TakesFill(box));
+    }
+
+    [Fact]
+    public void ChangingTheHeadAgainDoesNotGrowTheBoxAgain()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+
+        var first = f.Marker.SetEnding(line, LineEnding.None, LineEnding.Diamond);
+        var second = f.Marker.SetEnding(first, LineEnding.None, LineEnding.OpenArrow);
+
+        Assert.Equal(first.Rect.Width, second.Rect.Width);
+        Assert.Equal(first.Rect.Height, second.Rect.Height);
+
+        var wide = f.Marker.SetWidth(second, 6);
+        var bare = f.Marker.SetEnding(wide, LineEnding.None, LineEnding.None);
+        Assert.Equal(Math.Min(bare.Line[0], bare.Line[2]) - 4, bare.Rect.Left, 6);
+        bare = f.Marker.SetEnding(f.Marker.SetWidth(bare, line.Border.Width), LineEnding.None, LineEnding.None);
+        var again = f.Marker.SetEnding(bare, LineEnding.None, LineEnding.Diamond);
+
+        Assert.Equal(line.Rect.Width, bare.Rect.Width, 6);
+        Assert.Equal(first.Rect.Width, again.Rect.Width, 6);
+    }
+
+    [Fact]
+    public void AMarkMadeOfPointsGrowsItsBoxWithItsWidth()
+    {
+        using var f = new CommentFixture();
+        Point[] square = [new(100, 100), new(300, 100), new(300, 300), new(100, 300)];
+        var pencil = f.Marker.Add(MarkTool.Pencil, 0, square, Red);
+        var polygon = f.Marker.Add(MarkTool.Polygon, 0, square, Red);
+
+        var wideInk = f.Marker.SetWidth(pencil, 12);
+        var widePolygon = f.Marker.SetWidth(polygon, 12);
+
+        Assert.Equal(pencil.Rect.Width + 2 * (6 - pencil.Border.Width / 2), wideInk.Rect.Width, 6);
+        Assert.Equal(polygon.Rect.Width + 2 * (12 - polygon.Border.Width), widePolygon.Rect.Width, 6);
+        Assert.Equal(polygon.Rect.Height + 2 * (12 - polygon.Border.Width), widePolygon.Rect.Height, 6);
+    }
+
+    [Fact]
+    public void TheDashKeepsTheWidthOfAMarkThatOnlyHadABorder()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Oval, 0, Drag, Red);
+        made.Dictionary.Remove("BS");
+        made.Dictionary["Border"] = new PdfArray([new PdfNumber(0), new PdfNumber(0), new PdfNumber(4)]);
+
+        var dotted = f.Marker.SetDash(f.Marker.Find(0, made.Reference!.Number)!, LineStyle.Dotted);
+
+        Assert.Equal(4, dotted.Border.Width);
+    }
+
+    [Fact]
+    public void TheFillAndTheDashCanBeChangedAndTakenAway()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Oval, 0, Drag, Red);
+
+        var filled = f.Marker.SetFill(made, [0, 0, 1]);
+        var dotted = f.Marker.SetDash(filled, LineStyle.Dotted);
+        Assert.Equal([0.0, 0, 1], dotted.InteriorColor!);
+        Assert.Equal(LineStyle.Dotted, Marker.LineOf(dotted));
+
+        var plain = f.Marker.SetDash(f.Marker.SetFill(dotted, null), LineStyle.Solid);
+        Assert.False(plain.Dictionary.ContainsKey("IC"));
+        Assert.Equal(BorderStyle.Solid, plain.Border.Style);
+        Assert.Equal([0.9, 0.1, 0.1], plain.Color!);
+    }
+
+    [Fact]
+    public void RecolouringAFilledShapeLeavesItsFill()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Rectangle, 0, Drag, Red with { Fill = [1, 0, 0] });
+
+        var blue = f.Marker.Recolor(made, [0, 0, 1]);
+
+        Assert.Equal([0.0, 0, 1], blue.Color!);
+        Assert.Equal([1.0, 0, 0], blue.InteriorColor!);
+    }
+
+    [Fact]
     public void EditedTextIsKeptAndANoteDoesNotNeedAFont()
     {
         using var f = new CommentFixture();
@@ -292,5 +479,437 @@ public sealed class MarkerTests
 
         Assert.True(f.Tab.Undo());
         Assert.Empty(f.Marks());
+    }
+
+    [Fact]
+    public void AnArrowTakesTheChosenHeadAndStaysAnArrowToOtherReaders()
+    {
+        using var f = new CommentFixture();
+
+        var made = f.Marker.Add(MarkTool.Arrow, 0, Drag, Red with { Head = LineEnding.ClosedArrow });
+
+        var read = f.Marks().Single();
+        Assert.Equal(LineEnding.ClosedArrow, read.EndEnding);
+        Assert.Equal(LineEnding.None, read.StartEnding);
+        Assert.Equal("LineArrow", read.Intent);
+        Assert.True(made.HasAppearance);
+    }
+
+    [Fact]
+    public void ALineHasNoHeadUnlessTheStyleGivesOne()
+    {
+        using var f = new CommentFixture();
+
+        f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        f.Marker.Add(MarkTool.Arrow, 0, Drag, Red with { Head = LineEnding.OpenArrow });
+
+        var marks = f.Marks();
+        Assert.Equal((LineEnding.None, LineEnding.None), (marks[0].StartEnding, marks[0].EndEnding));
+        Assert.Equal((LineEnding.None, LineEnding.OpenArrow), (marks[1].StartEnding, marks[1].EndEnding));
+    }
+
+    [Theory]
+    [InlineData(MarkTool.Line)]
+    [InlineData(MarkTool.Arrow)]
+    public void BothHeadsOfALineAreDrawnAndKeptThroughASave(MarkTool tool)
+    {
+        using var f = new CommentFixture();
+
+        foreach (var head in Enum.GetValues<LineEnding>()) f.Marker.Add(tool, 0, Drag, Red with { StartHead = head, Head = head });
+
+        var reopened = PdfDocument.Open(f.Document.SaveRewrite());
+        var read = PdfAnnotations.Read(reopened, reopened.Pages[0]);
+        Assert.Equal(Enum.GetValues<LineEnding>(), read.Select(m => m.StartEnding));
+        Assert.Equal(Enum.GetValues<LineEnding>(), read.Select(m => m.EndEnding));
+    }
+
+    [Fact]
+    public void BothHeadsAreSetReadBackAndGiveTheBoxRoomOnlyWhileTheyAreThere()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+
+        var headed = f.Marker.SetEnding(line, LineEnding.Circle, LineEnding.ClosedArrow);
+        var bare = f.Marker.SetEnding(headed, LineEnding.None, LineEnding.None);
+
+        Assert.Equal(LineEnding.Circle, headed.StartEnding);
+        Assert.Equal(LineEnding.ClosedArrow, headed.EndEnding);
+        Assert.True(headed.Rect.Width > line.Rect.Width);
+        Assert.True(headed.HasAppearance);
+        Assert.Equal(line.Rect.Width, bare.Rect.Width, 6);
+        Assert.Equal(line.Rect.Height, bare.Rect.Height, 6);
+    }
+
+    [Fact]
+    public void ANoteTakesTheChosenIcon()
+    {
+        using var f = new CommentFixture();
+
+        f.Marker.Add(MarkTool.Note, 0, Drag, Red with { Icon = "Key" });
+
+        Assert.Equal("Key", f.Marks().Single().IconName);
+    }
+
+    [Fact]
+    public void TheHeadAndTheIconOfAMarkAreChanged()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        var note = f.Marker.Add(MarkTool.Note, 0, [new(200, 300)], Red);
+        double width = line.Rect.Width;
+
+        var headed = f.Marker.SetEnding(line, LineEnding.None, LineEnding.Diamond);
+        var iconed = f.Marker.SetIcon(note, "Help");
+
+        Assert.Equal(LineEnding.Diamond, headed.EndEnding);
+        Assert.Equal(LineEnding.None, headed.StartEnding);
+        Assert.True(headed.Rect.Width > width);
+        Assert.True(headed.HasAppearance);
+        Assert.Equal("Help", iconed.IconName);
+    }
+
+    [Fact]
+    public void ANoteWithAnotherIconNameKeepsItThroughALookChange()
+    {
+        using var f = new CommentFixture();
+        var note = f.Marker.Add(MarkTool.Note, 0, [new(200, 300)], Red);
+        note = f.Marker.SetIcon(note, "Star");
+
+        var faded = f.Marker.SetOpacity(f.Marker.Recolor(note, [0, 0, 1]), 0.5);
+
+        Assert.Equal("Star", faded.IconName);
+    }
+
+    [Fact]
+    public void MovingOneEndOfALineLeavesTheOtherAndKeepsBothInTheBox()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, [new Point(100, 100), new Point(300, 300)], Red);
+
+        var moved = f.Marker.MovePoint(line, 1, new Point(400, 200));
+
+        var ends = f.Marker.PointsOf(moved)!;
+        Assert.Equal(100, ends[0].X, 0.5);
+        Assert.Equal(100, ends[0].Y, 0.5);
+        Assert.Equal(400, ends[1].X, 0.5);
+        Assert.Equal(200, ends[1].Y, 0.5);
+        var box = f.Marker.BoxOf(moved);
+        Assert.True(box.Contains(ends[0]) && box.Contains(ends[1]));
+        Assert.True(moved.HasAppearance);
+    }
+
+    [Fact]
+    public void MovingACornerOfAPolygonChangesOnlyThatCorner()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], Red);
+
+        var moved = f.Marker.MovePoint(shape, 2, new Point(350, 350));
+
+        var corners = f.Marker.PointsOf(moved)!;
+        Assert.Equal(4, corners.Length);
+        Assert.Equal(350, corners[2].X, 0.5);
+        Assert.Equal(350, corners[2].Y, 0.5);
+        Assert.Equal(300, corners[1].X, 0.5);
+        Assert.Equal(100, corners[3].X, 0.5);
+    }
+
+    private static readonly Point[] Square = [new(100, 100), new(300, 100), new(300, 300), new(100, 300)];
+
+    private static byte[] Strokes(CommentFixture f, PdfAnnotation a) => f.Document.Data(f.Document.Stream(f.Document.Dict(a.Dictionary, "AP"), "N")!);
+
+    private static PdfAnnotation Again(CommentFixture f, PdfAnnotation a) => f.Marks().Single(m => m.Reference!.Number == a.Reference!.Number);
+
+    private static PdfAnnotation Foreign(CommentFixture f, MarkTool tool, Point[] points, string key)
+    {
+        var made = f.Marker.Add(tool, 0, points, Red);
+        made.Dictionary[key] = new PdfNumber(1);
+        return Again(f, made);
+    }
+
+    [Fact]
+    public void ACloudHasCornersThatMoveAndKeepRoomForItsBulge()
+    {
+        using var f = new CommentFixture();
+        var cloud = f.Marker.Add(MarkTool.Cloud, 0, Square, Red);
+
+        var moved = f.Marker.MovePoint(cloud, 2, new Point(350, 350));
+
+        var corners = f.Marker.PointsOf(moved)!;
+        Assert.Equal(4, corners.Length);
+        Assert.Equal(350, corners[2].X, 0.5);
+        var box = f.Marker.BoxOf(moved);
+        Assert.True(box.Right >= 350 + moved.Border.Width + 1 - 0.01 && box.Bottom >= 350 + moved.Border.Width + 1 - 0.01);
+        Assert.True(moved.Cloud > 0);
+        Assert.True(moved.HasAppearance);
+    }
+
+    [Fact]
+    public void TheBoxOfAMovedPointHoldsAllPointsAndTheBorder()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red with { Width = 6 });
+
+        var moved = f.Marker.MovePoint(shape, 0, new Point(20, 40));
+
+        var box = f.Marker.BoxOf(moved);
+        Assert.True(box.Left <= 20 - 6 + 0.01 && box.Top <= 40 - 6 + 0.01);
+        Assert.True(box.Right >= 300 + 6 - 0.01 && box.Bottom >= 300 + 6 - 0.01);
+        var shrunk = f.Marker.MovePoint(moved, 0, new Point(100, 100));
+        Assert.Equal(100 - 6, f.Marker.BoxOf(shrunk).Left, 0.5);
+    }
+
+    [Theory]
+    [InlineData("LL")]
+    [InlineData("LLE")]
+    [InlineData("LLO")]
+    [InlineData("Cap")]
+    [InlineData("CO")]
+    public void ALineWithLeadersOrACaptionOnlyMoves(string key)
+    {
+        using var f = new CommentFixture();
+        var line = Foreign(f, MarkTool.Line, Drag, key);
+
+        Assert.True(Marker.Foreign(line));
+        Assert.Null(f.Marker.PointsOf(line));
+        AssertUnchanged(f, line);
+    }
+
+    [Fact]
+    public void ACloudWithoutItsBorderEffectOnlyMoves()
+    {
+        using var f = new CommentFixture();
+        var bare = f.Marker.Add(MarkTool.Cloud, 0, Square, Red);
+        bare.Dictionary.Remove("BE");
+        var calm = f.Marker.Add(MarkTool.Cloud, 0, Square, Red);
+        var effect = new PdfDictionary();
+        effect["S"] = new PdfName("C");
+        effect["I"] = new PdfNumber(0);
+        calm.Dictionary["BE"] = effect;
+
+        foreach (var mark in new[] { Again(f, bare), Again(f, calm) })
+        {
+            Assert.True(Marker.Foreign(mark));
+            Assert.Null(f.Marker.PointsOf(mark));
+            AssertUnchanged(f, mark);
+        }
+    }
+
+    private static void AssertUnchanged(CommentFixture f, PdfAnnotation mark)
+    {
+        byte[] before = Strokes(f, mark);
+
+        Assert.Same(mark, f.Marker.Recolor(mark, [0, 0, 1]));
+        Assert.Same(mark, f.Marker.SetOpacity(mark, 0.5));
+        Assert.Same(mark, f.Marker.SetWidth(mark, 6));
+        Assert.Same(mark, f.Marker.SetFill(mark, [1, 1, 0]));
+        Assert.Same(mark, f.Marker.SetDash(mark, LineStyle.Dashed));
+        Assert.Same(mark, f.Marker.SetEnding(mark, LineEnding.None, LineEnding.Diamond));
+        Assert.Throws<ArgumentException>(() => f.Marker.MovePoint(mark, 0, new Point(10, 10)));
+        Assert.Equal(before, Strokes(f, Again(f, mark)));
+    }
+
+    [Fact]
+    public void AForeignMarkStillMoves()
+    {
+        using var f = new CommentFixture();
+        var line = Foreign(f, MarkTool.Line, Drag, "LL");
+
+        var moved = f.Marker.Move(line, new Vector(30, 10));
+
+        Assert.True(Marker.Foreign(moved));
+        Assert.Equal(line.Line[0] + 30, moved.Line[0], 0.5);
+    }
+
+    [Theory]
+    [InlineData(MarkTool.Line)]
+    [InlineData(MarkTool.Polygon)]
+    public void AMeasurementKeepsItsValueWhenMovedAndTakesAColourButNoPoints(MarkTool tool)
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(tool, 0, tool == MarkTool.Line ? Drag : Square, Red);
+        f.Marker.SetText(made, "12.5 m");
+        made.Dictionary["Measure"] = new PdfDictionary();
+        var measured = Again(f, made);
+
+        Assert.True(Marker.Measured(measured));
+        Assert.False(Marker.Foreign(measured));
+        Assert.Null(f.Marker.PointsOf(measured));
+        Assert.Same(measured, f.Marker.Resize(measured, new Rect(10, 10, 50, 50)));
+        var moved = f.Marker.Move(measured, new Vector(20, 0));
+        var painted = f.Marker.Recolor(moved, [0, 0, 1]);
+
+        Assert.True(painted.Dictionary.ContainsKey("Measure"));
+        Assert.Equal("12.5 m", painted.Contents);
+        Assert.Equal([0, 0, 1], painted.Color);
+    }
+
+    [Fact]
+    public void ABadPointIndexIsRefusedNotWrittenOver()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.MovePoint(line, 2, new Point(10, 10)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.MovePoint(shape, 4, new Point(10, 10)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.MovePoint(shape, -1, new Point(10, 10)));
+        Assert.Equal(8, Again(f, shape).Vertices.Count);
+    }
+
+    [Fact]
+    public void AMeasurementAndABoxHaveNoPointsToMove()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        line.Dictionary["Measure"] = new PdfDictionary();
+        var box = f.Marker.Add(MarkTool.Rectangle, 0, Drag, Red);
+
+        Assert.Null(f.Marker.PointsOf(line));
+        Assert.Null(f.Marker.PointsOf(box));
+        Assert.Throws<ArgumentException>(() => f.Marker.MovePoint(line, 0, new Point(10, 10)));
+    }
+
+    [Fact]
+    public void ACornerIsAddedInTheMiddleAndOnTheClosingSideOfAPolygon()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        var middle = f.Marker.InsertPoint(shape, 1, new Point(320, 200));
+        var closing = f.Marker.InsertPoint(middle, 4, new Point(60, 200));
+
+        var corners = f.Marker.PointsOf(closing)!;
+        Assert.Equal(6, corners.Length);
+        Assert.Equal(300, corners[1].X, 0.5);
+        Assert.Equal(320, corners[2].X, 0.5);
+        Assert.Equal(200, corners[2].Y, 0.5);
+        Assert.Equal(100, corners[4].X, 0.5);
+        Assert.Equal(60, corners[5].X, 0.5);
+        Assert.True(closing.HasAppearance);
+        var box = f.Marker.BoxOf(closing);
+        Assert.True(box.Left <= 60 && box.Right >= 320);
+    }
+
+    [Fact]
+    public void ACornerAddedThenUndoneLeavesTheOldPolygon()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+        Assert.True(f.Tab.Commit("Polygon"));
+
+        f.Marker.InsertPoint(Again(f, shape), 0, new Point(200, 100));
+        Assert.True(f.Tab.Commit("Add point"));
+        Assert.Equal(10, Again(f, shape).Vertices.Count);
+        Assert.True(f.Tab.Undo());
+
+        Assert.Equal(8, Again(f, shape).Vertices.Count);
+    }
+
+    [Fact]
+    public void ACornerCanBeTakenAwayUntilThreeAreLeft()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        Assert.True(f.Marker.CanRemovePoint(shape, 3));
+        var triangle = f.Marker.RemovePoint(shape, 1);
+
+        Assert.Equal(3, f.Marker.PointsOf(triangle)!.Length);
+        Assert.Equal(300, f.Marker.PointsOf(triangle)![1].X, 0.5);
+        Assert.Equal(300, f.Marker.PointsOf(triangle)![1].Y, 0.5);
+        Assert.False(f.Marker.CanRemovePoint(triangle, 0));
+        Assert.Throws<ArgumentException>(() => f.Marker.RemovePoint(triangle, 0));
+        Assert.Equal(6, Again(f, triangle).Vertices.Count);
+        Assert.False(f.Marker.CanRemovePoint(shape, 4));
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.RemovePoint(shape, 4));
+        Assert.Throws<ArgumentOutOfRangeException>(() => f.Marker.InsertPoint(shape, 4, new Point(10, 10)));
+    }
+
+    [Fact]
+    public void APolygonWithAStrayNumberStillKeepsThreeCorners()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300)], Red);
+        shape.Dictionary["Vertices"] = new PdfArray([.. shape.Vertices.Append(5).Select(v => (PdfObject)new PdfNumber(v))]);
+        shape = Again(f, shape);
+
+        Assert.Equal(7, shape.Vertices.Count);
+        Assert.False(f.Marker.CanRemovePoint(shape, 0));
+    }
+
+    [Fact]
+    public void ASideIsFoundByAPointOnItIncludingTheClosingOne()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        Assert.Equal(0, f.Marker.SegmentAt(shape, new Point(200, 102), 4));
+        Assert.Equal(1, f.Marker.SegmentAt(shape, new Point(298, 200), 4));
+        Assert.Equal(2, f.Marker.SegmentAt(shape, new Point(200, 300), 4));
+        Assert.Equal(3, f.Marker.SegmentAt(shape, new Point(100, 200), 4));
+        Assert.Equal(-1, f.Marker.SegmentAt(shape, new Point(200, 200), 4));
+    }
+
+    [Fact]
+    public void ACloudALineAndAMeasuredPolygonTakeNoCornersNorLoseAny()
+    {
+        using var f = new CommentFixture();
+        var cloud = f.Marker.Add(MarkTool.Cloud, 0, Square, Red);
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        var area = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+        area.Dictionary["Measure"] = new PdfDictionary();
+        area = Again(f, area);
+
+        foreach (var mark in new[] { cloud, line, area })
+        {
+            Assert.Throws<ArgumentException>(() => f.Marker.InsertPoint(mark, 0, new Point(200, 100)));
+            Assert.False(f.Marker.CanRemovePoint(mark, 0));
+            Assert.Throws<ArgumentException>(() => f.Marker.RemovePoint(mark, 0));
+            Assert.Equal(-1, f.Marker.SegmentAt(mark, new Point(200, 100), 4));
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void CornersMoveAndComeAndGoInUserSpaceOnATurnedPage(int degrees)
+    {
+        using var f = new CommentFixture();
+        f.Document.Pages[0].Dictionary["Rotate"] = new PdfNumber(degrees);
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+        var at = new Point(320, 210);
+
+        var added = f.Marker.InsertPoint(shape, 1, at);
+
+        var (ux, uy) = f.Geometry.ToUser(at.X, at.Y);
+        Assert.Equal(ux, added.Vertices[4], 0.001);
+        Assert.Equal(uy, added.Vertices[5], 0.001);
+        Assert.Equal(at.X, f.Marker.PointsOf(added)![2].X, 0.001);
+        var moved = f.Marker.MovePoint(added, 2, new Point(340, 220));
+        (ux, uy) = f.Geometry.ToUser(340, 220);
+        Assert.Equal(ux, moved.Vertices[4], 0.001);
+        Assert.Equal(uy, moved.Vertices[5], 0.001);
+        var removed = f.Marker.RemovePoint(moved, 2);
+        Assert.Equal(shape.Vertices.Count, removed.Vertices.Count);
+        for (int i = 0; i < shape.Vertices.Count; i++) Assert.Equal(shape.Vertices[i], removed.Vertices[i], 0.001);
+    }
+
+    [Fact]
+    public void CornersKeepTheirPlaceOnAPageWithAUserUnit()
+    {
+        using var f = new CommentFixture();
+        f.Document.Pages[0].Dictionary["UserUnit"] = new PdfNumber(2);
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, Square, Red);
+
+        var added = f.Marker.InsertPoint(shape, 0, new Point(200, 100));
+        var moved = f.Marker.MovePoint(added, 1, new Point(210, 90));
+
+        var (ux, uy) = f.Geometry.ToUser(210, 90);
+        Assert.Equal(ux, moved.Vertices[2], 0.001);
+        Assert.Equal(uy, moved.Vertices[3], 0.001);
+        Assert.Equal(210, f.Marker.PointsOf(moved)![1].X, 0.001);
     }
 }

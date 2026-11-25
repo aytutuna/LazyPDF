@@ -94,7 +94,6 @@ public class FilterChainTests
     [InlineData("DCTDecode", "DCTDecode")]
     [InlineData("DCT", "DCTDecode")]
     [InlineData("JPXDecode", "JPXDecode")]
-    [InlineData("JBIG2Decode", "JBIG2Decode")]
     public void CodecIsReportedWithItsInput(string filter, string codec)
     {
         var result = PdfFilters.DecodeToCodec(Plain, new PdfName(filter), null);
@@ -145,9 +144,9 @@ public class FilterChainTests
     }
 
     [Fact]
-    public void DefaultCapIsOneGibibyte()
+    public void DefaultCapIs256Mebibytes()
     {
-        Assert.Equal(1L << 30, PdfFilters.DefaultMaxSize);
+        Assert.Equal(256L << 20, PdfFilters.DefaultMaxSize);
     }
 
     [Fact]

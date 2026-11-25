@@ -1,5 +1,6 @@
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Batch;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 using Xunit;
 
@@ -51,6 +52,103 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task AFileFromASubfolderKeepsItsFolderInTheResults()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a\\b\\x.pdf", Pdfs.Text());
+        var set = Set(dir, Step(BatchStepKind.Clean));
+
+        var result = await Runner().RunAsync(file, set, 1, Now, CancellationToken.None, "b");
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal(dir.Sub("out\\b\\x.pdf"), result.Output);
+        Assert.StartsWith("b\\x.pdf", result.Detail);
+    }
+
+    [Fact]
+    public async Task SameNamedFilesInDifferentFoldersDoNotCollide()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, Step(BatchStepKind.Clean));
+
+        var one = await Runner().RunAsync(dir.File("a\\x.pdf", Pdfs.Text()), set, 1, Now, CancellationToken.None, "a");
+        var two = await Runner().RunAsync(dir.File("b\\x.pdf", Pdfs.Text()), set, 2, Now, CancellationToken.None, "b");
+
+        Assert.Equal(dir.Sub("out\\a\\x.pdf"), one.Output);
+        Assert.Equal(dir.Sub("out\\b\\x.pdf"), two.Output);
+    }
+
+    [Fact]
+    public async Task AFolderAboveTheResultsFolderIsNotUsed()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, Step(BatchStepKind.Clean));
+
+        var result = await Runner().RunAsync(dir.File("x.pdf", Pdfs.Text()), set, 1, Now, CancellationToken.None, "..\\up");
+
+        Assert.Equal(dir.Sub("out\\x.pdf"), result.Output);
+    }
+
+    [Fact]
+    public async Task ALockedFileIsRefusedWithAPlainReason()
+    {
+        using var dir = new TempDir();
+        byte[] locked = LazyPDF.App.Tools.Protect.ProtectWork.WithPassword(PdfDocument.Open(Pdfs.Text()), "secret", "secret", PdfPermissions.All, PdfCryptStrength.Aes256);
+        string file = dir.File("locked.pdf", locked);
+
+        var result = await Run(Runner(), file, Set(dir, Step(BatchStepKind.Clean)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("File is locked", result.Title);
+        Assert.Contains("locked.pdf", result.Detail);
+        Assert.Contains("Password for locked files", result.Detail);
+    }
+
+    private static byte[] Locked() =>
+        LazyPDF.App.Tools.Protect.ProtectWork.WithPassword(PdfDocument.Open(Pdfs.Text()), "x", "owner", PdfPermissions.All, PdfCryptStrength.Aes256);
+
+    [Fact]
+    public async Task ALockedFileRunsWithItsPasswordAndIsSavedUnprotected()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("locked.pdf", Locked());
+
+        var result = await Runner().RunAsync(file, Set(dir, Step(BatchStepKind.Clean)), 1, Now, CancellationToken.None, "", "x");
+
+        Assert.True(result.Ok, result.Detail);
+        using var made = PdfDocument.Open(File.ReadAllBytes(result.Output!));
+        Assert.Null(made.Security);
+    }
+
+    [Fact]
+    public async Task AWrongPasswordIsRefusedWithoutNamingIt()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("locked.pdf", Locked());
+
+        var result = await Runner().RunAsync(file, Set(dir, Step(BatchStepKind.Clean)), 1, Now, CancellationToken.None, "", "y");
+
+        Assert.False(result.Ok);
+        Assert.Equal("File is locked", result.Title);
+        Assert.Equal("The password does not open locked.pdf.", result.Detail);
+    }
+
+    [Fact]
+    public async Task ASavedSetHoldsNoPassword()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, Step(BatchStepKind.Clean));
+        set.Name = "Locked";
+        await Runner().RunAsync(dir.File("locked.pdf", Locked()), set, 1, Now, CancellationToken.None, "", "x");
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        Assert.DoesNotContain("\"x\"", File.ReadAllText(Path.Combine(dir.Path, "batch-sets.json")), StringComparison.Ordinal);
+        Assert.DoesNotContain("assword", File.ReadAllText(Path.Combine(dir.Path, "batch-sets.json")));
+    }
+
+    [Fact]
     public async Task ANameThatIsTakenGetsANumberAndNothingIsOverwritten()
     {
         using var dir = new TempDir();
@@ -85,6 +183,61 @@ public sealed class BatchRunnerTests
         set.Steps[0].Start = 10;
         var again = await Run(runner, two, set);
         Assert.Contains("AB-0010", TextOf(again.Output!, 0));
+    }
+
+    [Fact]
+    public async Task PageNumbersArePrintedOnThePages()
+    {
+        using var dir = new TempDir();
+        var step = BatchStep.Of(BatchStepKind.PageNumbers);
+        var set = Set(dir, step);
+
+        var result = await Run(Runner(), dir.File("a.pdf", Pdfs.Text(3)), set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Contains("Page 2 of 3", TextOf(result.Output!, 1));
+    }
+
+    [Fact]
+    public async Task PageNumbersFillInTheDateAndTheFileName()
+    {
+        using var dir = new TempDir();
+        var step = BatchStep.Of(BatchStepKind.PageNumbers);
+        step.Text = "{file} {date}";
+
+        var result = await Run(Runner(), dir.File("a.pdf", Pdfs.Text()), Set(dir, step));
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Contains("a.pdf 2026-03-09", TextOf(result.Output!, 0));
+    }
+
+    [Fact]
+    public async Task PageNumbersWithNoTextFailWithWhatToDo()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PageNumbers, Text = " " });
+
+        var result = await Run(Runner(), dir.File("a.pdf", Pdfs.Text()), set);
+
+        Assert.False(result.Ok);
+        Assert.Equal("Page number text is empty", result.Title);
+    }
+
+    [Fact]
+    public void APageNumbersStepSurvivesASavedSet()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PageNumbers, Text = "{page}/{pages}", Place = BatesPlace.HeaderCenter, FontSize = 14 });
+        set.Name = "Numbers";
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        var step = store.Load().Single().Steps.Single();
+        Assert.Equal(BatchStepKind.PageNumbers, step.Kind);
+        Assert.Equal("{page}/{pages}", step.Text);
+        Assert.Equal(BatesPlace.HeaderCenter, step.Place);
+        Assert.Equal(14, step.FontSize);
     }
 
     [Fact]
@@ -210,6 +363,19 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task ACompressThatCannotShrinkTheFileIsSaidInTheLog()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, Step(BatchStepKind.Compress), Step(BatchStepKind.Compress)));
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal("Done, with notes", result.Title);
+        Assert.Contains("Could not be made smaller, so it was left as it was.", result.Detail);
+    }
+
+    [Fact]
     public async Task ACancelDuringAStepStopsTheRunBeforeAnythingIsWritten()
     {
         using var dir = new TempDir();
@@ -250,6 +416,109 @@ public sealed class BatchRunnerTests
         Assert.Contains("PDF/A rule", result.Detail);
     }
 
+    // A tagged one-page file that fails PDF/UA only on what marking writes: no identifier, no packet.
+    private static byte[] TaggedFile()
+    {
+        string[] bodies =
+        [
+            "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 5 0 R /MarkInfo <</Marked true>> /Lang (en-US) /ViewerPreferences <</DisplayDocTitle true>>>>",
+            "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>",
+            "<</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <<>> /StructParents 0>>",
+            "<</Length 55>>\nstream\n/Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC\nendstream",
+            "<</Type /StructTreeRoot /K 6 0 R /ParentTree 8 0 R>>",
+            "<</Type /StructElem /S /Document /P 5 0 R /K 7 0 R>>",
+            "<</Type /StructElem /S /Figure /P 6 0 R /Pg 3 0 R /K 0 /Alt (A blue square)>>",
+            "<</Nums [0 [7 0 R]]>>",
+            "<</Title (Square) /Creator (Test) /Producer (Test)>>",
+        ];
+        var text = new System.Text.StringBuilder("%PDF-1.7\n");
+        var offsets = new List<int>();
+        for (int i = 0; i < bodies.Length; i++)
+        {
+            offsets.Add(text.Length);
+            text.Append($"{i + 1} 0 obj\n{bodies[i]}\nendobj\n");
+        }
+        int xref = text.Length;
+        text.Append($"xref\n0 {bodies.Length + 1}\n0000000000 65535 f \n");
+        foreach (int offset in offsets) text.Append($"{offset:D10} 00000 n \n");
+        text.Append($"trailer\n<</Size {bodies.Length + 1} /Root 1 0 R /Info 9 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <0102030405060708090A0B0C0D0E0F10>]>>\nstartxref\n{xref}\n%%EOF\n");
+        return System.Text.Encoding.Latin1.GetBytes(text.ToString());
+    }
+
+    [Fact]
+    public async Task APdfUaStepWithMarkingMarksAFileThatFailsOnlyOnTheMarks()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", TaggedFile());
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa, MarkPdfUa = true });
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal("Done", result.Title);
+        using var made = PdfDocument.Open(File.ReadAllBytes(result.Output!));
+        Assert.True(PdfUaValidator.Validate(made).IsValid);
+    }
+
+    [Fact]
+    public async Task APdfUaStepWithoutMarkingOnlyReportsWhatIsBroken()
+    {
+        using var dir = new TempDir();
+        byte[] original = TaggedFile();
+        string file = dir.File("a.pdf", original);
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa });
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal("Done, with notes", result.Title);
+        Assert.Contains("PDF/UA condition", result.Detail);
+        using var made = PdfDocument.Open(File.ReadAllBytes(result.Output!));
+        Assert.Contains("06-001", PdfUaValidator.Validate(made).Issues.Select(i => i.Condition));
+    }
+
+    [Fact]
+    public async Task APdfUaStepReportsAFileThatCannotBeMarked()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa, MarkPdfUa = true });
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Contains("PDF/UA conditions are not met", result.Detail);
+    }
+
+    [Fact]
+    public async Task APdfUaStepWithMarkingDoesNotMarkAFileThatALaterStepBreaks()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", TaggedFile());
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa, MarkPdfUa = true }, Step(BatchStepKind.Watermark, "DRAFT"));
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        using var made = PdfDocument.Open(File.ReadAllBytes(result.Output!));
+        var report = PdfUaValidator.Validate(made);
+        Assert.False(report.IsValid);
+        Assert.Contains("06-001", report.Issues.Select(i => i.Condition));
+    }
+
+    [Fact]
+    public async Task APdfUaStepBeforeProtectIsCheckedBeforeTheLock()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", TaggedFile());
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa, MarkPdfUa = true }, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" });
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal("Done", result.Title);
+    }
+
     [Fact]
     public async Task CommentsAndFormsStayOnlyWhereTheStepKeepsThem()
     {
@@ -283,5 +552,230 @@ public sealed class BatchRunnerTests
 
         Assert.False(result.Ok);
         Assert.Equal("Not saved", result.Title);
+    }
+
+    private static List<int> Turns(string path)
+    {
+        using var document = PdfDocument.Open(File.ReadAllBytes(path));
+        return [.. document.Pages.Select(p => p.Rotate)];
+    }
+
+    [Fact]
+    public async Task RotateTurnsEveryPageOrOnlyTheOddOrEvenOnes()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text(3));
+
+        var all = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Turn = 90 }));
+        var even = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Turn = 180, Pages = BatchPages.Even }), 2);
+
+        Assert.Equal([90, 90, 90], Turns(all.Output!));
+        Assert.Equal([0, 180, 0], Turns(even.Output!));
+    }
+
+    [Fact]
+    public async Task RotateAddsToThePageTurnItAlreadyHas()
+    {
+        using var dir = new TempDir();
+        var session = PdfEditSession.Open(Pdfs.Text());
+        PageOperations.Rotate(session.Document, [0], 270);
+        session.Commit("Rotate");
+        string file = dir.File("a.pdf", session.Current.ToArray());
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Turn = 90 }));
+
+        Assert.Equal([0], Turns(result.Output!));
+    }
+
+    [Fact]
+    public async Task RotatePassesAFileWithNoMatchingPageThroughWithANote()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Pages = BatchPages.Even }));
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Contains("No page matched", result.Detail, StringComparison.Ordinal);
+        Assert.Equal([0], Turns(result.Output!));
+    }
+
+    [Fact]
+    public void ARotateStepSurvivesBeingSaved()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Turn = 270, Pages = BatchPages.Odd });
+        set.Name = "Turn";
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        var step = Assert.Single(Assert.Single(store.Load()).Steps);
+        Assert.Equal((BatchStepKind.Rotate, 270, BatchPages.Odd), (step.Kind, step.Turn, step.Pages));
+    }
+
+    [Fact]
+    public async Task ProtectLocksTheResultWithThePassword()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text(2));
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" }));
+
+        Assert.True(result.Ok, result.Detail);
+        byte[] made = File.ReadAllBytes(result.Output!);
+        Assert.Equal(PdfReadProblem.PasswordRequired, Assert.Throws<PdfReadException>(() => PdfDocument.Open(made)).Problem);
+        Assert.Throws<PdfReadException>(() => PdfDocument.Open(made, "other"));
+        using var opened = PdfDocument.Open(made, "pw");
+        Assert.Equal(2, opened.Pages.Count);
+    }
+
+    [Fact]
+    public void ThePasswordOfAProtectStepIsNotSaved()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw-secret" });
+        set.Name = "Lock";
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        Assert.DoesNotContain("pw-secret", File.ReadAllText(dir.Sub("batch-sets.json")), StringComparison.Ordinal);
+        Assert.Equal("", Assert.Single(Assert.Single(store.Load()).Steps).Password);
+        Assert.Equal("pw-secret", set.Copy().Steps[0].Password);
+    }
+
+    [Fact]
+    public async Task ProtectThatIsNotLastRefusesTheRun()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" }, Step(BatchStepKind.Clean)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("Protect must be the last step", result.Title);
+        Assert.False(Directory.Exists(dir.Sub("out")));
+    }
+
+    [Fact]
+    public async Task ProtectWithPdfARefusesTheRun()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.PdfA, Level = PdfALevel.A2b }, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" }));
+
+        Assert.False(result.Ok);
+        Assert.Equal("PDF/A cannot be locked", result.Title);
+        Assert.False(Directory.Exists(dir.Sub("out")));
+    }
+
+    [Fact]
+    public void AStepCanJoinASetWithProtectExceptAnotherProtectPdfAOrPictures()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" });
+
+        Assert.Null(BatchRunner.CannotAdd(set, BatchStepKind.Compress));
+        Assert.Equal("Protect is already there", BatchRunner.CannotAdd(set, BatchStepKind.Protect)?.Title);
+        Assert.Equal("PDF/A cannot be locked", BatchRunner.CannotAdd(set, BatchStepKind.PdfA)?.Title);
+        Assert.Equal("Pictures cannot be locked", BatchRunner.CannotAdd(set, BatchStepKind.ExportPictures)?.Title);
+        Assert.Null(BatchRunner.CannotAdd(Set(dir), BatchStepKind.PdfA));
+    }
+
+    [Fact]
+    public async Task ProtectWithNoPasswordRefusesTheRun()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, Step(BatchStepKind.Protect)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("No password", result.Title);
+        Assert.False(Directory.Exists(dir.Sub("out")));
+    }
+
+    [Fact]
+    public async Task ExportPicturesWritesAFolderOfPicturesAndNoPdf()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("name.pdf", Pdfs.Text(2));
+        var set = Set(dir, Step(BatchStepKind.Watermark, "DRAFT"), Step(BatchStepKind.ExportPictures));
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal(dir.Sub("out\\name"), result.Output);
+        Assert.Equal([dir.Sub("out\\name\\name page 1.png"), dir.Sub("out\\name\\name page 2.png")], Directory.GetFiles(result.Output!).Order());
+        Assert.Empty(Directory.GetFiles(dir.Sub("out"), "*.pdf"));
+        Assert.Contains("Saved 2 pictures in name.", result.Detail);
+    }
+
+    [Fact]
+    public async Task ASecondRunOfExportPicturesMakesANewFolder()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("name.pdf", Pdfs.Text());
+        var set = Set(dir, Step(BatchStepKind.ExportPictures));
+
+        await Run(Runner(), file, set);
+        var second = await Run(Runner(), file, set);
+
+        Assert.Equal(dir.Sub("out\\name (2)"), second.Output);
+        Assert.True(File.Exists(dir.Sub("out\\name (2)\\name page 1.png")));
+        Assert.Contains("Saved 1 picture in", second.Detail);
+    }
+
+    [Fact]
+    public async Task ExportPicturesFailsWhenThePagesCannotBeDrawn()
+    {
+        using var dir = new TempDir();
+        var runner = new BatchRunner(new FakeCodec(), new SystemFontSource(), new FakeRecognizer(), () => new FakeRenderer { Draws = false });
+
+        var result = await Run(runner, dir.File("a.pdf", Pdfs.Text()), Set(dir, Step(BatchStepKind.ExportPictures)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("Pages cannot be drawn", result.Title);
+    }
+
+    [Fact]
+    public async Task ACancelledExportPicturesLeavesNoFolder()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("name.pdf", Pdfs.Text(2));
+        using var cancel = new CancellationTokenSource();
+        cancel.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Runner().RunAsync(file, Set(dir, Step(BatchStepKind.ExportPictures)), 1, Now, cancel.Token, ""));
+
+        Assert.False(Directory.Exists(dir.Sub("out\\name")));
+    }
+
+    [Fact]
+    public async Task ExportPicturesThatIsNotLastRefusesTheRun()
+    {
+        using var dir = new TempDir();
+
+        var result = await Run(Runner(), dir.File("a.pdf", Pdfs.Text()), Set(dir, Step(BatchStepKind.ExportPictures), Step(BatchStepKind.Clean)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("Export pictures must be the last step", result.Title);
+        Assert.False(Directory.Exists(dir.Sub("out")));
+    }
+
+    [Fact]
+    public void ThePictureSettingsOfASetAreSaved()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.ExportPictures, Picture = PictureFormat.Jpeg, Dpi = 300, Quality = 70 });
+        set.Name = "Pictures";
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        var step = Assert.Single(Assert.Single(store.Load()).Steps);
+        Assert.Equal((BatchStepKind.ExportPictures, PictureFormat.Jpeg, 300, 70), (step.Kind, step.Picture, step.Dpi, step.Quality));
     }
 }

@@ -5,6 +5,9 @@ namespace LazyPDF.App.Tools.Accessibility;
 /// <summary>A figure of the tag tree and the page it is on.</summary>
 public sealed record FigureRow(StructElement Element, int Page, int Number)
 {
+    /// <summary>What names the figure across edits, where its number moves when another is added or removed.</summary>
+    public int Key => Element.Reference?.Number ?? -Number;
+
     public string Alt => Element.Alt?.Trim() ?? "";
 
     public bool HasAlt => Alt.Length > 0;

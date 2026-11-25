@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
@@ -22,17 +23,18 @@ internal sealed record Side(byte[] Bytes, string Name, string? Password, X509Cer
 /// </summary>
 internal sealed class CompareSession : IDisposable
 {
-    public const int MaxPixelRows = 1000;
+    public const int MaxPixelRows = 5000;
 
-    private const double PixelDpi = 96;
     private const int RowsPerPage = 50;
     private const int ReportMarks = 5001;
+    private const double MaxPagePixels = 40_000_000;
 
     private readonly Side _before;
     private readonly Side _after;
     private List<(Parts Part, ChangeRow Row)> _rows = [];
     private List<ChangeRow> _pixelRows = [];
     private ComparisonResult? _pixelResult;
+    private double _pixelDpi = 96;
 
     public CompareSession(Side before, Side after, Func<IDocumentRenderer> renderers)
     {
@@ -70,7 +72,7 @@ internal sealed class CompareSession : IDisposable
     /// <summary>The report is a copy of the new file; a file that limits what readers may do can only be copied by its owner.</summary>
     public bool CanReport => New.Document.Security is not { OpenedAsOwner: false, Permissions: not PdfPermissions.All };
 
-    public void Compare(CompareOptions options, bool byPixels, CancellationToken token)
+    public void Compare(CompareOptions options, bool byPixels, double dpi, CancellationToken token)
     {
         var result = PdfComparer.Compare(Old.Document, New.Document, options, token);
         _rows = [.. result.Changes.Select(c => (ChangeParts.Of(c), ChangeRow.Of(c, Old.Document, New.Document)))];
@@ -79,6 +81,7 @@ internal sealed class CompareSession : IDisposable
         Looked = 0;
         Undrawn = 0;
         PixelCapped = false;
+        _pixelDpi = dpi;
         if (byPixels) ComparePixels(result, token);
         ByPixels = byPixels;
         Result = result;
@@ -91,7 +94,7 @@ internal sealed class CompareSession : IDisposable
     public PdfRgbaImage? Overlay(int newPage)
     {
         var pair = Result?.Pages.FirstOrDefault(p => p.NewIndex == newPage && !p.IsAdded);
-        return pair is null ? null : PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, newPage, PixelDpi)?.Overlay;
+        return pair is null || !SmallEnough(pair) ? null : PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, newPage, _pixelDpi)?.Overlay;
     }
 
     /// <summary>
@@ -108,6 +111,20 @@ internal sealed class CompareSession : IDisposable
         if (after.Security is not { } security) return report;
         using var plain = PdfDocument.Open(report);
         return plain.SaveRewrite(new PdfSaveOptions(Security: security, DocumentId: after.FirstId));
+    }
+
+    public string TextReport(Parts parts) =>
+        ComparisonReport.ToText(ByPixels ? _pixelResult! : ChangeParts.Only(Result!, parts), Old.Title, New.Title);
+
+    /// <summary>The shown rows as CSV with a byte order mark, so Excel reads the letters as UTF-8.</summary>
+    public byte[] Csv(Parts parts)
+    {
+        var text = new StringBuilder();
+        AppendCsv(text, Loc.T("Kind"), Loc.T("Old page"), Loc.T("New page"), Loc.T("What"), Loc.T("Detail"));
+        foreach (var row in Rows(parts))
+            AppendCsv(text, row.Kind is { } kind ? CompareText.KindName(kind) : Loc.T("Looks different"), PageNumber(row.OldPage), PageNumber(row.NewPage), row.Title, row.Subtitle);
+        var utf8 = new UTF8Encoding(true);
+        return [.. utf8.GetPreamble(), .. utf8.GetBytes(text.ToString())];
     }
 
     public void Dispose()
@@ -134,7 +151,7 @@ internal sealed class CompareSession : IDisposable
                 else removed++;
                 continue;
             }
-            if (PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, pair.NewIndex, PixelDpi) is not { } found)
+            if (!SmallEnough(pair) || PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, pair.NewIndex, _pixelDpi) is not { } found)
             {
                 Undrawn++;
                 continue;
@@ -145,7 +162,7 @@ internal sealed class CompareSession : IDisposable
             areas += found.Differences.Count;
             // A page of scanner noise must not use up the list, so each page gives its largest areas.
             foreach (var difference in found.Differences.OrderByDescending(d => d.Pixels).Take(RowsPerPage).OrderBy(d => d.Region.Y).ThenBy(d => d.Region.X))
-                rows.Add(ChangeRow.Of(pair, difference, found.Alignment, PixelDpi, oldPage, newPage));
+                rows.Add(ChangeRow.Of(pair, difference, found.Alignment, _pixelDpi, oldPage, newPage));
             foreach (var difference in found.Differences.Take(ReportMarks - changes.Count))
                 changes.Add(PixelChange(pair, difference, newPage));
         }
@@ -153,6 +170,14 @@ internal sealed class CompareSession : IDisposable
         _pixelRows = [.. rows.Take(MaxPixelRows)];
         var summary = new ComparisonSummary(added, removed, areas, 0, 0, 0, areas, 0, added + removed, 0, 0, 0);
         _pixelResult = new ComparisonResult(result.Pages, changes, summary, result.OldPageCount, result.NewPageCount);
+    }
+
+    // The comparison keeps about 30 bytes per pixel, so a drawing sheet at a fine detail is left undrawn.
+    private bool SmallEnough(PagePair pair)
+    {
+        double scale = _pixelDpi / 72;
+        return new[] { new PageGeometry(Old.Document.Pages[pair.OldIndex]), new PageGeometry(New.Document.Pages[pair.NewIndex]) }
+            .All(g => g.Width * scale * g.Height * scale <= MaxPagePixels);
     }
 
     private static CompareChange PixelChange(PagePair pair, PixelDifference difference, PageGeometry page)
@@ -163,6 +188,21 @@ internal sealed class CompareSession : IDisposable
         var (x2, y2) = page.ToUser(r.X + r.Width, r.Y);
         var (x3, y3) = page.ToUser(r.X, r.Y);
         return new CompareChange(ChangeKind.Changed, ChangeArea.Image, pair.OldIndex, pair.NewIndex, "", "", [], [new TextQuad(x0, y0, x1, y1, x2, y2, x3, y3)], Loc.T("Looks different"));
+    }
+
+    private static string PageNumber(int page) => page < 0 ? "" : (page + 1).ToString();
+
+    private static void AppendCsv(StringBuilder text, params string[] fields)
+    {
+        text.AppendJoin(',', fields.Select(Field));
+        text.Append("\r\n");
+    }
+
+    // A leading apostrophe keeps a spreadsheet from reading text such as "- item" or "=x" as a formula.
+    internal static string Field(string f)
+    {
+        if (f.Length > 0 && f[0] is '=' or '+' or '-' or '@' or '\t' or '\r') f = "'" + f;
+        return f.IndexOfAny([',', '"', '\r', '\n']) < 0 ? f : "\"" + f.Replace("\"", "\"\"") + "\"";
     }
 
     private static PdfDocument Reopen(Side side) =>

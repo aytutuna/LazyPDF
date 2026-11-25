@@ -24,11 +24,22 @@ public sealed partial class PdfDocument
     /// Another handler than the file's own, or none, needs the owner's rights when the file restricts
     /// its permissions, and throws <see cref="PdfPermissionException"/> without them.
     /// </summary>
-    public byte[] SaveRewrite(PdfSaveOptions? options = null)
+    public byte[] SaveRewrite(PdfSaveOptions? options = null, CancellationToken cancel = default) =>
+        SaveRewrite(options, out _, cancel);
+
+    /// <summary>
+    /// As <see cref="SaveRewrite(PdfSaveOptions?, CancellationToken)"/>, and says in <paramref name="dropped"/>
+    /// how many objects the rewrite reached that the file's table lists but that could not be read, and so
+    /// are left out. A free or unlisted object is not counted. The bytes are the same.
+    /// </summary>
+    public byte[] SaveRewrite(PdfSaveOptions? options, out int dropped, CancellationToken cancel = default)
     {
         options ??= new PdfSaveOptions();
         RequireEncryptionRights(options.Security);
-        return new PdfRewriter(this, options).Run();
+        var rewriter = new PdfRewriter(this, options, cancel);
+        byte[] bytes = rewriter.Run();
+        dropped = rewriter.Dropped.Count;
+        return bytes;
     }
 
     internal IReadOnlyDictionary<int, Entry> Entries => _entries;
@@ -49,6 +60,6 @@ public sealed partial class PdfDocument
     internal int IndexInObjectStream(int number)
     {
         if (!_entries.TryGetValue(number, out var entry) || entry.Kind != EntryKind.Compressed) return 0;
-        return Math.Max(0, LoadObjectStream(entry.StreamNumber)?.Numbers.IndexOf(number) ?? 0);
+        return LoadObjectStream(entry.StreamNumber)?.NumberIndex.GetValueOrDefault(number) ?? 0;
     }
 }

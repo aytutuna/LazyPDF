@@ -81,6 +81,14 @@ enum SyntheticFonts {
         try ProgramsGolden.fixture("synthetic.ttf")
     }
 
+    /// The same font with a cmap that maps only A, for the fallback tests: every other letter is missing from it.
+    static func onlyA() throws -> [UInt8] {
+        let cmap: [UInt8] = [0, 0, 0, 1, 0, 3, 0, 1, 0, 0, 0, 12,
+                             0, 4, 0, 32, 0, 0, 0, 4, 0, 4, 0, 1, 0, 0,
+                             0, 0x41, 0xFF, 0xFF, 0, 0, 0, 0x41, 0xFF, 0xFF, 0xFF, 0xC0, 0, 1, 0, 0, 0, 0]
+        return Sfnt.build([Sfnt.replacing(Sfnt.tables(try ttf()), "cmap", cmap)])
+    }
+
     private static func withFsType(_ tables: [Sfnt.Table], _ fsType: Int) -> [Sfnt.Table] {
         var os2 = Sfnt.data(tables, "OS/2")
         FontBytes.putU16(&os2, 8, fsType)

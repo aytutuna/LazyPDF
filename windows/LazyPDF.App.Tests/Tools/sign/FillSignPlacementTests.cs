@@ -1,12 +1,15 @@
+using System.Reflection;
 using System.Windows;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.FillSign;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
 
 // Where a signature or a line of text lands on the page, and that the placing is one undoable step.
+[Collection("Application")]
 public sealed class FillSignPlacementTests
 {
     private static readonly Size Page = new(612, 792);
@@ -84,7 +87,7 @@ public sealed class FillSignPlacementTests
         {
             using var tab = NewTab();
 
-            Assert.True(FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Approved", 12, DateTimeOffset.Now));
+            Assert.True(FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Approved", 12, [0, 0, 0], DateTimeOffset.Now));
 
             var note = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
             Assert.Equal(AnnotationType.FreeText, note.Type);
@@ -95,16 +98,56 @@ public sealed class FillSignPlacementTests
     }
 
     [Fact]
+    public void PlacedTextKeepsItsColour()
+    {
+        OnSta.Run(() =>
+        {
+            using var tab = NewTab();
+
+            FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Approved", 12, [0.1, 0.3, 0.8], DateTimeOffset.Now);
+
+            var note = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
+            Assert.Contains("0.1 0.3 0.8 rg", note.DefaultAppearance);
+        });
+    }
+
+    [Fact]
     public void TextTheFontsCannotDrawChangesNothing()
     {
         OnSta.Run(() =>
         {
             using var tab = NewTab();
 
-            Assert.Throws<InvalidOperationException>(() => FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Çağrı", 12, DateTimeOffset.Now));
+            Assert.Throws<InvalidOperationException>(() => FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Çağrı", 12, [0, 0, 0], DateTimeOffset.Now));
 
             Assert.False(tab.IsDirty);
+            Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
         });
+    }
+
+    // A page the viewer has not laid out has no size, so the box is empty, which is found after the picture is in the file.
+    [Fact]
+    public Task APlacementThatFailsAfterAddingToTheFileIsTakenBack() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        panel.Attach(tab, DispatchProxy.Create<IDocumentViewer, FlatViewer>(), host);
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        typeof(FillSignPanel).GetField("_image", flags)!.SetValue(panel, Ink);
+
+        typeof(FillSignPanel).GetMethod("Placed", flags)!.Invoke(panel, [0, new Point(50, 50), null]);
+
+        Assert.Equal("Nothing to place", host.Problems.Single().Title);
+        Assert.False(tab.Document.HasChanges);
+        Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
+        return Task.CompletedTask;
+    });
+
+    private class FlatViewer : FakeViewer
+    {
+        protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name == "PageSize" ? new Size(0, 0) : base.Invoke(method, args);
     }
 
     private static DocumentTab Turned(int degrees)
@@ -158,7 +201,7 @@ public sealed class FillSignPlacementTests
         {
             using var tab = Turned(90);
 
-            FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "4 November 2026", 12, DateTimeOffset.Now);
+            FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "4 November 2026", 12, [0, 0, 0], DateTimeOffset.Now);
 
             var note = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
             var form = Appearance(tab, note);
@@ -168,6 +211,56 @@ public sealed class FillSignPlacementTests
             Assert.Equal(shown.Height, note.Rect.Width, 3);
             Assert.NotNull(form.Dictionary["Matrix"]);
         });
+    }
+
+    [Theory]
+    [InlineData(MarkShape.Check, AnnotationType.Ink, 0)]
+    [InlineData(MarkShape.Cross, AnnotationType.Ink, 0)]
+    [InlineData(MarkShape.Dot, AnnotationType.Circle, 0)]
+    [InlineData(MarkShape.Line, AnnotationType.Line, 0)]
+    [InlineData(MarkShape.Check, AnnotationType.Ink, 90)]
+    [InlineData(MarkShape.Cross, AnnotationType.Ink, 90)]
+    [InlineData(MarkShape.Dot, AnnotationType.Circle, 90)]
+    [InlineData(MarkShape.Line, AnnotationType.Line, 90)]
+    public void EachMarkIsOneAnnotationKeptOnThePage(MarkShape shape, AnnotationType type, int degrees)
+    {
+        using var tab = degrees == 0 ? NewTab() : Turned(degrees);
+        var geometry = new PageGeometry(tab.Document.Pages[0]);
+
+        Assert.True(FillSignPlacement.PlaceMark(tab, 0, shape, new Point(3, geometry.Height - 2), null, 24, [0.8, 0.1, 0.1], DateTimeOffset.Now));
+
+        var mark = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
+        Assert.Equal(type, mark.Type);
+        var page = tab.Document.Pages[0].MediaBox;
+        Assert.True(mark.Rect.Left >= page.Left - 2 && mark.Rect.Bottom >= page.Bottom - 2 && mark.Rect.Right <= page.Right + 2 && mark.Rect.Top <= page.Top + 2);
+        if (shape == MarkShape.Dot) Assert.NotNull(mark.InteriorColor);
+        Assert.True(tab.Undo());
+        Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
+    }
+
+    [Theory]
+    [InlineData(MarkShape.Check)]
+    [InlineData(MarkShape.Cross)]
+    [InlineData(MarkShape.Dot)]
+    public void ASlippedClickStillMakesAMarkOfTheChosenSize(MarkShape shape)
+    {
+        using var tab = NewTab();
+
+        FillSignPlacement.PlaceMark(tab, 0, shape, new Point(200, 200), new Point(206, 201), 24, [0, 0, 0], DateTimeOffset.Now);
+
+        var mark = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
+        Assert.True(mark.Rect.Width > 20);
+    }
+
+    [Fact]
+    public void ALineTakesTheDragAsItsEnds()
+    {
+        using var tab = NewTab();
+
+        FillSignPlacement.PlaceMark(tab, 0, MarkShape.Line, new Point(100, 100), new Point(300, 100), 12, [0, 0, 0], DateTimeOffset.Now);
+
+        var line = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
+        Assert.True(line.Rect.Width > 200 && line.Rect.Width < 205);
     }
 
     [Fact]

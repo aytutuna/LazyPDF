@@ -43,6 +43,7 @@ public struct PdfAttachment {
 
 public enum PdfAttachments {
     private static let maxAnnotations = 50_000
+    private static let maxExtractSize = 1 << 30
     private static let streamKeys = ["UF", "F", "DOS", "Mac", "Unix"]
 
     /// The embedded files of the tree, then those of the pages' attachment annotations. A file specification with no
@@ -77,12 +78,12 @@ public enum PdfAttachments {
         embeddedStream(document, document.resolve(attachment.spec) as? PdfDictionary)
     }
 
-    /// The file's bytes, decoded.
+    /// The file's bytes, decoded; up to 1 GiB, above the default decode cap.
     public static func extract(_ document: PdfDocument, _ attachment: PdfAttachment) throws -> [UInt8] {
         guard let stream = embeddedStream(document, document.resolve(attachment.spec) as? PdfDictionary) else {
             throw InvalidOperationException("The attachment is no longer in the document.")
         }
-        return try document.data(stream)
+        return try document.data(stream, maxExtractSize)
     }
 
     /// Adds a file to the /EmbeddedFiles tree. A name the tree has already gets " (2)", " (3)"... before its extension.

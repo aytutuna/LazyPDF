@@ -31,12 +31,14 @@ enum FixtureFonts {
 
     static var arial: [UInt8] { latin("ArialMT") }
 
-    static func latin(_ postScriptName: String) -> [UInt8] {
+    /// `extraGlyphs` are further glyph names to include, such as the Turkish letters no 8-bit encoding has.
+    static func latin(_ postScriptName: String, extraGlyphs: [String] = []) -> [UInt8] {
         lock.lock()
         defer { lock.unlock() }
-        if let known = made[postScriptName] { return known }
-        let font = buildLatin(postScriptName)
-        made[postScriptName] = font
+        let key = ([postScriptName] + extraGlyphs).joined(separator: ",")
+        if let known = made[key] { return known }
+        let font = buildLatin(postScriptName, extraGlyphs)
+        made[key] = font
         return font
     }
 
@@ -57,11 +59,11 @@ enum FixtureFonts {
         ("lozenge", 0xD7), ("apple", 0xF0), ("Euro", 0xDB),
     ]
 
-    private static func buildLatin(_ postScriptName: String) -> [UInt8] {
+    private static func buildLatin(_ postScriptName: String, _ more: [String]) -> [UInt8] {
         let standard = StandardNames.macGlyphs
         var names = Array(standard.prefix(258))
         // uni01F8 is not in any encoding: a test names it in /Differences, and Arial has a glyph for it.
-        var extras: Set<String> = ["uni01F8"]
+        var extras = Set(["uni01F8"] + more.filter { !standard.prefix(258).contains($0) })
         for table in [PdfEncodings.winAnsi, PdfEncodings.macRoman, PdfEncodings.standard] {
             for case let name? in table where !names.contains(name) { extras.insert(name) }
         }

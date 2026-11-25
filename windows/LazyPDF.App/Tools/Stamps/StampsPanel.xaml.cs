@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.FillSign;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
 using Microsoft.Win32;
@@ -29,7 +30,7 @@ public sealed partial class StampsPanel : ToolPanel
     private readonly string[] _families;
     private readonly (string Name, StampColor Color)[] _colors =
     [
-        (Loc.T("Grey"), StampColor.Gray(0.5)),
+        (Loc.T("Gray"), StampColor.Gray(0.5)),
         (Loc.T("Black"), StampColor.Black),
         (Loc.T("Red"), new StampColor(0.8, 0.1, 0.1)),
         (Loc.T("Orange"), new StampColor(0.95, 0.5, 0.1)),
@@ -40,13 +41,14 @@ public sealed partial class StampsPanel : ToolPanel
     [
         (Loc.T("None"), null),
         (Loc.T("White"), new StampColor(1, 1, 1)),
-        (Loc.T("Light grey"), StampColor.Gray(0.9)),
+        (Loc.T("Light gray"), StampColor.Gray(0.9)),
         (Loc.T("Cream"), new StampColor(1, 0.97, 0.85)),
         (Loc.T("Light blue"), new StampColor(0.85, 0.92, 1)),
     ];
 
     private readonly Dictionary<(Guid Tab, int Run), StampDraft> _written = [];
     private bool _ready;
+    private bool _reading;
     private bool _canRun;
     private bool _touched;
     private ToolAction? _action;
@@ -211,7 +213,7 @@ public sealed partial class StampsPanel : ToolPanel
         if (!done)
         {
             tab.Session.Discard();
-            host.SetStatus(Loc.T("Cancelled."));
+            host.SetStatus(Loc.T("Canceled."));
         }
         return done && ReferenceEquals(tab.Document, document);
     }
@@ -266,33 +268,61 @@ public sealed partial class StampsPanel : ToolPanel
         Refresh();
     }
 
-    private void Picture_Click(object sender, RoutedEventArgs e)
+    private async void Picture_Click(object sender, RoutedEventArgs e)
     {
+        if (_reading) return;
         var dialog = new OpenFileDialog
         {
             Title = Loc.T("Pick a picture"),
             Filter = Loc.T("Pictures") + "|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff|" + Loc.T("All files") + "|*.*",
         };
         if (dialog.ShowDialog() != true) return;
+        await PickAsync(dialog.FileName);
+    }
+
+    internal byte[]? Picture => _picture;
+
+    internal async Task PickAsync(string path)
+    {
+        var tab = Tab;
+        var host = Host!;
+        byte[]? bytes = null;
+        ImageSource? image = null;
+        _reading = true;
+        PictureButton.IsEnabled = false;
         try
         {
-            var bytes = File.ReadAllBytes(dialog.FileName);
-            _pictureImage = Decode(bytes);
+            await host.RunBusyAsync(Loc.T("Reading the picture"), token => Task.Run(() =>
+            {
+                token.ThrowIfCancellationRequested();
+                var file = File.ReadAllBytes(path);
+                if (token.IsCancellationRequested) return;
+                image = Decode(file);
+                bytes = file;
+            }, token));
+            if (bytes is null || !ReferenceEquals(Tab, tab)) return;
+            _pictureImage = image;
             _picture = bytes;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or NotSupportedException or FileFormatException)
         {
-            Host?.ShowProblem(new Problem(Loc.T("Picture cannot be read"), Loc.T("Pick a PNG, JPEG or another common picture.")));
+            host.ShowProblem(new Problem(Loc.T("Picture cannot be read"), Loc.T("Pick a PNG, JPEG or another common picture.")));
             return;
         }
-        PictureName.Text = Path.GetFileName(dialog.FileName);
+        finally
+        {
+            _reading = false;
+            PictureButton.IsEnabled = true;
+        }
+        PictureName.Text = Path.GetFileName(path);
         ShowPicture();
-        Form_Changed(sender, e);
+        Form_Changed(this, new RoutedEventArgs());
     }
 
+    // Only the preview is turned here; the engine turns the picture it stamps.
     private static ImageSource Decode(byte[] bytes)
     {
-        using var stream = new MemoryStream(bytes);
+        using var stream = new MemoryStream(SignatureArt.UprightFile(bytes));
         var frame = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
         frame.Freeze();
         return frame;

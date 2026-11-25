@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices.WindowsRuntime;
 using LazyPDF.Core;
 using Windows.Globalization;
@@ -26,23 +27,66 @@ public sealed class WindowsOcr : ITextRecognizer
 
         var words = new List<OcrWord>();
         double toImage = image.Width / (double)width;
+        // TextAngle is how far Windows found the page turned clockwise; the layer wants counter-clockwise radians.
+        double angle = result.TextAngle is { } degrees ? -degrees * Math.PI / 180 : 0;
+        if (Math.Abs(angle) < MinAngle) angle = 0;
         foreach (var line in result.Lines)
         {
             foreach (var word in line.Words)
             {
                 var box = word.BoundingRect;
-                words.Add(new OcrWord(word.Text, new OcrBox(box.X * toImage, box.Y * toImage, box.Width * toImage, box.Height * toImage)));
+                var upright = angle == 0 ? new OcrBox(box.X, box.Y, box.Width, box.Height) : Turned(box.X, box.Y, box.Width, box.Height, -angle, width / 2.0, height / 2.0);
+                words.Add(new OcrWord(word.Text, new OcrBox(upright.X * toImage, upright.Y * toImage, upright.Width * toImage, upright.Height * toImage), 1, angle));
             }
         }
         return words;
     }
 
+    // Below this (about 0.3 degrees) a page counts as straight, so a clean scan keeps its exact boxes.
+    private const double MinAngle = 0.005;
+
+    /// <summary>
+    /// Windows gives each word as an upright box in the page turned back by the text angle about the image centre.
+    /// This puts its baseline start where the word was printed, keeping the size; <paramref name="clockwise"/> is in radians.
+    /// </summary>
+    internal static OcrBox Turned(double x, double y, double width, double height, double clockwise, double centerX, double centerY)
+    {
+        double cos = Math.Cos(clockwise), sin = Math.Sin(clockwise);
+        double dx = x - centerX, dy = y + height - centerY;
+        double left = centerX + dx * cos - dy * sin, baseline = centerY + dx * sin + dy * cos;
+        return new OcrBox(left, baseline - height, width, height);
+    }
+
+    // A page can be read four times, so the engine is made once per language. A missing language is asked for again, since it can be added meanwhile.
+    private static readonly ConcurrentDictionary<string, OcrEngine> Engines = new();
+
+    /// <summary>The picture turned clockwise by <paramref name="quarterTurns"/> times 90 degrees.</summary>
+    internal static PdfRgbaImage Turn(PdfRgbaImage image, int quarterTurns)
+    {
+        int turns = (quarterTurns % 4 + 4) % 4;
+        if (turns == 0) return image;
+        int w = image.Width, h = image.Height;
+        int width = turns == 2 ? w : h;
+        var rgba = new byte[image.Rgba.Length];
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                var (tx, ty) = turns switch { 1 => (h - 1 - y, x), 2 => (w - 1 - x, h - 1 - y), _ => (y, w - 1 - x) };
+                Array.Copy(image.Rgba, (y * w + x) * 4, rgba, (ty * width + tx) * 4, 4);
+            }
+        }
+        return new PdfRgbaImage(width, turns == 2 ? h : w, rgba);
+    }
+
     private static OcrEngine? Engine(string language)
     {
+        if (Engines.TryGetValue(language, out var cached)) return cached;
         try
         {
             var requested = new Language(language);
-            return OcrEngine.IsLanguageSupported(requested) ? OcrEngine.TryCreateFromLanguage(requested) : null;
+            var engine = OcrEngine.IsLanguageSupported(requested) ? OcrEngine.TryCreateFromLanguage(requested) : null;
+            return engine is null ? null : Engines.GetOrAdd(language, engine);
         }
         catch (ArgumentException)
         {

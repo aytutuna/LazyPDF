@@ -19,7 +19,7 @@ public static class ExportLayout
 
     /// <summary>
     /// Analyses <paramref name="pages"/> (0-based, in the order given; null for all). Pictures
-    /// need the <paramref name="codec"/> only for JPEG 2000, JBIG2 and masks on a JPEG.
+    /// need the <paramref name="codec"/> only for JPEG 2000 and masks on a JPEG.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">A page index is out of range.</exception>
     /// <exception cref="PdfReadException">The pages hold more text than the export keeps in memory.</exception>

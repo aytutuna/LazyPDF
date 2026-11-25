@@ -87,6 +87,31 @@ final class SignatureSharedRoleTests: XCTestCase {
         assertNotAllowed(try check(attacked), .unreadable)
     }
 
+    func test_aShadowTheRepairOfAWrongTableEntryFindsIsStillAChange() throws {
+        let pdf = TestPdf()
+        pdf.stream(1, "", "BT /F1 18 Tf 40 300 Td (Contract page 1) Tj ET")
+        pdf.obj(2, "<</Type /Catalog /Pages 3 0 R>>")
+        pdf.obj(3, "<</Type /Pages /Kids [4 0 R] /Count 1 /MediaBox [0 0 300 400]>>")
+        pdf.obj(4, "<</Type /Page /Parent 3 0 R /Contents 1 0 R>>")
+        let file = pdf.finish("/Root 2 0 R")
+        let text = TestPdf.text(file)
+        let offset = (file.indexOf(TestPdf.latin("\n1 0 obj")) ?? 0) + 1
+        let crooked = TestPdf.latin(text.replacingOccurrences(of: String(format: "%010ld 00000 n", offset), with: String(format: "%010ld 00000 n", offset + 3)))
+        var request = SignatureKit.request(pki)
+        request.certify = .formFill
+        let signed = try PdfSigner.sign(crooked, request)
+        XCTAssertEqual(try check(signed).verdict, .valid)
+
+        let shadowed = signed + TestPdf.latin("\n1 0 obj\n<</Length \(evil.count)>>\nstream\n\(evil)\nendstream\nendobj\n")
+        var second = PdfSignRequest(pki.leafEc, try XCTUnwrap(Pki.signing.adding(days: 1)))
+        second.chain = pki.chain
+        second.fieldName = "Second"
+        let attacked = try PdfSigner.sign(shadowed, second)
+
+        XCTAssertTrue(SignatureKit.text(try PdfDocument.open(attacked).pages[0].contents()).contains("pay 1,000,000"))
+        assertNotAllowed(try check(attacked), .unreadable)
+    }
+
     func test_anObjectThatValidationDataOrACommentSharesWithAnotherJobKeepsTheStricterOne() throws {
         for role in ["validation", "annotation", "appearance"] {
             let pdf: TestPdf

@@ -182,4 +182,87 @@ public sealed class CertificateSigningTests
 
         Assert.Throws<InvalidOperationException>(() => PdfLongTermValidation.Add(session, new NoServer(), Now));
     }
+
+    private static PdfDictionary Resources(PdfEditSession session)
+    {
+        var widget = Assert.Single(PdfAnnotations.ReadAll(session.Document), a => a.Type == AnnotationType.Widget);
+        var form = session.Document.Stream(session.Document.Dict(widget.Dictionary, "AP"), "N")!;
+        return session.Document.Dict(form.Dictionary, "Resources")!;
+    }
+
+    [Fact]
+    public void TheLookIsPassedToTheRequest()
+    {
+        using var ada = Ada();
+        var look = new SignatureLook { Text = "" };
+
+        Assert.Null(Request(Plain(ada)).Look);
+        Assert.Same(look, Request(Plain(ada) with { Look = look }).Look);
+    }
+
+    [Fact]
+    public void APictureLookPutsAnImageInTheAppearanceBesideTheText()
+    {
+        using var ada = Ada();
+        var session = PdfEditSession.Open(Pdfs.Text());
+        var picture = new SignatureLook { Image = new PdfRgbaImage(2, 1, [0, 0, 0, 255, 0, 0, 0, 255]) };
+
+        PdfSigner.Sign(session, Request(Plain(ada) with { Rect = new PdfRect(72, 600, 272, 660), Look = picture }));
+
+        var resources = Resources(session);
+        Assert.NotNull(resources["XObject"]);
+        Assert.NotNull(resources["Font"]);
+    }
+
+    [Fact]
+    public void APictureOnlyLookWritesNoSignerText()
+    {
+        using var ada = Ada();
+        var session = PdfEditSession.Open(Pdfs.Text());
+        var picture = new SignatureLook { Image = new PdfRgbaImage(2, 1, [0, 0, 0, 255, 0, 0, 0, 255]), Text = "" };
+
+        PdfSigner.Sign(session, Request(Plain(ada) with { Rect = new PdfRect(72, 600, 272, 660), Look = picture }));
+
+        var resources = Resources(session);
+        Assert.NotNull(resources["XObject"]);
+        Assert.Null(resources["Font"]);
+    }
+
+    [Theory]
+    [InlineData(-1, null, 0)]
+    [InlineData(0, null, 0)]
+    [InlineData(1, null, 1)]
+    [InlineData(2, "B", 3)]
+    [InlineData(2, "Gone", 0)]
+    [InlineData(-1, "A", 0)]
+    public void ThePlaceChoiceSurvivesAChange(int oldIndex, string? oldField, int expected)
+    {
+        Assert.Equal(expected, CertificateSigning.KeptPlace(oldIndex, oldField, ["A", "B"]));
+    }
+
+    [Theory]
+    [InlineData(0, new double[] { 1, 0, 0, 1, 0, 0 })]
+    [InlineData(90, new double[] { 0, 1, -1, 0, 0, 0 })]
+    [InlineData(270, new double[] { 0, -1, 1, 0, 0, 0 })]
+    public void ABoxDrawnOnATurnedPageIsSignedWhereItWasDrawn(int rotate, double[] matrix)
+    {
+        using var ada = Ada();
+        var document = PdfDocument.Open(Pdfs.Text());
+        document.Pages[0].Dictionary["Rotate"] = new PdfNumber(rotate);
+        var session = PdfEditSession.Open(document.SaveIncremental());
+        var geometry = new PageGeometry(session.Document.Pages[0]);
+        var drawn = new DisplayRect(20, 30, 200, 60);
+        var rect = geometry.ToUser(drawn);
+
+        PdfSigner.Sign(session, Request(Plain(ada) with { Page = 0, Rect = rect, Look = new SignatureLook { Image = new PdfRgbaImage(2, 1, [0, 0, 0, 255, 0, 0, 0, 255]) } }));
+
+        var widget = Assert.Single(PdfAnnotations.ReadAll(session.Document), a => a.Type == AnnotationType.Widget);
+        var back = geometry.ToDisplay(widget.Rect);
+        Assert.Equal(drawn.X, back.X, 6);
+        Assert.Equal(drawn.Y, back.Y, 6);
+        Assert.Equal(drawn.Width, back.Width, 6);
+        Assert.Equal(drawn.Height, back.Height, 6);
+        var form = session.Document.Stream(session.Document.Dict(widget.Dictionary, "AP"), "N")!;
+        Assert.Equal(matrix, session.Document.Array(form.Dictionary, "Matrix")?.Items.Select(i => ((PdfNumber)i).Value).ToArray() ?? [1, 0, 0, 1, 0, 0]);
+    }
 }

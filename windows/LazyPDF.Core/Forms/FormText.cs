@@ -16,9 +16,11 @@ public static class FormText
 
     public static string BadRect => Loc.T("The field needs a rectangle with an area.");
 
-    public static string NoPage => Loc.T("The page is not in the document.");
+    public static string NoPage => Loc.T("The page is not in the file.");
 
     public static string NotAField => Loc.T("This field is not part of the form.");
+
+    public static string NotSigned => Loc.T("This signature field is not signed.");
 
     public static string NotAButton => Loc.T("Only a check box or radio button has an export value.");
 
@@ -30,7 +32,7 @@ public static class FormText
 
     public static string BadSize => Loc.T("The text size must be from 0 to 200 points.");
 
-    public static string BadColor => Loc.T("A colour is one, three or four numbers from 0 to 1.");
+    public static string BadColor => Loc.T("A color is one, three or four numbers from 0 to 1.");
 
     public static string NotAPushButton => Loc.T("Only a button can have an action.");
 

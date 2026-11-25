@@ -22,7 +22,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
     /// <summary>Some image was left at its size because a use of it could not be measured.</summary>
     public bool Partial { get; private set; }
 
-    public void Run()
+    public void Run(CancellationToken cancel)
     {
         var images = PdfGraph.Objects(document)
             .Select(o => o.Value as PdfStream)
@@ -32,6 +32,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         {
             foreach (var image in images)
             {
+                cancel.ThrowIfCancellationRequested();
                 if (TryBilevel(image)) Bilevel++;
             }
         }
@@ -45,6 +46,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         var unseen = Unseen(placed);
         foreach (var image in images)
         {
+            cancel.ThrowIfCancellationRequested();
             if (!placed.Found.TryGetValue(image, out var placement)) continue;
             if (unseen.Contains(image)) Partial |= Exceeds(placement);
             else if (TryShrink(image, placement)) Downsampled++;
@@ -138,10 +140,10 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
     // The data with every filter undone; null for an image codec, which the caller handles.
     private byte[]? Samples(PdfStream stream)
     {
-        var (filter, parameters, _) = document.DecodeSpec(stream);
         try
         {
-            var decoded = PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters);
+            var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
+            var decoded = PdfFilters.DecodeToCodecWhole(document.RawData(stream), filter, parameters, PdfFilters.DefaultMaxSize);
             return decoded.Codec is null ? decoded.Data : null;
         }
         catch (PdfReadException)
@@ -169,21 +171,23 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         bool replaced = Shrink(stream, width, height, newWidth, newHeight);
         if (replaced && soft is not null && maskWidth > 0 && maskHeight > 0 && _done.Add(soft))
         {
-            Shrink(soft, maskWidth, maskHeight, Math.Max(1, (int)((long)maskWidth * newWidth / width)), Math.Max(1, (int)((long)maskHeight * newHeight / height)));
+            Shrink(soft, maskWidth, maskHeight, Math.Max(1, (int)((long)maskWidth * newWidth / width)), Math.Max(1, (int)((long)maskHeight * newHeight / height)), mask: true);
         }
         return replaced;
     }
 
     private bool HasMatte(PdfDictionary image) => document.Resolve(image["SMask"]) is PdfStream soft && soft.Dictionary.ContainsKey("Matte");
 
-    private bool Shrink(PdfStream stream, int width, int height, int newWidth, int newHeight)
+    private bool Shrink(PdfStream stream, int width, int height, int newWidth, int newHeight, bool mask = false)
     {
         var dictionary = stream.Dictionary;
-        var (filter, parameters, _) = document.DecodeSpec(stream);
+        // A bilevel picture, JBIG2 coded or not, is kept as it is; decoding it first would only be thrown away.
+        if (document.Integer(dictionary, "BitsPerComponent") == 1) return false;
         PdfDecodedStream decoded;
         try
         {
-            decoded = PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters);
+            var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
+            decoded = PdfFilters.DecodeToCodecWhole(document.RawData(stream), filter, parameters, PdfFilters.DefaultMaxSize);
         }
         catch (PdfReadException)
         {
@@ -191,7 +195,8 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         }
         var (family, components) = ImageKit.Describe(document, dictionary["ColorSpace"]);
         long bpc = document.Integer(dictionary, "BitsPerComponent") ?? 8;
-        if (decoded.Codec is "DCTDecode" or "JPXDecode") return ShrinkCoded(stream, decoded, family, components, newWidth, newHeight);
+        // ShrinkCoded writes RGB, which a soft mask must not be, so a coded one stays as stored.
+        if (decoded.Codec is "DCTDecode" or "JPXDecode") return !mask && ShrinkCoded(stream, decoded, family, components, newWidth, newHeight);
         if (decoded.Codec is not null || bpc == 1 || bpc is not (2 or 4 or 8 or 16)) return false;
 
         byte[] pixels;
@@ -232,15 +237,17 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
     {
         var dictionary = stream.Dictionary;
         bool jpx = decoded.Codec == "JPXDecode";
-        if (dictionary.ContainsKey("Decode") || (!jpx && family is not (ImageFamily.Gray or ImageFamily.Rgb))) return false;
-        if (jpx && family is not (ImageFamily.Gray or ImageFamily.Rgb or ImageFamily.Unknown)) return false;
+        if (dictionary.ContainsKey("Decode") || document.Resolve(dictionary["Mask"]) is PdfArray || (!jpx && family is not (ImageFamily.Gray or ImageFamily.Rgb))) return false;
+        if (jpx && (family is not (ImageFamily.Gray or ImageFamily.Rgb or ImageFamily.Unknown) || !JpxImage.Readable(document, dictionary))) return false;
         if (codec is null)
         {
             NeedsCodec = true;
             return false;
         }
-        var image = codec.Decode(decoded.Data, decoded.Codec!);
-        if (image is null || (long)image.Width * image.Height > MaxPixels) return false;
+        var image = codec.Decode(decoded.Data, decoded.Codec!, jpx ? components : 0);
+        if (image is null || image.Width < 1 || image.Height < 1 || (long)image.Width * image.Height > MaxPixels) return false;
+        // The alpha is left out below, which only shows the picture right when it has none (see JpxImage.Opaque).
+        if (jpx && !JpxImage.Opaque(image)) return false;
         var rgb = new byte[image.Width * image.Height * 3];
         for (int i = 0, o = 0; i < image.Width * image.Height; i++)
         {

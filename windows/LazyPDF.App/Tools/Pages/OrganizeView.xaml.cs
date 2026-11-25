@@ -24,11 +24,12 @@ public sealed partial class OrganizeView : ToolPanel
     private readonly DispatcherTimer _sharpen;
     private List<(double Width, double Height)> _sizes = [];
     private bool _syncing;
+    private bool _stale;
 
     public OrganizeView()
     {
         InitializeComponent();
-        _ = new PageDrag(Thumbs, () => Cells, Selected, (pages, before) => MoveTo(pages, before), (paths, before) => _ = InsertFilesAsync(paths, before));
+        _ = new PageDrag(Thumbs, () => Tab, () => Cells, Selected, (pages, before) => MoveTo(pages, before), (paths, before) => _ = InsertFilesAsync(paths, before));
         // The pictures are made again at the new size once the slider stops, not at every step of it.
         _sharpen = new DispatcherTimer(TimeSpan.FromMilliseconds(200), DispatcherPriority.Background, Sharpen_Tick, Dispatcher) { IsEnabled = false };
         IsEnabledChanged += View_IsEnabledChanged;
@@ -46,7 +47,10 @@ public sealed partial class OrganizeView : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
+        Tab!.Drawn += Tab_Drawn;
+        _stale = !Tab.Drawing.IsCompleted;
         Build();
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
         Refresh();
         Dispatcher.BeginInvoke(() => Thumbs.Focus(), DispatcherPriority.Loaded);
     }
@@ -55,14 +59,38 @@ public sealed partial class OrganizeView : ToolPanel
     {
         _sharpen.Stop();
         Tab!.Changed -= Tab_Changed;
+        Tab!.Drawn -= Tab_Drawn;
         foreach (var cell in Cells) cell.Release();
         Thumbs.ItemsSource = null;
     }
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
+        bool hadFocus = Thumbs.IsKeyboardFocusWithin;
+        _stale = true;
         Build();
         Refresh();
+        if (hadFocus) Dispatcher.BeginInvoke(FocusSelected, DispatcherPriority.Loaded);
+    }
+
+    // Build replaces the items, which drops the tile that had the keyboard focus.
+    private void FocusSelected()
+    {
+        if (Tab is null) return;
+        if (Thumbs.SelectedItems.Count > 0)
+        {
+            int first = Thumbs.Items.IndexOf(Thumbs.SelectedItems[0]);
+            Thumbs.ScrollIntoView(Thumbs.SelectedItems[0]);
+            if (Thumbs.ItemContainerGenerator.ContainerFromIndex(first) is ListBoxItem item && item.Focus()) return;
+        }
+        Thumbs.Focus();
+    }
+
+    // The renderer draws the new pages only once the tab says so; a picture made before would be of the old ones.
+    private void Tab_Drawn(object? sender, EventArgs e)
+    {
+        _stale = false;
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
     }
 
     // The window disables its workspace while a job runs, which takes the keyboard focus with it and does not give it back.
@@ -91,7 +119,7 @@ public sealed partial class OrganizeView : ToolPanel
             cells.Add(new PageCell(i, labels[i], width, height, scale));
         }
         Thumbs.ItemsSource = cells;
-        Dispatcher.BeginInvoke(Lay, DispatcherPriority.Loaded);
+        Dispatcher.BeginInvoke(SizeTiles, DispatcherPriority.Loaded);
     }
 
     private (double Width, double Height, double Scale) Fit(int page)
@@ -102,13 +130,18 @@ public sealed partial class OrganizeView : ToolPanel
     }
 
     // The grid's cells are as large as the picture box plus room around it; the panel exists once the list has been laid out.
-    private void Lay()
+    private void SizeTiles()
     {
         if (PageDrag.Descendant<TilePanel>(Thumbs) is { } tiles)
         {
             tiles.CellWidth = BoxWidth + TilePadding;
             tiles.CellHeight = BoxHeight + LabelHeight;
         }
+    }
+
+    private void Lay()
+    {
+        SizeTiles();
         LoadVisible();
     }
 
@@ -136,7 +169,7 @@ public sealed partial class OrganizeView : ToolPanel
     // Tiles in view and a row either side get a picture; the rest let theirs go.
     private void LoadVisible()
     {
-        if (Tab?.Renderer is not WindowsPageRenderer renderer || PageDrag.Descendant<TilePanel>(Thumbs) is not { } tiles) return;
+        if (_stale || Tab?.Renderer is not WindowsPageRenderer renderer || PageDrag.Descendant<TilePanel>(Thumbs) is not { } tiles) return;
         var (first, last) = tiles.Window(1);
         double dpr = VisualTreeHelper.GetDpi(this).DpiScaleX;
         var cells = Cells;
@@ -184,6 +217,7 @@ public sealed partial class OrganizeView : ToolPanel
         int selected = Thumbs.SelectedItems.Count;
         int total = Cells.Count;
         bool any = selected > 0;
+        CopyTo.IsEnabled = any && Host?.OpenDocuments.Count > 1;
         TurnLeft.IsEnabled = TurnRight.IsEnabled = Remove.IsEnabled = Duplicate.IsEnabled = Extract.IsEnabled = Cut.IsEnabled = Copy.IsEnabled = any;
         Paste.IsEnabled = PageClipboard.Count > 0;
         SignedRow.Visibility = Tab.Document.IsSigned ? Visibility.Visible : Visibility.Collapsed;
@@ -219,6 +253,9 @@ public sealed partial class OrganizeView : ToolPanel
             case Key.X when modifiers == ModifierKeys.Control && any: Cut_Click(this, new RoutedEventArgs()); return true;
             case Key.C when modifiers == ModifierKeys.Control && any: Copy_Click(this, new RoutedEventArgs()); return true;
             case Key.V when modifiers == ModifierKeys.Control: Paste_Click(this, new RoutedEventArgs()); return true;
+            case Key.Left or Key.Right when modifiers == ModifierKeys.Control && any: Nudge(key == Key.Left ? -1 : 1); return true;
+            case Key.Left or Key.Right when modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && any: Turn(Selected(), key == Key.Left ? -90 : 90); return true;
+            case Key.D when modifiers == ModifierKeys.Control && any: Duplicate_Click(this, new RoutedEventArgs()); return true;
             case Key.Escape when modifiers == ModifierKeys.None: Done_Click(this, new RoutedEventArgs()); return true;
             default: return false;
         }
@@ -231,6 +268,30 @@ public sealed partial class OrganizeView : ToolPanel
         Viewer?.GoToPage(cell.Index);
         Done_Click(sender, e);
     }
+
+    private void Thumbs_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) => PageDrag.SelectUnder(Thumbs, e.OriginalSource);
+
+    private void Thumbs_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        bool any = Selected().Count > 0;
+        foreach (var item in Thumbs.ContextMenu.Items.OfType<MenuItem>()) item.IsEnabled = any;
+        CopyToTab.IsEnabled = any && Tab is { } tab && Host is { } host && PageTransferMenu.Fill(CopyToTab.Items, host, tab, Selected);
+    }
+
+    private void CopyTo_Click(object sender, RoutedEventArgs e)
+    {
+        if (Tab is not { } tab || Host is not { } host) return;
+        if (!PageTransferMenu.Fill(CopyToMenu.Items, host, tab, Selected))
+        {
+            CopyTo.IsEnabled = false;
+            host.SetStatus(Loc.T("No other file is open."));
+            return;
+        }
+        CopyToMenu.PlacementTarget = CopyTo;
+        CopyToMenu.IsOpen = true;
+    }
+
+    private void CopyTo_ContextMenuOpening(object sender, ContextMenuEventArgs e) => e.Handled = true;
 
     private void Done_Click(object sender, RoutedEventArgs e) => Closed?.Invoke(this, EventArgs.Empty);
 }

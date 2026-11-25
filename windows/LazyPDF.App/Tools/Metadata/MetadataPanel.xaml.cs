@@ -13,17 +13,29 @@ public sealed partial class MetadataPanel : ToolPanel
     private static readonly DateTime FirstDay = new(1900, 1, 1);
     private static readonly DateTime LastDay = new(2100, 1, 1);
 
+    private const int MaxCustom = 100;
+
+    private sealed class CustomRow
+    {
+        public string Name { get; set; } = "";
+        public string Value { get; set; } = "";
+    }
+
     private readonly ToolAction _action;
+    private readonly System.Collections.ObjectModel.ObservableCollection<CustomRow> _custom = [];
+    private string? _customProblem;
     private DocumentMetadata _metadata = null!;
     private ViewerSettings _view = null!;
     private bool _loading = true;
     private bool _changed;
     private Guid _editing;
+    private Guid _dropped;
 
     public MetadataPanel()
     {
         InitializeComponent();
-        _action = new ToolAction(Loc.T("Save properties"), "", () => _changed, RunAsync);
+        _action = new ToolAction(Loc.T("Save properties"), "", () => _customProblem is null && (_changed || _dropped == Tab?.Id), Save);
+        CustomList.ItemsSource = _custom;
         ModeBox.ItemsSource = MetadataEdit.Modes.Select(MetadataEdit.ModeName).ToList();
         LayoutBox.ItemsSource = MetadataEdit.Layouts.Select(MetadataEdit.LayoutName).ToList();
         SidesBox.ItemsSource = MetadataEdit.Sides.Select(MetadataEdit.SidesName).ToList();
@@ -42,21 +54,33 @@ public sealed partial class MetadataPanel : ToolPanel
 
     protected override void OnDetach() => Tab!.Changed -= Tab_Changed;
 
-    // Typed properties go into the file on Save, on leaving a field and on close, as one undo step each time.
-    // A signed file asks first, so there the caller is told to wait and leaving a field does not ask again.
+    // Typed properties go into the file on Save, on leaving the panel and on close, as one undo step each time.
+    // A signed file asks first, so there the caller is told to wait and leaving the panel does not ask again.
     public override bool HandIn()
     {
-        if (!_changed || Tab is null) return true;
+        if (Tab is null || !_changed || _customProblem is null) return Store(true);
+        Host!.ShowNotice(Loc.T("Properties not saved"), _customProblem);
+        return false;
+    }
+
+    private bool Store(bool notify)
+    {
+        if (Tab is null) return true;
+        if (!_changed || _customProblem is not null)
+        {
+            if (MetadataEdit.ShowDropNotice(notify, _dropped == Tab.Id)) ShowDropNotice();
+            return true;
+        }
         bool asks = AsksFirst;
-        _ = RunAsync();
+        _ = RunAsync(notify);
         return !asks;
     }
 
     private bool AsksFirst => Tab is { } tab && tab.Document.IsSigned && ChangeGate.Refusal(tab.Document) is null;
 
-    private void Fields_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    private void Fields_FocusWithinChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (e.OriginalSource is TextBox && !AsksFirst) HandIn();
+        if (e.NewValue is false && !AsksFirst) Store(false);
     }
 
     private void Tab_Changed(object? sender, EventArgs e) => Load(_changed);
@@ -80,6 +104,9 @@ public sealed partial class MetadataPanel : ToolPanel
         string maker = string.Join(" · ", new[] { _metadata.Creator, _metadata.Producer }.Where(s => !string.IsNullOrEmpty(s)));
         MakerText.Text = maker;
         MakerText.Visibility = maker.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        string? xmp = MetadataEdit.XmpNote(_metadata);
+        XmpText.Text = xmp ?? "";
+        XmpText.Visibility = xmp is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void ShowForm()
@@ -88,6 +115,8 @@ public sealed partial class MetadataPanel : ToolPanel
         AuthorBox.Text = _metadata.Author ?? "";
         SubjectBox.Text = _metadata.Subject ?? "";
         KeywordsBox.Text = _metadata.Keywords ?? "";
+        _custom.Clear();
+        foreach (var (name, value) in _metadata.Custom) _custom.Add(new CustomRow { Name = name, Value = value });
         CreatedPicker.SelectedDate = _metadata.Created?.LocalDateTime.Date;
         ModeBox.SelectedIndex = Array.IndexOf(MetadataEdit.Modes, _view.PageMode);
         LayoutBox.SelectedIndex = Array.IndexOf(MetadataEdit.Layouts, _view.PageLayout);
@@ -118,6 +147,7 @@ public sealed partial class MetadataPanel : ToolPanel
             Subject = Text(SubjectBox.Text),
             Keywords = Text(KeywordsBox.Text),
             Created = created,
+            Custom = MetadataEdit.Custom(CustomPairs()),
         };
         var view = _view with
         {
@@ -142,22 +172,86 @@ public sealed partial class MetadataPanel : ToolPanel
     {
         if (_loading || Tab is null) return;
         var (metadata, view) = ReadForm();
-        _changed = metadata != _metadata || view != _view;
+        // The form drops empty values, so the file's own are left out of the comparison.
+        var kept = _metadata with { Custom = MetadataEdit.Custom(_metadata.Custom.Select(pair => (pair.Key, pair.Value))) };
+        _changed = !MetadataEdit.Same(metadata, kept) || view != _view;
+        _customProblem = MetadataEdit.CustomProblem(CustomPairs(), _metadata.Custom);
+        CustomNote.Text = MetadataEdit.CustomNote(CustomPairs(), _metadata.Custom) ?? "";
+        AddCustomButton.IsEnabled = _custom.Count < MaxCustom;
         if (_changed) _editing = Tab.Id;
         RaiseActionChanged();
     }
 
-    private Task RunAsync()
+    private List<(string Name, string Value)> CustomPairs() => _custom.Select(row => (row.Name, row.Value)).ToList();
+
+    // A new row sets its text once, which is no edit; reading the form for each of thousands of rows would take minutes.
+    private void CustomName_Changed(object sender, TextChangedEventArgs e)
+    {
+        var box = (TextBox)sender;
+        var row = (CustomRow)box.DataContext;
+        if (row.Name == box.Text) return;
+        row.Name = box.Text;
+        Field_Changed(sender, e);
+    }
+
+    private void CustomValue_Changed(object sender, TextChangedEventArgs e)
+    {
+        var box = (TextBox)sender;
+        var row = (CustomRow)box.DataContext;
+        if (row.Value == box.Text) return;
+        row.Value = box.Text;
+        Field_Changed(sender, e);
+    }
+
+    private void AddCustom_Click(object sender, RoutedEventArgs e)
+    {
+        _custom.Add(new CustomRow());
+        Field_Changed(sender, e);
+    }
+
+    private void RemoveCustom_Click(object sender, RoutedEventArgs e)
+    {
+        _custom.Remove((CustomRow)((Button)sender).DataContext);
+        Field_Changed(sender, e);
+    }
+
+    // Leaving the panel may have saved the typed text already; the button then only shows the notice.
+    private Task Save()
+    {
+        if (_changed) return RunAsync(true);
+        ShowDropNotice();
+        return Task.CompletedTask;
+    }
+
+    private Task RunAsync(bool notify)
     {
         var tab = Tab!;
         var host = Host!;
         var (metadata, view) = ReadForm();
         bool touch = TouchModifiedBox.IsChecked == true;
+        bool drops = MetadataEdit.DropsText(_metadata, metadata);
         return ChangeGate.RunAsync(tab, host, _action.Text, () =>
         {
             MetadataEdit.Write(tab.Document, metadata, view, touch, DateTimeOffset.Now);
-            if (tab.Commit(Loc.T("Properties"))) host.SetStatus(Loc.T("Properties changed."));
+            if (tab.Commit(Loc.T("Properties")))
+            {
+                host.SetStatus(Loc.T("Properties changed."));
+                // Leaving the panel commits it, so a drop is remembered until the properties are saved.
+                if (drops)
+                {
+                    _dropped = tab.Id;
+                    RaiseActionChanged();
+                }
+                if (MetadataEdit.ShowDropNotice(notify, _dropped == tab.Id)) ShowDropNotice(host);
+            }
             return Task.CompletedTask;
         });
+    }
+
+    private void ShowDropNotice(IToolHost? host = null)
+    {
+        _dropped = Guid.Empty;
+        RaiseActionChanged();
+        (host ?? Host)?.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them."));
     }
 }

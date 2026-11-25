@@ -76,16 +76,16 @@ public static partial class AccessibilityChecker
         foreach (var child in table.Children)
         {
             string t = type(child);
+            if (TagRules.KidRule("Table", t) is not null) return false;
             if (t == "TR") rows.Add(child);
-            else if (t is "THead" or "TBody" or "TFoot")
+            else if (t != "Caption")
             {
                 foreach (var row in child.Children)
                 {
-                    if (type(row) != "TR") return false;
+                    if (TagRules.KidRule(t, type(row)) is not null) return false;
                     rows.Add(row);
                 }
             }
-            else if (t != "Caption") return false;
         }
         if (rows.Count == 0) return false;
 
@@ -93,7 +93,7 @@ public static partial class AccessibilityChecker
         foreach (var row in rows)
         {
             var cells = row.Children.ToList();
-            if (cells.Count == 0 || cells.Any(c => type(c) is not ("TH" or "TD"))) return false;
+            if (cells.Count == 0 || cells.Any(c => TagRules.KidRule("TR", type(c)) is not null)) return false;
             if (cells.Any(c => HasSpan(document, c))) return true;
             widths.Add(cells.Count);
         }
@@ -120,9 +120,10 @@ public static partial class AccessibilityChecker
         {
             bool ok = type(e) switch
             {
-                "L" => e.Children.All(c => type(c) is "LI" or "Caption"),
-                "LI" => type(e.Parent ?? e) == "L" && e.Children.All(c => type(c) is "Lbl" or "LBody" or "L"),
-                "Lbl" or "LBody" => e.Parent is { } parent && type(parent) == "LI",
+                "L" => e.Children.All(c => TagRules.KidRule("L", type(c)) is null),
+                "LI" => TagRules.ParentRule(e.Parent is { } up ? type(up) : "", "LI") is null
+                    && e.Children.All(c => TagRules.KidRule("LI", type(c)) is null || type(c) == "L"),
+                "Lbl" or "LBody" => e.Parent is { } parent && TagRules.ParentRule(type(parent), type(e)) is null,
                 _ => true,
             };
             if (!ok) found.Add(PageOf(e), e.Reference);
@@ -177,6 +178,7 @@ public static partial class AccessibilityChecker
 
         var found = new Found();
         int budget = 50_000;
+        var withContent = new Dictionary<StructElement, bool>();
         foreach (var page in document.Pages)
         {
             if (document.Array(page.Dictionary, "Annots") is not { } annots) continue;
@@ -186,15 +188,23 @@ public static partial class AccessibilityChecker
                 if (item is not PdfReference reference || document.Resolve(item) is not PdfDictionary annotation || document.Name(annotation, "Subtype") != "Link") continue;
                 bool described = !string.IsNullOrWhiteSpace(PdfText.Read(document, annotation, "Contents"));
                 if (!owners.TryGetValue(reference.Number, out var owner)) found.Add(page.Index, reference);
-                else if (!described && !HasText(owner) && !HasContent(owner)) found.Add(page.Index, reference);
+                else if (!described && !HasText(owner) && !HasContent(owner, withContent)) found.Add(page.Index, reference);
             }
         }
         foreach (var e in elements.Where(e => type(e) == "Link" && e.Kids.Count == 0 && !HasText(e))) found.Add(PageOf(e), e.Reference);
         return found.Count == 0 ? Pass(AccessibilityRule.Links) : Fail(AccessibilityRule.Links, found);
     }
 
-    private static bool HasContent(StructElement element) =>
-        element.Kids.OfType<StructContent>().Any() || Below(element).Any(e => e.Kids.OfType<StructContent>().Any());
+    // One element is named by many annotations at worst, and each walk is the whole subtree.
+    private static bool HasContent(StructElement element, Dictionary<StructElement, bool> known)
+    {
+        if (!known.TryGetValue(element, out bool has))
+        {
+            has = element.Kids.OfType<StructContent>().Any() || Below(element).Any(e => e.Kids.OfType<StructContent>().Any());
+            known[element] = has;
+        }
+        return has;
+    }
 
     // 7.18.1 and 7.18.4: a field has a name and a description.
     private static AccessibilityItem FormNames(PdfForm form)

@@ -91,7 +91,7 @@ final class ExportImages {
 
             let filter: PdfObject?, parameters: PdfObject?
             if let stream {
-                let spec = document.decodeSpec(stream)
+                let spec = try document.decodeSpec(stream, decoding: true)
                 filter = spec.filter
                 parameters = spec.parameters
             } else {
@@ -142,8 +142,10 @@ final class ExportImages {
             return try merge.fromSamples(dictionary, decoded.data)
         }
         guard let codec else { return nil }
+        let jpx = coder == "JPXDecode"
+        if jpx && !JpxImage.readable(document, dictionary) { return nil }
         try merge.charge(0)
-        guard let coded = codec.decode(decoded.data, coder) else { return nil }
+        guard let coded = codec.decode(decoded.data, coder, jpx ? JpxImage.components(document, dictionary) : 0) else { return nil }
         guard let size = ExportImageMerge.area(coded) else { throw PdfReadException(.unsupported, ExportText.tooLarge) }
         try merge.charge(size)
         if size > Self.maxPixels { throw PdfReadException(.unsupported, ExportText.tooLarge) }

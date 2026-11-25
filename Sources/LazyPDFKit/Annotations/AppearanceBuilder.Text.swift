@@ -35,10 +35,13 @@ extension AppearanceBuilder {
         let textBox = PdfRect(box.left + inset, box.bottom + inset, box.right - inset, box.top - inset)
         if textBox.isEmpty || paragraphs.isEmpty { return c }
 
-        let texts = paragraphs.flatMap { $0.map { $0.text } }
+        let runs = paragraphs.flatMap { $0 }
         var cache: [FontKey: PdfDrawFont] = [:]
         var names: [Int: String] = [:]
-        let lines = try TextLayout.layout(paragraphs, textBox.width, format) { try self.fontFor($0, texts, &cache) }
+        // A font only has to cover the runs that are set in it.
+        let lines = try TextLayout.layout(paragraphs, textBox.width, format) { f in
+            try self.fontFor(f, runs.filter { $0.format.family == f.family && $0.format.style == f.style }.map { $0.text }, &cache)
+        }
 
         c.w.save()
         c.w.rect(c.x(box.left), c.y(box.bottom), box.width, box.height).clip()
@@ -47,10 +50,11 @@ extension AppearanceBuilder {
             if y < box.bottom { break }
             let baseline = y - line.ascent
             var x: Double
+            // Left is the default alignment, and the default of a right-to-left paragraph is the right.
             switch a.alignment {
             case 1: x = textBox.left + (textBox.width - line.width) / 2
             case 2: x = textBox.right - line.width
-            default: x = textBox.left
+            default: x = line.rightToLeft ? textBox.right - line.width : textBox.left
             }
             for piece in line.pieces {
                 drawPiece(c, piece, x, baseline, &names)
@@ -73,7 +77,7 @@ extension AppearanceBuilder {
             names[piece.font.reference.number] = name
         }
         c.color(format.color, stroke: false)
-        c.w.beginText().font(name, format.size).moveText(c.x(x), c.y(baseline)).show(piece.font.encode(piece.text)).endText()
+        c.w.beginText().font(name, format.size).moveText(c.x(x), c.y(baseline)).showRun(piece.font, piece.text, piece.rightToLeft, format.size).endText()
         if format.underline {
             c.color(format.color, stroke: true)
             c.w.lineWidth(max(0.5, format.size / 18))
@@ -140,9 +144,10 @@ extension AppearanceBuilder {
     private func fontFor(_ format: TextFormat, _ texts: [String], _ cache: inout [FontKey: PdfDrawFont]) throws -> PdfDrawFont {
         let key = FontKey(family: format.family, style: format.style.rawValue)
         if let known = cache[key] { return known }
-        var font = try embedder.add(format.family, format.style, texts)
+        var font = try embedder.addCovering(format.family, format.style, texts)
         if font == nil { font = try embedder.add("Helvetica", format.style, texts) }
         guard let found = font else { throw InvalidOperationException(AnnotationText.noFont) }
+        undrawn.formUnion(found.missing)
         cache[key] = found
         return found
     }
@@ -171,7 +176,7 @@ extension AppearanceBuilder {
         let baseline = (h - (font.ascent + font.descent) * size) / 2
         let fontName = c.addFont(font.reference)
         c.color(color, stroke: false)
-        c.w.beginText().font(fontName, size).moveText((w - textWidth) / 2, baseline).show(font.encode(label)).endText()
+        c.w.beginText().font(fontName, size).moveText((w - textWidth) / 2, baseline).show(font, label, size).endText()
         return c
     }
 

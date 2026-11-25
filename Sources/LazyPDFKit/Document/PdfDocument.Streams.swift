@@ -18,6 +18,13 @@ extension PdfDocument {
         return security.decryptStream(stream.number, stream.generation, raw, cryptView(stream.dictionary))
     }
 
+    /// The size of `rawData` without copying it.
+    func rawLength(_ stream: PdfStream) -> Int {
+        if let memory = stream.data { return memory.count }
+        if stream.dataOffset < 0 || stream.dataOffset > source.count { return 0 }
+        return streamLength(stream, stream.dataOffset)
+    }
+
     /// The data of `stream` decrypted and decoded, with /Length, /Filter and /DecodeParms resolved first.
     /// Throws `PdfReadException` for a filter that is not supported or data that does not decode.
     public func data(_ stream: PdfStream) throws -> [UInt8] {
@@ -25,7 +32,7 @@ extension PdfDocument {
     }
 
     func data(_ stream: PdfStream, _ maxSize: Int, strict: Bool = false) throws -> [UInt8] {
-        let (filter, parameters, _) = decodeSpec(stream)
+        let (filter, parameters, _) = try decodeSpec(stream, decoding: true, maxSize)
         return try PdfFilters.decode(rawData(stream), filter, parameters, maxSize, strict: strict)
     }
 
@@ -53,6 +60,69 @@ extension PdfDocument {
             return (rest, parameters, true)
         }
         return (filter, parameters, false)
+    }
+
+    /// As `decodeSpec`, with a /JBIG2Globals stream coming with its decoded data in memory, which is what the filter
+    /// reads; a caller that writes the parameters back uses the other and gets the stream as the file has it.
+    /// Throws for globals that do not decode.
+    func decodeSpec(_ stream: PdfStream, decoding: Bool, _ maxSize: Int = PdfFilters.defaultMaxSize) throws -> (filter: PdfObject?, parameters: PdfObject?, crypt: Bool) {
+        var spec = decodeSpec(stream)
+        if decoding { spec.parameters = try forJbig2(spec.filter, spec.parameters, stream.dictionary, maxSize) }
+        return spec
+    }
+
+    // The JBIG2 stage of an image gets what it needs besides its own parameters: the decoded globals, and the size of the image,
+    // which the stage fits its page to. A stream with no such stage is left alone, whatever its parameters hold.
+    private func forJbig2(_ filter: PdfObject?, _ parameters: PdfObject?, _ image: PdfDictionary, _ maxSize: Int) throws -> PdfObject? {
+        let names: [PdfObject]
+        switch filter {
+        case let name as PdfName: names = [name]
+        case let array as PdfArray: names = array.items
+        default: names = []
+        }
+        guard let at = names.firstIndex(where: { ($0 as? PdfName)?.value == "JBIG2Decode" }) else { return parameters }
+        var each: [PdfObject] = []
+        switch parameters {
+        case let array as PdfArray: each = array.items
+        case let single as PdfDictionary: each = [single]
+        default: break
+        }
+        while each.count <= at { each.append(PdfNull.instance) }
+        let stage = (each[at] as? PdfDictionary)?.copy() ?? PdfDictionary()
+        if let globals = stage["JBIG2Globals"] as? PdfStream {
+            stage["JBIG2Globals"] = PdfStream(PdfDictionary(), data: try globalsData(globals, maxSize))
+        }
+        let width = integer(image, "Width") ?? 0, height = integer(image, "Height") ?? 0
+        if width >= 1 && width <= Int(Int32.max) && height >= 1 && height <= Int(Int32.max) {
+            stage["Width"] = PdfNumber(width)
+            stage["Height"] = PdfNumber(height)
+        }
+        each[at] = stage
+        return PdfArray(each)
+    }
+
+    /// The most a globals stream may expand to; they hold symbols, not pictures.
+    private static let maxGlobals = 32 << 20
+
+    /// The data of a globals stream. Its own filters are read without any globals of theirs (a JBIG2 stage on it is damage),
+    /// so that streams that name each other cannot send this round in circles.
+    private func globalsData(_ globals: PdfStream, _ maxSize: Int) throws -> [UInt8] {
+        if let known = globalsData, globalsOf === globals, sameBuffer(globalsSource, globals.data), known.count <= maxSize { return known }
+        let (filter, parameters, _) = decodeSpec(globals)
+        if PdfFilters.uses(filter, "JBIG2Decode") { throw PdfReadException.damaged("A JBIG2 globals stream is JBIG2 coded.") }
+        let data = try PdfFilters.decode(rawData(globals), filter, parameters, Swift.min(maxSize, Self.maxGlobals), strict: false)
+        globalsOf = globals
+        globalsSource = globals.data
+        globalsData = data
+        return data
+    }
+
+    /// Whether two arrays are one and the same storage: the cache keeps its own, so a change to the stream's data
+    /// makes a copy and shows here.
+    private func sameBuffer(_ a: [UInt8]?, _ b: [UInt8]?) -> Bool {
+        guard let a, let b else { return a == nil && b == nil }
+        if a.isEmpty || b.isEmpty { return a.isEmpty && b.isEmpty }
+        return a.withUnsafeBufferPointer { x in b.withUnsafeBufferPointer { y in x.baseAddress == y.baseAddress && x.count == y.count } }
     }
 
     private func streamLength(_ stream: PdfStream, _ start: Int) -> Int {

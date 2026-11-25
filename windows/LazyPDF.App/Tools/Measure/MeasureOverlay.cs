@@ -21,12 +21,12 @@ internal sealed class MeasureOverlay(IDocumentViewer viewer, MeasureTool tool)
         _drawn.Clear();
     }
 
-    public void Draw(IReadOnlyList<MeasureItem> items, MeasureScale scale)
+    public void Draw(IReadOnlyList<MeasureItem> items, Func<int, MeasureScale> scaleOf)
     {
         Clear();
         foreach (var item in items)
         {
-            Shape(item.Page, item.Points, item.Kind != MeasureKind.Distance, dashed: false, item.Kind == MeasureKind.Area, item.Value(scale), item.Middle);
+            Shape(item.Page, item.Points, item.Kind != MeasureKind.Distance, dashed: false, item.Kind == MeasureKind.Area, item.Value(scaleOf(item.Page)), item.Middle);
         }
 
         if (tool.Page >= 0 && tool.Points.Count > 0)
@@ -35,7 +35,7 @@ internal sealed class MeasureOverlay(IDocumentViewer viewer, MeasureTool tool)
             bool live = tool.HoverPage == tool.Page && tool.Hover is not null;
             if (live) points.Add(tool.Hover!.Value);
             bool closed = tool.Kind != MeasureKind.Distance && points.Count > 2;
-            string? text = points.Count > 1 ? new MeasureItem(tool.Kind, tool.Page, points).Value(scale) : null;
+            string? text = points.Count > 1 ? new MeasureItem(tool.Kind, tool.Page, points).Value(scaleOf(tool.Page)) : null;
             Shape(tool.Page, points, closed, dashed: live, closed && tool.Kind == MeasureKind.Area, text, points[^1]);
         }
         if (tool.Snapped && tool.Hover is { } at) Marker(tool.HoverPage, at);

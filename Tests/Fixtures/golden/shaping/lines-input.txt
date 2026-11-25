@@ -1,0 +1,16 @@
+# line <base> <text> shapes one line; wrap <base> <width> <text> breaks a text. base is auto, 0 or 1.
+line auto abc def
+line auto אבג
+line auto שלום עולם
+line auto אב abc 12 גד
+line auto אב 12 גד
+line auto אב (גד) [הו]
+line auto abc <אב> 12
+line auto abc אב, גד.
+line 1 abc!
+line 0 !אב
+line auto אבְ בּ
+line auto لا ب
+wrap auto 40 אבג דהו abc זחט יכל מנס
+wrap 1 22 abc def ghi
+wrap 0 45 abc אבג דהו זחט

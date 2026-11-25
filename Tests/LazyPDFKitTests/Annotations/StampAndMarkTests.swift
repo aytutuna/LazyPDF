@@ -40,6 +40,21 @@ final class StampAndMarkTests: XCTestCase {
         XCTAssertEqual(stamp.color, [0, 0.4, 0])
     }
 
+    func test_customStampNameKeepsEveryLetterThroughASave() throws {
+        let (document, writer, page) = try start(try AnnotationFixtures.ArialSource())
+        try writer.addStamp(page, PdfRect(100, 600, 360, 660), "ŞİFRELİ GİZLİ")
+        try writer.addStamp(page, PdfRect(100, 500, 360, 560), "Approved")
+        let saved = try document.saveRewrite()
+        let raw = Latin1.string(saved)
+        XCTAssertTrue(raw.contains("#C5#9E"))
+        XCTAssertFalse(raw.contains("#5E"))
+        XCTAssertTrue(raw.contains("/Approved"))
+        let reopened = try PdfDocument.open(saved)
+        let stamps = PdfAnnotations.read(reopened, reopened.pages[0])
+        XCTAssertEqual(stamps.map(\.iconName), ["ŞİFRELİ GİZLİ", "Approved"])
+        XCTAssertEqual(AnnotationText.stampLabel(try XCTUnwrap(stamps[0].iconName)), "ŞİFRELİ GİZLİ")
+    }
+
     func test_imageStampPaintsItsPicture() throws {
         let (document, writer, page) = try start()
         let stamp = try writer.addImageStamp(page, PdfRect(100, 600, 180, 660), 2, 2, rgba)

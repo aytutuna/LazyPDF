@@ -14,6 +14,15 @@ public sealed class AttachmentFilesTests
     [InlineData("help.chm")]
     [InlineData("link.url")]
     [InlineData("setup.appref-ms")]
+    [InlineData("budget.xlsm")]
+    [InlineData("disk.ISO")]
+    [InlineData("run.py")]
+    [InlineData("search.search-ms")]
+    [InlineData("update.msix")]
+    [InlineData("notes.one")]
+    [InlineData("query.iqy")]
+    [InlineData("connect.RDP")]
+    [InlineData("page.mhtml")]
     [InlineData(@"..\..\tools\run.bat")]
     public void ProgramsAreRecognisedWhateverTheyEndWith(string name) =>
         Assert.True(AttachmentFiles.CouldRun(AttachmentFiles.SafeName(name)));
@@ -24,6 +33,21 @@ public sealed class AttachmentFilesTests
     [InlineData("notes")]
     public void DocumentsAreNot(string name) =>
         Assert.False(AttachmentFiles.CouldRun(AttachmentFiles.SafeName(name)));
+
+    [Theory]
+    [InlineData("NUL", "_NUL")]
+    [InlineData("con.txt", "_con.txt")]
+    [InlineData("COM1.pdf", "_COM1.pdf")]
+    [InlineData("LPT9", "_LPT9")]
+    [InlineData("console.txt", "console.txt")]
+    [InlineData("NULL.txt", "NULL.txt")]
+    [InlineData("com10.txt", "com10.txt")]
+    [InlineData("CON .txt", "_CON .txt")]
+    [InlineData("COM¹.txt", "_COM¹.txt")]
+    [InlineData("LPT³", "_LPT³")]
+    [InlineData("COM11.txt", "COM11.txt")]
+    public void ReservedDeviceNamesGetAPrefix(string name, string expected) =>
+        Assert.Equal(expected, AttachmentFiles.SafeName(name));
 
     [Fact]
     public void TheNameIsTheOneWindowsWillWrite()

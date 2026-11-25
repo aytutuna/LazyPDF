@@ -53,11 +53,13 @@ public sealed partial class FormsPanel : ToolPanel
 
     private bool Designing => DesignMode.IsChecked == true;
 
+    private readonly FillMerge _fills = new();
+
     private PdfForm Form => _form ??= FormEdits.Read(Tab!, _fonts);
 
     protected override void OnAttach()
     {
-        _fill = new FillLayer(Viewer!, Enter, Choose, ResetFields, name => Host!.OpenSigning(name)) { Highlight = HighlightToggle.IsChecked == true };
+        _fill = new FillLayer(Viewer!, Enter, Choose, ResetFields, name => Host!.OpenSigning(name), text => Host!.ShowNotice(Loc.T("This button does nothing here"), text)) { Highlight = HighlightToggle.IsChecked == true };
         _frames = new FieldFrames(Viewer!);
         _tool = new FieldTool(this);
         Tab!.Changed += Tab_Changed;
@@ -65,9 +67,12 @@ public sealed partial class FormsPanel : ToolPanel
         Viewer.PageChanged += Viewer_PageChanged;
         Viewer.ModeChanged += Viewer_ModeChanged;
         InputManager.Current.PreProcessInput += Input_PreProcess;
+        Viewer.View.PreviewKeyDown += View_PreviewKeyDown;
         _selected = null;
+        _picked = [];
         _found = [];
         _signedOk = false;
+        _fills.Forget();
         _working = false;
         FoundPane.Visibility = Visibility.Collapsed;
         Reload();
@@ -82,15 +87,17 @@ public sealed partial class FormsPanel : ToolPanel
     protected override void OnDetach()
     {
         InputManager.Current.PreProcessInput -= Input_PreProcess;
-        _fill!.Flush();
+        Viewer!.View.PreviewKeyDown -= View_PreviewKeyDown;
         Tab!.Changed -= Tab_Changed;
         Viewer!.ViewChanged -= Viewer_ViewChanged;
         Viewer.PageChanged -= Viewer_PageChanged;
         Viewer.ModeChanged -= Viewer_ModeChanged;
-        _fill.Clear();
+        _fill!.Clear();
         _frames!.Clear();
         if (ReferenceEquals(Viewer.PointerTool, _tool)) Viewer.PointerTool = null;
+        _loading = true;
         FieldList.ItemsSource = null;
+        _loading = false;
         FoundList.ItemsSource = null;
         _rows = [];
         _fill = null;
@@ -150,6 +157,7 @@ public sealed partial class FormsPanel : ToolPanel
         if (Designing)
         {
             _fill!.Clear();
+            DropGone(form);
             ShowDesign(form);
         }
         else
@@ -249,16 +257,42 @@ public sealed partial class FormsPanel : ToolPanel
     {
         if (Tab is null) return;
         _selected = null;
+        _picked = [];
         Reload();
     }
 
     private void FieldList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_loading || FieldList.SelectedItem is not FieldRow row || Form.FindAll(row.Name).ElementAtOrDefault(row.Ordinal)?.Widgets.ElementAtOrDefault(row.Index) is not { PageIndex: >= 0 } widget) return;
+        if (_loading) return;
+        if (Designing && FieldList.SelectedItems.Count == 0)
+        {
+            Select(null, 0);
+            return;
+        }
+        var newRows = e.AddedItems.OfType<FieldRow>().ToList();
+        if (Designing && newRows.Count == 0)
+        {
+            // A row let go keeps the widgets picked for the rows still selected, and the view stays.
+            var left = FieldList.SelectedItems.OfType<FieldRow>().ToList();
+            Pick([.. _picked.Where(k => left.Any(r => r.Name == k.Name && r.Ordinal == k.Ordinal))]);
+            return;
+        }
+        if ((newRows.LastOrDefault() ?? FieldList.SelectedItem as FieldRow) is not { } row
+            || Form.FindAll(row.Name).ElementAtOrDefault(row.Ordinal)?.Widgets.ElementAtOrDefault(row.Index) is not { PageIndex: >= 0 } widget) return;
         var d = Viewer!.Geometry(widget.PageIndex).ToDisplay(widget.Rect);
         Viewer.GoToPage(widget.PageIndex);
         Viewer.Reveal(widget.PageIndex, new Rect(d.X, d.Y, d.Width, d.Height));
-        if (Designing) Select(row.Name, row.Index, row.Ordinal);
+        if (Designing)
+        {
+            var rows = FieldList.SelectedItems.OfType<FieldRow>().ToList();
+            var form = Form;
+            // A row stands for a whole field, so widgets already picked keep their own index.
+            var kept = _picked.Where(k => rows.Any(r => r.Name == k.Name && r.Ordinal == k.Ordinal)
+                && form.FindAll(k.Name).ElementAtOrDefault(k.Ordinal)?.Widgets.ElementAtOrDefault(k.Index)?.PageIndex == widget.PageIndex).ToList();
+            var added = newRows.Where(r => r.Page == row.Page &&!kept.Any(k => k.Name == r.Name && k.Ordinal == r.Ordinal))
+                .Select(r => (r.Name, r.Index, r.Ordinal));
+            Pick([.. kept, .. added]);
+        }
         else Dispatcher.InvokeAsync(() => _fill?.Focus(row.Name, row.Index), DispatcherPriority.Loaded);
     }
 
@@ -272,18 +306,18 @@ public sealed partial class FormsPanel : ToolPanel
             Host!.ShowProblem(new Problem(Loc.T("Value not accepted"), message));
             return false;
         }
-        return Fill(f => f.SetValue(name, text));
+        return Fill(name, f => f.SetValue(name, text));
     }
 
-    private bool Choose(string name, IReadOnlyList<string> picked) => Tab is not null && Fill(f => f.SetChoices(name, picked));
+    private bool Choose(string name, IReadOnlyList<string> picked) => Tab is not null && Fill(name, f => f.SetChoices(name, picked));
 
     private void ResetFields(IReadOnlyList<string>? names) =>
         Edit(Loc.T("Reset form"), form => names is null ? form.Reset() : names.Sum(name => form.Reset(name)), () => ResetFields(names));
 
-    private bool Fill(Func<PdfForm, FormFillResult> fill)
+    private bool Fill(string name, Func<PdfForm, FormFillResult> fill)
     {
         bool xfa = Form.Xfa == XfaKind.Static;
-        if (Edit(Loc.T("Fill form field"), fill, () => Fill(fill)) is not { } result) return false;
+        if (Edit(Loc.T("Fill form"), fill, () => Fill(name, fill), merge: true) is not { } result) return false;
         if (result.Rejected.Count > 0)
         {
             Host!.ShowProblem(new Problem(Loc.T("Value not accepted"), Loc.T("This field does not take that value. Check it and try again.")));
@@ -295,10 +329,10 @@ public sealed partial class FormsPanel : ToolPanel
     }
 
     // One undoable step. Nothing happens while an edit runs, or before the person has agreed to change a signed file.
-    private T? Edit<T>(string label, Func<PdfForm, T> edit, Action? again = null)
+    private T? Edit<T>(string label, Func<PdfForm, T> edit, Action? again = null, bool merge = false)
     {
         if (_working || Signed(again)) return default;
-        return Guard(() => FormEdits.Apply(Tab!, _fonts, label, edit));
+        return Guard(() => merge ? _fills.Apply(Tab!, _fonts, label, edit) : FormEdits.Apply(Tab!, _fonts, label, edit));
     }
 
     // A change to a signed file leaves the signatures not covering what is now in it, and a certified file may forbid the change.

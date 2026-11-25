@@ -12,8 +12,8 @@ enum SignatureKeyKind {
     case ec
 }
 
-struct SignatureCryptoException: Error {
-    let message: String
+public struct SignatureCryptoException: Error {
+    public let message: String
 }
 
 enum SignatureCrypto {

@@ -1,0 +1,90 @@
+#if os(iOS)
+import UIKit
+import LazyPDFKit
+import LazyPDFApp
+
+/// The system print sheet for the document as it is now.
+@MainActor
+public enum IOSSystemPrint {
+    /// What is handed to the print sheet. UIKit cannot read a file locked with a password or for certificate recipients,
+    /// so those go as the engine's unlocked copy; the rest as the session has it.
+    public static func item(_ session: PdfEditSession) throws -> Data {
+        guard session.document.security != nil else { return Data(session.current) }
+        return Data(try session.document.saveRewrite(PdfSaveOptions()))
+    }
+
+    public static func info(name: String, layout: PrintLayout = PrintLayout()) -> UIPrintInfo {
+        let info = UIPrintInfo(dictionary: nil)
+        info.jobName = name
+        info.outputType = .general
+        switch layout.duplex {
+        case .oneSided: info.duplex = .none
+        case .shortEdge: info.duplex = .shortEdge
+        case nil: break
+        }
+        return info
+    }
+
+    // Regions where Letter is the usual office paper.
+    static let letterRegions: Set<String> = ["US", "CA", "MX", "PH", "CL", "CO", "VE", "CR", "GT", "DO", "PA", "SV", "NI", "HN", "PR", "BO", "PE"]
+
+    /// The sheet size a layout is made for: the sheet UIKit prints on is chosen later and takes the pages scaled to fit.
+    static var paper: (width: Double, height: Double) {
+        letterRegions.contains(Locale.current.region?.identifier ?? "") ? (612, 792) : (595, 842)
+    }
+
+    /// Shows the sheet; `done` runs when it closes, with whether anything was printed. The window's problem and notice
+    /// bars get what keeps it from opening and what the layout had to leave out. The sheets of a layout are made under
+    /// the busy bar, where they can be canceled.
+    public static func present(_ session: PdfEditSession, name: String, layout: PrintLayout = PrintLayout(), vm: AppViewModel,
+                               done: ((Bool) -> Void)? = nil) async {
+        let problem = vm.showProblem
+        let data: Data
+        do {
+            if layout.isPlain {
+                data = try item(session)
+            } else {
+                if let wrong = layout.rangeError(count: session.document.pages.count) {
+                    problem(Problem(L10n.t("Not printed"), wrong))
+                    return
+                }
+                guard !layout.isEmpty(count: session.document.pages.count) else {
+                    problem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
+                    return
+                }
+                if let wrong = layout.validate(sheetWidth: paper.width, sheetHeight: paper.height) {
+                    problem(Problem(L10n.t("Not printed"), wrong))
+                    return
+                }
+                let source = session.document
+                var made: PrintSheets?
+                var failure: Error?
+                try await vm.runBusy(L10n.t("Making the pages to print")) { token in
+                    do {
+                        made = try await layout.fileInBackground(source, sheetWidth: paper.width, sheetHeight: paper.height, token: token)
+                    } catch {
+                        failure = error
+                        throw error
+                    }
+                }
+                // A cancel is not a failure to report.
+                if failure is CancellationError { return }
+                guard let sheets = made else { throw failure ?? CancellationError() }
+                data = Data(sheets.bytes)
+                if let note = PrintLayout.droppedNote(sheets.dropped) { vm.showNotice(L10n.t("Left off the sheets"), note) }
+            }
+        } catch {
+            problem(Problem(L10n.t("Not printed"), L10n.t("A copy of {0} could not be made for printing. Check that the disk has room.", name)))
+            return
+        }
+        guard UIPrintInteractionController.canPrint(data) else {
+            problem(Problem(L10n.t("Not printed"), L10n.t("The printer did not take {0}. Check that it is on and has no error, then try again.", name)))
+            return
+        }
+        let controller = UIPrintInteractionController.shared
+        controller.printInfo = info(name: name, layout: layout)
+        controller.printingItem = data
+        controller.present(animated: true) { _, printed, _ in done?(printed) }
+    }
+}
+#endif

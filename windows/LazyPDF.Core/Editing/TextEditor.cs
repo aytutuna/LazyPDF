@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace LazyPDF.Core;
 
 /// <summary>What to change about the look of some text; a null member is left as it is.</summary>
@@ -20,12 +22,39 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
 
     private ShowPatch PatchOf(EditGlyph g) => batch.Patch(PlaceOf(g), g.Op) ?? throw new EditConflictException(EditingText.SharedForm);
 
-    private static void Check(IEnumerable<EditGlyph> glyphs)
+    // With `whole`, glyphs under /ActualText pass: the caller has taken in every glyph of their span.
+    private static void Check(IEnumerable<EditGlyph> glyphs, bool whole = false)
     {
         foreach (var g in glyphs)
         {
             if (g.Font.IsVertical) throw new EditConflictException(EditingText.Vertical);
-            if (g.HasActualText) throw new EditConflictException(EditingText.ActualText);
+            if (g.HasActualText && !(whole && g.Span is not null)) throw new EditConflictException(EditingText.ActualText);
+        }
+    }
+
+    // A span's text is one character of the page text, so its glyphs are edited together; the glyph that carries the text comes first.
+    private static List<EditGlyph> Whole(IEnumerable<EditGlyph> glyphs) =>
+        [.. glyphs.SelectMany(g => g.Span is { } span ? span.Members.Prepend(g) : [g]).Distinct()];
+
+    // New text goes where the old was, which is inside the span, so the span stops claiming it. The marked content stays
+    // with what it carried besides the text (a structure tree points at its MCID), and an inner span goes with the outer one.
+    private void Unwrap(IEnumerable<EditGlyph> glyphs)
+    {
+        foreach (var span in glyphs.SelectMany(g => g.Inner.Prepend(g.Span!)).OfType<ActualSpan>().Distinct())
+        {
+            var place = new Place(span.Unit, span.Visit);
+            var op = span.Unit.Operations[span.Op];
+            var rest = span.Marked.Properties!.Copy();
+            rest.Remove("ActualText");
+            var writer = new ContentWriter();
+            if (rest.Count == 0) writer.Op("BMC", [op.Operands[0]]);
+            else if (op.Operands[^1] is PdfName)
+            {
+                string name = batch.AddResource(place, "Properties", rest) ?? throw new EditConflictException(EditingText.SharedForm);
+                writer.Op("BDC", [op.Operands[0], new PdfName(name)]);
+            }
+            else writer.Op("BDC", [op.Operands[0], rest]);
+            if (!batch.ReplaceOperation(place, span.Op, Encoding.Latin1.GetString(writer.ToArray()).TrimEnd())) throw new EditConflictException(EditingText.SharedForm);
         }
     }
 
@@ -36,7 +65,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     {
         var all = glyphs.SelectMany(g => g.Twins.Prepend(g)).ToList();
         foreach (var g in all) PatchOf(g).Cut(g.Element, g.Offset, g.Offset + g.Length);
-        var flows = flow is null ? [] : flow.Twins.Prepend(flow).Except(unplaced ?? []).ToList();
+        var flows = flow is null ? [] : flow.Twins.Prepend(flow).Concat(flow.Span?.Members ?? []).Except(unplaced ?? []).ToList();
         foreach (var group in Runs([.. all.Where(g => !flows.Any(f => SameRun(f, g)))]))
         {
             var first = group[0];
@@ -46,36 +75,55 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         }
     }
 
+    // Glyphs sit in the stream in display order, which for right-to-left characters is not the order of the characters; a range
+    // with such characters is taken left to right so that its first glyph is where the range starts on the page.
+    private List<EditGlyph> Ordered(TextRange range) => Ordered(range, model.GlyphsIn(range));
+
+    private List<EditGlyph> Ordered(TextRange range, List<EditGlyph> glyphs)
+    {
+        var chars = model.Text.Chars;
+        bool rtl = false;
+        for (int i = Math.Max(range.Start, 0); i < Math.Min(range.End, model.CharGlyphs.Length) && !rtl; i++) rtl = model.CharGlyphs[i] is not null && chars[i].IsRtl;
+        if (!rtl || glyphs.Count == 0) return glyphs;
+        var (ux, uy) = AnchorOf(glyphs).Direction;
+        return [.. glyphs.OrderBy(g => g.Origin.X * ux + g.Origin.Y * uy)];
+    }
+
     private static EditGlyph AnchorOf(IReadOnlyList<EditGlyph> glyphs) =>
         glyphs.FirstOrDefault(g => g.Text.Any(c => !char.IsWhiteSpace(c))) ?? glyphs[0];
 
     /// <summary>Replaces the glyphs of a range of characters with <paramref name="text"/> in their font, at the place of the first of them.</summary>
     public void Replace(TextRange range, string text, TextStyleChange? style = null)
     {
-        var glyphs = model.GlyphsIn(range);
+        var logical = Whole(model.GlyphsIn(range));
+        var glyphs = Ordered(range, logical);
         if (glyphs.Count == 0) throw new EditConflictException(EditingText.NoText);
-        Check(glyphs);
-        if (style is null && StyleGroups(glyphs) is { Count: > 1 } groups)
+        Check(glyphs, true);
+        Unwrap(glyphs);
+        if (style is null && StyleGroups(logical) is { Count: > 1 } groups)
         {
             ReplaceByStyle(range, glyphs, groups, text);
             return;
         }
         var anchor = AnchorOf(glyphs);
-        var pieces = Pieces(PlaceOf(glyphs[0]), glyphs[0], anchor, text, style, out var wrap);
+        bool? rtl = LineRtl(FirstChar(range));
+        var pieces = Pieces(PlaceOf(glyphs[0]), glyphs[0], anchor, text, style, rtl, out var wrap);
         double newWidth = pieces.Sum(p => p.Advance) * anchor.UnitX;
         double shift = AlignmentShift(range, glyphs, newWidth);
         PutText(glyphs[0], false, pieces, wrap, shift);
-        var unplaced = PutTwins(glyphs[0], anchor, pieces, text, style, wrap, shift);
+        var unplaced = PutTwins(glyphs[0], anchor, pieces, text, style, rtl, wrap, shift);
         CutAll(glyphs, glyphs[0], unplaced, shift + newWidth - Extent(glyphs));
         CheckRoom(range, glyphs, newWidth);
     }
 
     // A word set partly in another size, font or colour (a drop cap, a changed letter) takes its new letters in the same parts.
+    // The groups are in logical order, like the new text; each is put at its own left edge on the page.
     private void ReplaceByStyle(TextRange range, List<EditGlyph> glyphs, List<List<EditGlyph>> groups, string text)
     {
         var runes = text.EnumerateRunes().Select(r => r.ToString()).ToList();
         int next = 0;
         double width = 0;
+        bool? rtl = LineRtl(FirstChar(range));
         for (int i = 0; i < groups.Count; i++)
         {
             var group = groups[i];
@@ -87,10 +135,11 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
                 CutAll(group, null);
                 continue;
             }
+            group = Ordered(range, group);
             var anchor = AnchorOf(group);
-            var pieces = builder.Build(PlaceOf(group[0]), anchor, part);
+            var pieces = TextBuilder.Shape(builder.Build(PlaceOf(group[0]), anchor, part), anchor, null, rtl);
             PutText(group[0], false, pieces, default, 0);
-            var unplaced = PutTwins(group[0], anchor, pieces, part, null, default, 0);
+            var unplaced = PutTwins(group[0], anchor, pieces, part, null, rtl, default, 0);
             double groupWidth = pieces.Sum(p => p.Advance) * anchor.UnitX;
             CutAll(group, group[0], unplaced, groupWidth - Extent(group));
             width += groupWidth;
@@ -115,25 +164,36 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     {
         var chars = model.Text.Chars;
         EditGlyph? glyph = null;
+        int found = -1;
         bool after = false;
+        if (index < 0) throw new EditConflictException(EditingText.NoText);
         for (int i = Math.Min(index, chars.Count - 1); i >= 0 && glyph is null; i--)
         {
             glyph = model.CharGlyphs[i];
-            after = i < index;
+            if (glyph is not null)
+            {
+                after = i < index;
+                found = i;
+            }
         }
-        for (int i = index; i < chars.Count && glyph is null; i++) glyph = model.CharGlyphs[i];
+        for (int i = index; i < chars.Count && glyph is null; i++)
+        {
+            glyph = model.CharGlyphs[i];
+            found = i;
+        }
         if (glyph is null) throw new EditConflictException(EditingText.NoText);
         Check([glyph]);
-        var pieces = Pieces(PlaceOf(glyph), glyph, glyph, text, null, out var wrap);
+        var pieces = Pieces(PlaceOf(glyph), glyph, glyph, text, null, LineRtl(found), out var wrap);
         PutText(glyph, after, pieces, wrap, 0);
     }
 
     // Removes the glyphs and moves what follows them in the same string back to where it was.
     public void Delete(TextRange range)
     {
-        var glyphs = model.GlyphsIn(range);
+        var glyphs = Ordered(range, Whole(model.GlyphsIn(range)));
         if (glyphs.Count == 0) throw new EditConflictException(EditingText.NoText);
-        Check(glyphs);
+        Check(glyphs, true);
+        Unwrap(glyphs);
         CutAll(glyphs, null);
     }
 
@@ -151,7 +211,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     }
 
     // A twin is shown in a font and a stream of its own, so the codes of the anchor's font mean nothing to it: its text is built again for it.
-    private List<EditGlyph> PutTwins(EditGlyph glyph, EditGlyph anchor, List<EditPiece> pieces, string text, TextStyleChange? style, StyleWrap wrap, double shift)
+    private List<EditGlyph> PutTwins(EditGlyph glyph, EditGlyph anchor, List<EditPiece> pieces, string text, TextStyleChange? style, bool? rtl, StyleWrap wrap, double shift)
     {
         var unplaced = new List<EditGlyph>();
         foreach (var twin in glyph.Twins)
@@ -164,7 +224,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             var mark = batch.Save();
             try
             {
-                var own = Pieces(PlaceOf(twin), twin, twin, text, style, out var twinWrap);
+                var own = Pieces(PlaceOf(twin), twin, twin, text, style, rtl, out var twinWrap);
                 PutText(twin, false, own, twinWrap, shift);
             }
             catch (EditConflictException) when (twin.RenderMode == 3)
@@ -189,10 +249,10 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     /// <summary>The operators round new text that change its look, and the size it is set at.</summary>
     internal readonly record struct StyleWrap(byte[]? Before, byte[]? After, double? Size);
 
-    private List<EditPiece> Pieces(Place place, EditGlyph at, EditGlyph anchor, string text, TextStyleChange? style, out StyleWrap wrap)
+    private List<EditPiece> Pieces(Place place, EditGlyph at, EditGlyph anchor, string text, TextStyleChange? style, bool? rtl, out StyleWrap wrap)
     {
         wrap = default;
-        if (style is null) return builder.Build(place, anchor, text);
+        if (style is null) return TextBuilder.Shape(builder.Build(place, anchor, text), anchor, null, rtl);
         var state = place.States.At(at.Op);
         var before = new ContentWriter();
         var after = new ContentWriter();
@@ -216,7 +276,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             size = style.Size ?? at.FontSize;
             var draw = StandIn(anchor.Font, style, text);
             string name = batch.AddResource(place, "Font", draw.Reference) ?? throw new EditConflictException(EditingText.SharedForm);
-            pieces = TextBuilder.BuildWith(draw, name, anchor, text, size.Value);
+            pieces = TextBuilder.Shape(TextBuilder.BuildWith(draw, name, anchor, text, size.Value), anchor, size, rtl);
         }
         else
         {
@@ -227,8 +287,10 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
                 before.Font(fontName.Value, newSize);
                 restore |= StateParts.Font;
                 double factor = newSize / at.FontSize;
-                pieces = [.. pieces.Select(p => new EditPiece { Text = p.Text, Bytes = p.Bytes, Font = p.Font, IsSpace = p.IsSpace, Shift = p.Shift, Advance = p.Advance * factor })];
+                pieces = [.. pieces.Select(p => new EditPiece { Text = p.Text, Bytes = p.Bytes, Font = p.Font, Draw = p.Draw, IsSpace = p.IsSpace, Em = p.Em, Code32 = p.Code32, Shift = p.Shift, Advance = p.Advance * factor })];
+                size = newSize;
             }
+            pieces = TextBuilder.Shape(pieces, anchor, size, rtl);
         }
         if (restore != StateParts.None) place.States.At(at.Op + 1).Replay(after, restore);
         wrap = new StyleWrap(before.Length > 0 ? before.ToArray() : null, after.Length > 0 ? after.ToArray() : null, size);
@@ -259,9 +321,9 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     /// <summary>Changes the look of the text of a range without changing its characters where the font stays the same.</summary>
     public void Restyle(TextRange range, TextStyleChange change)
     {
-        var glyphs = model.GlyphsIn(range);
+        var glyphs = Whole(model.GlyphsIn(range));
         if (glyphs.Count == 0) throw new EditConflictException(EditingText.NoText);
-        Check(glyphs);
+        Check(glyphs, true);
         if (change.NeedsFont)
         {
             Replace(range, model.Text.GetText(range), change);
@@ -357,12 +419,15 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         return states.At(last + 1).Depth == depth;
     }
 
+    // New text is laid out the way the line reads, not the way its own first letter does.
+    private bool? LineRtl(int index) => index < 0 ? null : model.Text.Lines[model.Text.Chars[index].Line].IsRtl;
+
     private double AlignmentShift(TextRange range, IReadOnlyList<EditGlyph> glyphs, double newWidth)
     {
         int first = FirstChar(range);
         if (first < 0) return 0;
         var line = model.Text.Lines[model.Text.Chars[first].Line];
-        var lineGlyphs = model.GlyphsIn(line.Range);
+        var lineGlyphs = Whole(model.GlyphsIn(line.Range));
         if (lineGlyphs.Count != glyphs.Count || model.AlignmentOfLine(line.Index) is not { } alignment || alignment is TextAlignment.Left or TextAlignment.Justify) return 0;
         double oldWidth = Extent(glyphs);
         return alignment == TextAlignment.Right ? oldWidth - newWidth : (oldWidth - newWidth) / 2;
@@ -395,14 +460,23 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         var (ux, uy) = first.Direction;
         double start = first.Origin.X * ux + first.Origin.Y * uy;
         double end = start + newWidth;
-        for (int i = range.End; i < Math.Min(model.CharGlyphs.Length, range.End + 400); i++)
+        // The characters after a right-to-left range are on its left, so the neighbour that matters is the nearest one on the right.
+        bool rtl = Enumerable.Range(Math.Max(range.Start, 0), Math.Max(Math.Min(range.End, model.CharGlyphs.Length) - Math.Max(range.Start, 0), 0)).Any(i => model.CharGlyphs[i] is not null && model.Text.Chars[i].IsRtl);
+        EditGlyph? neighbour = null;
+        double neighbourStart = 0;
+        for (int i = rtl ? Math.Max(range.Start - 400, 0) : range.End; i < Math.Min(model.CharGlyphs.Length, range.End + 400); i++)
         {
-            if (model.CharGlyphs[i] is not { } next || next.Text.All(char.IsWhiteSpace)) continue;
+            if (model.CharGlyphs[i] is not { } next || next.Text.All(char.IsWhiteSpace) || glyphs.Contains(next)) continue;
             double across = Math.Abs((next.Origin.X - first.Origin.X) * -uy + (next.Origin.Y - first.Origin.Y) * ux);
             double nextStart = next.Origin.X * ux + next.Origin.Y * uy;
-            if (across > 0.3 * first.UserSize || nextStart < start) continue;
-            if (SameRun(last, next)) return;
-            if (end > nextStart - 0.05 * first.UserSize) Overlaps = true;
+            if (across > 0.3 * first.UserSize || nextStart < (rtl ? start + oldWidth - 0.05 * first.UserSize : start)) continue;
+            if (neighbour is null || nextStart < neighbourStart) (neighbour, neighbourStart) = (next, nextStart);
+            if (!rtl) break;
+        }
+        if (neighbour is not null)
+        {
+            if (SameRun(last, neighbour)) return;
+            if (end > neighbourStart - 0.05 * first.UserSize) Overlaps = true;
             return;
         }
         var box = model.Page.CropBox;

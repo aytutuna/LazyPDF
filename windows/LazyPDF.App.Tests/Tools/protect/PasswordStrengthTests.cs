@@ -18,6 +18,14 @@ public sealed class PasswordStrengthTests
     public void WordsAreRatedByLengthAndVariety(string password, Strength expected) =>
         Assert.Equal(expected, PasswordStrength.Rate(password));
 
+    [Theory]
+    [InlineData("", false)]
+    [InlineData("a", true)]
+    [InlineData("12345", true)]
+    [InlineData("123456", false)]
+    public void OnlyAPasswordUnderSixIsVeryShort(string password, bool expected) =>
+        Assert.Equal(expected, PasswordStrength.VeryShort(password));
+
     [Fact]
     public void ALongerWordIsNeverRatedBelowItsPrefix()
     {

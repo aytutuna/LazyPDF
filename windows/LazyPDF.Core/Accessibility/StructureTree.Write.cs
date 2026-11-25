@@ -24,6 +24,7 @@ public sealed partial class StructureTree
         Put(Dictionary, "RoleMap", RoleMap.Count == 0 ? null : MapOf(RoleMap.ToDictionary(e => e.Key, e => (PdfObject)new PdfName(e.Value))));
         Put(Dictionary, "ClassMap", ClassMap.Count == 0 ? null : MapOf(ClassMap));
         WriteParentTree(document, all, pages);
+        WriteIdTree(document, all);
 
         foreach (int number in _removed) document.Delete(number);
         _removed.Clear();
@@ -181,6 +182,28 @@ public sealed partial class StructureTree
         }
         long highest = entries.Count > 0 ? entries.Keys.Max() : -1;
         Put(Dictionary, "ParentTreeNextKey", new PdfNumber(Math.Max(next, highest + 1)));
+    }
+
+    // Headers names elements by ID, and a reader finds them through /IDTree, so an ID the tree lacks has to be added.
+    private void WriteIdTree(PdfDocument document, List<StructElement> all)
+    {
+        var entries = new Dictionary<string, PdfObject>(StringComparer.Ordinal);
+        foreach (var element in all)
+        {
+            if (string.IsNullOrEmpty(element.Id)) continue;
+            // The key is the /ID string as stored, since /Headers and /Ref hold the same bytes and decoding then encoding does not give them back.
+            string key = document.Resolve(element.Dictionary["ID"]) is PdfString raw ? System.Text.Encoding.Latin1.GetString(raw.Bytes) : PdfNameTree.KeyOf(element.Id);
+            entries.TryAdd(key, element.Reference!);
+        }
+        if (entries.Count == 0 && Dictionary["IDTree"] is null) return;
+
+        var existing = PdfNameTree.Read(document, Dictionary["IDTree"]);
+        bool same = existing.Count == entries.Count
+            && existing.All(e => entries.TryGetValue(e.Key, out var value) && value.ToString() == e.Value.ToString());
+        if (same) return;
+        var tree = document.Dict(Dictionary, "IDTree");
+        var root = PdfNameTree.Write(document, tree, entries);
+        if (tree is null) Dictionary["IDTree"] = document.Add(root);
     }
 
     // PDF integers stop at 2^31 - 1 (ISO 32000-1 Annex C), so a larger key is no key; it also keeps the next free number from overflowing.

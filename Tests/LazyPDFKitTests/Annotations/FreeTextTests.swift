@@ -41,6 +41,46 @@ final class FreeTextTests: XCTestCase {
         try AnnotationFixtures.reopen(document)
     }
 
+    private final class CjkSource: FontSource {
+        private let lacking: [UInt8]
+        private let covering: [UInt8]?
+
+        init(covering: Bool) throws {
+            lacking = try SyntheticFonts.onlyA()
+            self.covering = covering ? try SyntheticFonts.ttf() : nil
+        }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            if family == "Microsoft YaHei", let covering { return FontFile(covering) }
+            return FontFile(lacking)
+        }
+    }
+
+    func test_textTheFontLacksIsDrawnInAFallbackFont() throws {
+        let (document, writer, page) = try start(try CjkSource(covering: true))
+        let box = try writer.addFreeText(page, PdfRect(100, 600, 400, 640), turkish, font: FreeTextStyle(family: "Arial", size: 14))
+        XCTAssertEqual(try AnnotationFixtures.draw(document, box).text, turkish)
+        XCTAssertEqual(try fonts(document, box).count, 1)
+        XCTAssertEqual(writer.takeUndrawn(), "")
+    }
+
+    func test_aRunThatFitsItsFamilyKeepsItWhenAnotherRunNeedsAFallback() throws {
+        let (document, writer, page) = try start(try CjkSource(covering: true))
+        let rich = "<body xmlns=\"http://www.w3.org/1999/xhtml\"><p><span style=\"font-family:Times New Roman\">AB</span><span style=\"font-family:Microsoft YaHei\">ğİ</span></p></body>"
+        let box = try writer.addFreeText(page, PdfRect(100, 600, 400, 640), "", font: FreeTextStyle(richText: rich))
+        XCTAssertEqual(try AnnotationFixtures.draw(document, box).text, "ABğİ")
+        XCTAssertEqual(try fonts(document, box).compactMap { document.name($0, "Subtype") }.sorted(), ["Type0", "Type1"])
+        XCTAssertEqual(writer.takeUndrawn(), "")
+    }
+
+    func test_charactersNoFontHasAreReportedOnce() throws {
+        let (document, writer, page) = try start(try CjkSource(covering: false))
+        let box = try writer.addFreeText(page, PdfRect(100, 600, 400, 640), "BğBğ", font: FreeTextStyle(family: "Arial", size: 14))
+        XCTAssertEqual(writer.takeUndrawn(), "Bğ")
+        XCTAssertEqual(writer.takeUndrawn(), "")
+        XCTAssertEqual(document.name(try fonts(document, box)[0], "Subtype"), "Type0")
+    }
+
     func test_turkishTextWithoutAFontSourceSaysSo() throws {
         let (_, writer, page) = try start()
         XCTAssertThrowsError(try writer.addFreeText(page, PdfRect(100, 600, 500, 640), turkish)) {
@@ -157,5 +197,26 @@ final class FreeTextTests: XCTestCase {
         XCTAssertEqual(note.iconName, "Comment")
         XCTAssertTrue(note.flags.contains(.noZoom))
         XCTAssertTrue(AnnotationFixtures.operators(try AnnotationFixtures.appearance(document, note)).contains("B"))
+    }
+
+    func test_everyNoteIconIsDrawnDifferentlyInsideTheRect() throws {
+        let (document, writer, page) = try start()
+        var seen = Set<[UInt8]>()
+        for name in ["Note", "Comment", "Help", "Insert", "Key", "NewParagraph", "Paragraph"] {
+            let note = try writer.addNote(page, PdfRect(100, 700, 120, 720), AnnotationInfo(author: "A", contents: "x"), icon: name)
+            XCTAssertTrue(seen.insert(try document.data(try AnnotationFixtures.normal(document, note))).inserted, name)
+            for (path, _) in try AnnotationFixtures.draw(document, note).paths {
+                XCTAssertTrue(path.bounds.left >= -0.01 && path.bounds.bottom >= -0.01, name)
+                XCTAssertTrue(path.bounds.right <= note.rect.width + 0.01 && path.bounds.top <= note.rect.height + 0.01, name)
+            }
+        }
+    }
+
+    func test_anotherNoteIconNameIsKeptWhenTheLookChanges() throws {
+        let (document, writer, page) = try start()
+        let note = try writer.addNote(page, PdfRect(100, 700, 120, 720), AnnotationInfo(author: "A", contents: "x"), icon: "Star")
+        _ = try writer.setColor(note, [1, 0, 0])
+        let reread = PdfAnnotations.read(try AnnotationFixtures.reopen(document), document.pages[0])
+        XCTAssertEqual(reread.first?.iconName, "Star")
     }
 }

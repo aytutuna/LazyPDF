@@ -69,4 +69,16 @@ public class AddedContentTests
         Assert.False(editor.Order(paths[1], OrderMove.Back).Done);
         Assert.Equal(content, EditKit.Latin(session));
     }
+
+    [Fact]
+    public void TextIsNotArranged()
+    {
+        string content = "BT /F1 12 Tf 50 700 Td (Hello) Tj ET";
+        var session = EditKit.Session(content);
+        var editor = new PageEditor(session, 0);
+        var result = editor.Order(Assert.Single(editor.Objects.OfType<TextObject>()), OrderMove.Front);
+        Assert.False(result.Done);
+        Assert.Equal(EditingText.NotAlone, Assert.Single(result.Skipped).Reason);
+        Assert.Equal(content, EditKit.Latin(session));
+    }
 }

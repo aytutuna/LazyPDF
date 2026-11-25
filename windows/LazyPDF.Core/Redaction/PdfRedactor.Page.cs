@@ -49,6 +49,7 @@ public sealed partial class PdfRedactor
         if (plan.Understood)
         {
             var scan = plan.Scan!;
+            int wholeBefore = rewriter.WholeImages;
             byte[] content = RedactionResources.DropIdleFonts(rewriter.Rewrite(scan.Root, page.Contents(), page.Dictionary, page.Resources, false));
             string fontName = "";
             if (font is not null && marks.Any(m => !string.IsNullOrEmpty(m.OverlayText ?? options.OverlayText)))
@@ -71,7 +72,7 @@ public sealed partial class PdfRedactor
                 tagged = scan.Marked;
                 var (annotations, fields) = RemoveAnnotations(work, page, a => areas.Any(area => Geometry.Touches(a.Rect, area)), needles, false);
                 KeepPainted(work, page, walk, painted);
-                return new PageRedaction(page.Index, scan.Glyphs, scan.Images, scan.Paths, annotations, fields);
+                return new PageRedaction(page.Index, scan.Glyphs, scan.Images, scan.Paths, annotations, fields, 0, rewriter.WholeImages - wholeBefore);
             }
         }
         if (options.Renderer is null) throw new InvalidOperationException(RedactionText.NeedsPicture(page.Index));

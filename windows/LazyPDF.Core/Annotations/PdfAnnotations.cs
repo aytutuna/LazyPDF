@@ -115,7 +115,7 @@ public static class PdfAnnotations
             DefaultStyle = PdfText.Read(document, d, "DS"),
             RichText = PdfText.Read(document, d, "RC"),
             Alignment = (int)(document.Integer(d, "Q") ?? 0),
-            IconName = document.Name(d, "Name"),
+            IconName = (document.Resolve(d["Name"]) as PdfName)?.Text,
             Popup = d["Popup"] as PdfReference,
             HasAppearance = document.Dict(d, "AP") is { } ap && ap["N"] is not null,
         };

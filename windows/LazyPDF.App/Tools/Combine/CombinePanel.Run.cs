@@ -10,7 +10,7 @@ namespace LazyPDF.App.Tools.Combine;
 public partial class CombinePanel
 {
     // Parts open as tabs only up to this many; more than that goes to a folder.
-    private const int MostTabs = 10;
+    private const int MostTabs = 3;
 
     private bool ToFolder => Output.SelectedIndex == 1;
 
@@ -33,22 +33,48 @@ public partial class CombinePanel
         }
         string? folder = ToFolder ? PickFolder() : null;
         if (ToFolder && folder is null) return;
+        bool bookmarks = BookmarkEach.IsChecked == true;
 
         byte[]? bytes = null;
+        int skipped = 0, dropped = 0;
         try
         {
             await host.RunBusyAsync(Loc.T("Combining files"), token => Task.Run(() =>
             {
                 // The open document is read again here: its pages may be taken twice and the session belongs to the UI thread.
                 var again = PageEdits.Reopen(tab);
-                byte[] made = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token).SaveRewrite();
+                using var merged = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token, [.. sources.Select(s => Path.GetFileNameWithoutExtension(s.Entry.Name))]);
+                if (bookmarks) CombineJob.AddFileBookmarks(merged, [.. sources.Select(s => (s.Entry.Name, s.Pages?.Count ?? (s.Entry.Document ?? again).Pages.Count))]);
+                byte[] made = merged.SaveRewrite();
                 token.ThrowIfCancellationRequested();
                 bytes = made;
+                skipped = merged.SkippedAttachments;
+                dropped = merged.DroppedObjects;
             }, token));
         }
         catch (Exception error) when (error is PdfReadException or ArgumentException)
         {
-            host.ShowProblem(new Problem(Loc.T("Files not combined"), Loc.T("The files could not be put into one. Try fewer pages or files.")));
+            string? bad = null;
+            bool checkedAll = false;
+            try
+            {
+                await host.RunBusyAsync(Loc.T("Checking the files"), token => Task.Run(() =>
+                {
+                    using var open = PageEdits.Reopen(tab);
+                    bad = FirstUnmergeable(open, sources, token);
+                    checkedAll = true;
+                }, token));
+            }
+            catch (Exception again) when (again is PdfReadException or ArgumentException)
+            {
+                // Reopening failed again, so no file can be named.
+                host.ShowProblem(new Problem(Loc.T("Files not combined"), Loc.T("The files could not be put into one. Try fewer pages or files.")));
+                return;
+            }
+            if (!checkedAll) return;
+            host.ShowProblem(new Problem(Loc.T("Files not combined"), bad is null
+                ? Loc.T("The files could not be put into one. Try fewer pages or files.")
+                : Loc.T("{0} could not be put into the file. Leave it out, or try fewer of its pages.", bad)));
             return;
         }
         if (bytes is null) return;
@@ -57,37 +83,60 @@ public partial class CombinePanel
         bool protectedSource = documents.Any(document => document.IsEncrypted);
         if (folder is not null)
         {
-            Saved(host, folder, [(name, bytes)], protectedSource);
+            Saved(host, folder, [(name, bytes)], protectedSource, PageJobs.SkippedText(skipped, dropped));
             return;
         }
-        await host.OpenNewAsync(bytes, name);
-        if (protectedSource) host.ShowNotice(Loc.T("Copy is not protected"), CopyRules.Unprotected);
+        if (!await host.OpenNewAsync(bytes, name)) return;
+        if (protectedSource) host.ShowNotice(Loc.T("Copy is not protected"), (CopyRules.Unprotected + " " + PageJobs.SkippedText(skipped, dropped)).Trim());
+        else PageJobs.NoteSkippedAttachments(host, skipped, dropped);
+    }
+
+    internal static string? FirstUnmergeable(PdfDocument open, IEnumerable<(CombineEntry Entry, List<int>? Pages)> sources, CancellationToken token = default)
+    {
+        foreach (var (entry, pages) in sources)
+        {
+            try
+            {
+                using var merged = PageAssembly.Merge([new MergeSource(entry.Document ?? open, pages)], token, [Path.GetFileNameWithoutExtension(entry.Name)]);
+                merged.SaveRewrite();
+            }
+            catch (Exception error) when (error is PdfReadException or ArgumentException)
+            {
+                return entry.Name;
+            }
+        }
+        return null;
     }
 
     private async Task SplitAsync()
     {
         var tab = Tab!;
         var host = Host!;
-        if (!CombineJob.TryAmount(Kind, Amount.Text, out double amount)) return;
+        if (!CombineJob.TryAmount(Kind, Amount.Text, out double amount, tab.PageCount)) return;
         var kind = Kind;
+        var ranges = CombineJob.ParseRanges(kind == SplitBy.Ranges ? Amount.Text : "", tab.PageCount).Ranges;
         if (CopyRules.Refused(tab.Document, host)) return;
         if (kind == SplitBy.Bookmarks && CombineJob.BookmarkParts(tab.Document) < 2)
         {
             host.ShowProblem(new Problem(Loc.T("Nothing to cut at"), Loc.T("No bookmark starts after the first page. Split by pages or size instead.")));
             return;
         }
+        var titles = kind == SplitBy.Bookmarks ? CombineJob.BookmarkTitles(tab.Document) : [];
         string? folder = ToFolder ? PickFolder() : null;
         if (ToFolder && folder is null) return;
         List<byte[]>? parts = null;
+        int skipped = 0, dropped = 0;
         try
         {
             await host.RunBusyAsync(Loc.T("Splitting file"), token => Task.Run(() =>
             {
                 var saved = new List<byte[]>();
-                foreach (var part in CombineJob.Split(PageEdits.Reopen(tab), kind, amount, token))
+                foreach (var part in CombineJob.Split(PageEdits.Reopen(tab), kind, amount, token, ranges))
                 {
                     token.ThrowIfCancellationRequested();
                     saved.Add(part.SaveRewrite());
+                    skipped += part.SkippedAttachments;
+                    dropped += part.DroppedObjects;
                 }
                 parts = saved;
             }, token));
@@ -98,27 +147,45 @@ public partial class CombinePanel
             return;
         }
         if (parts is null) return;
-        if (parts.Count < 2)
+        if (parts.Count < 2 && kind != SplitBy.Ranges)
         {
             host.ShowNotice(Loc.T("Nothing to split"), Loc.T("The whole file fits in one part. Use a smaller amount."));
             return;
         }
 
+        string big = kind == SplitBy.Size ? CombineJob.Oversize(parts, amount) : "";
+        string left = PageJobs.SkippedText(skipped, dropped);
+        if (left.Length > 0) big = (big + " " + left).Trim();
+
         string stem = System.IO.Path.GetFileNameWithoutExtension(tab.Title);
-        var named = parts.Select((bytes, i) => (CombineJob.PartName(stem, i, parts.Count), bytes)).ToList();
+        var named = parts.Select((bytes, i) => (CombineJob.PartName(stem, i, parts.Count, i < titles.Count ? titles[i] : null), bytes)).ToList();
         if (folder is null && parts.Count > MostTabs)
         {
-            host.ShowNotice(Loc.T("Too many parts for tabs"), Loc.T("Pick a folder for the parts."));
+            host.ShowNotice(Loc.T("Too many parts for tabs"), Loc.T("These make {0} files. Pick a folder for them.", parts.Count));
             folder = PickFolder();
             if (folder is null) return;
         }
         if (folder is not null)
         {
-            Saved(host, folder, named, tab.Document.IsEncrypted);
+            Saved(host, folder, named, tab.Document.IsEncrypted, big);
             return;
         }
-        foreach (var (name, bytes) in named) await host.OpenNewAsync(bytes, name);
-        host.SetStatus(Loc.T("{0} parts opened.", parts.Count));
+        int opened = 0;
+        foreach (var (name, bytes) in named)
+        {
+            if (await host.OpenNewAsync(bytes, name)) opened++;
+        }
+        if (opened == 0) return;
+        if (opened < parts.Count)
+        {
+            // The info bar still says which part failed, so the word on protection goes in the status.
+            string some = Loc.T("{0} of {1} parts opened.", opened, parts.Count);
+            if (big.Length > 0) some += " " + big;
+            host.SetStatus(tab.Document.IsEncrypted ? some + " " + CopyRules.Unprotected : some);
+            return;
+        }
+        string all = Loc.T("{0} parts opened.", opened);
+        host.SetStatus(big.Length > 0 ? all + " " + big : all);
         CopyRules.NoteUnprotected(tab.Document, host);
     }
 
@@ -130,7 +197,7 @@ public partial class CombinePanel
         return _folder;
     }
 
-    private static void Saved(IToolHost host, string folder, IReadOnlyList<(string Name, byte[] Bytes)> files, bool protectedSource)
+    internal static void Saved(IToolHost host, string folder, IReadOnlyList<(string Name, byte[] Bytes)> files, bool protectedSource, string extra)
     {
         string first = "";
         try
@@ -147,6 +214,6 @@ public partial class CombinePanel
             host.ShowProblem(Problems.Save(error, System.IO.Path.GetFileName(folder)));
             return;
         }
-        host.ShowNotice(Loc.Plural(files.Count, "{0} file saved", "{0} files saved", files.Count), protectedSource ? folder + ". " + CopyRules.Unprotected : folder, new NoticeAction(Loc.T("Open the first"), () => _ = host.OpenAsync(first)));
+        host.ShowNotice(Loc.Plural(files.Count, "{0} file saved", "{0} files saved", files.Count), CombineJob.FolderNote(folder, protectedSource, extra), new NoticeAction(Loc.T("Open the first"), () => _ = host.OpenAsync(first)));
     }
 }

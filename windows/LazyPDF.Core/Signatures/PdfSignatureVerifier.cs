@@ -42,6 +42,7 @@ internal sealed class SignatureChecker
     private readonly VerifyOptions _options;
     private readonly ValidationData _dss;
     private readonly HashSet<long> _signatures;
+    private readonly Dictionary<string, X509Certificate2?> _fetched = [];
     private Dictionary<int, string>? _fieldNames;
 
     public SignatureChecker(PdfDocument document, byte[] file, IReadOnlyList<PdfRevision> revisions, VerifyOptions options, IReadOnlyList<FoundSignature> found)
@@ -103,6 +104,7 @@ internal sealed class SignatureChecker
             case CmsCheck.Unsupported: return Fail(report, SignatureVerdict.Unknown, SignatureProblem.UnsupportedFormat);
         }
         if (cms.DigestOid == "1.3.14.3.2.26") problems.Add(SignatureProblem.WeakDigest);
+        if (HasWeakKey(signer)) problems.Add(SignatureProblem.WeakKey);
 
         var extra = cms.Certificates.Concat(_dss.Certificates).ToList();
         DateTimeOffset? stamped = null;
@@ -111,23 +113,24 @@ internal sealed class SignatureChecker
             stamped = CheckToken(tokens[0], cms.Signature, extra, problems);
         }
         var signingTime = cms.SigningTime() ?? report.SigningTime;
-        // The signer's own clock proves nothing; without a trusted time stamp the chain is judged now.
-        var time = stamped ?? _options.Now;
+        // Without a trusted time stamp the signer's claim sets the time the chain is judged at; revocation is still judged now.
+        var time = stamped ?? signingTime ?? _options.Now;
 
-        var trust = CertificateTrust.Evaluate(signer, extra, time, _options);
+        var trust = CertificateTrust.Evaluate(signer, extra, time, _options, fetched: _fetched);
         if (!trust.Trusted) problems.Add(SignatureProblem.UntrustedSigner);
         if (!trust.TimeValid || stamped is null && signingTime is { } claimed && (claimed < signer.NotBefore || claimed > signer.NotAfter)) problems.Add(SignatureProblem.CertificateNotValid);
-
+        else if (stamped is null && signingTime is not null && time != _options.Now && !CertificateTrust.Evaluate(signer, extra, _options.Now, _options, fetched: _fetched).TimeValid) problems.Add(SignatureProblem.CertificateExpired);
         var evidence = new ValidationData();
         evidence.ReadArchival(cms);
         evidence.Certificates.AddRange(_dss.Certificates);
         evidence.Ocsps.AddRange(_dss.Ocsps);
         evidence.Crls.AddRange(_dss.Crls);
+        var revocationTime = stamped ?? _options.Now;
         bool checkedAll = trust.Chain.Count > 1;
         for (int i = 0; i + 1 < trust.Chain.Count; i++)
         {
-            var (state, at) = evidence.Check(trust.Chain[i], trust.Chain[i + 1], time);
-            if (state == RevocationState.Revoked && (time is null || at is null || at <= time)) problems.Add(SignatureProblem.CertificateRevoked);
+            var (state, at) = evidence.Check(trust.Chain[i], trust.Chain[i + 1], revocationTime);
+            if (state == RevocationState.Revoked && (revocationTime is null || at is null || at <= revocationTime)) problems.Add(SignatureProblem.CertificateRevoked);
             checkedAll &= state == RevocationState.Good;
         }
 
@@ -167,7 +170,7 @@ internal sealed class SignatureChecker
 
         var problems = new List<SignatureProblem>();
         var time = token.TokenInfo.Timestamp;
-        var trust = CertificateTrust.Evaluate(tsa, _dss.Certificates.Concat(carried), time, _options, timestamp: true);
+        var trust = CertificateTrust.Evaluate(tsa, _dss.Certificates.Concat(carried), time, _options, timestamp: true, fetched: _fetched);
         if (!trust.Trusted) problems.Add(SignatureProblem.UntrustedSigner);
         if (!trust.TimeValid) problems.Add(SignatureProblem.CertificateNotValid);
         return report with
@@ -196,7 +199,7 @@ internal sealed class SignatureChecker
             return null;
         }
         var time = token.TokenInfo.Timestamp;
-        var trust = CertificateTrust.Evaluate(tsa, extra.Concat(TokenCertificates(token)), time, _options, timestamp: true);
+        var trust = CertificateTrust.Evaluate(tsa, extra.Concat(TokenCertificates(token)), time, _options, timestamp: true, fetched: _fetched);
         if (!trust.Trusted || !trust.TimeValid)
         {
             problems.Add(SignatureProblem.TimestampInvalid);
@@ -267,6 +270,28 @@ internal sealed class SignatureChecker
         return (level, reference.Number == signatureNumber);
     }
 
+    private static readonly HashSet<string> SmallCurves =
+    [
+        "1.2.840.10045.3.1.1",
+        "1.2.840.10045.3.1.2", "1.2.840.10045.3.1.3",
+        "1.3.132.0.1", "1.3.132.0.2", "1.3.132.0.4", "1.3.132.0.5", "1.3.132.0.6", "1.3.132.0.7", "1.3.132.0.8",
+        "1.3.132.0.9", "1.3.132.0.15", "1.3.132.0.22", "1.3.132.0.23", "1.3.132.0.24", "1.3.132.0.25", "1.3.132.0.28",
+        "1.3.132.0.29", "1.3.132.0.30", "1.3.132.0.31",
+        "1.3.36.3.3.2.8.1.1.1", "1.3.36.3.3.2.8.1.1.2", "1.3.36.3.3.2.8.1.1.3", "1.3.36.3.3.2.8.1.1.4",
+    ];
+
+    internal static bool HasWeakKey(X509Certificate2 certificate)
+    {
+        if (certificate.GetRSAPublicKey() is { } rsa)
+        {
+            using (rsa) return rsa.KeySize < 2048;
+        }
+        if (certificate.GetECDsaPublicKey() is { } ec)
+        {
+            using (ec) return ec.ExportParameters(false).Curve.Oid?.Value is { } oid && SmallCurves.Contains(oid);
+        }
+        return false;
+    }
     private static SignatureReport Fail(SignatureReport report, SignatureVerdict verdict, SignatureProblem problem) =>
         report with { Verdict = verdict, Problems = [problem] };
 

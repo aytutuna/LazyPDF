@@ -74,14 +74,17 @@ public struct OcrResult: Equatable {
     }
 }
 
-/// What `PdfSearchable.readAsync` found: the counts, with no words written and nothing committed, and the words to write.
+/// What `PdfSearchable.readAsync` found: the counts, with no words written and nothing committed, and the words to write. `stopped` is true when a
+/// cancel ended a read that asked to keep what it had.
 public struct OcrRead {
     public let result: OcrResult
     public let pages: [OcrPageWords]
+    public let stopped: Bool
 
-    public init(_ result: OcrResult, _ pages: [OcrPageWords]) {
+    public init(_ result: OcrResult, _ pages: [OcrPageWords], _ stopped: Bool = false) {
         self.result = result
         self.pages = pages
+        self.stopped = stopped
     }
 }
 
@@ -104,9 +107,10 @@ public enum PdfSearchable {
     }
 
     /// The reading half of `runAsync`, for a caller that reads a copy of the file on another thread and writes the layers
-    /// into the document it shows (`PdfOcrLayer.add`). `document` is only read.
+    /// into the document it shows (`PdfOcrLayer.add`). `document` is only read. With `keepPartial` a cancel does not throw: the
+    /// pages finished before it are returned, the one being read is not, and `stopped` is true.
     public static func readAsync(_ document: PdfDocument, _ recognizer: TextRecognizer, _ renderer: PageRenderer,
-                                 _ options: OcrOptions, _ progress: ((OcrProgress) -> Void)? = nil) async throws -> OcrRead {
+                                 _ options: OcrOptions, _ progress: ((OcrProgress) -> Void)? = nil, keepPartial: Bool = false) async throws -> OcrRead {
         if !(options.dpi >= minDpi && options.dpi <= maxDpi) {
             throw ArgumentException("Specified argument was out of the range of valid values. (Parameter 'options')")
         }
@@ -116,33 +120,38 @@ public enum PdfSearchable {
         let interpreter = ContentInterpreter(document)
         var found: [OcrPageWords] = []
         var added = 0, noWords = 0, skipped = 0, notRendered = 0, done = 0
-        for index in targets {
-            try Task.checkCancellation()
-            let page = document.pages[index]
-            let kind = OcrTriage.classify(document, page, interpreter)
-            let outcome: OcrOutcome
-            if !OcrTriage.needsOcr(kind, options.existing == .replace, options.force) {
-                outcome = .skipped
-                skipped += 1
-            } else if let image = renderer.render(index, options.dpi) {
-                let recognized = try await recognizer.recognizeAsync(image, options.language)
-                found.append(OcrPageWords(index, recognized, image.width, image.height))
-                if !OcrLayerContent.layout(recognized, image.width, image.height, PageGeometry(page)).isEmpty {
-                    outcome = .added
-                    added += 1
+        var stopped = false
+        do {
+            for index in targets {
+                try Task.checkCancellation()
+                let page = document.pages[index]
+                let kind = OcrTriage.classify(document, page, interpreter)
+                let outcome: OcrOutcome
+                if !OcrTriage.needsOcr(kind, options.existing == .replace, options.force) {
+                    outcome = .skipped
+                    skipped += 1
+                } else if let image = renderer.render(index, options.dpi) {
+                    let recognized = try await recognizer.recognizeAsync(image, options.language)
+                    found.append(OcrPageWords(index, recognized, image.width, image.height))
+                    if !OcrLayerContent.layout(recognized, image.width, image.height, PageGeometry(page)).isEmpty {
+                        outcome = .added
+                        added += 1
+                    } else {
+                        outcome = .noWords
+                        noWords += 1
+                    }
                 } else {
-                    outcome = .noWords
-                    noWords += 1
+                    outcome = .notRendered
+                    notRendered += 1
                 }
-            } else {
-                outcome = .notRendered
-                notRendered += 1
+                done += 1
+                progress?(OcrProgress(index, done, targets.count, outcome))
             }
-            done += 1
-            progress?(OcrProgress(index, done, targets.count, outcome))
+        } catch is CancellationError where keepPartial {
+            stopped = true
         }
 
-        try Task.checkCancellation()
-        return OcrRead(OcrResult(added, noWords, skipped, notRendered, 0, false), found)
+        if !keepPartial { try Task.checkCancellation() }
+        return OcrRead(OcrResult(added, noWords, skipped, notRendered, 0, false), found, stopped)
     }
 }

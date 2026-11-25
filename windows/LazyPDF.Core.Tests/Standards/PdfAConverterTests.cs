@@ -340,6 +340,33 @@ public class PdfAConverterTests
     }
 
     [Fact]
+    public void AnIntentProfileTheValidatorRefusesIsReplaced()
+    {
+        SystemFonts.RequireArial();
+        byte[] scanner = (byte[])PdfASrgb.SrgbProfile.Clone();
+        System.Text.Encoding.ASCII.GetBytes("scnr").CopyTo(scanner, 12);
+        byte[] file = Plain(catalog: "/OutputIntents [6 0 R]", extra: pdf =>
+        {
+            pdf.Obj(6, "<</Type /OutputIntent /S /GTS_PDFX /OutputConditionIdentifier (mine) /DestOutputProfile 7 0 R>>");
+            pdf.Stream(7, "/N 3", scanner);
+        });
+        var result = Convert(file);
+        Assert.Contains(result.Changes, c => c.Contains("sRGB output intent"));
+        Assert.DoesNotContain("6.2.3", StandardsKit.Clauses(Clean(result)));
+    }
+
+    [Fact]
+    public void AForbiddenActionInANextArrayIsRemoved()
+    {
+        SystemFonts.RequireArial();
+        byte[] file = Plain(catalog: "/OpenAction << /S /URI /URI (x) /Next [<< /S /JavaScript /JS (1) >>] >>");
+        byte[] bytes = Clean(Convert(file));
+        using var document = PdfDocument.Open(bytes);
+        Assert.False(PdfActions.HasJavaScript(document));
+        Assert.DoesNotContain("6.5.1", StandardsKit.Clauses(bytes));
+    }
+
+    [Fact]
     public void TheProfileIsTheOneFromLazyScan()
     {
         Assert.Equal(736, PdfASrgb.SrgbProfile.Length);

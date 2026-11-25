@@ -62,6 +62,11 @@ private final class PageContent: ContentVisitor {
 }
 
 extension AccessibilityChecker {
+    /// The tagged-content rule alone, for the PDF/A level A checks.
+    static func taggedContent(_ document: PdfDocument, _ tree: StructureTree) throws -> AccessibilityItem {
+        try readContent(document, tree).taggedContent
+    }
+
     static func readContent(_ document: PdfDocument, _ tree: StructureTree?) throws -> (searchable: AccessibilityItem, encoding: AccessibilityItem, taggedContent: AccessibilityItem) {
         var inPage: [Int: Set<Int>] = [:]
         var inForm = Set<FormSequence>()

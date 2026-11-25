@@ -20,6 +20,7 @@ internal sealed partial class FillLayer
     private readonly Func<string, IReadOnlyList<string>, bool> _choose;
     private readonly Action<IReadOnlyList<string>?> _reset;
     private readonly Action<string> _sign;
+    private readonly Action<string> _unsupported;
     private readonly Dictionary<int, (Canvas Host, List<Slot> Slots)> _pages = [];
     private PdfForm _form = null!;
     private bool _canFill;
@@ -30,13 +31,14 @@ internal sealed partial class FillLayer
     /// <param name="choose">The same for the choices of a list box.</param>
     /// <param name="reset">Clears the named fields, or every field for null; what a Reset button on the page asks for.</param>
     /// <param name="sign">Opens signing with the named empty signature field chosen.</param>
-    public FillLayer(IDocumentViewer viewer, Func<string, string?, bool> enter, Func<string, IReadOnlyList<string>, bool> choose, Action<IReadOnlyList<string>?> reset, Action<string> sign)
+    public FillLayer(IDocumentViewer viewer, Func<string, string?, bool> enter, Func<string, IReadOnlyList<string>, bool> choose, Action<IReadOnlyList<string>?> reset, Action<string> sign, Action<string> unsupported)
     {
         _viewer = viewer;
         _enter = enter;
         _choose = choose;
         _reset = reset;
         _sign = sign;
+        _unsupported = unsupported;
     }
 
     public bool Highlight
@@ -116,7 +118,8 @@ internal sealed partial class FillLayer
     private void Add(int page)
     {
         if (_pages.ContainsKey(page)) return;
-        var host = new Canvas();
+        var size = _viewer.PageSize(page);
+        var host = new Canvas { Clip = new RectangleGeometry(new Rect(0, 0, size.Width, size.Height)) };
         var slots = new List<Slot>();
         // The page's tab order is the order the controls are added in.
         foreach (var widget in _form.TabSequence(page))
@@ -220,6 +223,7 @@ internal sealed partial class FillLayer
             foreach (var option in field.Options) hash.Add(option);
             foreach (var widget in field.Widgets)
             {
+                if (field.Kind == FieldKind.PushButton) hash.Add(ActionKey(form.Document, widget));
                 hash.Add(widget.Rect);
                 hash.Add(widget.PageIndex);
                 if (widget.PageIndex >= 0) pages.Add(widget.PageIndex);
@@ -232,4 +236,17 @@ internal sealed partial class FillLayer
         }
         return hash.ToHashCode();
     }
+
+    // Push() closes over its action, so a changed action needs new controls.
+    private static string ActionKey(PdfDocument document, FormWidget widget) => PdfActions.Read(document, widget.Dictionary["A"]) switch
+    {
+        null => "",
+        UriAction a => $"Uri {a.Uri}",
+        GoToAction a => $"GoTo {a.Destination.PageIndex}",
+        NamedAction a => $"Named {a.Name}",
+        SubmitFormAction a => $"Submit {a.Url}",
+        LaunchAction a => $"Launch {a.File}",
+        ResetFormAction a => $"Reset {a.Flags} {string.Join('', a.Fields)}",
+        var a => a.GetType().Name,
+    };
 }

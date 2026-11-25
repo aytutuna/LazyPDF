@@ -25,6 +25,19 @@ public sealed class DocumentLossTests
     }
 
     [Fact]
+    public void AMovedUnsavedTabWritesItsNewPathToTheRecoveryCopy()
+    {
+        using var f = new ViewModelFixture();
+        var store = new RecoveryStore(f.Dir.Sub("recovery"));
+        using var tab = new LazyPDF.App.Documents.DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), @"C:\old\a.pdf", "a.pdf", null, store, unsaved: true);
+
+        tab.MoveTo(@"C:\new\a.pdf", null, null);
+        store.Flush();
+
+        Assert.Equal(@"C:\new\a.pdf", Assert.Single(store.List()).Meta.OriginalPath);
+    }
+
+    [Fact]
     public async Task ARestoredFileThatAsksForAPasswordKeepsItsRecoveryCopyUntilItIsOpen()
     {
         using var f = new ViewModelFixture();
@@ -114,6 +127,7 @@ public sealed class DocumentLossTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         var tab = f.Vm.ActiveDocument!;
+        await f.SettledAsync();
         Touch(path, "%PDF-1.7\n"u8.ToArray());
 
         await f.Vm.ReloadAsync(tab);
@@ -130,6 +144,7 @@ public sealed class DocumentLossTests
         await f.Vm.OpenAsync(path);
         await f.Vm.SubmitPasswordAsync("secret");
         var tab = f.Vm.ActiveDocument!;
+        await f.SettledAsync();
         Touch(path, File.ReadAllBytes(Pdfs.Fixture("locked.pdf")));
 
         await f.Vm.ReloadAsync(tab);
@@ -148,6 +163,7 @@ public sealed class DocumentLossTests
         var tab = f.Vm.ActiveDocument!;
         Pdfs.Retitle(tab.Session, "Mine");
         tab.Commit("Properties");
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         bool saved = f.Vm.Save(tab);
@@ -169,6 +185,7 @@ public sealed class DocumentLossTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 2));
 
         Assert.False(f.Vm.Save(f.Vm.ActiveDocument!));
@@ -181,6 +198,7 @@ public sealed class DocumentLossTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         File.Delete(path);
 
         Assert.True(f.Vm.Save(f.Vm.ActiveDocument!));

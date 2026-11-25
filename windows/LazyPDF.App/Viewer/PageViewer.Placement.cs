@@ -16,19 +16,17 @@ public partial class PageViewer
     private Point _keyPoint;
     private Shape? _cross;
 
+    public event EventHandler? PlacementEnded;
+
     private bool PlaceWithKeys(KeyEventArgs e) => PlaceWithKeys(e.Key);
 
     internal bool PlaceWithKeys(Key key)
     {
-        if (_tool is not { } tool || _tab is null || _drag != Drag.None) return false;
+        if (_tool is not { } tool || _tab is null || _stale || _drag != Drag.None) return false;
         if (_keyPage < 0)
         {
             if (key != Key.Enter || CentreOfPage() is not { } centre) return false;
-            _keyPage = centre.Page;
-            _keyPoint = centre.Point;
-            ShowCross();
-            PlaceCue.Visibility = Visibility.Visible;
-            (UIElementAutomationPeer.FromElement(PlaceCueText) ?? UIElementAutomationPeer.CreatePeerForElement(PlaceCueText))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
+            OpenCross(centre.Page, centre.Point);
             return true;
         }
         if (Surface.PageMatrix(_keyPage) is not { } matrix)
@@ -42,7 +40,7 @@ public partial class PageViewer
                 int page = _keyPage;
                 var at = _keyPoint;
                 var view = Surface.TranslatePoint(matrix.Transform(at), this);
-                EndKeyPlacement();
+                EndKeyPlacement(notify: false);
                 tool.Press(new PagePointer(page, at, view, true, 1, Keyboard.Modifiers, true));
                 tool.Release(new PagePointer(page, at, view, false, 0, Keyboard.Modifiers, true));
                 break;
@@ -56,6 +54,25 @@ public partial class PageViewer
                 return false;
         }
         return true;
+    }
+
+    public void BeginPlacement(int page, Point point)
+    {
+        if (_tool is null || _tab is null || _stale) return;
+        EndKeyPlacement(notify: false);
+        OpenCross(page, point);
+    }
+
+    public void CancelPlacement() => EndKeyPlacement();
+
+    private void OpenCross(int page, Point point)
+    {
+        _keyPage = page;
+        _keyPoint = point;
+        ShowCross();
+        Reveal(_keyPage, new Rect(_keyPoint.X - 24, _keyPoint.Y - 24, 48, 48));
+        PlaceCue.Visibility = Visibility.Visible;
+        (UIElementAutomationPeer.FromElement(PlaceCueText) ?? UIElementAutomationPeer.CreatePeerForElement(PlaceCueText))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
     }
 
     private (int Page, Point Point)? CentreOfPage()
@@ -86,6 +103,7 @@ public partial class PageViewer
         var back = matrix.Transform(moved);
         _keyPoint = new Point(Math.Clamp(back.X, 0, size.Width), Math.Clamp(back.Y, 0, size.Height));
         ShowCross();
+        Reveal(_keyPage, new Rect(_keyPoint.X - 24, _keyPoint.Y - 24, 48, 48));
     }
 
     private void ShowCross()
@@ -102,11 +120,14 @@ public partial class PageViewer
         _cross.RenderTransform = new MatrixTransform(scale, 0, 0, scale, _keyPoint.X, _keyPoint.Y);
     }
 
-    private void EndKeyPlacement()
+    // An Enter on the cross is a click and ends it quietly; any other end tells the tool that was waiting on it.
+    private void EndKeyPlacement(bool notify = true)
     {
+        bool open = _keyPage >= 0;
         if (_cross?.Parent is System.Windows.Controls.Panel panel) panel.Children.Remove(_cross);
         _cross = null;
         _keyPage = -1;
         PlaceCue.Visibility = Visibility.Collapsed;
+        if (open && notify) PlacementEnded?.Invoke(this, EventArgs.Empty);
     }
 }

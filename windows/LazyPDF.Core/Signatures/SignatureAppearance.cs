@@ -7,6 +7,25 @@ internal static class SignatureAppearance
 {
     private const double Margin = 3;
 
+    /// <summary>What fits in the box, decided before anything is added to the document.</summary>
+    public readonly record struct Layout(double Width, double Height, double GraphicsWidth, bool ShowGraphics, bool ShowText);
+
+    /// <summary>
+    /// Picture and ink are drawn only when they have room inside the margins; without it the text gets the whole width.
+    /// Text is left out when it has no room either, and then no font is embedded.
+    /// </summary>
+    public static Layout Plan(PdfRect rect, int rotate, SignatureLook look, string text)
+    {
+        bool sideways = rotate is 90 or 270;
+        double width = sideways ? rect.Height : rect.Width, height = sideways ? rect.Width : rect.Height;
+        bool hasGraphics = look.Jpeg is not null || look.Image is not null || look.Ink is { Count: > 0 };
+        double graphicsWidth = hasGraphics ? (text.Length == 0 ? width : width * 0.4) : 0;
+        bool showGraphics = hasGraphics && graphicsWidth - 2 * Margin > 0 && height - 2 * Margin > 0;
+        if (!showGraphics) graphicsWidth = 0;
+        bool showText = text.Length > 0 && width - graphicsWidth - 2 * Margin > 0 && height - 2 * Margin > 0;
+        return new Layout(width, height, graphicsWidth, showGraphics, showText);
+    }
+
     public static string Text(SignJob job, SignatureLook look)
     {
         if (look.Text is { } given) return given;
@@ -29,17 +48,15 @@ internal static class SignatureAppearance
     }
 
     /// <summary>
-    /// The appearance for a widget at <paramref name="rect"/> on a page turned <paramref name="rotate"/> degrees clockwise: it is drawn
+    /// The appearance for a widget on a page turned <paramref name="rotate"/> degrees clockwise: it is drawn
     /// upright as the page is shown, and its /Matrix turns it back into the page's own space (12.5.5).
     /// </summary>
-    public static PdfReference Draw(PdfDocument document, PdfRect rect, int rotate, SignatureLook look, string text, PdfDrawFont? font)
+    public static PdfReference Draw(PdfDocument document, Layout layout, int rotate, SignatureLook look, string text, PdfDrawFont? font)
     {
-        bool sideways = rotate is 90 or 270;
-        double width = sideways ? rect.Height : rect.Width, height = sideways ? rect.Width : rect.Height;
+        (double width, double height, double graphicsWidth) = (layout.Width, layout.Height, layout.GraphicsWidth);
         var canvas = new AppearanceCanvas(document, new PdfRect(0, 0, width, height));
-        bool hasImage = look.Jpeg is not null || look.Image is not null;
-        bool hasInk = look.Ink is { Count: > 0 };
-        double graphicsWidth = (hasImage || hasInk) ? (font is null ? width : width * 0.4) : 0;
+        bool hasImage = layout.ShowGraphics && (look.Jpeg is not null || look.Image is not null);
+        bool hasInk = layout.ShowGraphics && look.Ink is { Count: > 0 };
 
         if (hasImage)
         {
@@ -100,7 +117,7 @@ internal static class SignatureAppearance
         for (int i = 0; i < lines.Count; i++)
         {
             if (i > 0) canvas.W.MoveText(0, -lineHeight);
-            canvas.W.Show(font.Encode(lines[i]));
+            canvas.W.Show(font, lines[i], size);
         }
         canvas.W.EndText();
     }

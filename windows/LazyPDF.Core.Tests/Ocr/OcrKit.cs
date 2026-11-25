@@ -135,5 +135,24 @@ internal static class OcrKit
         return items.Count(i => document.Resolve(i) is PdfStream s && s.Dictionary.ContainsKey("LazyPDFOcr"));
     }
 
+    /// <summary>A layer stream written by hand, first in the page's contents: the key a reader looks for, an uncompressed body.</summary>
+    public static void AddLayer(PdfDocument document, string content, int pageIndex = 0)
+    {
+        var marker = new PdfDictionary();
+        marker["Lang"] = new PdfString("en"u8.ToArray(), false);
+        var dictionary = new PdfDictionary();
+        dictionary["LazyPDFOcr"] = marker;
+        var stream = document.Add(new PdfStream(dictionary, TestPdf.Latin(content)));
+        var page = document.Pages[pageIndex];
+        var items = document.Resolve(page.Dictionary["Contents"]) switch
+        {
+            PdfArray array => array.Items.ToList(),
+            PdfStream => [page.Dictionary["Contents"]!],
+            _ => new List<PdfObject>(),
+        };
+        items.Insert(0, stream);
+        page.Dictionary["Contents"] = new PdfArray(items);
+    }
+
     public static string Latin(byte[] bytes) => Encoding.Latin1.GetString(bytes);
 }

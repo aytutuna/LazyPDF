@@ -1,0 +1,52 @@
+> Calibri,Arial|Carlito,Caladea|Calibri|r
+< Calibri/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Calibri|r
+< Carlito/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|CALIBRI|bi
+< Carlito/3
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Cambria|i
+< Caladea/2
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Arial|b
+< Liberation Sans/1
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|ARIAL|r
+< Liberation Sans/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Helvetica|r
+< Liberation Sans/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Times New Roman|bi
+< Liberation Serif/3
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|times|r
+< Liberation Serif/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Courier New|r
+< Liberation Mono/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Courier|b
+< Liberation Mono/1
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Liberation Mono|i
+< Liberation Mono/2
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Caladea|r
+< Caladea/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Comic Sans MS|r
+< Carlito/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|\Çalibri|r
+< Carlito/0
+> -|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono||r
+< Carlito/0
+> Arial|Carlito,Liberation Sans|Arial|b
+< Arial/1
+> Arial|Carlito,Liberation Sans|Verdana|r
+< Carlito/0
+> Verdana|Carlito|Verdana|r
+< Verdana/0
+> Cambria|Carlito|Cambria|r
+< Cambria/0
+> -|Carlito|Cambria|r
+< Carlito/0
+> -|Liberation Sans|Calibri|r
+< none
+> -|Liberation Sans|Arial|r
+< Liberation Sans/0
+> -|-|Calibri|r
+< none
+> Arial|-|Calibri|r
+< none
+> Arial|-|Arial|r
+< Arial/0

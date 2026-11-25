@@ -1,7 +1,7 @@
 namespace LazyPDF.Core;
 
-/// <summary>Text to put into a content stream at a byte position. At one position the order decides: closings (0) before openings (1).</summary>
-internal readonly record struct ContentInsertion(int Position, int Order, string Text);
+/// <summary>Text to put into a content stream at a byte position, in place of the <paramref name="Skip"/> bytes after it. At one position the order decides: closings (0) before openings (1).</summary>
+internal readonly record struct ContentInsertion(int Position, int Order, string Text, int Skip = 0);
 
 /// <summary>
 /// Plans the marked-content sequences of one page (ISO 32000-1 14.6). Text, images and forms go to
@@ -20,6 +20,7 @@ internal sealed class ContentTagger
     private readonly IReadOnlyList<IReadOnlyList<ContentOperation>> _streams;
     private readonly IReadOnlyDictionary<int, TagNode> _claims;
     private readonly Func<TagNode, int> _newMcid;
+    private readonly bool _artifacts;
     private readonly Stack<bool> _open = [];
     private int _skip;
     private bool _running;
@@ -28,11 +29,12 @@ internal sealed class ContentTagger
 
     public ContentTagger(
         IReadOnlyList<IReadOnlyList<ContentOperation>> streams, IReadOnlyDictionary<int, TagNode> claims,
-        Func<TagNode, int> newMcid)
+        Func<TagNode, int> newMcid, bool artifacts = true)
     {
         _streams = streams;
         _claims = claims;
         _newMcid = newMcid;
+        _artifacts = artifacts;
         Insertions = [.. streams.Select(_ => new List<ContentInsertion>())];
     }
 
@@ -40,6 +42,9 @@ internal sealed class ContentTagger
     public List<ContentInsertion>[] Insertions { get; }
 
     public int Artifacts { get; private set; }
+
+    /// <summary>The sequences given to a node, in drawing order: stream, byte position of the opening and the /MCID.</summary>
+    public List<(int Stream, int Position, int Mcid)> Sequences { get; } = [];
 
     public void Run()
     {
@@ -128,12 +133,15 @@ internal sealed class ContentTagger
         string begin;
         if (_target is null)
         {
+            if (!_artifacts) return;
             begin = "/Artifact BMC ";
             Artifacts++;
         }
         else
         {
-            begin = $"/{_target.Type} <</MCID {_newMcid(_target)}>> BDC ";
+            int mcid = _newMcid(_target);
+            Sequences.Add((_stream, operations[_first].Start, mcid));
+            begin = $"{new PdfName(_target.Type)} <</MCID {mcid}>> BDC ";
         }
         Insertions[_stream].Add(new ContentInsertion(operations[_first].Start, 1, begin));
         Insertions[_stream].Add(new ContentInsertion(operations[_last].End, 0, " EMC"));
@@ -149,7 +157,7 @@ internal sealed class ContentTagger
             int position = Math.Clamp(insertion.Position, at, data.Length);
             output.Write(data, at, position - at);
             output.Write(System.Text.Encoding.ASCII.GetBytes(insertion.Text));
-            at = position;
+            at = Math.Min(position + insertion.Skip, data.Length);
         }
         output.Write(data, at, data.Length - at);
         return output.ToArray();

@@ -46,7 +46,7 @@ public enum PdfAText {
     public static func realTooBig(_ text: String) -> String { L10n.t("The real number {0} is beyond 32767.", text) }
     public static var tooMuchContent: String { L10n.t("The page content is too large to check in full.") }
     public static var graphicsNesting: String { L10n.t("Graphics states are nested more than 28 deep.") }
-    public static func tooManyColorants(_ limit: Int) -> String { L10n.t("A DeviceN space has more than {0} colorants.", limit) }
+    public static func tooManyColorants(_ limit: Int) -> String { L10n.t("A DeviceN space has more than {0} color channels.", limit) }
 
     public static var embeddedFile: String { L10n.t("The file embeds another file, which this level does not allow.") }
     public static var embeddedNotPdfA: String { L10n.t("An embedded file is not a PDF/A file.") }
@@ -76,7 +76,7 @@ public enum PdfAText {
     public static var profileComponents: String { L10n.t("An ICC profile stream has no usable /N.") }
     public static var profileUnreadable: String { L10n.t("An ICC profile could not be read.") }
     public static func profileClass(_ kind: String) -> String { L10n.t("An ICC profile of class {0} is not allowed.", kind) }
-    public static var profileSpace: String { L10n.t("An ICC profile does not match the colour count in /N.") }
+    public static var profileSpace: String { L10n.t("An ICC profile does not match the color count in /N.") }
     public static func profileVersion(_ version: Int) -> String { L10n.t("An ICC profile is version {0}, newer than this level allows.", version) }
 
     public static func widthDiffers(_ code: Int, _ declared: Double, _ actual: Double) -> String {
@@ -147,6 +147,25 @@ public enum PdfAText {
     public static var autoState: String { L10n.t("An optional content configuration has /AS.") }
     public static var orderIncomplete: String { L10n.t("The /Order of a configuration leaves out some groups.") }
 
+    public static var noMarkInfo: String { L10n.t("The catalog has no /MarkInfo with /Marked true.") }
+    public static var noStructTree: String { L10n.t("The file has no structure tree.") }
+    public static var emptyStructTree: String { L10n.t("The structure tree has no elements.") }
+    public static var structTreeTooBig: String { L10n.t("The structure tree is too large to check in full.") }
+    public static var contentOutsideTree: String { L10n.t("Content is neither in the structure tree nor marked as an artifact.") }
+    public static var noStructParents: String { L10n.t("A page with tagged content has no /StructParents.") }
+    public static var parentTreeMismatch: String { L10n.t("The parent tree does not lead the content of this page back to the structure elements that hold it.") }
+    public static func nonStandardType(_ type: String) -> String { L10n.t("The structure type {0} is not a standard type and the role map does not lead to one.", type) }
+    public static func noAlternateText(_ type: String) -> String { L10n.t("A {0} element has neither /Alt nor /ActualText.", type) }
+    public static var noLanguage: String { L10n.t("No natural language is set in the catalog or on the top structure elements.") }
+    public static func structureElement(_ number: Int) -> String { L10n.t("Structure element {0}", number) }
+    public static var setLanguageToTag: String { L10n.t("Set the document language first and Lazy PDF can tag the file itself.") }
+    public static func tagFirst(_ level: PdfALevel, _ problems: [String], _ hint: String? = nil) -> String {
+        let text = L10n.t("{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again.", level.name(), problems.joined(separator: " "))
+        return hint.map { text + " " + $0 } ?? text
+    }
+    public static func tagged(_ pages: Int) -> String { L10n.t("The file was tagged automatically ({0} pages). Check the reading order and the descriptions.", pages) }
+    public static var marked: String { L10n.t("The file was marked as tagged.") }
+
     public static let producer = "Lazy PDF"
     public static var needsPassword: String { L10n.t("The file needs a password.") }
     public static var unreadable: String { L10n.t("The file could not be read.") }
@@ -207,7 +226,7 @@ public enum PdfAText {
         let whole = kept[0..<(kept.count - 2)].map { String($0) }.joined()
         var fraction = kept[(kept.count - 2)...].map { String($0) }.joined()
         while fraction.hasSuffix("0") { fraction.removeLast() }
-        let sign = value < 0 ? "-" : ""
+        let sign = value.sign == .minus ? "-" : ""
         return sign + whole + (fraction.isEmpty ? "" : "." + fraction)
     }
 }

@@ -55,7 +55,7 @@ public enum CompareText {
         L10n.t("Size {0} to {1}", digits(from, 2), digits(to, 2))
     }
 
-    public static func colorChange(_ from: RgbColor, _ to: RgbColor) -> String { L10n.t("Colour {0} to {1}", hex(from), hex(to)) }
+    public static func colorChange(_ from: RgbColor, _ to: RgbColor) -> String { L10n.t("Color {0} to {1}", hex(from), hex(to)) }
 
     private static func hex(_ c: RgbColor) -> String { String(format: "#%02X%02X%02X", Int(c.r), Int(c.g), Int(c.b)) }
 
@@ -67,7 +67,7 @@ public enum CompareText {
 
     public static var annotationPosition: String { L10n.t("Position") }
 
-    public static var annotationColor: String { L10n.t("Colour") }
+    public static var annotationColor: String { L10n.t("Color") }
 
     public static var bookmark: String { L10n.t("Bookmark") }
 

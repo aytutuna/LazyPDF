@@ -33,6 +33,9 @@ function Find-SdkTool([string] $name) {
     $found.FullName
 }
 
+$arches = @(if ($X64) { 'x64' }; if ($Arm64) { 'arm64' })
+if ($arches) { & (Join-Path $PSScriptRoot 'build_openjpeg.ps1') -Arch $arches }
+
 $makeappx = Find-SdkTool 'makeappx.exe'
 $makepri = Find-SdkTool 'makepri.exe'
 $nuget = if ($env:NUGET_PACKAGES) { $env:NUGET_PACKAGES } else { Join-Path $HOME '.nuget\packages' }
@@ -50,6 +53,9 @@ function New-Package([string] $publish, [string] $arch) {
     robocopy $publish $stage /E /XF *.pdb /NFL /NDL /NJH /NJS /NP | Out-Null
     if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
     Copy-Item (Join-Path $store 'Assets') (Join-Path $stage 'Assets') -Recurse
+    # A publish without a runtime carries both architectures' DLLs under runtimes; the package gets its own beside the exe.
+    Remove-Item (Join-Path $stage 'runtimes\win-*\native\openjp2.dll') -Force -ErrorAction SilentlyContinue
+    Copy-Item (Join-Path $root "windows\native\bin\$arch\openjp2.dll") $stage -Force
 
     # The runtime's own third-party notices, from the runtime pack named in the publish's deps.json.
     $deps = Get-Content (Join-Path $publish 'LazyPDF.deps.json') -Raw | ConvertFrom-Json

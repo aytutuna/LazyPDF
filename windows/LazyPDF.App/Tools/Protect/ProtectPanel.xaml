@@ -12,7 +12,18 @@
 
         <StackPanel x:Name="UnlockSection" Margin="0,0,0,12" Visibility="Collapsed">
             <TextBlock Text="{loc:T Current permissions password}" Style="{StaticResource FieldLabelText}" />
-            <PasswordBox x:Name="UnlockBox" AutomationProperties.Name="{loc:T Current permissions password}" PasswordChanged="Password_Changed" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <PasswordBox x:Name="UnlockBox" AutomationProperties.Name="{loc:T Current permissions password}" PasswordChanged="Password_Changed" />
+                <TextBox x:Name="UnlockPlain" Grid.Column="0" IsReadOnly="True" Visibility="Collapsed" AutomationProperties.Name="{loc:T Hold to show the password}" />
+                <Button x:Name="UnlockReveal" Grid.Column="1" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE7B3;" Margin="4,0,0,0"
+                        ToolTip="{loc:T Hold to show the password}" AutomationProperties.Name="{loc:T Hold to show the password}"
+                        PreviewMouseLeftButtonDown="Reveal_MouseDown" PreviewMouseLeftButtonUp="Reveal_MouseUp" LostMouseCapture="Reveal_Release"
+                        PreviewKeyDown="Reveal_KeyDown" PreviewKeyUp="Reveal_KeyUp" LostKeyboardFocus="Reveal_Release" />
+            </Grid>
         </StackPanel>
 
         <Border x:Name="ModeTrack" Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,16">
@@ -31,7 +42,18 @@
 
         <StackPanel x:Name="PasswordSection">
             <TextBlock Text="{loc:T Password to open}" Style="{StaticResource FieldLabelText}" />
-            <PasswordBox x:Name="OpenBox" AutomationProperties.Name="{loc:T Password to open}" PasswordChanged="Password_Changed" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <PasswordBox x:Name="OpenBox" AutomationProperties.Name="{loc:T Password to open}" PasswordChanged="Password_Changed" />
+                <TextBox x:Name="OpenPlain" Grid.Column="0" IsReadOnly="True" Visibility="Collapsed" AutomationProperties.Name="{loc:T Hold to show the password}" />
+                <Button x:Name="OpenReveal" Grid.Column="1" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE7B3;" Margin="4,0,0,0"
+                        ToolTip="{loc:T Hold to show the password}" AutomationProperties.Name="{loc:T Hold to show the password}"
+                        PreviewMouseLeftButtonDown="Reveal_MouseDown" PreviewMouseLeftButtonUp="Reveal_MouseUp" LostMouseCapture="Reveal_Release"
+                        PreviewKeyDown="Reveal_KeyDown" PreviewKeyUp="Reveal_KeyUp" LostKeyboardFocus="Reveal_Release" />
+            </Grid>
             <Grid Margin="0,6,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="72" />
@@ -41,7 +63,18 @@
                 <TextBlock x:Name="StrengthHint" Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
             </Grid>
             <TextBlock Text="{loc:T Repeat password}" Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" />
-            <PasswordBox x:Name="RepeatBox" AutomationProperties.Name="{loc:T Repeat password}" PasswordChanged="Password_Changed" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <PasswordBox x:Name="RepeatBox" AutomationProperties.Name="{loc:T Repeat password}" PasswordChanged="Password_Changed" />
+                <TextBox x:Name="RepeatPlain" Grid.Column="0" IsReadOnly="True" Visibility="Collapsed" AutomationProperties.Name="{loc:T Hold to show the password}" />
+                <Button x:Name="RepeatReveal" Grid.Column="1" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE7B3;" Margin="4,0,0,0"
+                        ToolTip="{loc:T Hold to show the password}" AutomationProperties.Name="{loc:T Hold to show the password}"
+                        PreviewMouseLeftButtonDown="Reveal_MouseDown" PreviewMouseLeftButtonUp="Reveal_MouseUp" LostMouseCapture="Reveal_Release"
+                        PreviewKeyDown="Reveal_KeyDown" PreviewKeyUp="Reveal_KeyUp" LostKeyboardFocus="Reveal_Release" />
+            </Grid>
             <TextBlock x:Name="PasswordNote" Style="{StaticResource ReasonText}" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
 
@@ -80,7 +113,18 @@
             <StackPanel x:Name="LimitDetails" Visibility="Collapsed">
                 <StackPanel x:Name="OwnerRow" Margin="0,8,0,0">
                     <TextBlock Text="{loc:T Permissions password}" Style="{StaticResource FieldLabelText}" />
-                    <PasswordBox x:Name="OwnerBox" AutomationProperties.Name="{loc:T Permissions password}" PasswordChanged="Password_Changed" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <PasswordBox x:Name="OwnerBox" AutomationProperties.Name="{loc:T Permissions password}" PasswordChanged="Password_Changed" />
+                        <TextBox x:Name="OwnerPlain" Grid.Column="0" IsReadOnly="True" Visibility="Collapsed" AutomationProperties.Name="{loc:T Hold to show the password}" />
+                        <Button x:Name="OwnerReveal" Grid.Column="1" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE7B3;" Margin="4,0,0,0"
+                                ToolTip="{loc:T Hold to show the password}" AutomationProperties.Name="{loc:T Hold to show the password}"
+                                PreviewMouseLeftButtonDown="Reveal_MouseDown" PreviewMouseLeftButtonUp="Reveal_MouseUp" LostMouseCapture="Reveal_Release"
+                                PreviewKeyDown="Reveal_KeyDown" PreviewKeyUp="Reveal_KeyUp" LostKeyboardFocus="Reveal_Release" />
+                    </Grid>
                     <TextBlock x:Name="OwnerNote" Style="{StaticResource ReasonText}" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite" />
                 </StackPanel>
                 <TextBlock Text="{loc:T People may}" Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" />

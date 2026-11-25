@@ -10,7 +10,7 @@ public static class SignatureText
     public static string FieldLocked => Loc.T("An earlier signature locked this field. Choose another one.");
     public static string FieldTaken => Loc.T("This field is already signed. Choose another one.");
     public static string NoFont => Loc.T("No font can draw the signature text. Choose another font.");
-    public static string NoPage => Loc.T("The page is not in the document.");
+    public static string NoPage => Loc.T("The page is not in the file.");
     public static string NoTimestamp => Loc.T("The time stamp server gave no answer. Try again later.");
     public static string NoTimestampServer => Loc.T("This signature needs a time stamp server.");
     public static string NoRoom => Loc.T("The signature does not fit in the space kept for it.");
@@ -38,6 +38,9 @@ public static class SignatureText
         _ => Loc.T("Signature not checked"),
     };
 
+    public static string Status(SignatureReport report) =>
+        OnlyExpired(report) ? Loc.T("Certificate has expired") : Status(report.Verdict);
+
     /// <summary>One line a person can read.</summary>
     public static string Sentence(SignatureReport report)
     {
@@ -51,7 +54,7 @@ public static class SignatureText
         {
             SignatureVerdict.Valid when report.Changes.IsEmpty => head + " " + Loc.T("Not changed since."),
             SignatureVerdict.Valid => head + " " + Loc.T("Changed only as the signer allowed."),
-            SignatureVerdict.ValidButUntrusted => head + " " + (report.Changes.IsEmpty ? "" : Loc.T("Changed only as allowed.") + " ") + Loc.T("The signer is not trusted."),
+            SignatureVerdict.ValidButUntrusted => head + " " + (report.Changes.IsEmpty ? "" : Loc.T("Changed only as allowed.") + " ") + (OnlyExpired(report) ? Loc.T("The certificate has expired since.") : Loc.T("The signer is not trusted.")),
             SignatureVerdict.ChangedAfterSigning => head + " " + Loc.T("Changed since."),
             SignatureVerdict.Broken => stamp ? Loc.T("The time stamp is not valid.") : Loc.T("The signature by {0} is not valid.", who),
             _ => Loc.T("This signature could not be checked."),
@@ -68,11 +71,13 @@ public static class SignatureText
         SignatureProblem.NoCertificate => Loc.T("Signer's certificate is missing"),
         SignatureProblem.UntrustedSigner => Loc.T("Signer is not trusted"),
         SignatureProblem.CertificateNotValid => Loc.T("Certificate was not valid when signing"),
+        SignatureProblem.CertificateExpired => Loc.T("Certificate has expired since"),
         SignatureProblem.CertificateRevoked => Loc.T("Certificate was revoked"),
         SignatureProblem.ChangedAfterSigning => Loc.T("File changed after signing"),
         SignatureProblem.DamagedStructure => Loc.T("File structure is damaged"),
         SignatureProblem.TimestampInvalid => Loc.T("Time stamp is not valid"),
-        _ => Loc.T("Signature uses a weak digest"),
+        SignatureProblem.WeakDigest => Loc.T("Signature uses a weak digest"),
+        _ => Loc.T("Signature uses a weak key"),
     };
 
     /// <summary>What to do about it.</summary>
@@ -85,11 +90,13 @@ public static class SignatureText
         SignatureProblem.NoCertificate => Loc.T("Ask the signer to sign again with the certificate included."),
         SignatureProblem.UntrustedSigner => Loc.T("Trust the signer's certificate only after checking it with them."),
         SignatureProblem.CertificateNotValid => Loc.T("Check the date on the signature and the certificate."),
+        SignatureProblem.CertificateExpired => Loc.T("The signing time is the signer's own claim. Check that the file was signed before the certificate expired."),
         SignatureProblem.CertificateRevoked => Loc.T("Do not rely on this signature."),
         SignatureProblem.ChangedAfterSigning => Loc.T("Open the signed version from the file's history."),
         SignatureProblem.DamagedStructure => Loc.T("Open the signed version from the file's history."),
         SignatureProblem.TimestampInvalid => Loc.T("Treat the signing time as the signer's claim."),
-        _ => Loc.T("Ask the signer to sign again with SHA-256."),
+        SignatureProblem.WeakDigest => Loc.T("Ask the signer to sign again with SHA-256."),
+        _ => Loc.T("Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve."),
     };
 
     /// <summary>A change in words.</summary>
@@ -107,9 +114,12 @@ public static class SignatureText
             SignatureChangeKind.PageStructure => Loc.T("Pages changed") + where,
             SignatureChangeKind.Form => Loc.T("Form changed") + where,
             SignatureChangeKind.Unreadable => Loc.T("Added data cannot be checked"),
-            _ => Loc.T("Document changed") + where,
+            _ => Loc.T("File changed") + where,
         };
     }
+
+    private static bool OnlyExpired(SignatureReport report) =>
+        report.Verdict == SignatureVerdict.ValidButUntrusted && report.Problems.Count == 1 && report.Problems[0] == SignatureProblem.CertificateExpired;
 
     private static string Date(DateTimeOffset? time) =>
         time is { } t ? t.ToString("d MMM yyyy", CultureInfo.CurrentUICulture) : "";

@@ -88,6 +88,17 @@ public sealed class RecoveryStoreTests
     }
 
     [Fact]
+    public void ASweepOfAFolderThatIsNotThereDoesNothing()
+    {
+        using var dir = new TempDir();
+        var store = new RecoveryStore(dir.Sub("none"));
+
+        store.Sweep();
+
+        Assert.Empty(store.List());
+    }
+
+    [Fact]
     public void AStrayFileIsNotADocument()
     {
         using var dir = new TempDir();

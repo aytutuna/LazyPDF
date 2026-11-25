@@ -59,7 +59,7 @@ internal static class SummaryPages
                     x += 32;
                 }
                 writer.BeginText().FillGray(0).Font(line.Heading ? boldName : regularName, size).MoveText(x, top)
-                    .Show(font.Encode(line.Text)).EndText();
+                    .Show(font, line.Text, size).EndText();
             }
             page.Dictionary["Contents"] = document.Add(new PdfStream(new PdfDictionary(), writer.ToArray()));
         }

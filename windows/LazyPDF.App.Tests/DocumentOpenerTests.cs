@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.Text;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Create;
 using LazyPDF.Core;
 using Xunit;
 
@@ -81,6 +83,63 @@ public sealed class DocumentOpenerTests
     }
 
     [Fact]
+    public void Utf16TextWithABomIsDecoded()
+    {
+        byte[] bytes = [.. Encoding.Unicode.GetPreamble(), .. Encoding.Unicode.GetBytes("héllo")];
+
+        Assert.Equal("héllo", TextFiles.Decode(bytes));
+    }
+
+    [Fact]
+    public void Utf16BigEndianTextWithABomIsDecoded()
+    {
+        byte[] bytes = [.. Encoding.BigEndianUnicode.GetPreamble(), .. Encoding.BigEndianUnicode.GetBytes("héllo")];
+
+        Assert.Equal("héllo", TextFiles.Decode(bytes));
+    }
+
+    [Fact]
+    public void Utf32TextWithABomIsDecoded()
+    {
+        byte[] bytes = [.. Encoding.UTF32.GetPreamble(), .. Encoding.UTF32.GetBytes("héllo")];
+
+        Assert.Equal("héllo", TextFiles.Decode(bytes));
+    }
+
+    [Fact]
+    public void InvalidUtf8IsReadInTheCodePage()
+    {
+        var saved = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
+        try { Assert.Equal("Çalışma", TextFiles.Decode([0xC7, 0x61, 0x6C, 0xFD, 0xFE, 0x6D, 0x61])); }
+        finally { CultureInfo.CurrentCulture = saved; }
+    }
+
+    [Fact]
+    public void Utf8TextLosesItsBom()
+    {
+        byte[] bytes = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes("héllo")];
+
+        Assert.Equal("héllo", TextFiles.Decode(bytes));
+    }
+
+    [Fact]
+    public void AsciiIsUnchanged()
+    {
+        Assert.Equal("plain text", TextFiles.Decode(Encoding.ASCII.GetBytes("plain text")));
+    }
+
+    [Fact]
+    public void TurkishCodePageTextIsReadOnATurkishCulture()
+    {
+        byte[] bytes = [0xFE, 0xF0, 0xDD];
+        var saved = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
+        try { Assert.Equal("şğİ", TextFiles.Decode(bytes)); }
+        finally { CultureInfo.CurrentCulture = saved; }
+    }
+
+    [Fact]
     public void TurkishTextNeedsAFontFromTheSource()
     {
         using var dir = new TempDir();
@@ -93,11 +152,70 @@ public sealed class DocumentOpenerTests
     }
 
     [Fact]
+    public void AFileLongerThanAnArrayCanBeIsRefusedBeforeItIsRead()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("huge.pdf", []);
+        using (var stream = new FileStream(path, FileMode.Open)) stream.SetLength(int.MaxValue + 1L);
+
+        var error = Assert.Throws<PdfReadException>(() => Opener.Read(path));
+
+        Assert.Equal(PdfReadProblem.Unsupported, error.Problem);
+        Assert.Equal(DocumentOpener.TooLarge, error.Message);
+    }
+
+    [Fact]
     public void AMissingFileThrowsFileNotFound()
     {
         using var dir = new TempDir();
         Directory.CreateDirectory(dir.Path);
 
         Assert.Throws<FileNotFoundException>(() => Opener.Read(dir.Sub("none.pdf")));
+    }
+
+    [Fact]
+    public async Task ReadingInStepsReportsProgressUpToTheWholeFile()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("big.pdf", new byte[5 << 20]);
+        var seen = new Steps();
+
+        var source = await Opener.ReadAsync(path, seen, CancellationToken.None);
+
+        Assert.Equal(5 << 20, source.Bytes.Length);
+        Assert.Equal(1.0, seen.Values[^1]);
+        Assert.Equal(seen.Values.Order(), seen.Values);
+    }
+
+    [Fact]
+    public async Task ACancelledReadThrows()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("a.pdf", Pdfs.Text());
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Opener.ReadAsync(path, null, cancelled.Token));
+    }
+
+    [Fact]
+    public async Task ReadAndReadAsyncGiveTheSameBytes()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("a.pdf", Pdfs.Text());
+
+        var sync = Opener.Read(path);
+        var async = await Opener.ReadAsync(path, null, CancellationToken.None);
+
+        Assert.Equal(sync.Bytes, async.Bytes);
+        Assert.Equal(sync.Title, async.Title);
+        Assert.Equal(sync.Hash, async.Hash);
+    }
+
+    private sealed class Steps : IProgress<double>
+    {
+        public List<double> Values { get; } = [];
+
+        public void Report(double value) => Values.Add(value);
     }
 }

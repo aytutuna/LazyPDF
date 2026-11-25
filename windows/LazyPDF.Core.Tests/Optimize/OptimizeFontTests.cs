@@ -116,6 +116,22 @@ public class OptimizeFontTests
     }
 
     [Fact]
+    public void FontWithNoGlyphsIsLeftAlone()
+    {
+        var tables = new (string Tag, byte[] Data)[] { ("glyf", new byte[4]), ("head", new byte[54]), ("loca", new byte[2]), ("maxp", new byte[6]) };
+        var font = new List<byte> { 0, 1, 0, 0, 0, (byte)tables.Length, 0, 0, 0, 0, 0, 0 };
+        int offset = 12 + 16 * tables.Length;
+        foreach (var (tag, data) in tables)
+        {
+            font.AddRange(System.Text.Encoding.Latin1.GetBytes(tag));
+            font.AddRange(new byte[] { 0, 0, 0, 0, 0, 0, (byte)(offset >> 8), (byte)offset, 0, 0, (byte)(data.Length >> 8), (byte)data.Length });
+            offset += data.Length;
+        }
+        foreach (var (_, data) in tables) font.AddRange(data);
+        Assert.Null(TrueTypeTrim.Trim(font.ToArray(), new HashSet<int> { 1 }));
+    }
+
+    [Fact]
     public void FontAlsoListedInTheFormIsLeftWhole()
     {
         byte[] file = OptimizeKit.Build("BT /F1 18 Tf 10 100 Td (Hello) Tj ET", "/Font <</F1 5 0 R>>", AddSimpleFont,

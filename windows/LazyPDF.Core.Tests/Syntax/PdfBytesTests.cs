@@ -67,6 +67,13 @@ public class PdfBytesTests
     }
 
     [Fact]
+    public void NonFiniteNumbersWriteZero()
+    {
+        foreach (double value in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity })
+            Assert.Equal("0", new PdfNumber(value).Text);
+    }
+
+    [Fact]
     public void LexerFarOutsideTheBytesReadsTheEnd()
     {
         foreach (long position in new long[] { long.MaxValue, long.MaxValue - 1, long.MinValue, -5, 3, 1000 })
@@ -77,5 +84,25 @@ public class PdfBytesTests
             Assert.Throws<PdfReadException>(() => lexer.ReadObject());
             Assert.Throws<PdfReadException>(() => lexer.ReadObjectHeader());
         }
+    }
+
+    [Fact]
+    public void NameAboveLatin1IsWrittenAsItsUtf8Bytes()
+    {
+        Assert.Equal("/#C5#9E", new PdfName("Ş").ToString());
+        Assert.Equal("/#C5#9E", PdfName.FromText("Ş").ToString());
+        var read = (PdfName)new PdfLexer(new PdfArrayBytes(TestPdf.Latin("/#C5#9E"))).ReadObject();
+        Assert.Equal("Ş", read.Text);
+        var latin = (PdfName)new PdfLexer(new PdfArrayBytes(TestPdf.Latin("/#FC"))).ReadObject();
+        Assert.Equal(latin.Value, latin.Text);
+    }
+
+    [Fact]
+    public void NameMixingLatin1AndAboveIsWrittenAsUtf8Throughout()
+    {
+        var name = new PdfName("GÖZDEN GEÇİRİLDİ");
+        Assert.DoesNotContain("#D6", name.ToString());
+        var read = (PdfName)new PdfLexer(new PdfArrayBytes(TestPdf.Latin(name.ToString()))).ReadObject();
+        Assert.Equal("GÖZDEN GEÇİRİLDİ", read.Text);
     }
 }

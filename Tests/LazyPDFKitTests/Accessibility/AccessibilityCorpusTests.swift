@@ -89,6 +89,9 @@ final class AccessibilityCorpusTests: XCTestCase {
         print("text changed \(textChanged), tree and content differ \(treeMismatch), reopen or write failed \(reopenFailed), \(Int(Date().timeIntervalSince(start))) s")
         for problem in problems { print(problem) }
 
+        // The fixture files stand in for a corpus; a run that read none of them or tagged nothing has proved nothing.
+        XCTAssertGreaterThan(files, 0)
+        if ProcessInfo.processInfo.environment["LAZYPDF_CORPUS"]?.isEmpty ?? true { XCTAssertGreaterThan(pagesTagged, 0) }
         XCTAssertEqual(textChanged, 0)
         XCTAssertEqual(treeMismatch, 0)
         XCTAssertEqual(reopenFailed, 0)

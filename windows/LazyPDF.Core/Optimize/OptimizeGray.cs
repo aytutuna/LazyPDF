@@ -52,7 +52,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
     public int Left { get; private set; }
     public bool NeedsCodec { get; private set; }
 
-    public void Run()
+    public void Run(CancellationToken cancel)
     {
         foreach (var dictionary in PdfGraph.AllDictionaries(document))
         {
@@ -81,11 +81,11 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
 
         _analysing = true;
-        Pass(pages, forms);
+        Pass(pages, forms, cancel);
         Settle();
         _analysing = false;
         Left = 0;
-        Pass(pages, forms);
+        Pass(pages, forms, cancel);
         foreach (var (stream, data) in _output)
         {
             PdfGraph.SetData(stream, data);
@@ -93,16 +93,18 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
         foreach (var stream in all)
         {
+            cancel.ThrowIfCancellationRequested();
             var dictionary = stream.Dictionary;
             if (document.Integer(dictionary, "PatternType") == 2) Left++;
             else if (document.Name(dictionary, "Subtype") == "Image" && document.Bool(dictionary, "ImageMask") != true) GrayImage(stream);
         }
     }
 
-    private void Pass(List<(PdfDictionary? Resources, List<PdfStream> Streams, bool Straddles)> pages, List<PdfStream> forms)
+    private void Pass(List<(PdfDictionary? Resources, List<PdfStream> Streams, bool Straddles)> pages, List<PdfStream> forms, CancellationToken cancel)
     {
         foreach (var (resources, streams, straddles) in pages)
         {
+            cancel.ThrowIfCancellationRequested();
             if (straddles)
             {
                 Left++;
@@ -121,6 +123,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
         foreach (var form in forms)
         {
+            cancel.ThrowIfCancellationRequested();
             var inherited = new Slot(Space.Inherited, null);
             Convert(form, document.Dict(form.Dictionary, "Resources"), new State { Fill = inherited, Stroke = inherited });
         }
@@ -390,6 +393,13 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         };
     }
 
+    // Pixels of a JPEG 2000 picture stand for it only in a space they can be read as, and without alpha: the JPEG written back has none.
+    // One that drops its alpha under /SMaskInData 0 is left too when the codec's pixels have any (see JpxImage.Opaque).
+    // A DCT picture in a space the pixels cannot show, or a CMYK one the codec shows as its inverse, is left as stored too.
+    private bool Decodable(PdfDictionary dictionary, string coded, byte[] data) => coded == "JPXDecode"
+        ? JpxImage.Readable(document, dictionary) && JpxImage.MaskInData(document, dictionary) <= 0
+        : DctImage.Readable(document, dictionary) && (ImageKit.Describe(document, dictionary["ColorSpace"]).Family != ImageFamily.Cmyk || DctImage.CmykAsShown(document, dictionary, data));
+
     private void GrayImage(PdfStream stream)
     {
         var dictionary = stream.Dictionary;
@@ -401,12 +411,12 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
             Left++;
             return;
         }
-        var (filter, parameters, _) = document.DecodeSpec(stream);
         PdfRgbaImage pixels;
         string? coded;
         try
         {
-            var decoded = PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters);
+            var (filter, parameters, _) = document.DecodeSpec(stream, decoding: true);
+            var decoded = PdfFilters.DecodeToCodecWhole(document.RawData(stream), filter, parameters, PdfFilters.DefaultMaxSize);
             coded = decoded.Codec;
             if (coded is null)
             {
@@ -415,7 +425,8 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
                 plain.Remove("Mask");
                 pixels = PdfImageSamples.ToRgba(plain, decoded.Data, document.Resolve, s => document.Data(s));
             }
-            else if (coded is "DCTDecode" or "JPXDecode" && !dictionary.ContainsKey("Decode") && codec is not null && codec.Decode(decoded.Data, coded) is { } image)
+            else if (coded is "DCTDecode" or "JPXDecode" && !dictionary.ContainsKey("Decode") && codec is not null && Decodable(dictionary, coded, decoded.Data)
+                && codec.Decode(decoded.Data, coded, coded == "JPXDecode" ? components : 0) is { } image && (coded != "JPXDecode" || JpxImage.Opaque(image)))
             {
                 pixels = image;
             }
@@ -427,6 +438,11 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
             }
         }
         catch (PdfReadException)
+        {
+            Left++;
+            return;
+        }
+        if (pixels.Width < 1 || pixels.Height < 1)
         {
             Left++;
             return;

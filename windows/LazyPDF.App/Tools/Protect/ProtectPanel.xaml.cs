@@ -1,6 +1,7 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using LazyPDF.App.Documents;
 using LazyPDF.Core;
 using Microsoft.Win32;
@@ -16,6 +17,7 @@ public enum ProtectMode { Password, Certificates, Remove }
 public partial class ProtectPanel : ToolPanel
 {
     private readonly List<Recipient> _recipients = [];
+    private bool _typed;
 
     public ProtectPanel()
     {
@@ -51,12 +53,54 @@ public partial class ProtectPanel : ToolPanel
     protected override void OnDetach()
     {
         Tab!.Changed -= Tab_Changed;
+        HideAll();
         UnlockBox.Clear();
         OpenBox.Clear();
         RepeatBox.Clear();
         OwnerBox.Clear();
+        _typed = false;
         _recipients.Clear();
         ShowRecipients();
+    }
+
+    private void HideAll()
+    {
+        foreach (var button in new[] { UnlockReveal, OpenReveal, RepeatReveal, OwnerReveal }) Reveal(button, false);
+    }
+
+    private void Reveal_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        var button = (Button)sender;
+        Mouse.Capture(button);
+        Reveal(button, true);
+    }
+
+    private void Reveal_MouseUp(object sender, MouseButtonEventArgs e) => Reveal((Button)sender, false);
+
+    private void Reveal_Release(object sender, RoutedEventArgs e) => Reveal((Button)sender, false);
+
+    private void Reveal_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Space or Key.Enter)) return;
+        e.Handled = true;
+        if (!e.IsRepeat) Reveal((Button)sender, true);
+    }
+
+    private void Reveal_KeyUp(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Space or Key.Enter)) return;
+        e.Handled = true;
+        Reveal((Button)sender, false);
+    }
+
+    private static void Reveal(Button button, bool show)
+    {
+        var grid = (Grid)button.Parent;
+        var box = grid.Children.OfType<PasswordBox>().First();
+        var plain = grid.Children.OfType<TextBox>().First();
+        plain.Text = show ? box.Password : "";
+        box.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+        plain.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private bool Locked => Tab is { } tab && ProtectWork.IsLockedAgainstChange(tab.Document);
@@ -100,8 +144,10 @@ public partial class ProtectPanel : ToolPanel
 
         var strength = PasswordStrength.Rate(Opening);
         StrengthBar.Value = (int)strength;
-        StrengthHint.Text = PasswordStrength.Hint(strength);
-        PasswordNote.Text = RepeatBox.Password.Length > 0 && RepeatBox.Password != Opening ? Loc.T("The passwords do not match.") : "";
+        bool noOpening = mode == ProtectMode.Password && Opening.Length == 0;
+        StrengthHint.Text = noOpening && Limited ? Loc.T("No password to open. Anyone can open the file; only the limits apply.") : PasswordStrength.Hint(strength);
+        PasswordNote.Text = RepeatBox.Password.Length > 0 && RepeatBox.Password != Opening ? Loc.T("The passwords do not match.")
+            : noOpening && !Limited && _typed ? Loc.T("Type a password to open the file.") : "";
         OwnerNote.Text = !Limited || mode != ProtectMode.Password ? ""
             : OwnerBox.Password.Length == 0 ? Loc.T("Type a Permissions password to apply the limits.")
             : OwnerBox.Password == Opening ? Loc.T("Use a different password here.") : "";
@@ -120,6 +166,7 @@ public partial class ProtectPanel : ToolPanel
         {
             document.IsSigned ? Loc.T("The copy will not keep the signatures.") : null,
             document.PdfAPart is not null && mode != ProtectMode.Remove ? Loc.T("The copy will no longer be PDF/A.") : null,
+            mode == ProtectMode.Password && PasswordStrength.VeryShort(Opening) ? Loc.T("A password this short can be guessed in seconds. Use at least 8 characters.") : null,
         }.OfType<string>());
         WarnRow.Visibility = WarnNote.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         RaiseActionChanged();
@@ -129,7 +176,11 @@ public partial class ProtectPanel : ToolPanel
 
     private void Mode_Checked(object sender, RoutedEventArgs e) => UpdateState();
 
-    private void Password_Changed(object sender, RoutedEventArgs e) => UpdateState();
+    private void Password_Changed(object sender, RoutedEventArgs e)
+    {
+        if (sender == OpenBox || sender == RepeatBox) _typed = true;
+        UpdateState();
+    }
 
     private void Limit_Click(object sender, RoutedEventArgs e) => UpdateState();
 
@@ -199,6 +250,11 @@ public partial class ProtectPanel : ToolPanel
             host.ShowProblem(new Problem(Loc.T("Protection is locked"), Loc.T("Enter the permissions password, then try again.")));
             return;
         }
+        catch (ArgumentException e) when (mode == ProtectMode.Certificates)
+        {
+            host.ShowProblem(new Problem(Loc.T("Could not protect the file"), e.Message.Split(" (Parameter")[0]));
+            return;
+        }
         catch (Exception e) when (e is PdfReadException or InvalidDataException or System.Security.Cryptography.CryptographicException)
         {
             host.ShowProblem(new Problem(Loc.T("Could not protect the file"), Loc.T("The file could not be rewritten. Save a copy, then protect that.")));
@@ -223,11 +279,12 @@ public partial class ProtectPanel : ToolPanel
         }
         else
         {
-            await host.OpenNewAsync(made, title, mode == ProtectMode.Password && open.Length > 0 ? open : null, opener);
+            if (!await host.OpenNewAsync(made, title, mode == ProtectMode.Password && open.Length > 0 ? open : null, opener)) return;
             host.SetStatus(mode == ProtectMode.Remove ? Loc.T("Protection removed from a copy.") : Loc.T("Protected copy made."));
             host.ShowNotice(mode == ProtectMode.Remove ? Loc.T("Copy without protection") : Loc.T("Copy with protection"),
                             Loc.T("The original is unchanged. Save the copy to keep it."));
         }
+        HideAll();
         UnlockBox.Clear();
         OpenBox.Clear();
         RepeatBox.Clear();

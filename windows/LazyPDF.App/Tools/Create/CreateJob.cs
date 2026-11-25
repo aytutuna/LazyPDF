@@ -1,4 +1,5 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Create;
@@ -12,19 +13,32 @@ public static class CreateJob
         {
             // The engine cannot be stopped part way, so a cancel stops the wait and the result is dropped.
             await host.RunBusyAsync(Loc.T("Creating"), async token =>
-                made = await Task.Run(() => PdfMaker.Make(request, codec, fonts, token), token).WaitAsync(token));
+                made = request.Source == CreateSource.WebPage ? await PdfMaker.MakeWebPageAsync(request, token)
+                    : await Task.Run(() => PdfMaker.Make(request, codec, fonts, token), token).WaitAsync(token));
         }
-        catch (Exception e) when (e is ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is WebViewMissingException or WebPageException or PdfReadException or ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
-            host.ShowProblem(CreateProblems.Failed(e, request.Source));
+            host.ShowProblem(CreateProblems.Failed(e, request));
             return;
         }
         if (made is null) return;
 
-        await host.OpenNewAsync(made.Bytes, request.Title);
-        if (made.Unreadable == 0) return;
-        host.ShowNotice(Loc.T("Some left out"), request.Source == CreateSource.Pictures
-            ? Loc.Plural(made.Unreadable, "{0} picture could not be read.", "{0} pictures could not be read.")
-            : Loc.T("Some letters have no shape in the font and were left out."));
+        if (!await host.OpenNewAsync(made.Bytes, request.Title)) return;
+        if (request.Source == CreateSource.Office)
+        {
+            host.ShowNotice(Loc.T("Made without Office"), OfficeNotice.Text(made, FileKinds.OfficeAppOf(request.Files![0])));
+            return;
+        }
+        if (made.Unreadable + made.Skipped == 0 && !made.LeftOutRemote) return;
+        var lines = new List<string>();
+        if (made.Unreadable > 0)
+            lines.Add(request.Source == CreateSource.Pictures
+                ? Loc.Plural(made.Unreadable, "{0} picture could not be read.", "{0} pictures could not be read.")
+                : Loc.T("Some letters have no shape in the font and were left out."));
+        if (made.Skipped > 0)
+            lines.Add(Loc.Plural(made.Skipped, "{0} picture was too large and was left out.", "{0} pictures were too large and were left out."));
+        if (made.LeftOutRemote)
+            lines.Add(Loc.T("Pictures and styles from the internet are not loaded, so they are missing from the PDF."));
+        host.ShowNotice(Loc.T("Some left out"), string.Join(" ", lines));
     }
 }

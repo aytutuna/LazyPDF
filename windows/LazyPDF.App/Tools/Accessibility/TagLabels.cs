@@ -16,6 +16,15 @@ internal static class TagLabels
         return note.Length > 0 ? name + where + ": " + note : name + where;
     }
 
+    public static string Of(StructKid kid, StructureTree tree) => kid switch
+    {
+        StructElement element => Of(element, tree),
+        StructContent { PageIndex: >= 0 } content => Loc.T("Marked content, page {0}", content.PageIndex + 1),
+        StructContent => Loc.T("Marked content"),
+        StructObject { PageIndex: >= 0 } target => Loc.T("Annotation, page {0}", target.PageIndex + 1),
+        _ => Loc.T("Annotation"),
+    };
+
     private static string Note(StructElement element)
     {
         foreach (string? text in new[] { element.Alt, element.ActualText, element.Title })

@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using Microsoft.Win32;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.Core;
 
 namespace LazyPDF.App;
 
@@ -12,21 +13,31 @@ public partial class MainWindow
 {
     private void Open_Click(object sender, RoutedEventArgs e) => OpenWithDialog();
 
-    private void OpenWithDialog()
+    private void OpenWithDialog(Action? then = null)
     {
         var dialog = new OpenFileDialog
         {
             Multiselect = true,
             Filter = FileKinds.OpenFilter(Loc.T("PDF files"), Loc.T("Pictures"), Loc.T("Text files"), Loc.T("All supported files")),
         };
-        if (dialog.ShowDialog(this) == true) _ = _vm.OpenFilesAsync(dialog.FileNames);
+        if (dialog.ShowDialog(this) != true) return;
+        _ = OpenThenAsync(dialog.FileNames, then);
+    }
+
+    private async Task OpenThenAsync(string[] paths, Action? then)
+    {
+        await _vm.OpenFilesAsync(paths);
+        // Opening leaves the last file active; a tool that starts here should begin on the first one chosen.
+        if (then is not null && paths.Length > 0 && _vm.Documents.FirstOrDefault(d => string.Equals(d.Path, paths[0], StringComparison.OrdinalIgnoreCase)) is { } first)
+            _vm.ActiveTab = first;
+        if (then is not null && _vm.ActiveDocument is not null) then();
     }
 
     private void Save_Click(object sender, RoutedEventArgs e) => SaveWithDialog();
 
     private void SaveWithDialog()
     {
-        if (_vm.ActiveDocument is not { } tab || _inspectorPanel?.HandIn() == false) return;
+        if (_vm.ActiveDocument is not { } tab || !HandedIn()) return;
         if (AppViewModel.NeedsName(tab)) SaveAsWithDialog();
         else _vm.Save(tab);
     }
@@ -35,13 +46,42 @@ public partial class MainWindow
 
     private bool SaveAsWithDialog()
     {
-        if (_inspectorPanel?.HandIn() == false || _vm.ActiveDocument is not { } tab || AskForPath(tab, Loc.T("Save as")) is not { } path) return false;
+        if (!HandedIn() || _vm.ActiveDocument is not { } tab || AskForPath(tab, Loc.T("Save as")) is not { } path) return false;
         return _vm.SaveAs(tab, path);
+    }
+
+    private void SaveCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (!HandedIn() || _vm.ActiveDocument is not { } tab) return;
+        string name = Loc.T("{0} - copy", System.IO.Path.GetFileNameWithoutExtension(tab.Title));
+        if (AskForPath(tab, Loc.T("Save a copy"), name) is { } path) _vm.SaveCopy(tab, path);
+    }
+
+    private void SaveAll_Click(object sender, RoutedEventArgs e) => SaveAllWithDialogs();
+
+    private bool SaveAllWithDialogs()
+    {
+        // Typed words belong to the tab in view; they go in before the dirty list is made, since the first tab may be this one.
+        if (!HandedIn()) return false;
+        int saved = 0;
+        bool all = true;
+        foreach (var tab in _vm.Documents.Where(d => d.IsDirty).ToList())
+        {
+            _vm.ActiveTab = tab;
+            if (_inspectorPanel?.HandIn() == false || !(AppViewModel.NeedsName(tab) ? SaveAsWithDialog() : _vm.Save(tab)))
+            {
+                all = false;
+                break;
+            }
+            saved++;
+        }
+        if (saved > 0) _vm.SetStatus(Loc.Plural(saved, "Saved {0} file.", "Saved {0} files."));
+        return all;
     }
 
     private void SaveCompact_Click(object sender, RoutedEventArgs e)
     {
-        if (_vm.ActiveDocument is not { } tab || _inspectorPanel?.HandIn() == false) return;
+        if (_vm.ActiveDocument is not { } tab || !HandedIn()) return;
         if (tab.Document.IsSigned)
         {
             _vm.ShowNotice(Loc.T("Signatures would be lost"), Loc.T("{0} is signed. Saving it compact writes it again and the signatures no longer hold. Save and Save as keep them.", tab.Title),
@@ -56,7 +96,7 @@ public partial class MainWindow
         if (AskForPath(tab, Loc.T("Save compact")) is { } path) _vm.SaveCompact(tab, path);
     }
 
-    private string? AskForPath(DocumentTab tab, string title)
+    private string? AskForPath(DocumentTab tab, string title, string? name = null)
     {
         var dialog = new SaveFileDialog
         {
@@ -65,7 +105,7 @@ public partial class MainWindow
             DefaultExt = ".pdf",
             AddExtension = true,
             OverwritePrompt = true,
-            FileName = System.IO.Path.GetFileNameWithoutExtension(tab.Title),
+            FileName = name ?? System.IO.Path.GetFileNameWithoutExtension(tab.Title),
             InitialDirectory = tab.Path is { } path ? System.IO.Path.GetDirectoryName(path) : null,
         };
         return dialog.ShowDialog(this) == true ? dialog.FileName : null;
@@ -74,7 +114,8 @@ public partial class MainWindow
     private void SaveMenu_Click(object sender, RoutedEventArgs e)
     {
         bool open = _vm.ActiveDocument is not null;
-        SaveAsItem.IsEnabled = SaveCompactItem.IsEnabled = open;
+        SaveAsItem.IsEnabled = SaveCopyItem.IsEnabled = SaveCompactItem.IsEnabled = open;
+        SaveAllItem.IsEnabled = !_vm.IsBusy && _vm.Documents.Any(d => d.IsDirty);
         SaveMenu.PlacementTarget = SaveMenuButton;
         SaveMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
         SaveMenu.IsOpen = true;
@@ -86,47 +127,148 @@ public partial class MainWindow
 
     private void Undo()
     {
-        _inspectorPanel?.HandIn();
+        HandedIn();
         _vm.Undo();
     }
 
     private void Redo()
     {
-        _inspectorPanel?.HandIn();
+        HandedIn();
         _vm.Redo();
     }
 
     private void Print_Click(object sender, RoutedEventArgs e) => _vm.Print();
 
-    private void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
+    private void PrintMenu_Click(object sender, RoutedEventArgs e)
     {
+        PrintHereItem.IsEnabled = _vm.ActiveDocument is not null;
+        PrintMenu.PlacementTarget = PrintMenuButton;
+        PrintMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        PrintMenu.IsOpen = true;
+    }
+
+    private void PrintHere_Click(object sender, RoutedEventArgs e) => _vm.PrintHere();
+
+    // A driver that cannot answer leaves the ticket alone; the hint still tells the person to flip on the short edge.
+    private static System.Printing.Duplexing[] OfferedDuplexing(System.Printing.PrintQueue queue, System.Printing.PrintTicket ticket)
+    {
+        try { return [.. queue.GetPrintCapabilities(ticket).DuplexingCapability]; }
+        catch (System.Printing.PrintSystemException) { return []; }
+    }
+
+    // The part of the paper the printer reaches, for the ticket's orientation; empty when the driver cannot say.
+    private static Rect PrintableArea(System.Printing.PrintQueue queue, System.Printing.PrintTicket ticket)
+    {
+        try
+        {
+            var area = queue.GetPrintCapabilities(ticket).PageImageableArea;
+            return area is null ? Rect.Empty : new Rect(area.OriginWidth, area.OriginHeight, area.ExtentWidth, area.ExtentHeight);
+        }
+        catch (System.Printing.PrintSystemException) { return Rect.Empty; }
+    }
+
+    private async void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
+    {
+        await tab.Drawing;
         if (!tab.CanDraw)
         {
             _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Windows cannot draw the pages of {0}, so it would come out blank. Install Lazy Print or print it from another program.", tab.Title)));
             return;
         }
-        var dialog = new PrintDialog { UserPageRangeEnabled = false };
+        var dialog = new PrintDialog { UserPageRangeEnabled = true, CurrentPageEnabled = true, MinPage = 1, MaxPage = (uint)tab.PageCount };
         if (dialog.ShowDialog() != true) return;
-        var paginator = new PagePaginator(tab.Renderer, tab.PageCount)
-        {
-            PageSize = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight),
-        };
+        var range = PagePaginator.PagesFor(dialog.PageRangeSelection, dialog.PageRange.PageFrom, dialog.PageRange.PageTo, tab.PageIndex, tab.PageCount);
+        if (range is { Count: 0 }) return;
+        var size = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight);
+        // The reading direction sets the binding for this job; only the layout choices are kept.
+        bool rightToLeft = ViewerSettings.Read(tab.Session.Document).RightToLeft;
+        if (PrintLayoutWindow.Ask(this, range, tab.PageCount, PrintLayout.Remembered(AppPreferencesStore.Load()), size.Width * 0.75, size.Height * 0.75, rightToLeft) is not { } layout) return;
+        AppPreferencesStore.Update(layout.Remember);
+        // A print queue belongs to the thread that made it, so the worker opens its own from the names.
+        string server = dialog.PrintQueue.HostingPrintServer.Name, printer = dialog.PrintQueue.Name;
+        var ticket = dialog.PrintTicket;
+        var printable = PrintableArea(dialog.PrintQueue, ticket);
+        if (layout.Duplex(layout.Booklet && layout.Parity == PrintParity.All && !layout.Reverse ? OfferedDuplexing(dialog.PrintQueue, ticket) : []) is { } duplex)
+            ticket.Duplexing = duplex;
+        PagePaginator? paginator = null;
+        PrintJob? job = null;
+        var written = false;
         try
         {
-            dialog.PrintDocument(paginator, tab.Title);
-            if (paginator.Blank > 0) _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Some pages of {0} could not be drawn and came out blank.", tab.Title)));
-            else _vm.SetStatus(Loc.T("Sent {0} to the printer.", tab.Title));
+            await _vm.RunBusyAsync(Loc.T("Printing {0}…", tab.Title), async token =>
+            {
+                job = await PrintJob.Prepare(layout, tab.Session.Document, tab.Renderer, tab.PageCount, range, _vm.NewRenderer, size.Width * 0.75, size.Height * 0.75, token);
+                if (job.IsEmpty) return;
+                var shown = Environment.TickCount64;
+                paginator = new PagePaginator(job.Renderer, job.PageCount, job.Sides, token, (n, count) =>
+                {
+                    var now = Environment.TickCount64;
+                    if (now - shown < 100 && n < count) return;
+                    shown = now;
+                    Dispatcher.BeginInvoke(() => _vm.SetBusyText(Loc.T("Printing page {0} of {1}", n, count)), System.Windows.Threading.DispatcherPriority.Background);
+                })
+                {
+                    PageSize = size,
+                    Content = printable,
+                };
+                var done = new TaskCompletionSource();
+                var thread = new Thread(() =>
+                {
+                    try
+                    {
+                        using var host = new System.Printing.PrintServer(server);
+                        using var queue = host.GetPrintQueue(printer);
+                        queue.CurrentJobSettings.Description = tab.Title;
+                        System.Printing.PrintQueue.CreateXpsDocumentWriter(queue).Write(paginator, ticket);
+                        written = true;
+                        done.SetResult();
+                    }
+                    catch (Exception ex)
+                    {
+                        done.SetException(ex);
+                    }
+                });
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.IsBackground = true;
+                thread.Start();
+                await done.Task;
+            });
+            if (job is null) return;
+            if (job.IsEmpty)
+            {
+                _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("None of the pages you chose are left to print.")));
+                return;
+            }
+            if (!written) return;
+            if (paginator!.Blank > 0) _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Some pages of {0} could not be drawn and came out blank.", tab.Title)));
+            else
+            {
+                _vm.SetStatus(Loc.T("Sent {0} to the printer.", tab.Title));
+                if (PrintLayout.DroppedNote(job.Dropped) is { } note) _vm.ShowNotice(Loc.T("Left off the sheets"), note);
+            }
+        }
+        catch (InvalidOperationException) when (layout.Imposes)
+        {
+            _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Windows cannot draw the sheets of {0}. Print it without the layout or from another program.", tab.Title)));
+        }
+        catch (ArgumentException) when (layout.Imposes)
+        {
+            _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("The pages of {0} could not be laid out on sheets.", tab.Title)));
         }
         catch (System.Printing.PrintQueueException)
         {
             _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("The printer did not take {0}. Check that it is on and has no error, then try again.", tab.Title)));
+        }
+        finally
+        {
+            job?.Dispose();
         }
     }
 
     // Combine and a view that holds the stage take dropped files into their own lists, so over them they do not open as tabs.
     private bool OverFileTarget(DragEventArgs e)
     {
-        UIElement? target = _vm.HeldStage ?? InspectorHost.Content as Tools.Combine.CombinePanel;
+        UIElement? target = _vm.HeldStage ?? (InspectorHost.Content is UIElement panel && panel.ReadLocalValue(UIElement.AllowDropProperty) is true ? panel : null);
         if (target is null) return false;
         for (var node = e.OriginalSource as DependencyObject; node is not null;
              node = node is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
@@ -156,6 +298,45 @@ public partial class MainWindow
         DropOverlay.Visibility = Visibility.Collapsed;
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || OverFileTarget(e)) return;
         e.Handled = true;
+        OpenOrHold(paths);
+    }
+
+    private void OpenOrHold(IEnumerable<string> paths)
+    {
+        if (Modal || _vm.IsBusy || _actionRunning)
+        {
+            // A file arriving means the person is still working, and held files would be lost on exit.
+            if (_vm.IsExiting) _vm.CancelClose();
+            if (_held.Count == 0) _heldMessage = _vm.Message;
+            _held.AddRange(paths);
+            _vm.SetStatus(Loc.T("Will open when you are done here."));
+            return;
+        }
+        var all = _held.Concat(paths).ToList();
+        _held.Clear();
+        _ = _vm.OpenFilesAsync(all);
+    }
+
+    // Opening held files replaces the message on the info bar, so they wait for a message that came after the hold
+    // until it is dismissed or replaced by another.
+    internal static bool MayRelease(InfoMessage? showing, InfoMessage? atHold, InfoMessage? atEnd) =>
+        showing is null || ReferenceEquals(showing, atHold) || atEnd is not null && !ReferenceEquals(showing, atEnd);
+
+    private void ReleaseHeld(bool closing = false)
+    {
+        if (Modal || _vm.IsBusy || _actionRunning)
+        {
+            _settledMessage = null;
+            return;
+        }
+        if (_held.Count == 0) return;
+        if (!closing && !MayRelease(_vm.Message, _heldMessage, _settledMessage))
+        {
+            _settledMessage ??= _vm.Message;
+            return;
+        }
+        var paths = _held.ToList();
+        _held.Clear();
         _ = _vm.OpenFilesAsync(paths);
     }
 }

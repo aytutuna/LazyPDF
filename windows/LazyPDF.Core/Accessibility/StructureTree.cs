@@ -156,6 +156,7 @@ public sealed partial class StructureTree
             if (ReferenceEquals(p, kid)) throw new ArgumentException(AccessibilityText.IntoItself, nameof(parent));
         }
         Detach(kid);
+        if (kid is StructElement element) Unmark(element);
         Insert(parent, kid, index);
     }
 
@@ -220,7 +221,13 @@ public sealed partial class StructureTree
     {
         if (item is PdfArray list)
         {
-            foreach (var entry in list.Items.Take(MaxNodes)) ReadKid(entry, parent, page, depth, into);
+            // An array counts as a node and a nested one as a level, or a stack of arrays inside one object is not bounded.
+            if (++_nodes > MaxNodes || depth > MaxDepth)
+            {
+                IsTruncated = true;
+                return;
+            }
+            foreach (var entry in list.Items.Take(MaxNodes)) ReadKid(entry, parent, page, entry is PdfArray ? depth + 1 : depth, into);
             return;
         }
         if (++_nodes > MaxNodes || depth > MaxDepth)

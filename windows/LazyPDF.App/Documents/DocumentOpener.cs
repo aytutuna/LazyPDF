@@ -1,5 +1,6 @@
-using System.Text;
+using System.Runtime.InteropServices;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Create;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Documents;
@@ -8,8 +9,10 @@ namespace LazyPDF.App.Documents;
 /// <param name="Path">The file to save back to; null for pictures and text, which become a new document.</param>
 /// <param name="Made">The bytes were made from a picture or a text file, so they differ from anything on disk.</param>
 /// <param name="Note">Something the person should hear about how the file was read.</param>
+/// <param name="ReadOnly">The file has the read-only attribute, so saving over it fails.</param>
+/// <param name="Hash">SHA256 of the bytes read from a PDF on disk, so a file that was only touched is told from one that changed; null for anything else and for files too large to hash.</param>
 /// <param name="Stamp">What the file looked like just before it was read, so a later change by someone else shows.</param>
-public sealed record OpenSource(byte[] Bytes, string? Path, string Title, bool Made, string? Note = null, DiskStamp? Stamp = null);
+public sealed record OpenSource(byte[] Bytes, string? Path, string Title, bool Made, string? Note = null, DiskStamp? Stamp = null, bool ReadOnly = false, string? FileId = null, byte[]? Hash = null);
 
 /// <summary>When a file was last written and how long it was, the two things that tell a program it changed.</summary>
 public sealed record DiskStamp(DateTime Write, long Length)
@@ -26,10 +29,49 @@ public sealed record DiskStamp(DateTime Write, long Length)
 /// <summary>Reads what the open dialog and the drop target hand over: PDFs as they are, pictures and text turned into a PDF.</summary>
 public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
 {
+    /// <summary>What Core says of a file it cannot hold in one array; <see cref="Problems.Open"/> tells it from other unsupported files by this.</summary>
+    internal const string TooLarge = "The file is too large.";
+
+    internal const string IsFolder = "The path is a folder.";
+
     public OpenSource Read(string path)
     {
-        var stamp = DiskStamp.Of(path);
-        byte[] bytes = File.ReadAllBytes(path);
+        var stamp = Check(path);
+        return Make(path, File.ReadAllBytes(path), stamp);
+    }
+
+    /// <summary>Like <see cref="Read"/>, but reads in 1 MB steps, tells how far it is and stops when the token is cancelled.</summary>
+    public async Task<OpenSource> ReadAsync(string path, IProgress<double>? progress, CancellationToken token)
+    {
+        var stamp = Check(path);
+        byte[] bytes;
+        await using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+        {
+            bytes = new byte[stream.Length];
+            int done = 0;
+            if (bytes.Length == 0) progress?.Report(1);
+            while (done < bytes.Length)
+            {
+                token.ThrowIfCancellationRequested();
+                int step = Math.Min(1 << 20, bytes.Length - done);
+                await stream.ReadExactlyAsync(bytes.AsMemory(done, step), token);
+                done += step;
+                progress?.Report((double)done / bytes.Length);
+            }
+        }
+        token.ThrowIfCancellationRequested();
+        return Make(path, bytes, stamp);
+    }
+
+    private static DiskStamp? Check(string path)
+    {
+        if (Directory.Exists(path)) throw new InvalidDataException(IsFolder);
+        if (new FileInfo(path).Length > int.MaxValue) throw new PdfReadException(PdfReadProblem.Unsupported, TooLarge);
+        return DiskStamp.Of(path);
+    }
+
+    private OpenSource Make(string path, byte[] bytes, DiskStamp? stamp)
+    {
         string stem = System.IO.Path.GetFileNameWithoutExtension(path);
         if (FileKinds.IsPicture(path))
         {
@@ -45,21 +87,61 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
         }
         if (FileKinds.IsText(path))
         {
-            var made = PdfFromText.Create(Decode(bytes), fonts);
+            var made = PdfFromText.Create(TextFiles.Decode(bytes), fonts);
             return new OpenSource(made.Bytes, null, stem + ".pdf", true, made.Missing.Count > 0 ? Loc.T("Some characters have no letter in the font and were left out.") : null);
         }
-        return new OpenSource(bytes, path, System.IO.Path.GetFileName(path), false, Stamp: stamp);
+        return new OpenSource(bytes, path, System.IO.Path.GetFileName(path), false, Stamp: stamp, ReadOnly: new FileInfo(path).IsReadOnly, FileId: Identity(path),
+                          Hash: bytes.Length <= DocumentTab.HashLimit ? System.Security.Cryptography.SHA256.HashData(bytes) : null);
     }
 
-    internal static string Decode(byte[] bytes)
+    internal static string? Identity(string path)
     {
         try
         {
-            return new UTF8Encoding(false, true).GetString(bytes).TrimStart('﻿');
+            using var handle = File.OpenHandle(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            if (GetFileInformationByHandleEx(handle, FileIdInfoClass, out var id, (uint)Marshal.SizeOf<FileIdInfo>()))
+                return id.FileId.Any(b => b != 0) ? $"{id.VolumeSerialNumber:x}:{Convert.ToHexString(id.FileId)}" : null;
+            // Some file systems report an index of 0 for every file, which says nothing.
+            return GetFileInformationByHandle(handle, out var info) && (info.FileIndexHigh | info.FileIndexLow) != 0
+                ? $"{info.VolumeSerialNumber}:{info.FileIndexHigh}:{info.FileIndexLow}"
+                : null;
         }
-        catch (DecoderFallbackException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return Encoding.Latin1.GetString(bytes);
+            return null;
         }
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ByHandleFileInformation
+    {
+        public uint FileAttributes;
+        public long CreationTime;
+        public long LastAccessTime;
+        public long LastWriteTime;
+        public uint VolumeSerialNumber;
+        public uint FileSizeHigh;
+        public uint FileSizeLow;
+        public uint NumberOfLinks;
+        public uint FileIndexHigh;
+        public uint FileIndexLow;
+    }
+
+    private const int FileIdInfoClass = 18;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FileIdInfo
+    {
+        public ulong VolumeSerialNumber;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public byte[] FileId;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandleEx(Microsoft.Win32.SafeHandles.SafeFileHandle file, int infoClass, out FileIdInfo info, uint size);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle file, out ByHandleFileInformation info);
 }

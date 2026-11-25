@@ -67,6 +67,17 @@ final class PdfFontEmbedderTests: XCTestCase {
         XCTAssertEqual(try base("Courier New", .regular), "Courier")
     }
 
+    func test_formFontWrapKeepsTheParagraphDirectionOnEveryLine() throws {
+        let document = try blank()
+        let text = "שלום AB AB AB עולם"
+        let font = try XCTUnwrap(try PdfFontEmbedder(document, FixtureFonts()).add("Arial", .regular, [text]))
+
+        let lines = FormFont.fromAdded("F", font).wrap(text, 10, font.width("AB AB", 10) + 0.1)
+
+        XCTAssertGreaterThan(lines.count, 1)
+        for line in lines { XCTAssertTrue(font.isRightToLeft(line), line) }
+    }
+
     func test_turkishTextNeedsAFontFile() throws {
         let document = try blank()
         XCTAssertNil(try PdfFontEmbedder(document).add("Arial", .regular, [turkish]))
@@ -132,6 +143,54 @@ final class PdfFontEmbedderTests: XCTestCase {
         let document = try blank()
         let font = try XCTUnwrap(try PdfFontEmbedder(document, try FixtureFonts()).add("Arial", .regular, ["A中B"], embed: true))
         XCTAssertEqual(font.missing, [0x4E2D])
+    }
+
+    private final class CoveringFonts: FontSource {
+        private let lacking: [UInt8]
+        private let covering: [UInt8]?
+
+        init(covering: Bool) throws {
+            lacking = try SyntheticFonts.onlyA()
+            self.covering = covering ? try SyntheticFonts.ttf() : nil
+        }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            if family == "Arial", let covering { return FontFile(covering) }
+            return family == "Foo" || family == "Arial" ? FontFile(lacking) : nil
+        }
+    }
+
+    private func type0Count(_ document: PdfDocument) -> Int {
+        document.objectNumbers.filter { n in (document.get(n) as? PdfDictionary).map { document.name($0, "Subtype") == "Type0" } ?? false }.count
+    }
+
+    func test_addCoveringFallsBackToAFontThatHasTheCharacters() throws {
+        let document = try blank()
+        let before = type0Count(document)
+        let font = try XCTUnwrap(try PdfFontEmbedder(document, try CoveringFonts(covering: true)).addCovering("Foo", .regular, ["Aİ"]))
+        XCTAssertTrue(font.missing.isEmpty)
+        XCTAssertEqual(type0Count(document), before + 1)
+    }
+
+    func test_addCoveringWithNothingCoveringKeepsTheLeastMissing() throws {
+        let document = try blank()
+        let before = type0Count(document)
+        let font = try XCTUnwrap(try PdfFontEmbedder(document, try CoveringFonts(covering: false)).addCovering("Foo", .regular, ["Aİ"]))
+        XCTAssertEqual(font.missing, [0x130])
+        XCTAssertEqual(type0Count(document), before + 1)
+    }
+
+    func test_addCoveringKeepsTheStandardFontForTextThatFits() throws {
+        let document = try blank()
+        let font = try XCTUnwrap(try PdfFontEmbedder(document, try CoveringFonts(covering: true)).addCovering("Arial", .regular, ["Hello"]))
+        XCTAssertFalse(font.isEmbedded)
+    }
+
+    func test_addCoveringGivesNullForTextThatFitsWhenTheFamilyHasNoFont() throws {
+        let document = try blank()
+        let before = type0Count(document)
+        XCTAssertNil(try PdfFontEmbedder(document, try CoveringFonts(covering: true)).addCovering("Minion Pro", .regular, ["Hello"]))
+        XCTAssertEqual(type0Count(document), before)
     }
 
     func test_eachCallAddsItsOwnFont() throws {

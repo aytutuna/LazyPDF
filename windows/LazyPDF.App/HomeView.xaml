@@ -33,10 +33,35 @@
             <Button Style="{StaticResource CardButtonStyle}" Width="168" Height="188" Margin="6" Padding="8"
                     Click="Recent_Click" ToolTip="{Binding Item.Path}"
                     AutomationProperties.Name="{Binding Item.Name}"
-                    AutomationProperties.HelpText="{Binding Caption}"
+                    AutomationProperties.HelpText="{Binding HelpText}"
                     FocusVisualStyle="{StaticResource CardFocusVisualStyle}">
                 <Button.ContextMenu>
                     <ContextMenu>
+                        <MenuItem Header="{loc:T Pin to top}" Click="PinRecent_Click"
+                                  AutomationProperties.Name="{loc:T Pin to top}">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Item.Pinned}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
+                        <MenuItem Header="{loc:T Unpin}" Click="UnpinRecent_Click"
+                                  AutomationProperties.Name="{loc:T Unpin}">
+                            <MenuItem.Style>
+                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Item.Pinned}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </MenuItem.Style>
+                        </MenuItem>
                         <MenuItem Header="{loc:T Remove from list}" Click="RemoveRecent_Click"
                                   AutomationProperties.Name="{loc:T Remove from list}" />
                     </ContextMenu>
@@ -48,6 +73,8 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                             <Image Source="{Binding Thumbnail}" Stretch="Uniform" Margin="4"
                                    RenderOptions.BitmapScalingMode="HighQuality" />
+                            <TextBlock x:Name="PinGlyph" Text="&#xE718;" Style="{StaticResource GlyphText}" FontSize="12"
+                                       HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0" Visibility="Collapsed" />
                         </Grid>
                     </Border>
                     <TextBlock Text="{Binding Item.Name}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis"
@@ -56,6 +83,11 @@
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </DockPanel>
             </Button>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Item.Pinned}" Value="True">
+                    <Setter TargetName="PinGlyph" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
     </UserControl.Resources>
 

@@ -171,7 +171,7 @@ def main():
             errors.append(f"plural form differs: {key!r} ({where})")
     names = {}
     for key, entry in catalog.items():
-        if key not in used:
+        if key not in used and key not in swift:
             errors.append(f"not used by the code: {key!r}")
         for code in LANGUAGES:
             text = entry.get(code, "")

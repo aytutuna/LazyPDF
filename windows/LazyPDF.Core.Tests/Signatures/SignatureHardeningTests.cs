@@ -192,7 +192,7 @@ public class SignatureHardeningTests
         var report = Assert.Single(PdfSignatureVerifier.Verify(signed, options));
 
         Assert.Null(report.TimestampTime);
-        Assert.Equal(options.Now, report.TimeUsed);
+        Assert.Equal(Pki.Signing, report.TimeUsed);
     }
 
     [Fact]

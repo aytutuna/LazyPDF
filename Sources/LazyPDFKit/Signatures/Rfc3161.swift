@@ -92,6 +92,15 @@ final class Rfc3161Token {
     /// Reads the token at the start of `encoded`; `consumed` is the length of its encoding.
     static func tryDecode(_ encoded: [UInt8]) -> (Rfc3161Token, consumed: Int)? {
         guard let cms = CmsSignature.parse(encoded), cms.contentType == Oids.tstInfo, let content = cms.content else { return nil }
+        // Rfc3161TimestampToken.TryDecode refuses a token with more than one signer, or one whose signing certificate
+        // attribute (either version) does not name the signer; and one whose embedded signer is no time stamping
+        // authority or did not hold at the time of the stamp (checked below, once the time is read).
+        guard cms.signerCount == 1 else { return nil }
+        let embedded = cms.findSigner()
+        guard essAccepts(cms, embedded) else { return nil }
+        if let embedded {
+            guard isAuthority(embedded), CmsVerifier.check(cms, embedded, { SignatureCrypto.hash($0, content) }) == .ok else { return nil }
+        }
         do {
             var outer = AsnReader(content)
             var info = try outer.readSequence()
@@ -103,6 +112,7 @@ final class Rfc3161Token {
             let hash = try imprint.readOctetString()
             _ = try info.readInteger()
             let time = try info.readGeneralizedTime()
+            if let embedded, !holds(embedded, at: time) { return nil }
             var nonce: AsnInteger?
             while info.hasData {
                 let tag = try info.peekTag()
@@ -122,10 +132,87 @@ final class Rfc3161Token {
     /// the signer may be found among besides those the token carries.
     func verifySignatureForHash(_ hash: [UInt8], _ algorithm: HashAlgorithmName, _ extra: [X509Certificate]) -> X509Certificate? {
         guard Oids.digestName(hashOid) == algorithm, messageHash == hash, let content = cms.content,
-              let signer = cms.findSigner(in: cms.certificates + extra), cms.attributes[Oids.signingCertificateV2] != nil,
-              cms.signingCertificateMatches(signer) else { return nil }
+              let signer = cms.findSigner(in: cms.certificates + extra), Self.essAccepts(cms, signer),
+              Self.isAuthority(signer), Self.holds(signer, at: timestamp) else { return nil }
         let check = CmsVerifier.check(cms, signer) { SignatureCrypto.hash($0, content) }
         return check == .ok ? signer : nil
+    }
+
+    /// RFC 3161 2.3: the certificate of the authority has the time stamping purpose in one extended key usage
+    /// extension, and the extension is critical.
+    static func isAuthority(_ certificate: X509Certificate) -> Bool {
+        let extensions = certificate.extensions.filter { $0.oid == "2.5.29.37" }
+        guard extensions.count == 1, extensions[0].critical, let purposes = (try? certificate.enhancedKeyUsages()) ?? nil else { return false }
+        return purposes.contains("1.3.6.1.5.5.7.3.8")
+    }
+
+    static func holds(_ certificate: X509Certificate, at time: DateTimeOffset) -> Bool {
+        certificate.notBefore <= time && time <= certificate.notAfter
+    }
+
+    private static let signingCertificateV1 = "1.2.840.113549.1.9.16.2.12"
+
+    /// The signing certificate attribute, in the version of RFC 2634 (SHA-1) or of RFC 5035 or both, names the signer: the
+    /// hash is that of its certificate, and an issuerSerial, one directoryName and a serial, is its issuer and serial.
+    /// Without the certificate (an SKI signer that is not in the token) the issuerSerial can only be held against the
+    /// signer identifier, when that is an issuer and serial.
+    static func essAccepts(_ cms: CmsSignature, _ signer: X509Certificate?) -> Bool {
+        let versions: [(values: [[UInt8]]?, version2: Bool)] = [(cms.attributes[signingCertificateV1], false), (cms.attributes[Oids.signingCertificateV2], true)]
+        guard versions.contains(where: { $0.values != nil }) else { return false }
+        for (values, version2) in versions {
+            guard let values else { continue }
+            guard values.count == 1, let id = certificateId(values[0], version2) else { return false }
+            if let signer {
+                guard CmsBuilder.hashData(id.algorithm, signer.rawData) == id.hash else { return false }
+                if let (issuer, serial) = id.issuerSerial, issuer != signer.issuerName || serial != signer.serialNumber { return false }
+            } else if let (issuer, serial) = id.issuerSerial, let name = cms.issuerName, issuer != name || serial != cms.serial {
+                return false
+            }
+        }
+        return true
+    }
+
+    private static func certificateId(_ value: [UInt8], _ version2: Bool) -> (algorithm: HashAlgorithmName, hash: [UInt8], issuerSerial: ([UInt8], AsnInteger)?)? {
+        do {
+            var reader = AsnReader(value)
+            var outer = try reader.readSequence()
+            guard !reader.hasData else { return nil }
+            var ids = try outer.readSequence()
+            // Every id has to decode, as SigningCertificate(V2)Asn.Decode makes it; the first is the one that names the signer.
+            var first: (oid: String, hash: [UInt8], issuerSerial: ([UInt8], AsnInteger)?)?
+            while ids.hasData {
+                var id = try ids.readSequence()
+                let parsed = try readId(&id, version2)
+                if first == nil { first = parsed }
+            }
+            // The policies, when there are any, are one sequence.
+            if outer.hasData {
+                _ = try outer.readSequence()
+                guard !outer.hasData else { return nil }
+            }
+            guard let first, let algorithm = Oids.digestName(first.oid) else { return nil }
+            return (algorithm, first.hash, first.issuerSerial)
+        } catch {
+            return nil
+        }
+    }
+
+    private static func readId(_ id: inout AsnReader, _ version2: Bool) throws -> (oid: String, hash: [UInt8], issuerSerial: ([UInt8], AsnInteger)?) {
+        var oid = version2 ? "2.16.840.1.101.3.4.2.1" : "1.3.14.3.2.26"
+        if version2, try id.peekTag().value == AsnUniversal.sequence {
+            var named = try id.readSequence()
+            oid = try named.readObjectIdentifier()
+        }
+        let hash = try id.readOctetString()
+        guard id.hasData else { return (oid, hash, nil) }
+        var named = try id.readSequence()
+        var names = try named.readSequence()
+        var directory = try names.readSequence(.context(4, constructed: true))
+        let issuer = try directory.readEncodedValue()
+        guard !directory.hasData, !names.hasData else { throw AsnContentException() }
+        let serial = try named.readInteger()
+        guard !named.hasData, !id.hasData else { throw AsnContentException() }
+        return (oid, hash, (issuer, serial))
     }
 
     /// The certificate the token names as its signer, among the ones it carries.

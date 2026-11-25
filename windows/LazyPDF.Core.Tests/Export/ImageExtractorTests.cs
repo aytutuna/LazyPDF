@@ -9,6 +9,14 @@ public class ImageExtractorTests
 
     private static readonly byte[] Rgb2x2 = [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 0];
 
+    // 2 by 2 pixels, black on the diagonal.
+    private static byte[] Jbig2Picture()
+    {
+        var bm = new Bm(2, 2);
+        bm[0, 0] = bm[1, 1] = 1;
+        return Jbig2Segments.Generic(bm, 0, false);
+    }
+
     private static PdfDocument Open(string content)
     {
         var pdf = new TestPdf();
@@ -20,7 +28,7 @@ public class ImageExtractorTests
         pdf.Stream(11, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask 12 0 R", TestPdf.Deflate(Rgb2x2));
         pdf.Stream(12, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode", TestPdf.Deflate([0, 85, 170, 255]));
         pdf.Stream(13, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /JPXDecode", [1, 2, 3]);
-        pdf.Stream(14, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode", [1, 2, 3]);
+        pdf.Stream(14, "/Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /JBIG2Decode", Jbig2Picture());
         pdf.Stream(15, "/Type /XObject /Subtype /Image /Height 2 /ColorSpace /DeviceRGB /BitsPerComponent 8", Rgb2x2);
         pdf.Stream(16, "/Type /XObject /Subtype /Image /Width 8 /Height 6 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /SMask 12 0 R", ExportKit.Jpeg);
         pdf.Stream(17, "/Type /XObject /Subtype /Form /BBox [0 0 100 100] /Resources <<" + Fonts + ">>", "q 50 0 0 50 0 0 cm /Alpha Do Q");
@@ -69,10 +77,23 @@ public class ImageExtractorTests
     }
 
     [Fact]
-    public void WithoutACodecJpeg2000AndJbig2AreLeftOutAndABrokenImageToo()
+    public void WithoutACodecJpeg2000IsLeftOutAndABrokenImageToo()
     {
         var found = ImageExtractor.Extract(Open("q /Jpx Do /Jbig Do /Broken Do /Jpg Do Q"), [0]);
-        Assert.Equal(["Jpg"], found.Select(f => f.Name));
+        Assert.Equal(["Jbig", "Jpg"], found.Select(f => f.Name));
+    }
+
+    [Fact]
+    public void AJbig2ImageIsDecodedByTheFilterWithoutACodec()
+    {
+        var image = Assert.Single(ImageExtractor.Extract(Open("q /Jbig Do Q"), [0])).Image;
+        Assert.False(image.IsJpeg);
+        var (w, h, rgba) = ExportKit.PngDecode(image.Data);
+        Assert.Equal((2, 2), (w, h));
+        Assert.Equal([0, 0, 0, 255], rgba[..4]);
+        Assert.Equal([255, 255, 255, 255], rgba[4..8]);
+        Assert.Equal([255, 255, 255, 255], rgba[8..12]);
+        Assert.Equal([0, 0, 0, 255], rgba[12..16]);
     }
 
     [Fact]
@@ -82,7 +103,7 @@ public class ImageExtractorTests
         var found = ImageExtractor.Extract(Open("q /Jpx Do /Jbig Do /Masked Do Q"), [0], codec);
         Assert.Equal(["Jpx", "Jbig", "Masked"], found.Select(f => f.Name));
         Assert.All(found, f => Assert.False(f.Image.IsJpeg));
-        Assert.Equal(["JPXDecode", "JBIG2Decode", "DCTDecode"], codec.Decoded);
+        Assert.Equal(["JPXDecode", "DCTDecode"], codec.Decoded);
         var masked = ExportKit.PngDecode(found[2].Image.Data);
         Assert.Equal([0, 85, 170, 255], masked.Rgba.Where((_, i) => i % 4 == 3).Take(4));
     }

@@ -96,7 +96,7 @@ internal sealed class PageEdits(DocumentTab tab, IFontSource fonts, IImageCodec 
     public EditOutcome PathStyle(int page, IEnumerable<int> ids, RgbColor? fill, RgbColor? stroke, double? width)
     {
         var paths = Objects(page, ids).OfType<PathObject>().Where(p => (fill is null || p.Fill) && ((stroke is null && width is null) || p.Stroke)).ToList();
-        if (paths.Count == 0) return new EditOutcome(false, fill is not null ? Loc.T("This shape has no fill. Use the line colour instead.") : Loc.T("This shape has no line. Use the fill colour instead."));
+        if (paths.Count == 0) return new EditOutcome(false, fill is not null ? Loc.T("This shape has no fill. Use the line color instead.") : Loc.T("This shape has no line. Use the fill color instead."));
         return Result(Editor(page).SetPathStyle(paths, fill, stroke, width));
     }
 

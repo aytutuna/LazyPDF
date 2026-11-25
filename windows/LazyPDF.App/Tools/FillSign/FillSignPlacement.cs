@@ -6,11 +6,15 @@ using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.FillSign;
 
+public enum MarkShape { Check, Cross, Dot, Line }
+
 /// <summary>Where a signature or a line of text goes on a page, and putting it there. Boxes are in page space, y down.</summary>
 internal static class FillSignPlacement
 {
     public const double SignatureWidth = 150;
     public const double InitialsWidth = 60;
+    public const double LineLength = 100;
+    private const double MinMark = 6;
 
     /// <summary>A box of the given width centred on the click, kept on the page.</summary>
     public static DisplayRect Around(Point click, double width, double aspect, Size page)
@@ -41,16 +45,22 @@ internal static class FillSignPlacement
 
     public static bool PlaceImage(DocumentTab tab, int page, DisplayRect box, PdfRgbaImage image, DateTimeOffset now)
     {
-        var document = tab.Document;
-        var target = document.Pages[page];
-        var rect = new PageGeometry(target).ToUser(box);
-        var stamp = new PdfAnnotationWriter(document).AddImageStamp(target, AsShown(rect, box), image.Width, image.Height, image.Rgba, new AnnotationInfo(Date: now));
-        TurnToPage(document, stamp, rect, target.Rotate);
+        AddImage(tab.Document, page, box, image, null, now);
         return tab.Commit(Loc.T("Place signature"));
     }
 
+    /// <summary>A picture stamp in the box, turned to stand upright on a turned page. The caller commits.</summary>
+    public static PdfAnnotation AddImage(PdfDocument document, int page, DisplayRect box, PdfRgbaImage image, string? author, DateTimeOffset now)
+    {
+        var target = document.Pages[page];
+        var rect = new PageGeometry(target).ToUser(box);
+        var stamp = new PdfAnnotationWriter(document).AddImageStamp(target, AsShown(rect, box), image.Width, image.Height, image.Rgba, new AnnotationInfo(author, Date: now));
+        TurnToPage(document, stamp, rect, target.Rotate);
+        return stamp;
+    }
+
     /// <summary>One or more lines of text with its left edge at the click, centred on it vertically.</summary>
-    public static bool PlaceText(DocumentTab tab, IFontSource fonts, int page, Point click, string text, double size, DateTimeOffset now)
+    public static bool PlaceText(DocumentTab tab, IFontSource fonts, int page, Point click, string text, double size, double[] colour, DateTimeOffset now)
     {
         var document = tab.Document;
         var pdfPage = document.Pages[page];
@@ -61,10 +71,43 @@ internal static class FillSignPlacement
             Math.Clamp(click.Y - height / 2, 0, Math.Max(0, geometry.Height - height)),
             Math.Min(width, geometry.Width), Math.Min(height, geometry.Height));
         var rect = geometry.ToUser(box);
-        var note = new PdfAnnotationWriter(document, fonts).AddFreeText(pdfPage, AsShown(rect, box), text, new FreeTextStyle("Helvetica", size), info: new AnnotationInfo(Date: now));
+        var note = new PdfAnnotationWriter(document, fonts).AddFreeText(pdfPage, AsShown(rect, box), text, new FreeTextStyle("Helvetica", size, TextColor: colour), info: new AnnotationInfo(Date: now));
         TurnToPage(document, note, rect, pdfPage.Rotate);
         return tab.Commit(Loc.T("Place text"));
     }
+
+    /// <summary>A check mark, cross, dot or line as a vector annotation. A line takes the drag as its ends, the rest fill a square.</summary>
+    public static bool PlaceMark(DocumentTab tab, int page, MarkShape shape, Point from, Point? to, double size, double[] colour, DateTimeOffset now)
+    {
+        var pdfPage = tab.Document.Pages[page];
+        var geometry = new PageGeometry(pdfPage);
+        var area = new Size(geometry.Width, geometry.Height);
+        var writer = new PdfAnnotationWriter(tab.Document);
+        var info = new AnnotationInfo(Date: now);
+        (double X, double Y) User(double x, double y) => geometry.ToUser(x, y);
+        if (shape == MarkShape.Line)
+        {
+            var (a, b) = to is { } end
+                ? (Inside(from, area), Inside(end, area))
+                : (new Point(Math.Clamp(from.X - LineLength / 2, 0, Math.Max(0, area.Width - LineLength)), from.Y), new Point(Math.Clamp(from.X + LineLength / 2, Math.Min(LineLength, area.Width), area.Width), from.Y));
+            writer.AddLine(pdfPage, User(a.X, a.Y), User(b.X, b.Y), new AnnotationStyle(colour, 1.5), info);
+            return tab.Commit(Loc.T("Place mark"));
+        }
+        var box = to is { } corner && FromDrag(from, corner, 1, area) is { Width: >= MinMark } dragged ? dragged : Around(from, size, 1, area);
+        if (shape == MarkShape.Dot)
+        {
+            writer.AddCircle(pdfPage, geometry.ToUser(box), new AnnotationStyle(colour, 1, Fill: colour), info);
+            return tab.Commit(Loc.T("Place mark"));
+        }
+        (double, double)[][] unit = shape == MarkShape.Check
+            ? [[(0.1, 0.55), (0.38, 0.85), (0.38, 0.85), (0.9, 0.15)]]
+            : [[(0.1, 0.1), (0.9, 0.9)], [(0.9, 0.1), (0.1, 0.9)]];
+        var strokes = unit.Select(s => (IReadOnlyList<(double X, double Y)>)s.Select(p => User(box.X + p.Item1 * box.Width, box.Y + p.Item2 * box.Height)).ToList()).ToList();
+        writer.AddInk(pdfPage, strokes, new AnnotationStyle(colour, Math.Max(1, box.Width / 8)), info);
+        return tab.Commit(Loc.T("Place mark"));
+    }
+
+    private static Point Inside(Point p, Size page) => new(Math.Clamp(p.X, 0, page.Width), Math.Clamp(p.Y, 0, page.Height));
 
     // On a page turned a quarter the user rectangle is the display box on its side. The appearance is drawn as the page
     // shows it, at the size of the display box, and its matrix turns it into the page's own space (ISO 32000-1 12.5.5).

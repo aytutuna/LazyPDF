@@ -1,4 +1,5 @@
 using System.Globalization;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Measure;
 
@@ -57,7 +58,73 @@ public sealed record MeasureScale(double Page, LengthUnit PageUnit, double Real,
 
     public string Area(double squarePoints) => Number(squarePoints * PerPoint * PerPoint) + " " + RealUnit.Symbol() + "²";
 
-    public string Ratio => string.Create(CultureInfo.InvariantCulture, $"{Page:0.####} {PageUnit.Symbol()} = {Real:0.####} {RealUnit.Symbol()}");
+    public string Ratio => string.Create(CultureInfo.InvariantCulture, $"{Written(Page)} {PageUnit.Symbol()} = {Written(Real)} {RealUnit.Symbol()}");
+
+    // Eight significant digits: a file reads the scale back within a hundred millionth, however small one unit is.
+    private static double Rounded(double value) => double.Parse(value.ToString("G8", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
+
+    private static string Written(double value) => Rounded(value).ToString("0.####################", CultureInfo.InvariantCulture);
+
+    /// <summary>The scale that makes a line of <paramref name="points"/> read <paramref name="length"/>, written as one <paramref name="pageUnit"/> on the page standing for some real length.</summary>
+    public static MeasureScale From(double points, double length, LengthUnit pageUnit, LengthUnit realUnit) =>
+        new(1, pageUnit, Rounded(length / (points * LengthUnits.PointInMetres / pageUnit.Metres())), realUnit);
+
+    /// <summary>The scale a <see cref="Ratio"/> text writes; null for any other text.</summary>
+    public static MeasureScale? TryParse(string ratio)
+    {
+        var sides = ratio.Split('=');
+        if (sides.Length != 2 || !Side(sides[0], out double page, out var pageUnit) || !Side(sides[1], out double real, out var realUnit)) return null;
+        var scale = new MeasureScale(page, pageUnit, real, realUnit);
+        return scale.IsValid ? scale : null;
+    }
+
+    /// <summary>The scale of the first measurement already in the file that the panel can show, looking at no more than 200 marks; null when there is none.</summary>
+    public static MeasureScale? Find(PdfDocument document)
+    {
+        int seen = 0;
+        foreach (var page in document.Pages)
+        {
+            if (document.Array(page.Dictionary, "Annots") is not { } annots) continue;
+            foreach (var item in annots.Items)
+            {
+                if (++seen > 200) return null;
+                if (Of(document, item) is { } scale) return scale;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Like <see cref="Find"/>, but for the marks of this one page.</summary>
+    public static MeasureScale? FindOnPage(PdfDocument document, PdfPage page)
+    {
+        if (document.Array(page.Dictionary, "Annots") is not { } annots) return null;
+        int seen = 0;
+        foreach (var item in annots.Items)
+        {
+            if (++seen > 200) return null;
+            if (Of(document, item) is { } scale) return scale;
+        }
+        return null;
+    }
+
+    private static MeasureScale? Of(PdfDocument document, PdfObject item) =>
+        document.Resolve(item) is PdfDictionary mark && document.Dict(mark, "Measure") is { } measure && PdfText.Read(document, measure, "R") is { } ratio
+            && TryParse(ratio) is { } scale && scale.PageUnit is LengthUnit.Millimetre or LengthUnit.Centimetre or LengthUnit.Inch ? scale : null;
+
+    private static bool Side(string text, out double value, out LengthUnit unit)
+    {
+        value = 0;
+        unit = default;
+        var parts = text.Trim().Split(' ');
+        if (parts.Length != 2 || !double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out value)) return false;
+        foreach (var candidate in Enum.GetValues<LengthUnit>())
+        {
+            if (candidate.Symbol() != parts[1]) continue;
+            unit = candidate;
+            return true;
+        }
+        return false;
+    }
 
     private static string Number(double value) => value.ToString(value >= 100 ? "#,0" : "#,0.##", CultureInfo.CurrentCulture);
 }

@@ -24,6 +24,9 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
     /// <summary>The images and forms that were copied, for the tag tree: an item that still names the original would keep it.</summary>
     public HashSet<PdfStream> Replaced { get; } = [];
 
+    /// <summary>How many placements were removed whole because the picture could not be cut.</summary>
+    public int WholeImages { get; private set; }
+
     /// <summary>A resource dictionary of one's own to add names to: the categories are copied, what they point at is shared.</summary>
     public PdfDictionary Private(PdfDictionary? resources)
     {
@@ -74,9 +77,15 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
                     {
                         if (document.Stream(image.Image.Dictionary, key) is { } mask) Replaced.Add(mask);
                     }
-                    Replace(index, images.Redact(image.Image, image.Areas, image.Matrix) is { } reference
-                        ? Do(ContentResources.Add(document, resources, "XObject", reference, "Rd"))
-                        : "");
+                    if (images.Redact(image.Image, image.Areas, image.Matrix) is { } reference)
+                    {
+                        Replace(index, Do(ContentResources.Add(document, resources, "XObject", reference, "Rd")));
+                    }
+                    else
+                    {
+                        WholeImages++;
+                        Replace(index, "");
+                    }
                     break;
             }
         }

@@ -19,7 +19,11 @@ public sealed class OcrWorkTests
         public string[] Words { get; set; } = ["alpha", "beta"];
         public Exception? Fails { get; set; }
         public Action? OnRead { get; set; }
+        // Words only for an image taller than wide, as a page that was scanned sideways reads once it is turned.
+        public bool PortraitOnly { get; set; }
         public List<string> Languages { get; } = [];
+        // Words per language tag; a tag not in it reads Words.
+        public Dictionary<string, string[]> ByLanguage { get; } = [];
 
         public Task<IReadOnlyList<OcrWord>> RecognizeAsync(PdfRgbaImage image, string language, CancellationToken cancellation = default)
         {
@@ -27,7 +31,8 @@ public sealed class OcrWorkTests
             cancellation.ThrowIfCancellationRequested();
             if (Fails is not null) throw Fails;
             Languages.Add(language);
-            IReadOnlyList<OcrWord> words = [.. Words.Select((w, i) => new OcrWord(w, new OcrBox(0, i, image.Width, 1)))];
+            var read = ByLanguage.GetValueOrDefault(language) ?? Words;
+            IReadOnlyList<OcrWord> words = PortraitOnly && image.Width >= image.Height ? [] : [.. read.Select((w, i) => new OcrWord(w, new OcrBox(0, i, image.Width, 1)))];
             return Task.FromResult(words);
         }
     }
@@ -119,16 +124,60 @@ public sealed class OcrWorkTests
     }
 
     [Fact]
-    public async Task ACancelLeavesTheDocumentAsItWas()
+    public async Task ACancelKeepsThePagesAlreadyReadAsOneUndoableStep()
     {
         using var f = new ViewModelFixture();
-        var tab = await Open(f);
-        var recognizer = new FakeRecognizer { OnRead = () => f.Vm.CancelBusy() };
+        var tab = await Open(f, 3);
+        var recognizer = new FakeRecognizer();
+        int reads = 0;
+        recognizer.OnRead = () =>
+        {
+            if (++reads == 2) f.Vm.CancelBusy();
+        };
 
-        var result = await Make(tab, f, recognizer, All());
+        var result = await Make(tab, f, recognizer, new("en-US", OcrWork.Dpi, OcrExisting.Skip, [0, 1, 2], Force: true));
 
         Assert.Null(result);
-        Assert.Equal("Cancelled.", f.Vm.StatusFull);
+        Assert.Equal([true, false, false], tab.Document.Pages.Select(p => PdfOcrLayer.Has(tab.Document, p)));
+        Assert.Equal("Reading stopped", f.Vm.Message!.Title);
+        Assert.Equal("Stopped after 1 page. The page was kept. Undo takes it back.", f.Vm.Message.Text);
+        Assert.Equal("Make searchable", tab.Session.UndoLabel);
+        Assert.True(tab.Undo());
+        Assert.False(tab.Session.CanUndo);
+        Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
+    }
+
+    [Fact]
+    public async Task ACancelAfterPagesWithoutWordsChangesNothingAndSaysNothing()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 3);
+        var recognizer = new FakeRecognizer { Words = [] };
+        int reads = 0;
+        recognizer.OnRead = () =>
+        {
+            if (++reads == 2) f.Vm.CancelBusy();
+        };
+
+        await Make(tab, f, recognizer, new("en-US", OcrWork.Dpi, OcrExisting.Skip, [0, 1, 2], Force: true));
+
+        Assert.Equal("Canceled.", f.Vm.StatusFull);
+        Assert.Null(f.Vm.Message);
+        Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public async Task ACancelOnTheFirstPageLeavesTheDocumentAsItWas()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 3);
+        var recognizer = new FakeRecognizer { OnRead = () => f.Vm.CancelBusy() };
+
+        var result = await Make(tab, f, recognizer, new("en-US", OcrWork.Dpi, OcrExisting.Skip, [0, 1, 2], Force: true));
+
+        Assert.Null(result);
+        Assert.Equal("Canceled.", f.Vm.StatusFull);
+        Assert.Null(f.Vm.Message);
         Assert.False(tab.Session.CanUndo);
         Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
     }
@@ -147,6 +196,34 @@ public sealed class OcrWorkTests
         Assert.Equal("Language not available", f.Vm.Message.Title);
         Assert.Contains("xx", f.Vm.Message.Text);
         Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public async Task TheLanguageWithMostWordsWritesTheLayer()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f);
+        var recognizer = new FakeRecognizer();
+        recognizer.ByLanguage["en-US"] = ["a", "b"];
+        recognizer.ByLanguage["tr"] = ["a", "b", "c", "d", "e"];
+
+        await OcrWork.MakeSearchableAsync(tab, f.Vm, recognizer, All(), ["en-US", "tr"]);
+
+        Assert.Equal(5, Words(tab).Count());
+        Assert.Equal(["en-US", "tr", "en-US", "tr"], recognizer.Languages);
+        Assert.Equal("en-US", PdfOcrLayer.Language(tab.Document, tab.Document.Pages[0]));
+    }
+
+    [Fact]
+    public async Task OneLanguageReadsEachPageOnce()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f);
+        var recognizer = new FakeRecognizer();
+
+        await Make(tab, f, recognizer, All());
+
+        Assert.Equal(["en-US", "en-US"], recognizer.Languages);
     }
 
     [Fact]
@@ -171,8 +248,107 @@ public sealed class OcrWorkTests
 
         await Make(tab, f, new FakeRecognizer { Words = [] }, All());
 
-        Assert.Equal("No text found on 1 page. Check the language.", f.Vm.Message!.Text);
+        Assert.StartsWith("No text found on 1 page. Check the language.", f.Vm.Message!.Text);
         Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public async Task PagesWithoutWordsAreNotToldToRotate()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+
+        await Make(tab, f, new FakeRecognizer { Words = [] }, All());
+
+        Assert.DoesNotContain("sideways", f.Vm.Message!.Text);
+    }
+
+    private static PdfRgbaImage Landscape(bool ink)
+    {
+        var rgba = new byte[6 * 4 * 4];
+        Array.Fill(rgba, (byte)255);
+        if (ink) for (int i = 0; i < 12; i++) rgba[i * 4] = rgba[i * 4 + 1] = rgba[i * 4 + 2] = 0;
+        return new PdfRgbaImage(6, 4, rgba);
+    }
+
+    [Fact]
+    public async Task ASidewaysPageIsTurnedUprightAndGetsALayer()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: true);
+        var recognizer = new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] };
+
+        var result = await Make(tab, f, recognizer, All());
+
+        Assert.Equal(1, result!.Added);
+        Assert.Equal(90, tab.Document.Pages[0].Rotate);
+        Assert.True(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
+        Assert.Equal(["alpha", "beta", "gamma"], Words(tab));
+        Assert.Equal("Pages turned", f.Vm.Message!.Title);
+        Assert.Equal("1 page was turned upright.", f.Vm.Message.Text);
+    }
+
+    [Fact]
+    public async Task TheWordsOfATurnedPageLieOnThePageInItsNewShape()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: true);
+
+        await Make(tab, f, new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] }, All());
+
+        var geometry = new PageGeometry(tab.Document.Pages[0]);
+        var boxes = PdfOcrLayer.Words(tab.Document, tab.Document.Pages[0]).Select(w => w.Box).ToList();
+        Assert.Equal(3, boxes.Count);
+        Assert.All(boxes, b => Assert.InRange(b.X + b.Width, geometry.Width - 1, geometry.Width + 1));
+        Assert.All(boxes, b => Assert.InRange(b.Y + b.Height, 0, geometry.Height + 1));
+    }
+
+    [Fact]
+    public async Task UndoPutsTheTurnAndTheLayerBackTogether()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: true);
+
+        await Make(tab, f, new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] }, All());
+        Assert.True(tab.Undo());
+
+        Assert.Equal(0, tab.Document.Pages[0].Rotate);
+        Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
+        Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public async Task ABlankPageIsReadOnlyOnce()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: false);
+        var recognizer = new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] };
+
+        var result = await Make(tab, f, recognizer, All());
+
+        Assert.Equal(1, result!.NoWords);
+        Assert.Single(recognizer.Languages);
+        Assert.Equal(0, tab.Document.Pages[0].Rotate);
+    }
+
+    [Fact]
+    public async Task ATurnedReadWithTooFewWordsIsNotTaken()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: true);
+
+        await Make(tab, f, new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] }, All());
+        Assert.Equal(90, tab.Document.Pages[0].Rotate);
+        Assert.True(tab.Undo());
+
+        await Make(tab, f, new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta"] }, All());
+        Assert.Equal(0, tab.Document.Pages[0].Rotate);
+        Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
@@ -17,10 +18,10 @@ internal static class SignatureArt
     private const int MaxPictureWidth = 900;
     private const int Margin = 4;
 
-    public static PdfRgbaImage? Typed(string text, string family)
+    public static PdfRgbaImage? Typed(string text, string family, Color? ink = null)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
-        var line = new FormattedText(text.Trim(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface(family), 40, Brushes.Black, 1.0);
+        var line = new FormattedText(text.Trim(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface(family), 40, new SolidColorBrush(ink ?? Colors.Black), 1.0);
         var visual = new DrawingVisual();
         using (var dc = visual.RenderOpen())
         {
@@ -30,7 +31,7 @@ internal static class SignatureArt
         return Trim(Render(visual, line.WidthIncludingTrailingWhitespace + 2 * Margin, line.Height + 2 * Margin));
     }
 
-    public static PdfRgbaImage? Drawn(StrokeCollection strokes)
+    public static PdfRgbaImage? Drawn(StrokeCollection strokes, Color? ink = null)
     {
         if (strokes.Count == 0) return null;
         var bounds = strokes.GetBounds();
@@ -41,9 +42,9 @@ internal static class SignatureArt
             dc.PushTransform(new TranslateTransform(Margin - bounds.X, Margin - bounds.Y));
             foreach (var stroke in strokes)
             {
-                var ink = stroke.Clone();
-                ink.DrawingAttributes.Color = Colors.Black;
-                ink.Draw(dc);
+                var copy = stroke.Clone();
+                copy.DrawingAttributes.Color = ink ?? Colors.Black;
+                copy.Draw(dc);
             }
         }
         return Trim(Render(visual, bounds.Width + 2 * Margin, bounds.Height + 2 * Margin));
@@ -52,8 +53,19 @@ internal static class SignatureArt
     /// <summary>A picture of a signature on paper: the paper becomes see-through, the ink stays.</summary>
     public static PdfRgbaImage? FromFile(byte[] file)
     {
-        if (new WicImageCodec().DecodeFile(file) is not { Count: > 0 } frames) return null;
-        return Trim(PaperToClear(Shrink(Upright(frames[0], Orientation(file)))));
+        if (new WicImageCodec().DecodeFile(file)?.FirstOrDefault(f => !f.TooBig) is not { } frame) return null;
+        return Trim(PaperToClear(Shrink(Upright(frame, Orientation(file)))));
+    }
+
+    /// <summary>A camera JPEG turned upright and saved without its orientation tag; any other file as it is.</summary>
+    public static byte[] UprightFile(byte[] file)
+    {
+        if (file.Length < 2 || file[0] != 0xFF || file[1] != 0xD8) return file;
+        int orientation = Orientation(file);
+        if (orientation is < 2 or > 8) return file;
+        var codec = new WicImageCodec();
+        if (codec.DecodeFile(file)?.FirstOrDefault(f => !f.TooBig) is not { } frame) return file;
+        return codec.EncodeJpeg(Upright(frame, orientation), 92);
     }
 
     /// <summary>The picture turned a quarter clockwise.</summary>
@@ -109,7 +121,7 @@ internal static class SignatureArt
             var frame = BitmapDecoder.Create(stream, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0];
             return (frame.Metadata as BitmapMetadata)?.GetQuery("System.Photo.Orientation") is ushort value ? value : 1;
         }
-        catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException)
+        catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException or COMException)
         {
             return 1;
         }
@@ -125,10 +137,10 @@ internal static class SignatureArt
         return Read(picture);
     }
 
-    private static PdfRgbaImage Shrink(PdfRgbaImage image)
+    internal static PdfRgbaImage Shrink(PdfRgbaImage image, int maxWidth = MaxPictureWidth)
     {
-        if (image.Width <= MaxPictureWidth) return image;
-        double factor = (double)MaxPictureWidth / image.Width;
+        if (image.Width <= maxWidth) return image;
+        double factor = (double)maxWidth / image.Width;
         return Read(new TransformedBitmap(ToBitmap(image), new ScaleTransform(factor, factor)));
     }
 

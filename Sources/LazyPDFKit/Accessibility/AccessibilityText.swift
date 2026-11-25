@@ -8,6 +8,52 @@ public enum AccessibilityText {
     static var intoItself: String { L10n.t("An element cannot go into itself.") }
     static var treeTooLarge: String { L10n.t("The structure tree is too large to edit.") }
 
+    public static func placementReason(_ key: String) -> String {
+        switch key {
+        case TagRules.rootOnly: return L10n.t("Document can only be at the top of the tree.")
+        case TagRules.topLevel: return L10n.t("Part and Art can only be at the top or inside Document, Part or Art.")
+        case TagRules.needsTable: return L10n.t("A table section can only be inside a table.")
+        case TagRules.needsTableOrPart: return L10n.t("A table row can only be inside a table or a table section.")
+        case TagRules.needsRow: return L10n.t("A table cell can only be inside a table row.")
+        case TagRules.needsList: return L10n.t("A list item can only be inside a list.")
+        case TagRules.needsItem: return L10n.t("A list label or body can only be inside a list item.")
+        case TagRules.needsCaptionParent: return L10n.t("A caption can only be inside a table, list, figure or formula.")
+        case TagRules.needsToc: return L10n.t("A table of contents item can only be inside a table of contents.")
+        case TagRules.needsRuby: return L10n.t("A Ruby part can only be inside a Ruby element.")
+        case TagRules.needsWarichu: return L10n.t("A Warichu part can only be inside a Warichu element.")
+        case TagRules.tableKids: return L10n.t("A table holds only a caption, rows and table sections.")
+        case TagRules.partKids: return L10n.t("A table section holds only rows.")
+        case TagRules.rowKids: return L10n.t("A table row holds only header and data cells.")
+        case TagRules.listKids: return L10n.t("A list holds only list items and a caption.")
+        case TagRules.itemKids: return L10n.t("A list item holds only a label and a body.")
+        case TagRules.tocKids: return L10n.t("A table of contents holds only items, another table of contents and a caption.")
+        case TagRules.rubyKids: return L10n.t("A Ruby element holds only Ruby parts.")
+        case TagRules.warichuKids: return L10n.t("A Warichu element holds only Warichu parts.")
+        case TagRules.textKids: return L10n.t("A paragraph, heading or inline element holds only inline elements.")
+        case TagRules.noContent: return L10n.t("This element holds only other elements, not content.")
+        case TagRules.linkObject: return L10n.t("A link needs a link annotation inside it.")
+        case TagRules.unmapped: return L10n.t("This type does not lead to a standard type through the role map.")
+        default: return key
+        }
+    }
+
+    public static func contentReason(_ key: String) -> String {
+        switch key {
+        case TagContent.truncated: return L10n.t("The structure tree is too large to edit.")
+        case TagContent.notInTree: return L10n.t("The item is not in the tree.")
+        case TagContent.notContent: return L10n.t("This item is not marked content.")
+        case TagContent.formContent: return L10n.t("The content is drawn by a form XObject, which other places may share.")
+        case TagContent.sharedStream: return L10n.t("The page content is shared with another page.")
+        case TagContent.unreadable: return L10n.t("The page content cannot be edited safely.")
+        case TagContent.nestedTagged: return L10n.t("Other tagged content lies inside or around this content.")
+        case TagContent.partialMarked: return L10n.t("The selection covers only part of content that is already marked.")
+        case TagContent.splitOperation: return L10n.t("The selection cuts through a line of text or a picture. Select whole lines or pictures.")
+        case TagContent.emptySelection: return L10n.t("Nothing in the selection can be tagged.")
+        case TagContent.tooLarge: return L10n.t("The page has too many marked sequences to tag more.")
+        default: return placementReason(key)
+        }
+    }
+
     public static func name(_ rule: AccessibilityRule) -> String {
         switch rule {
         case .tagged: return L10n.t("Document is tagged")
@@ -19,7 +65,7 @@ public enum AccessibilityText {
         case .encoding: return L10n.t("Fonts map to text")
         case .taggedContent: return L10n.t("All content is tagged")
         case .tabOrder: return L10n.t("Tab order follows structure")
-        case .contrast: return L10n.t("Colour contrast")
+        case .contrast: return L10n.t("Color contrast")
         case .figureAlt: return L10n.t("Figures have alt text")
         case .tableStructure: return L10n.t("Tables are well formed")
         case .tableHeaders: return L10n.t("Tables have headers")
@@ -85,7 +131,7 @@ public enum AccessibilityText {
         pageIndex >= 0 ? L10n.t(", first on page {0}", pageIndex + 1) : ""
     }
 
-    public static var contrastNeedsPerson: String { L10n.t("Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.") }
+    public static var contrastNeedsPerson: String { L10n.t("Color contrast is not checked here. Look at the pages and make sure text stands out from its background.") }
     public static var noTags: String { L10n.t("There are no tags to check. Tag the document first.") }
     public static var suspectTags: String { L10n.t("The tags are marked as unreliable. Check them and clear the mark.") }
     public static var titleNotShown: String { L10n.t("The window shows the file name, not the title. Turn on showing the title.") }

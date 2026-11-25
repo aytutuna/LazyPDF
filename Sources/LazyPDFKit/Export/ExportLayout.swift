@@ -18,7 +18,7 @@ public enum ExportLayout {
     private static let pictureBytes = 1024
     private static let cellBytes = 16
 
-    /// Analyses `pages` (0-based, in the order given; nil for all). Pictures need the `codec` only for JPEG 2000, JBIG2
+    /// Analyses `pages` (0-based, in the order given; nil for all). Pictures need the `codec` only for JPEG 2000
     /// and masks on a JPEG. Throws `ArgumentException` when a page index is out of range, and `PdfReadException` when the
     /// pages hold more text than the export keeps in memory.
     public static func analyze(_ document: PdfDocument, _ pages: [Int]? = nil, _ codec: ImageCodec? = nil) throws -> ExportDocument {

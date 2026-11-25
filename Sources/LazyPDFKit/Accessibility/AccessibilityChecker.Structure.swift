@@ -76,15 +76,14 @@ extension AccessibilityChecker {
         var rows: [StructElement] = []
         for child in table.children {
             let t = type(child)
+            if TagRules.kidRule("Table", t) != nil { return false }
             if t == "TR" {
                 rows.append(child)
-            } else if t == "THead" || t == "TBody" || t == "TFoot" {
+            } else if t != "Caption" {
                 for row in child.children {
-                    if type(row) != "TR" { return false }
+                    if TagRules.kidRule(t, type(row)) != nil { return false }
                     rows.append(row)
                 }
-            } else if t != "Caption" {
-                return false
             }
         }
         if rows.isEmpty { return false }
@@ -92,7 +91,7 @@ extension AccessibilityChecker {
         var widths = Set<Int>()
         for row in rows {
             let cells = row.children
-            if cells.isEmpty || cells.contains(where: { type($0) != "TH" && type($0) != "TD" }) { return false }
+            if cells.isEmpty || cells.contains(where: { TagRules.kidRule("TR", type($0)) != nil }) { return false }
             if cells.contains(where: { hasSpan(document, $0) }) { return true }
             widths.insert(cells.count)
         }
@@ -119,11 +118,12 @@ extension AccessibilityChecker {
             let ok: Bool
             switch type(e) {
             case "L":
-                ok = e.children.allSatisfy { type($0) == "LI" || type($0) == "Caption" }
+                ok = e.children.allSatisfy { TagRules.kidRule("L", type($0)) == nil }
             case "LI":
-                ok = type(e.parent ?? e) == "L" && e.children.allSatisfy { type($0) == "Lbl" || type($0) == "LBody" || type($0) == "L" }
+                ok = TagRules.parentRule(e.parent.map(type) ?? "", "LI") == nil
+                    && e.children.allSatisfy { TagRules.kidRule("LI", type($0)) == nil || type($0) == "L" }
             case "Lbl", "LBody":
-                ok = e.parent.map { type($0) == "LI" } ?? false
+                ok = e.parent.map { TagRules.parentRule(type($0), type(e)) == nil } ?? false
             default:
                 ok = true
             }
@@ -181,6 +181,7 @@ extension AccessibilityChecker {
 
         let found = Found()
         var budget = 50_000
+        var withContent: [ObjectIdentifier: Bool] = [:]
         for page in document.pages {
             guard let annots = document.array(page.dictionary, "Annots") else { continue }
             for item in annots.items {
@@ -190,7 +191,7 @@ extension AccessibilityChecker {
                       document.name(annotation, "Subtype") == "Link" else { continue }
                 let described = !DotNetText.isNullOrWhiteSpace(PdfText.read(document, annotation, "Contents"))
                 if let owner = owners[reference.number] {
-                    if !described && !hasText(owner) && !hasContent(owner) { found.add(page.index, reference) }
+                    if !described && !hasText(owner) && !hasContent(owner, &withContent) { found.add(page.index, reference) }
                 } else {
                     found.add(page.index, reference)
                 }
@@ -200,8 +201,12 @@ extension AccessibilityChecker {
         return found.count == 0 ? pass(.links) : fail(.links, found)
     }
 
-    private static func hasContent(_ element: StructElement) -> Bool {
-        element.kids.contains { $0 is StructContent } || anyBelow(element, { $0.kids.contains { $0 is StructContent } })
+    // One element is named by many annotations at worst, and each walk is the whole subtree.
+    private static func hasContent(_ element: StructElement, _ known: inout [ObjectIdentifier: Bool]) -> Bool {
+        if let has = known[ObjectIdentifier(element)] { return has }
+        let has = element.kids.contains { $0 is StructContent } || anyBelow(element, { $0.kids.contains { $0 is StructContent } })
+        known[ObjectIdentifier(element)] = has
+        return has
     }
 
     // 7.18.1 and 7.18.4: a field has a name and a description.

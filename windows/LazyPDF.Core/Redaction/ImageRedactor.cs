@@ -3,7 +3,7 @@ namespace LazyPDF.Core;
 /// <summary>
 /// Makes a private copy of an image with the pixels under the marks overwritten in the samples, so
 /// the covered picture is gone rather than hidden. The copy is stored with Flate. Pictures in a
-/// lossy or bilevel codec go through the system's decoder; with none, or when it fails, nothing is
+/// lossy codec go through the system's decoder; with none, or when it fails, nothing is
 /// returned and the caller removes the image.
 /// </summary>
 internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
@@ -40,20 +40,21 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         }
     }
 
-    private PdfReference? Copy(PdfStream image, List<List<(double X, double Y)>> unit, int depth)
+    private PdfReference? Copy(PdfStream image, List<List<(double X, double Y)>> unit, int depth, bool soft = false)
     {
         // A mask has no masks of its own to speak of; a loop of them is a trap.
         if (depth > MaxMaskDepth) return null;
         var d = image.Dictionary;
-        var (filter, parameters, _) = document.DecodeSpec(image);
-        var decoded = PdfFilters.DecodeToCodec(document.RawData(image), filter, parameters, MaxSamples);
+        var (filter, parameters, _) = document.DecodeSpec(image, decoding: true);
+        var decoded = PdfFilters.DecodeToCodecWhole(document.RawData(image), filter, parameters, MaxSamples);
         var copy = new PdfDictionary();
         foreach (string key in Kept)
         {
             if (d[key] is { } value) copy[key] = value;
         }
         copy["Filter"] = new PdfName("FlateDecode");
-        if (!Masks(d, copy, unit, depth)) return null;
+        // A coded soft mask is written back as plain gray, which has no soft mask of its own to cut.
+        if (!(soft && decoded.Codec is not null) && !Masks(d, copy, unit, depth)) return null;
 
         if (decoded.Codec is null)
         {
@@ -64,12 +65,34 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             int components = mask ? 1 : SampleColorSpace.Parse(d["ColorSpace"], document.Resolve, s => document.Data(s)).Components;
             var samples = decoded.Data;
             long used = ((long)width * components * bits + 7) / 8 * height;
+            // A JBIG2 page is fitted to the picture's size, but not to a depth or colour space it does not have; other rows would put the marks in the wrong place.
+            if (PdfFilters.Uses(filter, "JBIG2Decode") && samples.Length != used) return null;
             if (samples.Length > used) samples = samples[..(int)used];
             Zero(samples, width, height, components * bits, unit);
             return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(samples)));
         }
 
-        if (codec?.Decode(decoded.Data, decoded.Codec) is not { } pixels || !Fits(pixels.Width, pixels.Height)) return null;
+        // A picture whose colour space the pixels cannot show is not rewritten: the caller removes it.
+        bool jpx = decoded.Codec == "JPXDecode";
+        if (jpx && !JpxImage.Readable(document, d)) return null;
+        if (!jpx && !soft && !DctImage.Readable(document, d)) return null;
+        if (!soft && document.Resolve(d["Mask"]) is PdfArray colourKey)
+        {
+            if (ColourKey(d, colourKey, jpx) is not { } mapped) return null;
+            copy["Mask"] = mapped;
+        }
+        if (codec?.Decode(decoded.Data, decoded.Codec, jpx ? JpxImage.Components(document, d) : 0) is not { } pixels || !Fits(pixels.Width, pixels.Height)) return null;
+        if (jpx)
+        {
+            long mode = JpxImage.MaskInData(document, d);
+            if (mode <= 0 && !JpxImage.Opaque(pixels)) return null;
+            pixels = JpxImage.Alpha(pixels, mode);
+        }
+        else if (!soft)
+        {
+            if (WithDecode(d, decoded.Data, pixels) is not { } decodedPixels) return null;
+            pixels = decodedPixels;
+        }
         var rgba = pixels.Rgba;
         var cells = Cells(pixels.Width, pixels.Height, pixels.Height, unit);
         foreach (var (row, from, to) in cells)
@@ -80,12 +103,20 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
                 (rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]) = (0, 0, 0, 255);
             }
         }
-        if (decoded.Codec == "JBIG2Decode")
+        if (soft)
         {
+            // ISO 32000-1 11.6.5.2: a soft mask is a DeviceGray image, 8 bits, with no /SMask or /Mask; /Matte stays.
+            var gray = new byte[pixels.Width * pixels.Height];
+            for (int i = 0; i < gray.Length; i++) gray[i] = rgba[4 * i];
             copy["Width"] = new PdfNumber(pixels.Width);
             copy["Height"] = new PdfNumber(pixels.Height);
-            return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(Bilevel(rgba, pixels.Width, pixels.Height))));
+            copy["ColorSpace"] = new PdfName("DeviceGray");
+            copy["BitsPerComponent"] = new PdfNumber(8);
+            foreach (string key in (ReadOnlySpan<string>)["SMask", "Mask", "SMaskInData"]) copy.Remove(key);
+            if (jpx) copy.Remove("Decode");
+            return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(gray)));
         }
+        FitMatte(copy, JpxImage.Components(document, d));
         var reference = ContentImages.AddRgba(document, pixels.Width, pixels.Height, rgba);
         var made = (PdfStream)document.Get(reference.Number)!;
         foreach (string key in (ReadOnlySpan<string>)["SMask", "Mask"])
@@ -93,6 +124,68 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             if (copy[key] is { } mask) made.Dictionary[key] = mask;
         }
         return reference;
+    }
+
+    // A picture of a DCT file is written back as RGB with no /Decode, so the /Decode goes onto the codec's samples first. That
+    // works where a codec channel is a component of the colour space: gray, which the codec gives as R = G = B, and RGB. A CMYK
+    // picture keeps what the codec made of it only where the page shows the same (see DctImage.CmykAsShown): the RGB inverse
+    // cannot stand in for the ink inverse otherwise, and any other /Decode on a picture the codec converted cannot be carried
+    // over, so the picture is one that cannot be decoded here.
+    private PdfRgbaImage? WithDecode(PdfDictionary image, byte[] jpeg, PdfRgbaImage pixels)
+    {
+        var decode = PdfFunction.Numbers(image["Decode"], document.Resolve);
+        var (family, components) = ImageKit.Describe(document, image["ColorSpace"]);
+        if (family == ImageFamily.Cmyk) return DctImage.CmykAsShown(document, image, jpeg) ? pixels : null;
+        if (decode is null || ImageKit.DefaultDecode(document, image, decode)) return pixels;
+        if (family is not (ImageFamily.Gray or ImageFamily.Rgb)) return null;
+        if (decode.Length < 2 * components) return pixels;
+        var rgba = (byte[])pixels.Rgba.Clone();
+        for (int i = 0; i < rgba.Length; i += 4)
+        {
+            for (int c = 0; c < 3; c++)
+            {
+                int j = components == 1 ? 0 : c;
+                double value = decode[2 * j] + rgba[i + c] * (decode[2 * j + 1] - decode[2 * j]) / 255;
+                rgba[i + c] = (byte)(Math.Clamp(value, 0, 1) * 255 + 0.5);
+            }
+        }
+        return new PdfRgbaImage(pixels.Width, pixels.Height, rgba, pixels.DpiX, pixels.DpiY);
+    }
+
+    // The picture is written back as RGB with /Decode applied, so a colour key (matched on the raw samples, ISO 32000-1 8.9.6.4)
+    // becomes an RGB key on the decoded ones: a gray key is repeated for the three channels and a component with a reversing
+    // /Decode swaps its range end for end. Any other /Decode, a CMYK key, a key on a JPEG 2000 picture, whose samples may be of
+    // any depth, and a key that does not fit its colour space cannot be carried over.
+    private PdfArray? ColourKey(PdfDictionary image, PdfArray key, bool jpx)
+    {
+        var (family, components) = ImageKit.Describe(document, image["ColorSpace"]);
+        var values = PdfFunction.Numbers(key, document.Resolve);
+        if (jpx || family is not (ImageFamily.Gray or ImageFamily.Rgb) || values is null || values.Length != 2 * components || (document.Integer(image, "BitsPerComponent") ?? 8) != 8) return null;
+        var decode = PdfFunction.Numbers(image["Decode"], document.Resolve);
+        bool decoded = decode is not null && decode.Length >= 2 * components && !ImageKit.DefaultDecode(document, image, decode);
+        var mapped = new List<PdfObject>();
+        for (int c = 0; c < 3; c++)
+        {
+            int j = components == 1 ? 0 : c;
+            double low = values[2 * j], high = values[2 * j + 1];
+            if (decoded)
+            {
+                if (decode![2 * j] == 1 && decode[2 * j + 1] == 0) (low, high) = (255 - high, 255 - low);
+                else if (decode[2 * j] != 0 || decode[2 * j + 1] != 1) return null;
+            }
+            mapped.Add(new PdfNumber(low));
+            mapped.Add(new PdfNumber(high));
+        }
+        return new PdfArray(mapped);
+    }
+
+    // The picture is written back as RGB, so a matte stays only as three entries: a gray picture's one is repeated, any other is
+    // dropped. With no colour space (0 components) the length of the matte is all there is to go by.
+    private void FitMatte(PdfDictionary image, int components)
+    {
+        if (document.Stream(image, "SMask") is not { } soft || document.Array(soft.Dictionary, "Matte") is not { } matte || matte.Items.Count == 3) return;
+        if (matte.Items.Count == 1 && components is 0 or 1) soft.Dictionary["Matte"] = new PdfArray([.. Enumerable.Repeat(matte.Items[0], 3)]);
+        else soft.Dictionary.Remove("Matte");
     }
 
     private static bool Fits(int width, int height) => width > 0 && height > 0 && (long)width * height <= PdfImageSamples.MaxPixels;
@@ -103,7 +196,7 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         foreach (string key in (ReadOnlySpan<string>)["SMask", "Mask"])
         {
             if (document.Stream(source, key) is not { } mask) continue;
-            var reference = Copy(mask, unit, depth + 1);
+            var reference = Copy(mask, unit, depth + 1, key == "SMask");
             if (reference is null) return false;
             copy[key] = reference;
         }
@@ -126,21 +219,6 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
                 data[start + b] &= (byte)~((0xFF >> lo) & (0xFF << (8 - hi)));
             }
         }
-    }
-
-    private static byte[] Bilevel(byte[] rgba, int width, int height)
-    {
-        int stride = (width + 7) / 8;
-        var bits = new byte[stride * height];
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                int i = (y * width + x) * 4;
-                if (rgba[i] + rgba[i + 1] + rgba[i + 2] >= 384) bits[y * stride + x / 8] |= (byte)(0x80 >> (x % 8));
-            }
-        }
-        return bits;
     }
 
     /// <summary>The runs of pixels, per row, that any part of a marked polygon touches. The polygons are in the unit square, y up.</summary>

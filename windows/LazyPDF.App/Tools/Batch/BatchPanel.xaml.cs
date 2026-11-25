@@ -42,6 +42,8 @@ public partial class BatchPanel : ToolPanel
     private readonly BatchSetStore _store = new();
     private readonly BatchSet _set = new();
     private readonly List<string> _files = [];
+    private readonly HashSet<string> _known = new(StringComparer.OrdinalIgnoreCase);
+    private bool _folderFailed;
     private readonly ObservableCollection<LogRow> _log = [];
     private BatchRunner? _runner;
     private bool _running;
@@ -52,6 +54,7 @@ public partial class BatchPanel : ToolPanel
         InitializeComponent();
         Summary.Text = ToolCatalog.Find("batch")?.Summary;
         TemplateHint.Text = Loc.T("Use {0}, {1} and {2}. A name that is taken gets a number.", "{name}", "{n}", "{date}");
+        PageTextHint.Text = Loc.T("Use {0} and {1}.", "{page}", "{pages}");
         TemplateBox.Text = _set.NameTemplate;
         LogList.ItemsSource = _log;
         FillChoices();
@@ -86,6 +89,8 @@ public partial class BatchPanel : ToolPanel
         _set.OutputFolder = saved.OutputFolder;
         _set.NameTemplate = saved.NameTemplate;
         _set.WatchFolder = saved.WatchFolder;
+        _set.StopOnError = saved.StopOnError;
+        StopBox.IsChecked = saved.StopOnError;
         _loading = true;
         TemplateBox.Text = _set.NameTemplate;
         _loading = false;

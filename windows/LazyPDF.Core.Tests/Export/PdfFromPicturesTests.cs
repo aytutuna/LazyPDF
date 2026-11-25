@@ -62,6 +62,18 @@ public class PdfFromPicturesTests
         Assert.Equal(306, (images[0].Bounds.Left + images[0].Bounds.Right) / 2, 6);
     }
 
+    [Theory]
+    [InlineData(200, 300, 200, 300)]
+    [InlineData(1, 99999, 3, 14400)]
+    [InlineData(double.NaN, 50, 3, 50)]
+    public void CustomPaperIsClamped(double width, double height, double expectedW, double expectedH)
+    {
+        var setup = new PdfPageSetup(PdfPaper.Custom, PdfOrientation.Portrait, 0, width, height);
+        var (document, _) = Reopen(PdfFromPictures.Create([ExportFakeCodec.Picture(2, 2)], Codec, setup));
+        var page = document.Pages[0].MediaBox;
+        Assert.Equal((expectedW, expectedH), (page.Width, page.Height));
+    }
+
     [Fact]
     public void FitToPictureSizesThePageToThePictureAndMargin()
     {
@@ -82,6 +94,19 @@ public class PdfFromPicturesTests
         Assert.True(landscape.Width > landscape.Height);
     }
 
+    [Theory]
+    [InlineData(PdfOrientation.Landscape, true, 1000, 500)]
+    [InlineData(PdfOrientation.Auto, true, 1000, 500)]
+    [InlineData(PdfOrientation.Auto, false, 500, 1000)]
+    [InlineData(PdfOrientation.Portrait, true, 500, 1000)]
+    public void AWideCustomPaperIsTurnedLikeTheNamedOnes(PdfOrientation orientation, bool widePicture, double expectedW, double expectedH)
+    {
+        var picture = widePicture ? ExportFakeCodec.Picture(40, 10) : ExportFakeCodec.Picture(10, 40);
+        var setup = new PdfPageSetup(PdfPaper.Custom, orientation, 0, 1000, 500);
+        var page = PdfDocument.Open(PdfFromPictures.Create([picture], Codec, setup).Bytes).Pages[0].MediaBox;
+        Assert.Equal((expectedW, expectedH), (page.Width, page.Height));
+    }
+
     [Fact]
     public void OnePageForEachFileInOrderAndUnreadableFilesAreReported()
     {
@@ -91,6 +116,24 @@ public class PdfFromPicturesTests
         using var reopened = PdfDocument.Open(made.Bytes);
         Assert.Equal(3, reopened.Pages.Count);
         Assert.Equal(ExportKit.Jpeg, reopened.RawData((PdfStream)reopened.Resolve(((PdfDictionary)reopened.Resolve(reopened.Pages[1].Resources!["XObject"])!)["Im1"])!));
+    }
+
+    [Fact]
+    public void AFrameTooBigToDecodeIsLeftOutAndCounted()
+    {
+        var made = PdfFromPictures.Create([[(byte)'B', 2]], Codec);
+        Assert.Equal(2, made.Pages);
+        Assert.Equal(1, made.SkippedFrames);
+        Assert.Empty(made.Unreadable);
+    }
+
+    [Fact]
+    public void AFileOfOnlyTooBigFramesIsCountedOnlyAsSkipped()
+    {
+        var made = PdfFromPictures.Create([ExportFakeCodec.Picture(4, 4), [(byte)'B', 0]], Codec);
+        Assert.Equal(1, made.Pages);
+        Assert.Equal(1, made.SkippedFrames);
+        Assert.Empty(made.Unreadable);
     }
 
     [Fact]
@@ -179,10 +222,58 @@ public class PdfFromPicturesTests
     }
 
     [Theory]
+    [InlineData(300, 300, 24, 24)]
+    [InlineData(72, 72, 100, 100)]
+    [InlineData(300, 150, 24, 48)]
+    [InlineData(0, 0, 75, 75)]
+    [InlineData(5000, 5000, 75, 75)]
+    [InlineData(300, 5000, 75, 75)]
+    public void ADecodedFrameIsPlacedAtTheDensityItCarries(int dpiX, int dpiY, double width, double height)
+    {
+        var made = PdfFromPictures.Create([ExportFakeCodec.Picture(100, 100, 128, dpiX, dpiY)], Codec, new PdfPageSetup(PdfPaper.Picture, Margin: 0));
+        var box = Reopen(made).Images[0].Bounds;
+        Assert.Equal(width, box.Width, 4);
+        Assert.Equal(height, box.Height, 4);
+    }
+
+    [Theory]
     [InlineData(300)]
     [InlineData(297.638)]
     public void AMarginThatLeavesNoRoomIsRefused(double margin)
     {
         Assert.Throws<ArgumentException>(() => PdfFromPictures.Create([Jpeg()], Codec, new PdfPageSetup(Margin: margin)));
     }
-}
+
+    [Fact]
+    public void ACancelledTokenStopsTheMakingOfThePdf()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() => PdfFromPictures.Create([Jpeg()], Codec, cancellation: source.Token));
+    }
+
+    [Fact]
+    public void ACancelDuringTheFirstDecodeStopsBeforeTheThirdFile()
+    {
+        using var source = new CancellationTokenSource();
+        var codec = new CancellingCodec(source);
+        var file = ExportFakeCodec.Picture(4, 4);
+        Assert.Throws<OperationCanceledException>(() => PdfFromPictures.Create([file, file, file], codec, cancellation: source.Token));
+        Assert.Equal(1, codec.Files);
+    }
+
+    private sealed class CancellingCodec(CancellationTokenSource source) : IImageCodec
+    {
+        public int Files { get; private set; }
+
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
+
+        public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file)
+        {
+            Files++;
+            source.Cancel();
+            return Codec.DecodeFile(file);
+        }
+
+        public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
+    }}

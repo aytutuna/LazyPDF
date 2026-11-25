@@ -30,7 +30,8 @@ public enum PageImages {
             for c in 0..<3 { rgba[i + c] = UInt8(truncatingIfNeeded: (Int(rgba[i + c]) * alpha + 255 * (255 - alpha) + 127) / 255) }
             rgba[i + 3] = 255
         }
-        return codec.encodeJpeg(PdfRgbaImage(image.width, image.height, rgba), quality)
+        let jpeg = codec.encodeJpeg(PdfRgbaImage(image.width, image.height, rgba), quality)
+        return jpeg.isEmpty ? nil : jpeg
     }
 
     private static func checkDpi(_ dpi: Double) throws {

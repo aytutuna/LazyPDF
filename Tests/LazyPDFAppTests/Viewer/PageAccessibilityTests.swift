@@ -1,0 +1,233 @@
+import XCTest
+import LazyPDFKit
+@testable import LazyPDFApp
+
+@MainActor
+final class PageAccessibilityTests: XCTestCase {
+    private final class Element {}
+
+    private func open(pages: Int = 2) throws -> (viewer: ViewerModel, tab: DocumentTab) {
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(pages)), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        return (viewer, tab)
+    }
+
+    func test_theCacheGivesTheSameElementOnTheNextQuery() {
+        var cache = PageElementCache<Element>()
+        let first = cache.elements(for: [0, 1], epoch: 1) { _ in Element() }
+        let again = cache.elements(for: [0, 1], epoch: 1) { _ in Element() }
+
+        XCTAssertEqual(first.count, 2)
+        XCTAssertTrue(first[0] === again[0] && first[1] === again[1])
+        XCTAssertTrue(cache.element(for: 1) === first[1])
+    }
+
+    func test_theCacheStartsOverWhenTheEpochMoves() {
+        var cache = PageElementCache<Element>()
+        let first = cache.elements(for: [0], epoch: 1) { _ in Element() }
+
+        let next = cache.elements(for: [0], epoch: 2) { _ in Element() }
+
+        XCTAssertFalse(first[0] === next[0])
+    }
+
+    func test_aPageOutOfViewIsLetGoAndAPageWithoutAnElementIsSkipped() {
+        var cache = PageElementCache<Element>()
+        _ = cache.elements(for: [0, 1], epoch: 1) { _ in Element() }
+
+        let found = cache.elements(for: [1, 2], epoch: 1) { $0 == 2 ? nil : Element() }
+
+        XCTAssertEqual(found.count, 1)
+        XCTAssertNil(cache.element(for: 0))
+        XCTAssertNil(cache.element(for: 2))
+    }
+
+    func test_theEpochMovesWithAnotherFileAndWithANewRevision() async throws {
+        let (viewer, tab) = try open()
+        let shown = viewer.textEpoch
+
+        viewer.show(try open().tab)
+        let other = viewer.textEpoch
+        XCTAssertGreaterThan(other, shown)
+
+        viewer.show(tab)
+        try TestPdfs.retitle(tab.session, "New title")
+        let before = viewer.textEpoch
+        XCTAssertTrue(try tab.commit("Properties"))
+        for _ in 0..<300 where viewer.textEpoch == before { try await Task.sleep(nanoseconds: 10_000_000) }
+
+        XCTAssertGreaterThan(viewer.textEpoch, before)
+    }
+
+    func test_thePageLoadedCallbackNamesThePage() async throws {
+        let (viewer, _) = try open()
+        var loaded: [Int] = []
+        viewer.onPageLoaded = { loaded.append($0) }
+
+        await viewer.loadPage(1)
+
+        XCTAssertEqual(loaded, [1])
+        XCTAssertNotNil(viewer.pageText(1))
+    }
+
+    func test_aPageThatWasAlreadyReadIsNotToldAgain() async throws {
+        let (viewer, _) = try open()
+        var loaded: [Int] = []
+        viewer.onPageLoaded = { loaded.append($0) }
+
+        await viewer.loadPage(1)
+        await viewer.loadPage(1)
+        _ = await viewer.text(1)
+        await viewer.loadPage(0)
+
+        XCTAssertEqual(loaded, [1, 0])
+    }
+}
+
+@MainActor
+final class ViewerAccessibilityTests: XCTestCase {
+    private func open(pages: Int = 2) async throws -> ViewerModel {
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(pages)), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        await viewer.loadPage(0)
+        return viewer
+    }
+
+    func test_theMapIsKeptWhileThePageIsAndMadeAgainAfterAReset() async throws {
+        let viewer = try await open()
+
+        let first = try XCTUnwrap(viewer.textMap(0))
+
+        XCTAssertTrue(viewer.textMap(0) === first)
+        XCTAssertNil(viewer.textMap(1))
+        viewer.resetText()
+        XCTAssertNil(viewer.textMap(0))
+    }
+
+    func test_selectingARunSelectsThoseCharactersAndTellsTheListener() async throws {
+        let viewer = try await open()
+        var told = 0
+        viewer.onSelectionChanged = { told += 1 }
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(2, 7))
+
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(2, 7))
+        XCTAssertNil(viewer.selectedChars(on: 1))
+        XCTAssertEqual(told, 1)
+    }
+
+    func test_aScreenReaderSelectionIsNotOverwrittenByTheDragInProgress() async throws {
+        let viewer = try await open()
+        let box = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(0, 1)))
+        let far = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(20, 21)))
+        viewer.pointerDown(box.center)
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(2, 7))
+        viewer.pointerMove(far.center)
+
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(2, 7))
+    }
+
+    func test_aCaretSelectsNothingButIsStillAPlace() async throws {
+        let viewer = try await open()
+        var told = 0
+        viewer.onSelectionChanged = { told += 1 }
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(3, 3))
+
+        XCTAssertFalse(viewer.hasSelection)
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(3, 3))
+        XCTAssertEqual(told, 1)
+        viewer.select(page: 0, LazyPDFKit.TextRange(3, 3))
+        XCTAssertEqual(told, 1)
+    }
+
+    func test_aCaretOnALineBreakStaysThereWhenReadBack() async throws {
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(1, "First line\nSecond line here")), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        await viewer.loadPage(0)
+        let map = try XCTUnwrap(viewer.textMap(0))
+        let lineBreak = try XCTUnwrap(map.text.utf16.firstIndex(of: 0x0A)).utf16Offset(in: map.text)
+
+        viewer.placeCaret(page: 0, offset: lineBreak)
+
+        XCTAssertEqual(viewer.readerOffset(on: 0), lineBreak)
+        XCTAssertFalse(viewer.hasSelection)
+    }
+
+    func test_aCaretLeavesTheUsersSelectionAloneAndIsAnswered() async throws {
+        let viewer = try await open()
+        viewer.select(page: 0, LazyPDFKit.TextRange(2, 7))
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(5, 5))
+
+        XCTAssertTrue(viewer.hasSelection)
+        XCTAssertEqual(viewer.selected.start, Caret(0, 2))
+        XCTAssertEqual(viewer.selected.end, Caret(0, 7))
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(5, 5))
+    }
+
+    func test_theCaretGoesWhenTheSelectionChangesOrTheTextIsReset() async throws {
+        let viewer = try await open()
+        viewer.select(page: 0, LazyPDFKit.TextRange(5, 5))
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(1, 4))
+        XCTAssertEqual(viewer.selectedChars(on: 0), LazyPDFKit.TextRange(1, 4))
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(5, 5))
+        viewer.selected.clear()
+        XCTAssertNil(viewer.selectedChars(on: 0))
+
+        viewer.select(page: 0, LazyPDFKit.TextRange(5, 5))
+        viewer.resetText()
+        XCTAssertNil(viewer.selectedChars(on: 0))
+    }
+
+    func test_onlyTheMapsOfPagesInViewAreKeptOnceManyWereAsked() async throws {
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(12)), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        for page in 0..<12 {
+            await viewer.loadPage(page)
+            XCTAssertNotNil(viewer.textMap(page))
+        }
+
+        XCTAssertLessThanOrEqual(viewer.textMaps.count, 8)
+        XCTAssertNotNil(viewer.textMaps[11])
+    }
+
+    func test_aCharacterIsFoundWhereItIsShown() async throws {
+        let viewer = try await open()
+        let box = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(4, 5)))
+
+        XCTAssertGreaterThan(box.width, 0)
+        XCTAssertEqual(viewer.charIndex(page: 0, at: box.center), 4)
+        XCTAssertNil(viewer.textBounds(page: 1, LazyPDFKit.TextRange(0, 1)))
+        XCTAssertNil(viewer.charIndex(page: 1, at: box.center))
+    }
+
+    func test_theRightHalfOfACharacterIsStillThatCharacter() async throws {
+        let viewer = try await open()
+        let last = try XCTUnwrap(viewer.textMap(0)).page.chars.count - 1
+        let box = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(4, 5)))
+        let end = try XCTUnwrap(viewer.textBounds(page: 0, LazyPDFKit.TextRange(last, last + 1)))
+
+        XCTAssertEqual(viewer.charIndex(page: 0, at: ViewPoint(box.x + box.width * 0.9, box.center.y)), 4)
+        XCTAssertEqual(viewer.charIndex(page: 0, at: ViewPoint(end.x + end.width * 0.9, end.center.y)), last)
+    }
+
+    func test_theLinesInViewAreThoseThatShow() async throws {
+        let viewer = try await open()
+
+        XCTAssertEqual(viewer.visibleLines(on: 0), 0...0)
+        viewer.scroll(by: 0, 100_000)
+        XCTAssertNil(viewer.visibleLines(on: 0))
+    }
+}

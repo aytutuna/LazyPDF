@@ -16,26 +16,47 @@ public interface IToolHost
     /// <summary>Shows <paramref name="view"/> on the stage in place of the viewer, until it is called again with null. Only a tool that is attached may hold it, and it lets go when it is detached.</summary>
     void HoldStage(UIElement? view) { }
 
+    /// <summary>The window a dialog the tool opens belongs over; null when the host has none.</summary>
+    Window? DialogOwner => null;
+
     void ShowProblem(Problem problem);
 
     void ShowNotice(string title, string text, NoticeAction? action = null);
 
     void SetStatus(string sentence);
 
+    /// <summary>The documents open in tabs, for a tool that picks another one.</summary>
+    IReadOnlyList<DocumentTab> OpenDocuments => [];
+
     /// <summary>Opens a file in a tab, or shows the tab it is already in.</summary>
     Task OpenAsync(string path);
 
-    /// <summary>Opens PDF bytes as a new document with unsaved changes and no file, so saving asks for a name: the result of Combine, Compare, Export or Create.</summary>
-    Task OpenNewAsync(byte[] pdf, string title);
+    /// <summary>Opens PDF bytes as a new document with unsaved changes and no file, so saving asks for a name: the result of Combine, Compare, Export or Create. False when no tab could be made, with the problem already shown.</summary>
+    Task<bool> OpenNewAsync(byte[] pdf, string title);
 
     /// <summary>As above, for encrypted bytes: the password or certificate that opens them is kept for the tab, so nothing is asked again.</summary>
-    Task OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) => OpenNewAsync(pdf, title);
+    Task<bool> OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) => OpenNewAsync(pdf, title);
+
+    /// <summary>Opens the tool with this id on the document in view, as picking it from the tool strip would, but never closes it when it is open already.</summary>
+    void OpenTool(string id) { }
+
+    /// <summary>As above, and the tool asks for <see cref="TakeReturnTool"/> when its work is done, to go back to the tool <paramref name="back"/>. Picking any other tool first forgets it.</summary>
+    void OpenToolReturning(string id, string back) => OpenTool(id);
+
+    /// <summary>The tool <see cref="OpenToolReturning"/> named, once.</summary>
+    string? TakeReturnTool() => null;
 
     /// <summary>Opens the Certificates tool with the empty signature field of that name chosen as the place to sign.</summary>
     void OpenSigning(string field) { }
 
     /// <summary>The field <see cref="OpenSigning"/> named, once: the tool asks for it when it is shown.</summary>
     string? TakeSigningField() => null;
+
+    /// <summary>Opens Accessibility on its Tags view, where the tags are added.</summary>
+    void OpenTagging() { }
+
+    /// <summary>True once after <see cref="OpenTagging"/>: Accessibility asks for it when it is shown.</summary>
+    bool TakeTaggingRequest() => false;
 
     /// <summary>Reads the tab's file from disk again and puts it in the tab's place, after a tool wrote the file.</summary>
     Task ReloadAsync(DocumentTab tab);

@@ -71,6 +71,13 @@ internal sealed class FormFont
         return true;
     }
 
+    /// <summary>Shows the text in display order, shaped when the font was added for it.</summary>
+    public ContentWriter Show(ContentWriter writer, string text, double size) =>
+        _added is not null ? writer.Show(_added, text, size) : text.Length == 0 ? writer : writer.Show(Encode(text));
+
+    /// <summary>Whether the line is a right-to-left paragraph, which a field aligns to the right unless /Q says otherwise.</summary>
+    public bool IsRightToLeft(string line) => _added is { IsEmbedded: true } && _added.IsRightToLeft(line);
+
     public byte[] Encode(string text)
     {
         if (_added is not null) return _added.Encode(text);
@@ -96,6 +103,7 @@ internal sealed class FormFont
     /// <summary>Lines no wider than <paramref name="maxWidth"/>: broken at spaces and newlines, a word wider than the box at the character.</summary>
     public IReadOnlyList<string> Wrap(string text, double size, double maxWidth)
     {
+        if (_added is { IsEmbedded: true } && Scripts.NeedsBidi(text)) return _added.Wrap(text, size, maxWidth);
         var lines = new List<string>();
         foreach (string paragraph in text.ReplaceLineEndings("\n").Split('\n'))
         {

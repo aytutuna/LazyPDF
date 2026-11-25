@@ -87,6 +87,11 @@ extension PdfAConversionRun {
         var removed = 0
         for d in parts.dictionaries {
             for key in ["A", "OpenAction", "Next"] where isForbidden(d[key]) && d.remove(key) { removed += 1 }
+            if let chain = document.resolve(d["Next"]) as? PdfArray {
+                let before = chain.items.count
+                chain.items.removeAll { isForbidden($0) }
+                removed += before - chain.items.count
+            }
             guard let triggers = document.dict(d, "AA") else { continue }
             if d === document.catalog || Self.isFieldOrWidget(document, d) {
                 d.remove("AA")
@@ -226,7 +231,7 @@ extension PdfAConversionRun {
         let d = stream.dictionary
         do {
             let (filter, parameters, _) = document.decodeSpec(stream)
-            let decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters, 256 << 20)
+            let decoded = try PdfFilters.decodeToCodec(document.rawData(stream), filter, parameters, 256 << 20, keepJbig2: true)
             if let codec = decoded.codec {
                 stream.data = decoded.data
                 d["Filter"] = PdfName(codec)

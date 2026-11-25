@@ -10,6 +10,7 @@ using Xunit;
 namespace LazyPDF.App.Tests;
 
 // The create tool: what each source makes, and the new tab it opens.
+[Collection("Application")]
 public sealed class CreateToolTests
 {
     private static readonly PdfPageSetup A4 = new();
@@ -17,6 +18,18 @@ public sealed class CreateToolTests
     private static byte[] Png() => PngWriter.Encode(new PdfRgbaImage(8, 8, Enumerable.Repeat((byte)200, 8 * 8 * 4).ToArray()));
 
     private static PdfDocument Open(MadePdf made) => PdfDocument.Open(made.Bytes);
+
+    [Fact]
+    public Task APictureDroppedOnTheTextBoxIsListed() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        var e = BatchDropTests.Drop(panel.TypedText, @"C:\x\a.png");
+        panel.TypedText.RaiseEvent(e);
+
+        Assert.True(e.Handled);
+        Assert.Single(panel.PictureList.Items);
+        return Task.CompletedTask;
+    });
 
     [Fact]
     public void BlankPagesAreEmptyAndAsBigAsAsked()
@@ -29,6 +42,157 @@ public sealed class CreateToolTests
         Assert.Equal((792, 612), (document.Pages[0].MediaBox.Width, document.Pages[0].MediaBox.Height));
         Assert.Equal("", PlainTextWriter.Make(ExportLayout.Analyze(document)).Replace("\f", "").Trim());
     }
+
+    private static string Sandbox() => Path.Combine(Path.GetTempPath(), "lazypdf-tests-" + Guid.NewGuid().ToString("N"));
+
+    [Fact]
+    public Task TheBlankPaperListHoldsMoreSizesAndACustomOne() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Blank;
+        panel.PaperBox.SelectedIndex = panel.PaperBox.Items.Count - 1;
+        panel.CustomWidth.Text = (100 * 72 / 25.4 / panel.PointsPerUnit).ToString(CultureInfo.CurrentCulture);
+        panel.CustomHeight.Text = (150 * 72 / 25.4 / panel.PointsPerUnit).ToString(CultureInfo.CurrentCulture);
+
+        var request = panel.Request()!;
+        Assert.Contains("A3", panel.PaperBox.Items.Cast<string>());
+        Assert.Equal((283.46, 425.2), (Math.Round(request.Setup.CustomWidth, 2), Math.Round(request.Setup.CustomHeight, 2)));
+        Assert.Equal(PdfPaper.Custom, request.Setup.Paper);
+
+        panel.CustomWidth.Text = "0.01";
+        Assert.False(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(CreateSource.Blank)]
+    [InlineData(CreateSource.Text)]
+    public Task AWideCustomSizeStaysWideUnderAutomatic(CreateSource source) => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)source;
+        panel.PaperBox.SelectedIndex = panel.PaperBox.Items.Count - 1;
+        panel.CustomWidth.Text = (300 * 72 / 25.4 / panel.PointsPerUnit).ToString(CultureInfo.CurrentCulture);
+        panel.CustomHeight.Text = (100 * 72 / 25.4 / panel.PointsPerUnit).ToString(CultureInfo.CurrentCulture);
+        if (source == CreateSource.Text) panel.TypedText.Text = "hello";
+
+        var made = PdfMaker.Make(panel.Request()!, new FakeCodec(), new FakeFonts());
+
+        var page = Open(made).Pages[0];
+        Assert.Equal((850.39, 283.46), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TextAndPicturesOfferTheSameSizesAndACustomOne() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        string[] sizes = ["A4", "A3", "A5", Loc.T("Letter"), Loc.T("Legal"), Loc.T("Custom size")];
+
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        Assert.Equal(sizes, panel.PaperBox.Items.Cast<string>());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Pictures;
+        Assert.Equal([.. sizes, Loc.T("Size of the picture")], panel.PaperBox.Items.Cast<string>());
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData("A3", PdfPaper.A3)]
+    [InlineData("A5", PdfPaper.A5)]
+    [InlineData("Legal", PdfPaper.Legal)]
+    public Task APaperPickedForTextIsPassedToTheEngine(string name, PdfPaper expected) => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        panel.TypedText.Text = "Hello";
+        panel.PaperBox.SelectedItem = name == "Legal" ? Loc.T("Legal") : name;
+
+        Assert.Equal(expected, panel.Request()!.Setup.Paper);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ACustomSizeForTextIsTypedInTheRegionsUnit() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        panel.TypedText.Text = "Hello";
+        panel.PaperBox.SelectedItem = Loc.T("Custom size");
+        Assert.Equal(System.Windows.Visibility.Visible, panel.CustomSize.Visibility);
+        Assert.Contains(panel.Unit, panel.CustomWidthLabel.Text);
+
+        panel.CustomWidth.Text = "100";
+        panel.CustomHeight.Text = "200";
+        var request = panel.Request()!;
+
+        Assert.Equal(PdfPaper.Custom, request.Setup.Paper);
+        Assert.Equal((Math.Round(100 * panel.PointsPerUnit, 3), Math.Round(200 * panel.PointsPerUnit, 3)), (request.Setup.CustomWidth, request.Setup.CustomHeight));
+        var page = Open(PdfMaker.Make(request, new FakeCodec(), new FakeFonts())).Pages[0];
+        Assert.Equal((Math.Round(100 * panel.PointsPerUnit, 1), Math.Round(200 * panel.PointsPerUnit, 1)), (Math.Round(page.MediaBox.Width, 1), Math.Round(page.MediaBox.Height, 1)));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheCustomSizeIsHeldToWhatTheEngineAccepts() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        panel.TypedText.Text = "Hello";
+        panel.PaperBox.SelectedItem = Loc.T("Custom size");
+        string In(double points) => (points / panel.PointsPerUnit).ToString("0.####", CultureInfo.CurrentCulture);
+
+        panel.CustomWidth.Text = In(14400);
+        panel.CustomHeight.Text = In(3.01);
+        Assert.True(panel.Action!.CanRun());
+
+        panel.CustomHeight.Text = In(2.9);
+        Assert.False(panel.Action!.CanRun());
+        Assert.Contains(panel.Unit, panel.Reason.Text);
+
+        panel.CustomHeight.Text = In(14401);
+        Assert.False(panel.Action!.CanRun());
+        panel.CustomHeight.Text = "abc";
+        Assert.False(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ThePaperAndCustomSizeComeBackInANewPanel() => Sta.Run(() =>
+    {
+        string settings = Sandbox();
+        var first = new CreatePanel(settings);
+        first.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        first.TypedText.Text = "Hello";
+        first.PaperBox.SelectedItem = Loc.T("Custom size");
+        first.CustomWidth.Text = "123.5";
+        first.CustomHeight.Text = "200";
+        first.Request();
+
+        var second = new CreatePanel(settings);
+        second.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        Assert.Equal(Loc.T("Custom size"), second.PaperBox.SelectedItem);
+        Assert.Equal(first.CustomWidth.Text, second.CustomWidth.Text);
+        Assert.Equal(first.CustomHeight.Text, second.CustomHeight.Text);
+        var again = new CreatePanel(Sandbox());
+        Assert.Equal("A4", again.PaperBox.SelectedItem);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APaperPickedOnPicturesIsKeptWhenBackOnPictures() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Pictures;
+        panel.PaperBox.SelectedItem = Loc.T("Size of the picture");
+
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        Assert.Equal("A4", panel.PaperBox.SelectedItem);
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Pictures;
+
+        Assert.Equal(Loc.T("Size of the picture"), panel.PaperBox.SelectedItem);
+        return Task.CompletedTask;
+    });
 
     [Fact]
     public void PicturesBecomePagesInTheOrderGiven()
@@ -73,6 +237,31 @@ public sealed class CreateToolTests
         Assert.Equal(0, made.Unreadable);
         Assert.Contains("Çalışma notları: ğ ş ı İ ö ü", PlainTextWriter.Make(ExportLayout.Analyze(Open(made))));
     }
+
+    [Fact]
+    public void TheFamilyAskedForIsTheOneEmbedded()
+    {
+        var made = PdfMaker.Make(new(CreateSource.Text, A4, "Text.pdf", Text: "Hello", Family: "Courier New"), new FakeCodec(), new SystemFontSource());
+
+        var document = Open(made);
+        var fonts = document.Dict(document.Pages[0].Resources, "Font")!;
+        Assert.Contains(fonts.Entries, f => document.Name(document.Resolve(f.Value) as PdfDictionary, "BaseFont")!.Contains("Courier"));
+    }
+
+    [Fact]
+    public Task TheFontListHoldsOnlyInstalledFamiliesAndTheRequestCarriesTheChoice() => Sta.Run(() =>
+    {
+        var installed = System.Windows.Media.Fonts.SystemFontFamilies.SelectMany(f => f.FamilyNames.Values).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        var families = panel.FontBox.Items.Cast<string>().ToList();
+        Assert.All(families, family => Assert.Contains(family, installed));
+        Assert.Equal(families[0], panel.Request()!.Family);
+        panel.FontBox.SelectedIndex = families.Count - 1;
+        Assert.Equal(families[^1], panel.Request()!.Family);
+        return Task.CompletedTask;
+    });
 
     [Fact]
     public void ALongTextRunsOverToMorePages()
@@ -123,6 +312,29 @@ public sealed class CreateToolTests
         Assert.True(f.Vm.Message!.IsError);
         Assert.Equal("No font for this text", f.Vm.Message.Title);
         Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task PicturesTooLargeToDecodeAreSaidToBeLeftOut()
+    {
+        using var f = new ViewModelFixture();
+        using var dir = new TempDir();
+        string file = dir.File("a.tif", [1]);
+
+        await CreateJob.RunAsync(f.Vm, new BigFrameCodec(), new FakeFonts(), new(CreateSource.Pictures, A4, "Pictures.pdf", Files: [file]));
+
+        Assert.Equal("Some left out", f.Vm.Message!.Title);
+        Assert.Equal("2 pictures were too large and were left out.", f.Vm.Message.Text);
+    }
+
+    private sealed class BigFrameCodec : IImageCodec
+    {
+        public PdfRgbaImage? Decode(byte[] data, string codec, int components = 0) => null;
+
+        public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) =>
+            [new PdfRgbaImage(4, 4, new byte[64]), new PdfRgbaImage(40000, 40000, []), new PdfRgbaImage(50000, 50000, [])];
+
+        public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
     }
 
     [Fact]
@@ -189,10 +401,10 @@ public sealed class CreateToolTests
 
         public Task OpenAsync(string path) => Task.CompletedTask;
 
-        public Task OpenNewAsync(byte[] pdf, string title)
+        public Task<bool> OpenNewAsync(byte[] pdf, string title)
         {
             Opened++;
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public Task ReloadAsync(DocumentTab tab) => Task.CompletedTask;
@@ -220,6 +432,88 @@ public sealed class CreateToolTests
         Assert.Throws<OperationCanceledException>(() =>
             PdfMaker.Make(new(CreateSource.Pictures, A4, "Pictures.pdf", Files: [file]), new FakeCodec(), new FakeFonts(), cancelled.Token));
     }
+
+    [Fact]
+    public void ACancelStopsTheEngineOnPicturesTextAndBlankPages()
+    {
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfMaker.Make(new(CreateSource.Pictures, A4, "Pictures.pdf", Picture: Png()), new FakeCodec(), new FakeFonts(), cancelled.Token));
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfMaker.Make(new(CreateSource.Text, A4, "Text.pdf", Text: "HelloWorld"), new FakeCodec(), new FakeFonts(), cancelled.Token));
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfMaker.Make(new(CreateSource.Blank, A4, "Blank.pdf", Pages: 3), new FakeCodec(), new FakeFonts(), cancelled.Token));
+    }
+
+    [Fact]
+    public Task ATextFileOverWhatTheBoxTakesIsKeptAsideAndUsed() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        string file = dir.File("long.txt", Encoding.ASCII.GetBytes(new string('a', 2 << 20)));
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        await panel.LoadTextFileAsync(file);
+
+        Assert.Equal(2 << 20, panel.Request()!.Text.Length);
+        Assert.Equal(System.Windows.Visibility.Collapsed, panel.TypedText.Visibility);
+        Assert.Equal(System.Windows.Visibility.Visible, panel.LongTextRow.Visibility);
+        Assert.Contains("long.txt", panel.LongTextNote.Text);
+        Assert.True(panel.Action!.CanRun());
+    });
+
+    [Fact]
+    public Task TheTypedTextComesBackFromTheNoteOrOnPickingAnotherSource() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        string big = dir.File("long.txt", Encoding.ASCII.GetBytes(new string('a', 2 << 20)));
+        string small = dir.File("short.txt", "hello"u8.ToArray());
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        await panel.LoadTextFileAsync(big);
+        panel.LongTextRow.Children.OfType<System.Windows.Controls.Button>().Single().RaiseEvent(new(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        Assert.Equal(System.Windows.Visibility.Visible, panel.TypedText.Visibility);
+        Assert.Equal(System.Windows.Visibility.Collapsed, panel.LongTextRow.Visibility);
+        Assert.False(panel.Action!.CanRun());
+
+        await panel.LoadTextFileAsync(big);
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Blank;
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        Assert.Equal("", panel.Request()!.Text);
+
+        await panel.LoadTextFileAsync(big);
+        await panel.LoadTextFileAsync(small);
+        Assert.Equal("hello", panel.Request()!.Text);
+        Assert.Equal(System.Windows.Visibility.Visible, panel.TypedText.Visibility);
+    });
+
+    [Fact]
+    public Task ATextFileOver20MbIsRefused() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        string file = dir.File("huge.txt", new byte[21 << 20]);
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        await panel.LoadTextFileAsync(file);
+
+        Assert.Equal(Loc.T("That file is too big. Pick a text file under 20 MB."), panel.Reason.Text);
+        Assert.False(panel.Action!.CanRun());
+    });
+
+    [Fact]
+    public Task TheTextFileFilterListsTheCommonExtensions() => Sta.Run(() =>
+    {
+        Assert.Contains("*.csv", TextFiles.Filter);
+        Assert.Contains("*.md", TextFiles.Filter);
+        return Task.CompletedTask;
+    });
 
     [Fact]
     public void TextInUtf8OrWithAByteOrderMarkReadsAsWritten()

@@ -144,6 +144,14 @@ public class ComparisonReportTests
     }
 
     [Fact]
+    public void ControlCharactersInNamesPrintAsQuestionMarksWithoutAFont()
+    {
+        var (plain, a, _) = Report(Pages("a"), Pages("a"), null, "A\u007FB\u0080C\u0090D\u009FE.pdf", "yeni.pdf");
+        a.Dispose();
+        Assert.Contains("A?B?C?D?E.pdf", Summary(plain));
+    }
+
+    [Fact]
     public void NamesOutsideLatin1PrintAsQuestionMarksWithoutAFontAndInFullWithOne()
     {
         string name = "Rapor-şğı.pdf";
@@ -153,6 +161,14 @@ public class ComparisonReportTests
         var (embedded, b, _) = Report(Pages("a"), Pages("a"), new CompareArial(), name, "yeni.pdf");
         b.Dispose();
         Assert.Contains(name, Summary(embedded));
+    }
+
+    [Fact]
+    public void ACutNeverSplitsASurrogatePair()
+    {
+        string text = new string('a', 119) + "\U0001F600 end";
+        var change = new CompareChange(ChangeKind.Removed, ChangeArea.Text, 0, 0, text, "", [], []);
+        Assert.EndsWith(": " + new string('a', 119) + "...", ComparisonReport.Line(change));
     }
 
     [Fact]

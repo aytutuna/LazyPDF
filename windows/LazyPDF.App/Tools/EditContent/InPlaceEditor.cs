@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using LazyPDF.App.Services;
 using LazyPDF.App.Viewer;
 
 namespace LazyPDF.App.Tools.EditContent;
@@ -14,6 +15,8 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
 {
     private TextBox? _box;
     private PageOverlay? _overlay;
+    private bool _lineBreaks;
+    private LazyPDF.Core.TextAlignment? _alignment;
 
     public bool IsOpen => _box is not null;
 
@@ -30,9 +33,11 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
     /// <param name="area">Where the text is, in page space.</param>
     /// <param name="caret">Where on the page the caret goes; the end of the text when null.</param>
     /// <param name="wrap">The text wraps inside the width of <paramref name="area"/> instead of growing to the right.</param>
-    public void Open(int page, Rect area, string text, EditorLook look, bool wrap, Point? caret = null)
+    /// <param name="lineBreaks">Shift+Enter starts a new line; Enter still keeps the text.</param>
+    public void Open(int page, Rect area, string text, EditorLook look, bool wrap, Point? caret = null, bool lineBreaks = false)
     {
         Close();
+        _lineBreaks = lineBreaks;
         Page = page;
         double scale = ViewScale.Of(viewer, page);
         var box = new TextBox
@@ -44,29 +49,61 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
             Padding = new Thickness(0),
             MinWidth = area.Width,
             TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            AcceptsReturn = false,
+            AcceptsReturn = lineBreaks,
             UndoLimit = 100,
         };
-        if (wrap) box.Width = area.Width;
+        var overlay = viewer.Overlay(page);
+        box.MaxWidth = Math.Max(area.Width, overlay.Width - area.X);
+        if (wrap)
+        {
+            box.Width = area.Width;
+            box.MaxHeight = Math.Max(area.Height, overlay.Height - area.Y);
+            box.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+        }
         System.Windows.Automation.AutomationProperties.SetName(box, Loc.T("Text on the page"));
+        if (lineBreaks)
+        {
+            string hint = Loc.T("Enter keeps the text. Shift+Enter starts a new line.");
+            box.ToolTip = hint;
+            System.Windows.Automation.AutomationProperties.SetHelpText(box, hint);
+        }
         Canvas.SetLeft(box, area.X);
         Canvas.SetTop(box, area.Y);
         Look(box, look);
+        _alignment = look.Alignment;
+        box.TextChanged += (_, _) => Flow(box);
+        Flow(box);
+        PageOverlay.KeepUpright(box, viewer.Rotation);
         box.PreviewKeyDown += Box_PreviewKeyDown;
         box.Loaded += (_, _) => box.Dispatcher.BeginInvoke(() =>
         {
             box.Focus();
-            box.CaretIndex = caret is { } at ? box.GetCharacterIndexFromPoint(new Point(at.X - area.X, at.Y - area.Y), true) : box.Text.Length;
+            box.CaretIndex = caret is { } at ? box.GetCharacterIndexFromPoint(InBox(box, at, area), true) : box.Text.Length;
         });
         _box = box;
-        _overlay = viewer.Overlay(page);
-        _overlay.Children.Add(box);
+        _overlay = overlay;
+        overlay.Children.Add(box);
+    }
+
+    // A right-to-left box is mirrored against the overlay, so x inside it counts from its right edge
+    internal static Point InBox(TextBox box, Point at, Rect area)
+    {
+        double x = at.X - area.X;
+        return new Point(box.FlowDirection == FlowDirection.RightToLeft ? box.ActualWidth - x : x, at.Y - area.Y);
     }
 
     /// <summary>Shows the text in another font, size or colour while it is open.</summary>
     public void Restyle(EditorLook look)
     {
-        if (_box is not null) Look(_box, look);
+        if (_box is null) return;
+        Look(_box, look);
+        _alignment = look.Alignment;
+        Flow(_box);
+    }
+
+    public void Upright()
+    {
+        if (_box is not null) PageOverlay.KeepUpright(_box, viewer.Rotation);
     }
 
     public void Close()
@@ -88,18 +125,40 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
         box.Foreground = new SolidColorBrush(look.Color);
         box.Background = light ? Brushes.Black : Brushes.White;
         box.CaretBrush = light ? Brushes.White : Brushes.Black;
-        box.TextAlignment = look.Alignment switch
+    }
+
+    // The box reads right to left when the text starts with a right-to-left letter, as the saved page will. A mirrored box
+    // puts Left at the right edge, so the page's left and right swap; an alignment that is not set starts the line.
+    private void Flow(TextBox box)
+    {
+        bool rtl = TextDirection.IsRightToLeft(box.Text);
+        box.FlowDirection = rtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        box.TextAlignment = _alignment switch
         {
             LazyPDF.Core.TextAlignment.Center => System.Windows.TextAlignment.Center,
-            LazyPDF.Core.TextAlignment.Right => System.Windows.TextAlignment.Right,
             LazyPDF.Core.TextAlignment.Justify => System.Windows.TextAlignment.Justify,
+            LazyPDF.Core.TextAlignment.Right => rtl ? System.Windows.TextAlignment.Left : System.Windows.TextAlignment.Right,
+            LazyPDF.Core.TextAlignment.Left => rtl ? System.Windows.TextAlignment.Right : System.Windows.TextAlignment.Left,
             _ => System.Windows.TextAlignment.Left,
         };
     }
 
-    private void Box_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void Box_PreviewKeyDown(object sender, KeyEventArgs e) => PressKey(e, Keyboard.Modifiers);
+
+    internal void PressKey(KeyEventArgs e, ModifierKeys modifiers)
     {
-        if (e.Key == Key.Enter)
+        if (e.Key == Key.Enter && _lineBreaks && (modifiers & ModifierKeys.Shift) != 0)
+        {
+            // Plain Shift+Enter is the TextBox's own line break; Ctrl+Shift+Enter would reach the viewer, so insert it here
+            if ((modifiers & ModifierKeys.Control) != 0 && _box is { } box)
+            {
+                e.Handled = true;
+                box.SelectedText = Environment.NewLine;
+                box.CaretIndex += Environment.NewLine.Length;
+                box.SelectionLength = 0;
+            }
+        }
+        else if (e.Key == Key.Enter)
         {
             e.Handled = true;
             Committed?.Invoke(this, EventArgs.Empty);

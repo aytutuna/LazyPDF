@@ -9,7 +9,8 @@ namespace LazyPDF.App.Viewer;
 /// <param name="Scale">Device independent pixels per point.</param>
 /// <param name="Viewport">What the layout centres in when it is smaller.</param>
 /// <param name="PixelsPerDip">Sizes and positions are rounded to whole device pixels so tiles meet exactly.</param>
-public sealed record LayoutOptions(int Columns, bool Cover, bool Continuous, int Rotation, double Scale, Size Viewport, double PixelsPerDip = 1);
+/// <param name="RightToLeft">With two columns, the first page of a spread sits on the right.</param>
+public sealed record LayoutOptions(int Columns, bool Cover, bool Continuous, int Rotation, double Scale, Size Viewport, double PixelsPerDip = 1, bool RightToLeft = false);
 
 /// <summary>
 /// Where every page of a document sits in the scrolled area: spreads (one page, or two facing) one under the
@@ -115,10 +116,11 @@ public sealed class ViewLayout
             if (columns == 2 && b == a)
             {
                 // A lone page keeps the place it would have in a pair: the cover on the right, the last page on the left.
-                if (o.Cover && s == 0) x += sizes[a - firstPage].Width + Gap;
+                if ((o.Cover && s == 0) != o.RightToLeft) x += sizes[a - firstPage].Width + Gap;
             }
-            for (int p = a; p <= b; p++)
+            for (int i = a; i <= b; i++)
             {
+                int p = o.RightToLeft ? a + b - i : i;
                 var size = sizes[p - firstPage];
                 rects[p - firstPage] = new Rect(x, Snap(y + (heights[s - first] - size.Height) / 2), size.Width, size.Height);
                 x += size.Width + Gap;

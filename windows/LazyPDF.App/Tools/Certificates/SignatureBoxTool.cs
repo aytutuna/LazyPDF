@@ -62,7 +62,7 @@ internal sealed class SignatureBoxTool(IDocumentViewer viewer, Action<int, Rect>
         return outline;
     }
 
-    public static void Place(Rectangle outline, Rect box)
+    public static void Place(FrameworkElement outline, Rect box)
     {
         Canvas.SetLeft(outline, box.X);
         Canvas.SetTop(outline, box.Y);

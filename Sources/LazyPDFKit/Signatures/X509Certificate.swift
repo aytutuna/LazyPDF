@@ -28,6 +28,11 @@ struct KeyUsage: OptionSet {
     static let decipherOnly = KeyUsage(rawValue: 32768)
 }
 
+/// Something that keeps a private key usable and is told before the key is used.
+protocol KeyHolder: AnyObject {
+    func prepare()
+}
+
 public final class X509Certificate {
     public let rawData: [UInt8]
     let tbsCertificate: [UInt8]
@@ -49,7 +54,18 @@ public final class X509Certificate {
 
     #if canImport(Security)
     /// The private key of a certificate that signs, set by whoever loaded the identity.
-    public var privateKey: SecKey?
+    public var privateKey: SecKey? {
+        get {
+            keyHolder?.prepare()
+            return storedKey
+        }
+        set { storedKey = newValue }
+    }
+
+    private var storedKey: SecKey?
+
+    /// What the private key needs to stay usable, such as the keychain it was imported into.
+    var keyHolder: KeyHolder?
     #endif
 
     /// nil when the bytes are not a certificate this reader understands.
@@ -232,8 +248,13 @@ public final class X509Certificate {
     public var issuer: String { Self.nameText(issuerName) }
 
     /// The common name, else the first of the organizational unit, the organization and the e-mail address; empty when there is none.
-    public var simpleName: String {
-        guard let attributes = Self.attributes(subjectName) else { return "" }
+    public var simpleName: String { Self.simpleName(subjectName) }
+
+    /// `simpleName` of the issuer, as GetNameInfo(SimpleName, true) gives it.
+    public var issuerSimpleName: String { Self.simpleName(issuerName) }
+
+    private static func simpleName(_ name: [UInt8]) -> String {
+        guard let attributes = Self.attributes(name) else { return "" }
         for oid in ["2.5.4.3", "2.5.4.11", "2.5.4.10", "1.2.840.113549.1.9.1"] {
             if let found = attributes.last(where: { $0.oid == oid }), !found.value.isEmpty { return found.value }
         }

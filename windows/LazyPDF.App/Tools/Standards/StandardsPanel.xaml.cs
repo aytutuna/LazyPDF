@@ -16,12 +16,14 @@ public partial class StandardsPanel : ToolPanel
     // The most rows listed; the rest are counted.
     private const int RowsShown = 100;
 
-    private static readonly PdfALevel[] Levels = Enum.GetValues<PdfALevel>();
+    private static readonly PdfALevel[] Levels = [.. Enum.GetValues<PdfALevel>().OrderBy(l => l.Part()).ThenBy(l => l.Conformance())];
 
     private PdfALevel _level = PdfALevel.A2b;
     private ToolAction _check = null!;
     private ToolAction _convert = null!;
     private int _ticket;
+    private int _probe;
+    private bool _probing;
     private bool _working;
 
     public StandardsPanel()
@@ -45,6 +47,8 @@ public partial class StandardsPanel : ToolPanel
     {
         Tab!.Changed -= Tab_Changed;
         _ticket++;
+        _probe++;
+        TagRow.Visibility = Visibility.Collapsed;
         Result.Visibility = Visibility.Collapsed;
         IssueList.ItemsSource = null;
     }
@@ -59,7 +63,50 @@ public partial class StandardsPanel : ToolPanel
         IssueList.ItemsSource = null;
         ShowLosses();
         RaiseActionChanged();
+        _ = FindTaggingAsync();
     }
+
+    // Read off the UI thread from a copy; a change, another level or leaving the panel before it ends drops the answer.
+    private async Task FindTaggingAsync()
+    {
+        _probe++;
+        TagRow.Visibility = Visibility.Collapsed;
+        // One read at a time: a change meanwhile is picked up when it ends, so quick edits don't pile up full validations.
+        if (_probing) return;
+        _probing = true;
+        try
+        {
+            while (true)
+            {
+                int probe = _probe;
+                if (Tab is not { } tab || !_level.NeedsTags()) return;
+                var level = _level;
+                var open = OpenCopy.Of(tab);
+                bool? needs;
+                try
+                {
+                    needs = await Task.Run(() => StandardsText.NeedsTagging(open, level));
+                }
+                catch (Exception e) when (e is PdfReadException or InvalidOperationException)
+                {
+                    needs = null;
+                }
+                if (probe != _probe) continue;
+                if (needs is { } found)
+                {
+                    TagNote.Text = StandardsText.TagHint(level);
+                    TagRow.Visibility = found ? Visibility.Visible : Visibility.Collapsed;
+                }
+                return;
+            }
+        }
+        finally
+        {
+            _probing = false;
+        }
+    }
+
+    private void TagFile_Click(object sender, RoutedEventArgs e) => Host?.OpenTagging();
 
     private void Mode_Checked(object sender, RoutedEventArgs e)
     {
@@ -156,7 +203,7 @@ public partial class StandardsPanel : ToolPanel
                 host.ShowProblem(new Problem(Loc.T("Not converted"), made.Refusal ?? Loc.T("The file could not be converted.")));
                 return;
             }
-            await host.OpenNewAsync(made.Bytes, StandardsText.ConvertedName(tab.Title, level, made.IsClean));
+            if (!await host.OpenNewAsync(made.Bytes, StandardsText.ConvertedName(tab.Title, level, made.IsClean))) return;
             host.ShowNotice(StandardsText.ConvertedTitle(made), StandardsText.ConvertedText(made, level));
             opened = Tab is { } now && !ReferenceEquals(now, tab);
         }

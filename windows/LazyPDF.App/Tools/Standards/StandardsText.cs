@@ -12,8 +12,22 @@ internal static class StandardsText
         PdfALevel.A2u => Loc.T("Like 2b, and every character keeps its text."),
         PdfALevel.A3b => Loc.T("Like 2b, and other files may be attached."),
         PdfALevel.A3u => Loc.T("Like 3b, and every character keeps its text."),
+        PdfALevel.A1a => Loc.T("Like 1b, and the file must be tagged for screen readers. Untagged files need a language set first."),
+        PdfALevel.A2a => Loc.T("Like 2u, and the file must be tagged for screen readers. Untagged files need a language set first."),
+        PdfALevel.A3a => Loc.T("Like 3u, and the file must be tagged for screen readers. Untagged files need a language set first."),
         _ => Loc.T("The newest, based on PDF 2.0."),
     };
+
+    /// <summary>True when the level needs tags and the file's are missing or fail the level's own rules.</summary>
+    public static bool NeedsTagging(Func<PdfDocument> open, PdfALevel level)
+    {
+        if (!level.NeedsTags()) return false;
+        using var copy = open();
+        return PdfAValidator.TaggingIssues(copy, level).Count > 0;
+    }
+
+    public static string TagHint(PdfALevel level) =>
+        Loc.T("{0} needs a tagged file, and this one is not tagged well enough yet. Tag the file first, then run this again.", level.Name());
 
     /// <summary>What converting costs this file, said before it is done.</summary>
     public static string Losses(bool signed, bool encrypted)

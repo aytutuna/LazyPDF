@@ -5,7 +5,7 @@ import Foundation
 //
 // Flate is Flate.swift, the engine's own inflater, not a system library: the limits and the tolerance of the
 // C# (which reads through DeflateStream) are part of what is ported. CCITT, LZW and the ASCII filters are
-// ported as they are. DCT, JPX and JBIG2 stay image codecs, as in the C#.
+// ported as they are. DCT and JPX stay image codecs, as in the C#; JBIG2 is decoded here (Jbig2.swift).
 
 /// A stream's data with its filters undone up to an image codec; `codec` is nil when none is left.
 public struct PdfDecodedStream {
@@ -23,12 +23,12 @@ public struct PdfDecodedStream {
 /// The stream filters (ISO 32000-1 7.4) and the predictors that go with Flate and LZW.
 public enum PdfFilters {
     /// The most a filter chain may expand to unless the caller says otherwise.
-    public static let defaultMaxSize = 1 << 30
+    public static let defaultMaxSize = 256 << 20
 
     private static let maxColors = 1 << 16
 
     /// The data of a stream with its filters undone. Both arguments are resolved: a name or an
-    /// array of names, a dictionary or an array of them. An image codec (DCT, JPX, JBIG2) is
+    /// array of names, a dictionary or an array of them. An image codec (DCT, JPX) is
     /// `PdfReadProblem.unsupported` here; see `decodeToCodec`.
     public static func decode(_ data: [UInt8], _ filter: PdfObject?, _ parameters: PdfObject?, _ maxSize: Int = defaultMaxSize) throws -> [UInt8] {
         try decode(data, filter, parameters, maxSize, strict: false)
@@ -36,17 +36,36 @@ public enum PdfFilters {
 
     /// With `strict` a Flate stream that breaks off or does not decode cleanly is damage, not a short result.
     static func decode(_ data: [UInt8], _ filter: PdfObject?, _ parameters: PdfObject?, _ maxSize: Int, strict: Bool) throws -> [UInt8] {
-        try run(data, filter, parameters, maxSize, stopAtCodec: false, strict: strict).data
+        try run(data, filter, parameters, maxSize, stopAtCodec: false, strict: strict, keepJbig2: false, strictJbig2: false).data
     }
 
     /// Undoes the filters before an image codec and stops there: the bytes are the codec's input
-    /// (a JPEG file, say), with the codec's name ("DCTDecode", "JPXDecode" or "JBIG2Decode") and its
-    /// /DecodeParms. Without a codec in the chain the data is fully decoded and the name is nil.
+    /// (a JPEG file, say), with the codec's name ("DCTDecode" or "JPXDecode") and its /DecodeParms. Without a codec in the chain the data is fully decoded and the name is nil.
     public static func decodeToCodec(_ data: [UInt8], _ filter: PdfObject?, _ parameters: PdfObject?, _ maxSize: Int = defaultMaxSize) throws -> PdfDecodedStream {
-        try run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false)
+        try run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: false, strictJbig2: false)
     }
 
-    private static func run(_ data: [UInt8], _ filter: PdfObject?, _ parameters: PdfObject?, _ maxSize: Int, stopAtCodec: Bool, strict: Bool) throws -> PdfDecodedStream {
+    /// As `decodeToCodec` with JBIG2Decode left coded too, for a caller that changes only the filters in front of it.
+    static func decodeToCodec(_ data: [UInt8], _ filter: PdfObject?, _ parameters: PdfObject?, _ maxSize: Int, keepJbig2: Bool) throws -> PdfDecodedStream {
+        try run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: keepJbig2, strictJbig2: false)
+    }
+
+    /// As `decodeToCodec`, but a JBIG2 page that could only be partly decoded is
+    /// `PdfReadProblem.damaged`, for a caller that would write the missing part out as if it were white.
+    static func decodeToCodecWhole(_ data: [UInt8], _ filter: PdfObject?, _ parameters: PdfObject?, _ maxSize: Int) throws -> PdfDecodedStream {
+        try run(data, filter, parameters, maxSize, stopAtCodec: true, strict: false, keepJbig2: false, strictJbig2: true)
+    }
+
+    /// Whether the chain holds the filter `name` (its full name).
+    static func uses(_ filter: PdfObject?, _ name: String) -> Bool {
+        switch filter {
+        case let n as PdfName: return n.value == name
+        case let array as PdfArray: return array.items.contains { ($0 as? PdfName)?.value == name }
+        default: return false
+        }
+    }
+
+    private static func run(_ data: [UInt8], _ filter: PdfObject?, _ parameters: PdfObject?, _ maxSize: Int, stopAtCodec: Bool, strict: Bool, keepJbig2: Bool, strictJbig2: Bool) throws -> PdfDecodedStream {
         var data = data
         let filters: [String]
         switch filter {
@@ -81,6 +100,8 @@ public enum PdfFilters {
                 if let named = (decodeParms?["Name"] as? PdfName)?.value, named != "Identity" {
                     throw PdfReadException(.unsupported, "A named crypt filter reached the filter layer.")
                 }
+            case "JBIG2Decode" where !keepJbig2:
+                data = try decodeJbig2(data, decodeParms, maxSize, strictJbig2)
             case "DCTDecode", "DCT", "JPXDecode", "JBIG2Decode":
                 if !stopAtCodec { throw PdfReadException(.unsupported, "The /\(name) filter is an image codec.") }
                 return PdfDecodedStream(data, name == "DCT" ? "DCTDecode" : name, decodeParms)
@@ -89,6 +110,14 @@ public enum PdfFilters {
             }
         }
         return PdfDecodedStream(data, nil, nil)
+    }
+
+    /// /JBIG2Globals is a stream; it is read as the data it holds, so the caller passes one whose data is in memory
+    /// (`PdfStream.data` set), as `PdfDocument.decodeSpec` does when asked to decode. It also adds the image's
+    /// /Width and /Height to the parameters (they are no part of the filter's own): the page is fitted to that size. Without
+    /// them, for a stream that is not an image, the page keeps its own size.
+    private static func decodeJbig2(_ data: [UInt8], _ p: PdfDictionary?, _ maxSize: Int, _ whole: Bool) throws -> [UInt8] {
+        try Jbig2.decode((p?["JBIG2Globals"] as? PdfStream)?.data ?? [], data, maxSize, max(0, int(p?["Width"], 0)), max(0, int(p?["Height"], 0)), whole)
     }
 
     private static func decodeCcitt(_ data: [UInt8], _ p: PdfDictionary?, _ maxSize: Int) throws -> [UInt8] {
@@ -104,21 +133,29 @@ public enum PdfFilters {
         try inflate(data, maxSize, false)
     }
 
+    /// A raw deflate stream (a zip entry) inflated; a stream that breaks off or does not inflate is damage.
+    static func inflateRaw(_ data: [UInt8], _ maxSize: Int) throws -> [UInt8] {
+        let output = FilterBuffer(maxSize, capacity: min(data.count * 4, 1 << 22))
+        if !(try inflateFrom(data, 0, output, true)) { throw PdfReadException.damaged("A compressed stream does not inflate.") }
+        return output.toArray()
+    }
+
     private static func inflate(_ data: [UInt8], _ maxSize: Int, _ strict: Bool) throws -> [UInt8] {
         if data.isEmpty { return [] }
         let output = FilterBuffer(maxSize, capacity: min(data.count * 4, 1 << 22))
         // The deflate stream is read bare, past a valid zlib header: the Adler-32 check would throw away
         // the last block of a file whose checksum is wrong (ISO 32000-1 7.4.4).
         let header = data.count >= 2 && (data[0] & 0x0F) == 8 && (Int(data[0]) * 256 + Int(data[1])) % 31 == 0 ? 2 : 0
-        try inflateFrom(data, header, output, strict)
-        if output.count == 0 && header > 0 { try inflateFrom(data, 0, output, strict) }
-        if output.count == 0 { throw PdfReadException.damaged("A compressed stream does not inflate.") }
+        var ended = try inflateFrom(data, header, output, strict)
+        if output.count == 0 && !ended && header > 0 { ended = try inflateFrom(data, 0, output, strict) }
+        if output.count == 0 && !ended { throw PdfReadException.damaged("A compressed stream does not inflate.") }
         return output.toArray()
     }
 
-    private static func inflateFrom(_ data: [UInt8], _ start: Int, _ output: FilterBuffer, _ strict: Bool) throws {
+    private static func inflateFrom(_ data: [UInt8], _ start: Int, _ output: FilterBuffer, _ strict: Bool) throws -> Bool {
         let ended = try Flate.inflate(data, start, output)
         if !ended && strict && output.count > 0 { throw PdfReadException.damaged("A compressed stream breaks off.") }
+        return ended
     }
 
     /// Undoes a /Predictor (ISO 32000-1 7.4.4.4): 2 (TIFF) or 10-15 (PNG, each row with its own

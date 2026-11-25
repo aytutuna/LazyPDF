@@ -70,6 +70,90 @@ public sealed class PageEditsTests
         Assert.Equal(marked[4], TextOf(document, landed[1]));
     }
 
+    [Theory]
+    [InlineData(new[] { 1, 3 }, -1, new[] { 1, 0, 3, 2, 4 })]
+    [InlineData(new[] { 0, 2 }, -1, new[] { 0, 2, 1, 3, 4 })]
+    [InlineData(new[] { 0, 1 }, -1, new[] { 0, 1, 2, 3, 4 })]
+    [InlineData(new[] { 3, 4 }, 1, new[] { 0, 1, 2, 3, 4 })]
+    [InlineData(new[] { 1, 3 }, 1, new[] { 0, 2, 1, 4, 3 })]
+    public void EachChosenPageStepsOnePlace(int[] pages, int step, int[] order)
+    {
+        var document = Open();
+        var marked = Enumerable.Range(0, 5).Select(i => TextOf(document, i)).ToList();
+
+        PageEdits.Nudge(document, pages, step);
+
+        Assert.Equal(order.Select(i => marked[i]), Enumerable.Range(0, 5).Select(i => TextOf(document, i)));
+        foreach (var (page, landed) in pages.Zip(PageEdits.Nudged(pages, step, 5)))
+            Assert.Equal(marked[page], TextOf(document, landed));
+    }
+
+    private static void NudgeByMoves(PdfDocument document, int[] pages, int step)
+    {
+        int total = document.Pages.Count;
+        var runs = new List<List<int>>();
+        foreach (int page in pages.Order())
+        {
+            if (runs.Count > 0 && runs[^1][^1] == page - 1) runs[^1].Add(page);
+            else runs.Add([page]);
+        }
+        if (step > 0) runs.Reverse();
+        foreach (var run in runs)
+        {
+            if (step < 0 ? run[0] == 0 : run[^1] == total - 1) continue;
+            PageOperations.Move(document, run, step < 0 ? run[0] - 1 : run[^1] + 2);
+        }
+    }
+
+    [Theory]
+    [InlineData(new[] { 0, 1, 5 }, -1)]
+    [InlineData(new[] { 3, 4, 9 }, 1)]
+    [InlineData(new[] { 2, 8, 9 }, 1)]
+    [InlineData(new[] { 0, 4, 5, 9 }, -1)]
+    public void NudgingInOneRewriteGivesTheOrderOfOneMoveAtATime(int[] pages, int step)
+    {
+        var once = Open(10);
+        var each = Open(10);
+
+        PageEdits.Nudge(once, pages, step);
+        NudgeByMoves(each, pages, step);
+
+        Assert.Equal(Enumerable.Range(0, 10).Select(i => TextOf(each, i)), Enumerable.Range(0, 10).Select(i => TextOf(once, i)));
+    }
+
+    [Fact]
+    public void NudgingEveryOtherPageOfABigFileIsQuick()
+    {
+        var document = Open(2000);
+        var marked = Enumerable.Range(0, 2000).Select(i => TextOf(document, i)).ToList();
+        var pages = Enumerable.Range(0, 1000).Select(i => i * 2 + 1).ToList();
+
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        Assert.True(PageEdits.CanNudge(pages, -1, 2000));
+        PageEdits.Nudge(document, pages, -1);
+        clock.Stop();
+
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(1));
+        Assert.Equal(marked[1], TextOf(document, 0));
+        Assert.Equal(marked[0], TextOf(document, 1));
+        Assert.Equal(marked[1999], TextOf(document, 1998));
+    }
+
+    [Fact]
+    public void OnlyPagesThatChangePlaceAreCountedAsMoved()
+    {
+        int[] pages = [0, 1, 5];
+        Assert.Equal(1, pages.Zip(PageEdits.Nudged(pages, -1, 10)).Count(z => z.First != z.Second));
+    }
+
+    [Fact]
+    public void NudgingNeedsAnUnchosenPageToStepPast()
+    {
+        Assert.False(PageEdits.CanNudge([0, 1], -1, 5));
+        Assert.True(PageEdits.CanNudge([0, 2], -1, 5));
+        Assert.False(PageEdits.CanNudge([3, 4], 1, 5));
+    }
+
     [Fact]
     public void DuplicatedPagesAreFoundBesideTheirCopies()
     {
@@ -102,6 +186,48 @@ public sealed class PageEditsTests
     }
 
     [Fact]
+    public void EachPageTakesItsOwnBoxThroughItsOwnTurn()
+    {
+        var document = Open(3);
+        PageOperations.Rotate(document, [1], 90);
+        var boxes = new Dictionary<int, DisplayRect> { [0] = new(10, 20, 100, 200), [1] = new(30, 40, 150, 50) };
+
+        PageEdits.CropEach(document, boxes);
+
+        var first = new PageGeometry(document.Pages[0]);
+        var second = new PageGeometry(document.Pages[1]);
+        Assert.Equal((100, 200), (Math.Round(first.Width), Math.Round(first.Height)));
+        Assert.Equal((150, 50), (Math.Round(second.Width), Math.Round(second.Height)));
+        Assert.Equal(document.Pages[2].MediaBox, document.Pages[2].CropBox);
+    }
+
+    [Fact]
+    public void TheInkGetsASixPointBorderAndIsClampedToThePage()
+    {
+        var image = new PdfRgbaImage(100, 100, Enumerable.Repeat((byte)255, 100 * 100 * 4).ToArray());
+        for (int y = 10; y < 20; y++)
+            for (int x = 0; x < 30; x++)
+                for (int c = 0; c < 3; c++) image.Rgba[(y * 100 + x) * 4 + c] = 0;
+
+        var box = PageEdits.TrimBox(image, 144, 144);
+
+        Assert.NotNull(box);
+        Assert.Equal(0, box.Value.X, 3);
+        Assert.Equal(10 * 1.44 - 6, box.Value.Y, 3);
+        Assert.Equal(30 * 1.44 + 6, box.Value.Width, 3);
+        Assert.Equal(10 * 1.44 + 12, box.Value.Height, 3);
+    }
+
+    [Fact]
+    public void ABlankPageOrOneInkedEdgeToEdgeIsLeftAlone()
+    {
+        var blank = new PdfRgbaImage(100, 100, Enumerable.Repeat((byte)255, 100 * 100 * 4).ToArray());
+        Assert.Null(PageEdits.TrimBox(blank, 144, 144));
+        var full = new PdfRgbaImage(100, 100, Enumerable.Repeat((byte)0, 100 * 100 * 4).ToArray());
+        Assert.Null(PageEdits.TrimBox(full, 144, 144));
+    }
+
+    [Fact]
     public void ADrawnBoxBecomesTheCropBoxOfEveryPageThroughItsOwnTurn()
     {
         var document = Open(2);
@@ -118,6 +244,72 @@ public sealed class PageEditsTests
         Assert.Equal(box.Width, second.Width, 1);
         Assert.Equal(box.Height, second.Height, 1);
         Assert.Equal(90, document.Pages[1].Rotate);
+    }
+
+    [Fact]
+    public void OnlyThePagesTheBoxTouchesAreCropTargets()
+    {
+        var document = Open(2);
+        PageOperations.SetBox(document, [1], PageBox.Crop, new PdfRect(0, 0, 100, 100));
+        PageOperations.SetBox(document, [1], PageBox.Media, new PdfRect(0, 0, 100, 100));
+
+        Assert.Equal([0], PageEdits.CropTargets(document, [0, 1], new DisplayRect(300, 300, 100, 100)));
+    }
+
+    [Fact]
+    public void ARotatedPageIsStillHitByABoxInsideItsDisplayedArea()
+    {
+        var document = Open(1);
+        PageOperations.Rotate(document, [0], 90);
+        var shown = new PageGeometry(document.Pages[0]);
+
+        Assert.Equal([0], PageEdits.CropTargets(document, [0], new DisplayRect(shown.Width - 100, 10, 50, 50)));
+    }
+
+    [Fact]
+    public void MarginsCutEachSideOfAnUprightPage()
+    {
+        var document = Open(1);
+        var media = document.Pages[0].MediaBox;
+
+        PageEdits.CropMargins(document, [0], 10, 20, 30, 40);
+
+        var crop = document.Pages[0].CropBox;
+        Assert.Equal(media.Left + 10, crop.Left, 1);
+        Assert.Equal(media.Right - 30, crop.Right, 1);
+        Assert.Equal(media.Top - 20, crop.Top, 1);
+        Assert.Equal(media.Bottom + 40, crop.Bottom, 1);
+    }
+
+    [Fact]
+    public void MarginsOnATurnedPageAreCutAsTheyAreSeen()
+    {
+        var document = Open(1);
+        PageOperations.Rotate(document, [0], 90);
+        var media = document.Pages[0].MediaBox;
+
+        PageEdits.CropMargins(document, [0], 50, 0, 0, 0);
+
+        var crop = document.Pages[0].CropBox;
+        Assert.Equal(media.Bottom + 50, crop.Bottom, 1);
+        Assert.Equal(media.Top, crop.Top, 1);
+        Assert.Equal(media.Left, crop.Left, 1);
+        Assert.Equal(media.Right, crop.Right, 1);
+    }
+
+    [Fact]
+    public void MarginsThatConsumeAPageLeaveItAndAreCounted()
+    {
+        var document = Open(2);
+        var before = document.Pages[0].CropBox;
+        PageOperations.SetBox(document, [1], PageBox.Media, new PdfRect(0, 0, 300, 400));
+
+        var targets = PageEdits.CropMarginTargets(document, [0, 1], 150, 0, 145, 0);
+        PageEdits.CropMargins(document, [0, 1], 150, 0, 145, 0);
+
+        Assert.Equal([0], targets);
+        Assert.Equal(before.Width - 295, document.Pages[0].CropBox.Width, 1);
+        Assert.Equal(300, document.Pages[1].CropBox.Width, 1);
     }
 
     [Fact]
@@ -327,6 +519,21 @@ public sealed class PageEditsTests
         Assert.Equal((9, true), TilePanel.Locate(new System.Windows.Point(10, 700), 0, 116, 166, 4, 10));
     }
 
+    [Fact]
+    public void BlankPagesAreThoseThatLookWhiteWithoutTextAndAFailedDrawIsLeftOut()
+    {
+        OcrPageKind[] kinds = [OcrPageKind.Text, OcrPageKind.Blank, OcrPageKind.Drawing, OcrPageKind.Text, OcrPageKind.Blank, OcrPageKind.Blank];
+        bool?[] white = [true, true, true, false, null, false];
+
+        Assert.Equal([1, 2], PageEdits.BlankPages(kinds, white, new bool[6]));
+    }
+
+    [Fact]
+    public void APageWithOnlyAnAnnotationIsNotBlank()
+    {
+        Assert.Empty(PageEdits.BlankPages([OcrPageKind.Blank], [true], [true]));
+    }
+
     private sealed class RecordingHost : IToolHost
     {
         public List<Problem> Problems { get; } = [];
@@ -342,7 +549,7 @@ public sealed class PageEditsTests
 
         public Task OpenAsync(string path) => Task.CompletedTask;
 
-        public Task OpenNewAsync(byte[] pdf, string title) => Task.CompletedTask;
+        public Task<bool> OpenNewAsync(byte[] pdf, string title) => Task.FromResult(true);
 
         public Task ReloadAsync(DocumentTab tab) => Task.CompletedTask;
     }

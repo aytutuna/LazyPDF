@@ -3,7 +3,8 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
-                 xmlns:compare="clr-namespace:LazyPDF.App.Tools.Compare">
+                 xmlns:compare="clr-namespace:LazyPDF.App.Tools.Compare"
+                 AllowDrop="True" PreviewDragOver="Panel_DragOver" PreviewDrop="Panel_Drop">
     <StackPanel Margin="12,4,12,12">
         <TextBlock Text="{loc:T Compare with}" Style="{StaticResource FieldLabelText}" />
         <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,8" HorizontalAlignment="Left">
@@ -16,6 +17,8 @@
         </Border>
 
         <StackPanel x:Name="FileGroup">
+            <ComboBox x:Name="OpenTabs" Visibility="Collapsed" HorizontalAlignment="Stretch" Margin="0,0,0,6" AutomationProperties.Name="{loc:T Open files}"
+                      SelectionChanged="OpenTabs_Changed" />
             <Button x:Name="ChooseButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Choose file}"
                     HorizontalAlignment="Left" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Choose file}" Click="Choose_Click" />
             <TextBlock x:Name="ChosenText" Style="{StaticResource ReasonText}" Margin="0,6,0,4" TextTrimming="CharacterEllipsis" />
@@ -45,6 +48,17 @@
         </Border>
         <TextBlock x:Name="HowText" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
 
+        <StackPanel x:Name="DetailGroup" Visibility="Collapsed" Margin="0,0,0,8">
+            <TextBlock Text="{loc:T Detail}" Style="{StaticResource FieldLabelText}" />
+            <ComboBox x:Name="PixelDetail" SelectedIndex="1" Margin="0,4,0,0" AutomationProperties.Name="{loc:T Detail}">
+                <ComboBoxItem Tag="72" Content="{loc:T Draft (72 dpi)}" />
+                <ComboBoxItem Tag="96" Content="{loc:T Normal (96 dpi)}" />
+                <ComboBoxItem Tag="150" Content="{loc:T Fine (150 dpi)}" />
+                <ComboBoxItem Tag="300" Content="{loc:T Very fine (300 dpi)}" />
+            </ComboBox>
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T Finer detail finds smaller changes and takes longer.}" />
+        </StackPanel>
+
         <StackPanel x:Name="OptionGroup">
             <CheckBox x:Name="IgnoreCase" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Ignore capitals}" AutomationProperties.Name="{loc:T Ignore capitals}" />
             <CheckBox x:Name="IgnoreSpace" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Ignore spacing}" AutomationProperties.Name="{loc:T Ignore spacing}" />
@@ -68,7 +82,11 @@
                 <Button x:Name="ViewButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A0;" Content="{loc:T Side by side}"
                         Margin="0,0,8,0" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Side by side}" Click="View_Click" />
                 <Button x:Name="ReportButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE9F9;" Content="{loc:T Write report}"
-                        Padding="10,3,10,4" AutomationProperties.Name="{loc:T Write report}" Click="Report_Click" />
+                        Margin="0,0,8,0" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Write report}" Click="Report_Click" />
+                <Button x:Name="PreviousButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70E;" ToolTip="{loc:T Previous difference (Alt+Up)}"
+                        AutomationProperties.Name="{loc:T Previous difference (Alt+Up)}" Click="Previous_Click" />
+                <Button x:Name="NextButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70D;" ToolTip="{loc:T Next difference (Alt+Down)}"
+                        AutomationProperties.Name="{loc:T Next difference (Alt+Down)}" Click="Next_Click" />
             </WrapPanel>
             <compare:ChangeList x:Name="Changes" MaxHeight="300" />
         </StackPanel>

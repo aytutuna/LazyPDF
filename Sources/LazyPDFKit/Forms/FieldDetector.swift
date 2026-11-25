@@ -3,11 +3,8 @@ import Foundation
 // Twin of windows/LazyPDF.Core/Forms/FieldDetector.cs: finds blanks on a page that look like they are meant to be filled
 // in: ruled lines and underscore runs with nothing written on them, small empty squares and circles, empty boxes, rows of
 // boxes (comb fields), and a gap after a label that ends with a colon. It reads the page through the content interpreter,
-// so lines and text inside form XObjects count; scanned pages with no vector content give nothing.
-//
-// The C# asks OcrTriage which pages are scans. The Ocr layer is ported after this one, so `ScanSurvey` below does the
-// same survey for the three kinds the detector acts on (picture, own layer, foreign layer); when Ocr lands it can be
-// replaced by `OcrTriage.classify`. The C# CancellationToken of the renderer overload is the task's.
+// so lines and text inside form XObjects count; scanned pages with no vector content give nothing. The C#
+// CancellationToken of the renderer overload is the task's.
 
 /// A field the detector suggests. Nothing is added until the caller accepts it with `PdfForm.addField`. `name` comes from
 /// the label next to the blank, unique among the form's fields and the other proposals; `cells` is the number of boxes of a
@@ -95,11 +92,11 @@ public enum FieldDetector {
     public static func detect(_ document: PdfDocument, _ renderer: PageRenderer) throws -> [FieldProposal] {
         let form = PdfForm.read(document)
         var names = Set(form.fields.map { Array($0.name.utf16) })
-        let interpreter = ContentInterpreter(document)
+        let kinds = OcrTriage.classifyAll(document)
         var found: [FieldProposal] = []
         for page in document.pages {
             try Task.checkCancellation()
-            found.append(contentsOf: detectPage(document, page, form, &names, renderer, ScanSurvey.isScan(document, page, interpreter)))
+            found.append(contentsOf: detectPage(document, page, form, &names, renderer, kinds[page.index]))
         }
         return found
     }
@@ -110,13 +107,13 @@ public enum FieldDetector {
         let form = PdfForm.read(document)
         let page = document.pages[pageIndex]
         var names = Set(form.fields.map { Array($0.name.utf16) })
-        return detectPage(document, page, form, &names, renderer, ScanSurvey.isScan(document, page, ContentInterpreter(document)))
+        return detectPage(document, page, form, &names, renderer, OcrTriage.classify(document, page))
     }
 
     private static func detectPage(_ document: PdfDocument, _ page: PdfPage, _ form: PdfForm, _ names: inout Set<[UInt16]>,
-                                   _ renderer: PageRenderer, _ scan: Bool) -> [FieldProposal] {
+                                   _ renderer: PageRenderer, _ kind: OcrPageKind) -> [FieldProposal] {
         var found = detectPage(document, page, form, &names)
-        if scan { found.append(contentsOf: ScanFieldDetector.detect(document, page, form, &names, renderer, found)) }
+        if kind == .picture || kind == .ownLayer || kind == .foreignLayer { found.append(contentsOf: ScanFieldDetector.detect(document, page, form, &names, renderer, found)) }
         return found
     }
 
@@ -312,73 +309,5 @@ public enum FieldDetector {
             n += 1
         }
         return name
-    }
-}
-
-/// What OcrTriage.Classify finds out about a page, for the kinds the detector reads from pixels: a picture covering most of
-/// the page, or text that is invisible or is the OCR layer of this app.
-enum ScanSurvey {
-    private static let pictureShare = 0.6
-    private static let sparseTextShare = 0.02
-
-    private final class Survey: ContentVisitor {
-        let crop: PdfRect
-        var visible = 0, invisible = 0, marks = 0
-        var textArea = 0.0, pictureArea = 0.0
-
-        init(_ crop: PdfRect) {
-            self.crop = crop
-            super.init()
-        }
-
-        override func showGlyph(_ context: ContentContext, _ glyph: GlyphInfo) {
-            let mode = context.state.renderMode
-            if mode == 3 {
-                invisible += 1
-                return
-            }
-            if mode == 7 { return }
-            if let text = glyph.unicode, FormFunctions.trim(text).isEmpty { return }
-            visible += 1
-            let box = glyph.bounds.intersect(crop)
-            textArea += box.isEmpty ? 0 : box.width * box.height
-        }
-
-        override func paintImage(_ context: ContentContext, _ image: ImageInfo) {
-            marks += 1
-            let box = image.bounds.intersect(crop)
-            if !box.isEmpty { pictureArea += box.width * box.height }
-        }
-
-        override func paintPath(_ context: ContentContext, _ path: PathInfo) {
-            if path.fill || path.stroke { marks += 1 }
-        }
-
-        override func paintShading(_ context: ContentContext, _ shading: ShadingInfo) { marks += 1 }
-    }
-
-    static func isScan(_ document: PdfDocument, _ page: PdfPage, _ interpreter: ContentInterpreter) -> Bool {
-        let survey = Survey(page.cropBox)
-        interpreter.run(page, survey)
-        let area = page.cropBox.width * page.cropBox.height
-        let picture = area > 0 && survey.pictureArea / area >= pictureShare
-        let visibleText = survey.visible > 0 && !(picture && survey.textArea / area < sparseTextShare)
-        if ownLayer(document, page) { return true }
-        if visibleText { return false }
-        return survey.invisible > 0 || picture
-    }
-
-    // The page has a content stream the OCR layer wrote (it carries the /LazyPDFOcr key).
-    private static func ownLayer(_ document: PdfDocument, _ page: PdfPage) -> Bool {
-        var items: [PdfObject] = []
-        switch document.resolve(page.dictionary["Contents"]) {
-        case is PdfStream:
-            if let own = page.dictionary["Contents"] { items = [own] }
-        case let array as PdfArray:
-            items = array.items
-        default:
-            break
-        }
-        return items.contains { (document.resolve($0) as? PdfStream)?.dictionary.containsKey("LazyPDFOcr") == true }
     }
 }

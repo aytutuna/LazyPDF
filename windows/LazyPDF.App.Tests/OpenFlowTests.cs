@@ -1,4 +1,5 @@
 using LazyPDF.App.Documents;
+using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
@@ -17,6 +18,30 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public void CancellingWhenNothingOpensDoesNothing()
+    {
+        using var f = new ViewModelFixture();
+
+        f.Vm.CancelOpening();
+
+        Assert.Null(f.Vm.Opening);
+        Assert.Equal([HomeTab.Instance], f.Vm.Strip);
+    }
+
+    [Fact]
+    public async Task SessionPathsSkipsATabWithoutAPathAndKeepsStripOrder()
+    {
+        using var f = new ViewModelFixture();
+        string first = f.Pdf("first.pdf");
+        string second = f.Pdf("second.pdf");
+        await f.Vm.OpenAsync(second);
+        await f.Vm.OpenNewAsync(File.ReadAllBytes(first), "made");
+        await f.Vm.OpenAsync(first);
+
+        Assert.Equal([second, first], f.Vm.SessionPaths());
+    }
+
+    [Fact]
     public async Task APdfOpensInATabAndBecomesTheActiveOne()
     {
         using var f = new ViewModelFixture();
@@ -30,6 +55,31 @@ public sealed class OpenFlowTests
         Assert.Equal("report.pdf", tab.Title);
         Assert.Equal(path, tab.Path);
         Assert.Equal([HomeTab.Instance, tab], f.Vm.Strip);
+    }
+
+    [Fact]
+    public async Task AReadOnlyFileOpensWithAWarningAndSavesAsANewFile()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("locked.pdf");
+        File.SetAttributes(path, FileAttributes.ReadOnly);
+        try
+        {
+            await f.Vm.OpenAsync(path);
+
+            var tab = f.Vm.ActiveDocument!;
+            Assert.True(tab.ReadOnly);
+            Assert.Equal("File is read-only", f.Vm.Message?.Title);
+            Assert.True(AppViewModel.NeedsName(tab));
+
+            Assert.True(f.Vm.SaveAs(tab, f.Dir.Sub("copy.pdf")));
+            Assert.False(tab.ReadOnly);
+            Assert.False(AppViewModel.NeedsName(tab));
+        }
+        finally
+        {
+            File.SetAttributes(path, FileAttributes.Normal);
+        }
     }
 
     [Fact]
@@ -100,6 +150,20 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public async Task AFolderIsSaidToBeAFolderAndIsNotRemembered()
+    {
+        using var f = new ViewModelFixture();
+        string folder = f.Dir.Sub("inside");
+        Directory.CreateDirectory(folder);
+
+        await f.Vm.OpenAsync(folder);
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.Empty(f.Vm.Recent);
+        Assert.Equal("That is a folder", f.Vm.Message?.Title);
+    }
+
+    [Fact]
     public async Task AFileThatIsNotThereIsSaidInWordsAndOpensNothing()
     {
         using var f = new ViewModelFixture();
@@ -109,6 +173,59 @@ public sealed class OpenFlowTests
         Assert.Empty(f.Vm.Documents);
         Assert.Equal("File not found", f.Vm.Message?.Title);
         Assert.Contains("gone.pdf", f.Vm.Message?.Text);
+    }
+
+    [Fact]
+    public async Task AFileTooLargeToHoldIsSaidInWordsAndOpensNothing()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Dir.File("huge.pdf", []);
+        using (var stream = new FileStream(path, FileMode.Open)) stream.SetLength(int.MaxValue + 1L);
+
+        await f.Vm.OpenAsync(path);
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.Equal("File is too large", f.Vm.Message?.Title);
+        Assert.Contains("huge.pdf", f.Vm.Message?.Text);
+    }
+
+    [Fact]
+    public async Task ATabThatCannotBeBuiltIsSaidInWordsNotLost()
+    {
+        using var dir = new TempDir();
+        var vm = new AppViewModel(() => throw new NotSupportedException(), new FakeCodec(), new FakeFonts(), new FakeSisters(),
+                                  dir.Sub("settings"), dir.Sub("recovery"), dir.Sub("print"));
+
+        await vm.OpenAsync(dir.File("a.pdf", Pdfs.Text()));
+
+        Assert.Empty(vm.Documents);
+        Assert.Equal("File cannot be opened", vm.Message?.Title);
+        Assert.True(vm.Message?.IsError);
+        Assert.Contains("a.pdf", vm.Message?.Text);
+    }
+
+    [Fact]
+    public void AnUnknownErrorSaysTheFileCouldNotBeOpened()
+    {
+        var problem = Problems.Open(new NotSupportedException(), "a.pdf");
+
+        Assert.Equal("File cannot be opened", problem.Title);
+        Assert.Equal("a.pdf could not be opened.", problem.Text);
+    }
+
+    [Theory]
+    [InlineData(typeof(OutOfMemoryException))]
+    [InlineData(typeof(PdfReadException))]
+    public void AFileTooLargeIsNotReportedAsOneAnotherProgramHolds(Type kind)
+    {
+        Exception error = kind == typeof(PdfReadException)
+            ? new PdfReadException(PdfReadProblem.Unsupported, DocumentOpener.TooLarge)
+            : new OutOfMemoryException();
+
+        var problem = Problems.Open(error, "a.pdf");
+
+        Assert.Equal("File is too large", problem.Title);
+        Assert.Equal("a.pdf is too large for Lazy PDF to open.", problem.Text);
     }
 
     [Fact]
@@ -157,16 +274,64 @@ public sealed class OpenFlowTests
         await f.Vm.OpenAsync(path);
 
         Assert.Equal(["kept.pdf"], f.Vm.Recent.Select(r => r.Name));
-        Assert.True(f.Vm.Recent[0].Exists);
+        Assert.Equal(path, f.Vm.Recent[0].Path);
 
+        await f.SettledAsync();
         File.Delete(path);
         await f.Vm.OpenAsync(path.Replace("kept", "kept2"));
         f.Vm.Close(f.Vm.ActiveDocument!);
         Assert.Equal(["kept.pdf"], f.Vm.Recent.Select(r => r.Name));
-        Assert.False(f.Vm.Recent[0].Exists);
+        Assert.Equal(path, f.Vm.Recent[0].Path);
 
         await f.Vm.OpenAsync(path);
         Assert.Empty(f.Vm.Recent);
+    }
+
+    [Fact]
+    public async Task AClosedFileReopensAtThePageItWasLeftOn()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("long.pdf", pages: 4);
+        await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
+        f.Vm.ActiveDocument!.PageIndex = 2;
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        await f.Vm.OpenAsync(path);
+
+        Assert.Equal(2, f.Vm.ActiveDocument!.PageIndex);
+    }
+
+    [Fact]
+    public void ARecentCardForAMissingFileSaysSo()
+    {
+        var card = new RecentCard(new RecentItem(Path.Combine(Path.GetTempPath(), "gone.pdf"), "", "", "", false));
+        var changed = new List<string?>();
+        card.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        card.Exists = false;
+
+        Assert.Contains(nameof(RecentCard.Caption), changed);
+        Assert.Equal(Loc.T("Not found"), card.Caption);
+    }
+
+    [Fact]
+    public async Task AFileComesBackAtThePageItWasLeftOn()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("long.pdf", pages: 3);
+        await f.Vm.OpenAsync(path);
+        var tab = f.Vm.ActiveDocument!;
+        tab.PageIndex = 2;
+        f.Vm.Close(tab);
+
+        await f.Vm.OpenAsync(path);
+        Assert.Equal(2, f.Vm.ActiveDocument!.PageIndex);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        File.WriteAllBytes(path, Pdfs.Text(1));
+        await f.Vm.OpenAsync(path);
+        Assert.Equal(0, f.Vm.ActiveDocument!.PageIndex);
     }
 
     [Fact]
@@ -182,6 +347,23 @@ public sealed class OpenFlowTests
 
         f.Vm.ClearRecent();
         Assert.Empty(f.Vm.Recent);
+    }
+
+    [Fact]
+    public async Task PinningMovesAFileToTheTopOfTheRecentList()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf("a.pdf");
+        string b = f.Pdf("b.pdf");
+        await f.Vm.OpenFilesAsync([a, b]);
+        string last = f.Vm.Recent[^1].Path;
+
+        f.Vm.SetPinned(last, true);
+        Assert.Equal(last, f.Vm.Recent[0].Path);
+        Assert.True(f.Vm.Recent[0].Pinned);
+
+        f.Vm.SetPinned(last, false);
+        Assert.False(f.Vm.Recent[0].Pinned);
     }
 
     [Fact]

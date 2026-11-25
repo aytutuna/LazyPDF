@@ -42,7 +42,7 @@ internal static class PdfXrefWriter
 
     /// <summary>
     /// A cross-reference stream, object <paramref name="number"/>, written last and listing
-    /// itself. /W is [1 w 2] with w wide enough for the largest offset. <paramref name="dictionary"/>
+    /// itself. /W is [1 w x] with w wide enough for the largest offset and x 2 bytes, more for an index past 65535. <paramref name="dictionary"/>
     /// holds /Size, /Root and the rest of what a trailer holds.
     /// </summary>
     public static void WriteStream(PdfObjectWriter writer, int number, List<XrefEntry> entries, PdfDictionary dictionary, bool compress)
@@ -54,14 +54,18 @@ internal static class PdfXrefWriter
         {
             while (width < 8 && entry.Second >= 1L << (width * 8)) width++;
         }
-        byte[] data = new byte[entries.Count * (width + 3)];
+        int thirdWidth = 2;
+        foreach (var entry in entries)
+        {
+            while (thirdWidth < 4 && entry.Third >= 1L << (thirdWidth * 8)) thirdWidth++;
+        }
+        byte[] data = new byte[entries.Count * (width + 1 + thirdWidth)];
         int at = 0;
         foreach (var entry in entries)
         {
             data[at++] = (byte)entry.Type;
             for (int b = width - 1; b >= 0; b--) data[at++] = (byte)(entry.Second >> (b * 8));
-            data[at++] = (byte)(entry.Third >> 8);
-            data[at++] = (byte)entry.Third;
+            for (int b = thirdWidth - 1; b >= 0; b--) data[at++] = (byte)(entry.Third >> (b * 8));
         }
 
         var index = new List<PdfObject>();
@@ -72,7 +76,7 @@ internal static class PdfXrefWriter
         }
         var head = new PdfDictionary();
         head.Add("Type", new PdfName("XRef"));
-        head.Add("W", new PdfArray([new PdfNumber(1), new PdfNumber(width), new PdfNumber(2)]));
+        head.Add("W", new PdfArray([new PdfNumber(1), new PdfNumber(width), new PdfNumber(thirdWidth)]));
         head.Add("Index", new PdfArray(index));
         foreach (var (key, value) in dictionary.Entries) head.Add(key, value);
         if (compress)

@@ -8,12 +8,12 @@ internal static class LayeredPdf
 {
     public static readonly PdfReference BlackBox = new(5, 0);
 
-    public static byte[] Make()
+    public static byte[] Make(string config = "/ON [5 0 R 6 0 R]")
     {
         const string content = "/OC /L1 BDC 0 0 0 rg 20 20 160 160 re f EMC";
         string[] objects =
         [
-            "<< /Type /Catalog /Pages 2 0 R /OCProperties << /OCGs [5 0 R 6 0 R] /D << /Order [5 0 R 6 0 R] /ON [5 0 R 6 0 R] >> >> >>",
+            $"<< /Type /Catalog /Pages 2 0 R /OCProperties << /OCGs [5 0 R 6 0 R] /D << /Order [5 0 R 6 0 R] {config} >> >> >>",
             "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
             "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << /Properties << /L1 5 0 R /L2 6 0 R >> >> >>",
             $"<< /Length {content.Length} >>\nstream\n{content}\nendstream",

@@ -25,6 +25,22 @@ final class FlateTests: XCTestCase {
         XCTAssertTrue(try PdfFilters.decode(PdfFilterEncoders.flate([]), name("Fl"), nil).isEmpty)
     }
 
+    func test_cleanEmptyStreamIsEmpty() throws {
+        XCTAssertTrue(try PdfFilters.decode([0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01], name("FlateDecode"), nil).isEmpty)
+        XCTAssertTrue(try PdfFilters.decode([0x03, 0x00], name("FlateDecode"), nil).isEmpty)
+    }
+
+    func test_emptyResultWithoutACleanEndIsDamaged() {
+        let cases: [[UInt8]] = [[0x78, 0x9C], [0xFF, 0xFF, 0xFF], [0x78, 0x9C, 0x01, 0x05, 0x00]]
+        for data in cases {
+            XCTAssertThrowsError(try PdfFilters.decode(data, name("FlateDecode"), nil)) { error in
+                let e = error as? PdfReadException
+                XCTAssertEqual(e?.problem, .damaged)
+                XCTAssertEqual(e?.message, "A compressed stream does not inflate.")
+            }
+        }
+    }
+
     func test_truncatedDataGivesWhatDecoded() throws {
         let data = FilterFixtures.randomBytes(40_000)
         let packed = PdfFilterEncoders.flate(data, .noCompression)
@@ -104,5 +120,24 @@ final class FlateTests: XCTestCase {
         let output = FilterBuffer(PdfFilters.defaultMaxSize)
         XCTAssertFalse(try Flate.inflate(bytes, 0, output))
         XCTAssertEqual(output.count, 65536)
+    }
+
+    func test_zeroBombPastTheDefaultCapIsRefused() {
+        let packed = PdfFilterEncoders.flate([UInt8](repeating: 0, count: 300 << 20))
+        XCTAssertThrowsError(try PdfFilters.decode(packed, name("FlateDecode"), nil)) { error in
+            let e = error as? PdfReadException
+            XCTAssertEqual(e?.problem, .unsupported)
+            XCTAssertEqual(e?.message, "A stream expands past the size limit.")
+        }
+    }
+
+    func test_largeZeroStreamUnderTheCapDecodesWhole() throws {
+        let packed = PdfFilterEncoders.flate([UInt8](repeating: 0, count: 64 << 20))
+        XCTAssertEqual(try PdfFilters.decode(packed, name("FlateDecode"), nil).count, 64 << 20)
+    }
+
+    func test_kibibyteCapStillStops() {
+        let packed = PdfFilterEncoders.flate([UInt8](repeating: 0, count: 4096))
+        assertProblem(.unsupported, try PdfFilters.decode(packed, name("FlateDecode"), nil, 1024))
     }
 }

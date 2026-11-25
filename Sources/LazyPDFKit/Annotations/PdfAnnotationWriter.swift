@@ -19,6 +19,10 @@ public final class PdfAnnotationWriter {
         appearance = AppearanceBuilder(document, fonts)
     }
 
+    /// The characters that no installed font could draw in the free text, stamps and redraws since the last call, once
+    /// each in code point order; they are left blank. Clears them.
+    public func takeUndrawn() -> String { appearance.takeUndrawn() }
+
     func newAnnotation(_ subtype: String, _ rect: PdfRect, _ info: AnnotationInfo?, _ color: [Double]?, _ opacity: Double = 1) -> PdfDictionary {
         let d = PdfDictionary()
         d["Type"] = PdfName("Annot")
@@ -141,7 +145,7 @@ public final class PdfAnnotationWriter {
 
     // Runs a change and, when it asks for it, draws the appearance again. A drawing that fails (no font for the text)
     // leaves the annotation as it was.
-    func edit(_ annotation: PdfAnnotation, redraw: Bool, _ change: () throws -> Void) throws -> PdfAnnotation {
+    public func edit(_ annotation: PdfAnnotation, redraw: Bool, _ change: () throws -> Void) throws -> PdfAnnotation {
         let d = annotation.dictionary
         let before = d.copy()
         do {

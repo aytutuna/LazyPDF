@@ -29,9 +29,12 @@ public sealed partial class PdfForm
     /// <summary>Sets a list box or combo box to several choices (export values or display texts).</summary>
     public FormFillResult SetChoices(string name, IReadOnlyList<string> choices) => Fill([(name, null, choices)]);
 
+    private readonly SortedSet<int> _undrawn = [];
+
     private FormFillResult Fill(IEnumerable<(string Name, string? Text, IReadOnlyList<string>? Choices)> entries)
     {
         RequireFillable();
+        _undrawn.Clear();
         var unknown = new List<string>();
         var rejected = new List<string>();
         var plan = new List<Change>();
@@ -51,7 +54,7 @@ public sealed partial class PdfForm
         }
         Commit(plan);
         var calculation = Recalculate();
-        return new FormFillResult(plan.Count, unknown, [.. rejected.Distinct()], calculation.Changed, calculation.NotRun);
+        return new FormFillResult(plan.Count, unknown, [.. rejected.Distinct()], calculation.Changed, calculation.NotRun, string.Concat(_undrawn.Select(char.ConvertFromUtf32)));
     }
 
     /// <summary>
@@ -71,6 +74,25 @@ public sealed partial class PdfForm
         Commit(plan);
         Recalculate();
         return plan.Count;
+    }
+
+    /// <summary>
+    /// Takes the signature out of a signed signature field, with the field's appearance, and leaves the field empty to sign
+    /// again. A certification (/Perms /DocMDP) that rests on that signature goes too. Throws InvalidOperationException when
+    /// the field is not signed. The signed revision stays in the file's history.
+    /// </summary>
+    public void ClearSignature(FormField field)
+    {
+        RequireFillable();
+        if (!field.IsSigned) throw new InvalidOperationException(FormText.NotSigned);
+        if (_document.Dict(_document.Catalog, "Perms") is { } perms && ReferenceEquals(_document.Resolve(perms["DocMDP"]), _document.Resolve(field.Dictionary["V"])))
+        {
+            perms.Remove("DocMDP");
+            if (perms.Count == 0) _document.Catalog.Remove("Perms");
+        }
+        field.Dictionary.Remove("V");
+        field.Dictionary.Remove("AP");
+        foreach (var widget in field.Widgets) widget.Dictionary.Remove("AP");
     }
 
     /// <summary>Draws the appearances of the fields again from their values: after the form's maker set /NeedAppearances, or after changing a field's look by hand.</summary>
@@ -330,14 +352,16 @@ public sealed partial class PdfForm
         foreach (var (name, texts) in needs)
         {
             var current = FormFont.FromResource(_document, name, resources);
-            if (current is not null && texts.All(current.CanShow))
+            // A kept simple font would show right-to-left text in logical order, so it goes to an added, shaped font.
+            if (current is not null && texts.All(t => current.CanShow(t) && !LazyPDF.Core.Scripts.NeedsBidi(t)))
             {
                 result[name] = (current, false);
                 continue;
             }
             var (family, style) = current is null ? Known(name) : FormFont.FamilyOf(_document, resources, name);
             var embedder = new PdfFontEmbedder(_document, _fonts);
-            var added = embedder.Add(family, style, texts) ?? embedder.Add("Helvetica", style, texts) ?? throw new InvalidOperationException(FormText.NoFont);
+            var added = embedder.AddCovering(family, style, texts) ?? embedder.Add("Helvetica", style, texts) ?? throw new InvalidOperationException(FormText.NoFont);
+            _undrawn.UnionWith(added.Missing);
             // A name already taken (a Type0 subset that FromResource cannot read) keeps its font.
             if (current is null && !added.IsEmbedded && _document.Dict(resources, "Font")?.ContainsKey(name) != true)
             {
@@ -361,10 +385,10 @@ public sealed partial class PdfForm
 
     private static void SetFontName(FormField field, string name) => SetFontName(field.Dictionary, field.DefaultAppearance, name);
 
-    private static void SetFontName(PdfDictionary holder, string? current, string name)
+    internal static void SetFontName(PdfDictionary holder, string? current, string name)
     {
         string da = current ?? "/Helv 0 Tf 0 g";
-        string updated = Regex.Replace(da, @"/[^\s/<>\[\]()]+(\s+[-+\d.]+\s+Tf)", $"/{name}$1");
+        string updated = Regex.Replace(da, @"/[^\s/<>\[\]()]+(\s+[-+\d.]+\s+Tf)", m => "/" + name + m.Groups[1].Value);
         if (updated == da && !da.Contains("Tf")) updated = $"/{name} 0 Tf " + da;
         holder["DA"] = PdfText.ToObject(updated);
     }

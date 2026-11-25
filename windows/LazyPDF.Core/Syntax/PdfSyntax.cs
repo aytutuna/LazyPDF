@@ -51,6 +51,7 @@ public sealed class PdfNumber : PdfObject
 
     private static string Format(double value)
     {
+        if (!double.IsFinite(value)) return "0";
         string text = Math.Round(value, 6).ToString("0.######", CultureInfo.InvariantCulture);
         return text == "-0" ? "0" : text;
     }
@@ -70,15 +71,45 @@ public sealed class PdfName(string value) : PdfObject
 {
     public string Value { get; } = value;
 
+    /// <summary>A name for free text: its UTF-8 bytes, one char each (7.3.5).</summary>
+    public static PdfName FromText(string text) => new(Encoding.Latin1.GetString(Encoding.UTF8.GetBytes(text)));
+
+    /// <summary>The text the bytes of <see cref="Value"/> spell as UTF-8, or Value itself when they are not UTF-8.</summary>
+    public string Text
+    {
+        get
+        {
+            if (Value.Any(c => c > 0xFF)) return Value;
+            try
+            {
+                return new UTF8Encoding(false, true).GetString(Encoding.Latin1.GetBytes(Value));
+            }
+            catch (ArgumentException)
+            {
+                return Value;
+            }
+        }
+    }
+
     public override void WriteTo(StringBuilder output)
     {
         output.Append('/');
-        foreach (char c in Value)
+        // A char above 0xFF has no byte of its own, so its UTF-8 bytes go; then every non-ASCII char
+        // goes that way, or the mix would not read back as UTF-8.
+        bool wide = Value.Any(c => c > 0xFF);
+        for (int i = 0; i < Value.Length; i++)
         {
+            char c = Value[i];
             // Regular characters as they are; '#', delimiters, white space and anything outside
             // printable ASCII as #xx.
             if (c > 0x20 && c < 0x7F && c != '#' && !PdfLexer.IsDelimiter((byte)c)) output.Append(c);
-            else output.Append('#').Append(((int)c & 0xFF).ToString("X2", CultureInfo.InvariantCulture));
+            else if (c <= 0xFF && !(wide && c > 0x7F)) output.Append('#').Append(((int)c).ToString("X2", CultureInfo.InvariantCulture));
+            else
+            {
+                int length = char.IsHighSurrogate(c) && i + 1 < Value.Length && char.IsLowSurrogate(Value[i + 1]) ? 2 : 1;
+                foreach (byte b in Encoding.UTF8.GetBytes(Value.Substring(i, length))) output.Append('#').Append(b.ToString("X2", CultureInfo.InvariantCulture));
+                i += length - 1;
+            }
         }
     }
 

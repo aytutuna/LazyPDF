@@ -1,4 +1,6 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Comment;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Pages;
@@ -6,6 +8,39 @@ namespace LazyPDF.App.Tools.Pages;
 /// <summary>What the Pages inspector and the organize view both do with a tab: one change to the document as one undo step, and pages copied out.</summary>
 internal static class PageJobs
 {
+    /// <summary>Runs <paramref name="change"/> unless the file's permissions forbid it, with the reason shown. A signed file asks first, and Go on anyway runs the change from the notice. False when it did not run now.</summary>
+    public static bool Gated(DocumentTab tab, IToolHost host, Func<bool> change)
+    {
+        if (ChangeGate.Refusal(tab.Document) is { } problem)
+        {
+            host.ShowProblem(problem);
+            return false;
+        }
+        int revision = tab.Revision;
+        if (MarkWork.Cautioned(tab, host, () => { if (Same(tab, host, revision)) change(); })) return false;
+        return change();
+    }
+
+    public static async Task<bool> GatedAsync(DocumentTab tab, IToolHost host, Func<Task<bool>> change)
+    {
+        if (ChangeGate.Refusal(tab.Document) is { } problem)
+        {
+            host.ShowProblem(problem);
+            return false;
+        }
+        int revision = tab.Revision;
+        if (MarkWork.Cautioned(tab, host, () => { if (Same(tab, host, revision)) _ = change(); })) return false;
+        return await change();
+    }
+
+    // The page numbers an edit holds were read before the caution; an undo or another edit while it was up moves them.
+    private static bool Same(DocumentTab tab, IToolHost host, int revision)
+    {
+        if (tab.Revision == revision) return true;
+        host.ShowProblem(new Problem(Loc.T("Pages not changed"), Loc.T("The pages changed since they were picked. Pick them again.")));
+        return false;
+    }
+
     public static bool Apply(DocumentTab tab, IToolHost host, string label, Action<PdfDocument> change, string status)
     {
         try
@@ -20,17 +55,40 @@ internal static class PageJobs
         return Commit(tab, host, label, status);
     }
 
-    // For the edits that copy pages in from another file: the work runs off the UI thread and the result goes to the tab it started on,
-    // wherever the person has moved to meanwhile.
-    public static async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, string status)
+    public static void Delete(DocumentTab tab, IToolHost host, string label, IReadOnlyCollection<int> pages, string status)
     {
-        bool done = false;
+        bool tagged = IsTagged(tab);
+        if (Apply(tab, host, label, d => PageOperations.Delete(d, pages), status)) NoticeIfUntagged(tab, host, tagged);
+    }
+
+    public static bool IsTagged(DocumentTab tab) => tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot") is not null;
+
+    public static void NoticeIfUntagged(DocumentTab tab, IToolHost host, bool wasTagged)
+    {
+        if (wasTagged && !IsTagged(tab))
+            host.ShowNotice(Loc.T("Tags removed"), Loc.T("This file was tagged for screen readers. A deleted page was tagged, so the tags are gone. Undo brings them back."));
+    }
+
+    // For the edits that copy pages in from another file: the work runs off the UI thread and the result goes to the tab it started on,
+    // wherever the person has moved to meanwhile. A tab that is not the one in view passes its <paramref name="file"/> name, since the host's own
+    // refusal for a change the file's permissions forbid does not say which file it is about.
+    public static async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, string status, string? file = null)
+    {
+        bool done = false, denied = false;
         try
         {
             await host.RunBusyAsync(busy, token => Task.Run(() =>
             {
                 token.ThrowIfCancellationRequested();
-                change(tab.Document);
+                try
+                {
+                    change(tab.Document);
+                }
+                catch (PdfPermissionException) when (file is not null)
+                {
+                    denied = true;
+                    return;
+                }
                 done = !token.IsCancellationRequested;
             }, token));
         }
@@ -41,6 +99,7 @@ internal static class PageJobs
         }
         if (done) return Commit(tab, host, label, status);
         tab.Session.Discard();
+        if (denied) host.ShowProblem(Problems.Restricted(file));
         return false;
     }
 
@@ -66,18 +125,50 @@ internal static class PageJobs
         host.ShowProblem(new Problem(Loc.T("Pages not changed"), Loc.T("The file did not take that change. Pick other pages and try again.")));
     }
 
-    /// <summary>The pages as a PDF of their own, made off the UI thread. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
-    public static async Task<byte[]?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed)
+    // The files are opened one by one, then all their pages go in at <paramref name="at"/> as one step. Returns the pages added.
+    public static async Task<int> InsertFilesAsync(DocumentTab tab, IToolHost host, IEnumerable<string> paths, int at)
+    {
+        var files = paths.Where(p => System.IO.Path.GetExtension(p).Equals(".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (files.Count == 0)
+        {
+            host.ShowProblem(new Problem(Loc.T("Not a PDF"), Loc.T("Only PDF files can be added between pages.")));
+            return 0;
+        }
+        var sources = new List<PdfDocument>();
+        foreach (string path in files)
+        {
+            if (await SourceFile.OpenAsync(host, path) is { } source) sources.Add(source);
+        }
+        int added = sources.Sum(s => s.Pages.Count);
+        if (added == 0) return 0;
+        bool done = await ApplyAsync(tab, host, Loc.T("Adding pages"), Loc.T("Insert pages"), d =>
+        {
+            int place = at;
+            foreach (var source in sources)
+            {
+                PageOperations.ImportPages(d, source, [.. Enumerable.Range(0, source.Pages.Count)], place);
+                place += source.Pages.Count;
+            }
+        }, Loc.Plural(added, "{0} page added", "{0} pages added", added));
+        return done ? added : 0;
+    }
+
+    /// <summary>The pages as a PDF of their own, made off the UI thread, with the counts of attachments and objects left out. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
+    public static async Task<(byte[] Bytes, int Skipped, int Dropped)?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed, bool files = true)
     {
         if (CopyRules.Refused(tab.Document, host)) return null;
         byte[]? bytes = null;
+        int skipped = 0, dropped = 0;
         try
         {
             await host.RunBusyAsync(busy, token => Task.Run(() =>
             {
-                byte[] made = PageAssembly.Extract(PageEdits.Reopen(tab), pages, token).SaveRewrite();
+                using var copy = PageAssembly.Extract(PageEdits.Reopen(tab), pages, token, files);
+                byte[] made = copy.SaveRewrite();
                 token.ThrowIfCancellationRequested();
                 bytes = made;
+                skipped = copy.SkippedAttachments;
+                dropped = copy.DroppedObjects;
             }, token));
         }
         catch (Exception error) when (error is PdfReadException or ArgumentException)
@@ -85,6 +176,22 @@ internal static class PageJobs
             host.ShowProblem(failed);
             return null;
         }
-        return bytes;
+        return bytes is null ? null : (bytes, skipped, dropped);
     }
+
+    // Shown by the caller once the result is open or saved, since opening a tab clears a notice from the tab it came from.
+    internal static void NoteSkippedAttachments(IToolHost host, int skipped, int dropped = 0)
+    {
+        if (skipped + dropped == 0) return;
+        host.ShowNotice(dropped == 0 ? Loc.T("Attachments left out") : skipped == 0 ? Loc.T("Objects left out") : Loc.T("Content left out"), SkippedText(skipped, dropped));
+    }
+
+    internal static string SkippedText(int skipped, int dropped = 0) =>
+        string.Join(" ", new[] { AttachmentsText(skipped), DroppedText(dropped) }.Where(text => text.Length > 0));
+
+    private static string AttachmentsText(int skipped) =>
+        skipped == 0 ? "" : Loc.Plural(skipped, "{0} attachment could not be read and was left out.", "{0} attachments could not be read and were left out.");
+
+    internal static string DroppedText(int dropped) =>
+        dropped == 0 ? "" : Loc.Plural(dropped, "{0} object could not be read and was left out.", "{0} objects could not be read and were left out.");
 }

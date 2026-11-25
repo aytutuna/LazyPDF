@@ -45,7 +45,7 @@ final class StreamDataTests: XCTestCase {
     }
 
     func test_unsupportedFilterIsAReadException() throws {
-        let pdf = TestPdf.withPages(1).stream(9, "/Filter /JBIG2Decode", "x")
+        let pdf = TestPdf.withPages(1).stream(9, "/Filter /JPXDecode", "x")
         let document = try open(pdf)
         assertReadFails(try document.data(try XCTUnwrap(document.get(9) as? PdfStream)), .unsupported)
     }
@@ -54,6 +54,13 @@ final class StreamDataTests: XCTestCase {
         let pdf = TestPdf.withPages(1).stream(9, "/Filter /FlateDecode", "this is not zlib data at all")
         let document = try open(pdf)
         assertReadFails(try document.data(try XCTUnwrap(document.get(9) as? PdfStream)), .damaged)
+    }
+
+    func test_emptyFlateStreamDecodesToNothing() throws {
+        let empty: [UInt8] = [0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01]
+        let document = try open(TestPdf.withPages(1).stream(9, "/Filter /FlateDecode", empty))
+        XCTAssertTrue(try document.data(try XCTUnwrap(document.get(9) as? PdfStream)).isEmpty)
+        XCTAssertTrue(document.repairs.isEmpty)
     }
 
     func test_streamMadeInMemoryGivesItsOwnData() throws {

@@ -41,6 +41,7 @@ extension PdfForm {
 
     func fill(_ entries: [(name: String, text: String?, choices: [String]?)]) throws -> FormFillResult {
         try requireFillable()
+        undrawn = []
         var unknown: [String] = []
         var rejected: [String] = []
         var plan: [Change] = []
@@ -62,7 +63,8 @@ extension PdfForm {
         let calculation = try recalculate()
         var seen = Set<[UInt16]>()
         let distinct = rejected.filter { seen.insert(Array($0.utf16)).inserted }
-        return FormFillResult(plan.count, unknown, distinct, calculation.changed, calculation.notRun)
+        return FormFillResult(plan.count, unknown, distinct, calculation.changed, calculation.notRun,
+                               String(String.UnicodeScalarView(undrawn.sorted().compactMap { Unicode.Scalar(UInt32($0)) })))
     }
 
     /// Puts the named field (all fields when nil) back to its /DV, or to empty without one, and runs the calculation order.
@@ -84,6 +86,22 @@ extension PdfForm {
         try commit(plan)
         try recalculate()
         return plan.count
+    }
+
+    /// Takes the signature out of a signed signature field, with the field's appearance, and leaves the field empty to sign
+    /// again. A certification (/Perms /DocMDP) that rests on that signature goes too. Throws `InvalidOperationException` when
+    /// the field is not signed. The signed revision stays in the file's history.
+    public func clearSignature(_ field: FormField) throws {
+        try requireFillable()
+        guard field.isSigned else { throw InvalidOperationException(FormText.notSigned) }
+        if let perms = document.dict(document.catalog, "Perms"),
+           let docMdp = document.resolve(perms["DocMDP"]), docMdp === document.resolve(field.dictionary["V"]) {
+            perms.remove("DocMDP")
+            if perms.count == 0 { document.catalog.remove("Perms") }
+        }
+        field.dictionary.remove("V")
+        field.dictionary.remove("AP")
+        for widget in field.widgets { widget.dictionary.remove("AP") }
     }
 
     /// Draws the appearances of the fields again from their values: after the form's maker set /NeedAppearances, or after
@@ -354,20 +372,22 @@ extension PdfForm {
         for name in needs.names {
             let texts = needs.texts(for: name)
             let current = try FormFont.fromResource(document, name, resources)
-            if let current, texts.allSatisfy({ current.canShow($0) }) {
+            // A kept simple font would show right-to-left text in logical order, so it goes to an added, shaped font.
+            if let current, texts.allSatisfy({ current.canShow($0) && !Scripts.needsBidi($0) }) {
                 result[name] = (current, false)
                 continue
             }
             let (family, style) = current == nil ? known(name) : FormFont.familyOf(document, resources, name)
             let embedder = PdfFontEmbedder(document, fonts)
             let added: PdfDrawFont
-            if let first = try embedder.add(family, style, texts) {
+            if let first = try embedder.addCovering(family, style, texts) {
                 added = first
             } else if let second = try embedder.add("Helvetica", style, texts) {
                 added = second
             } else {
                 throw InvalidOperationException(FormText.noFont)
             }
+            undrawn.formUnion(added.missing)
             // A name already taken (a Type0 subset that fromResource cannot read) keeps its font.
             if current == nil, !added.isEmbedded, let table = document.dict(resources, "Font"), !table.containsKey(name) {
                 table[name] = added.reference

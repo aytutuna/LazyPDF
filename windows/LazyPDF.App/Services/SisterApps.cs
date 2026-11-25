@@ -16,33 +16,74 @@ public sealed class SisterApps : ISisterApps
 
     private static readonly string PrintPipe = $"LazyPrint.Open.{Process.GetCurrentProcess().SessionId}";
 
-    private (DateTime At, bool Found) _scan;
+    private readonly object _lock = new();
+    private (DateTime At, bool Found, bool Busy) _scan, _print;
 
-    // Asked of Windows when the classes key has no entry, which takes a moment, and the Home tab asks often.
-    public bool LazyScanInstalled
+    public SisterApps()
     {
-        get
-        {
-            if (DateTime.UtcNow - _scan.At > TimeSpan.FromSeconds(30)) _scan = (DateTime.UtcNow, HasScheme(ScanScheme));
-            return _scan.Found;
-        }
+        _ = LazyScanInstalled;
+        _ = LazyPrintInstalled;
     }
 
-    public void OpenLazyScan()
+    // Asked of Windows when the classes key has no entry, which takes a moment, and the Home tab and the toolbar ask often.
+    // A stale answer is returned at once and refreshed in the background; the next refresh of the window sees the new one.
+    public event EventHandler? Changed;
+
+    public bool LazyScanInstalled => Cached(ref _scan, ScanScheme);
+
+    public bool LazyPrintInstalled => Cached(ref _print, PrintScheme);
+
+    private bool Cached(ref (DateTime At, bool Found, bool Busy) slot, string scheme)
+    {
+        lock (_lock)
+        {
+            if (DateTime.UtcNow - slot.At <= TimeSpan.FromSeconds(30) || slot.Busy) return slot.Found;
+            slot.Busy = true;
+        }
+        // A ref cannot be captured, so the slot is picked again by scheme.
+        Task.Run(() =>
+        {
+            var result = false;
+            var changed = false;
+            try
+            {
+                result = HasScheme(scheme);
+            }
+            catch (Exception)
+            {
+            }
+            finally
+            {
+                lock (_lock)
+                {
+                    var old = scheme == ScanScheme ? _scan.Found : _print.Found;
+                    changed = old != result;
+                    if (scheme == ScanScheme) _scan = (DateTime.UtcNow, result, false);
+                    else _print = (DateTime.UtcNow, result, false);
+                }
+            }
+            if (changed) Changed?.Invoke(this, EventArgs.Empty);
+        });
+        lock (_lock) return slot.Found;
+    }
+
+    public bool OpenLazyScan()
     {
         try
         {
             using var process = Process.Start(new ProcessStartInfo(ScanScheme + ":") { UseShellExecute = true });
+            return true;
         }
         catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
+            return false;
         }
     }
 
     public bool TryPrint(string path)
     {
         if (InstanceChannel.Send([path], PrintPipe, timeout: 300)) return true;
-        if (!HasScheme(PrintScheme)) return false;
+        if (!LazyPrintInstalled) return false;
         try
         {
             using var process = Process.Start(new ProcessStartInfo($"{PrintScheme}:open?file={Uri.EscapeDataString(path)}") { UseShellExecute = true });

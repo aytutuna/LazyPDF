@@ -3,6 +3,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.App.Tools.Ocr;
 using LazyPDF.Core;
 
@@ -10,7 +11,8 @@ namespace LazyPDF.App.Tools.Batch;
 
 public partial class BatchPanel
 {
-    private static readonly PdfALevel[] Levels = Enum.GetValues<PdfALevel>();
+    private static readonly PdfALevel[] Levels = [.. Enum.GetValues<PdfALevel>().OrderBy(l => l.Part()).ThenBy(l => l.Conformance())];
+    private static readonly int[] Dpis = [72, 96, 150, 300, 600];
     private OcrLanguageState? _languages;
 
     private static string TitleOf(BatchStepKind kind) => kind switch
@@ -20,6 +22,11 @@ public partial class BatchPanel
         BatchStepKind.Clean => Loc.T("Clean for sharing"),
         BatchStepKind.Watermark => Loc.T("Watermark"),
         BatchStepKind.Bates => Loc.T("Bates numbers"),
+        BatchStepKind.PageNumbers => Loc.T("Page numbers"),
+        BatchStepKind.Rotate => Loc.T("Rotate pages"),
+        BatchStepKind.Protect => Loc.T("Protect"),
+        BatchStepKind.ExportPictures => Loc.T("Export pictures"),
+        BatchStepKind.PdfUa => Loc.T("PDF/UA"),
         _ => Loc.T("PDF/A"),
     };
 
@@ -38,8 +45,37 @@ public partial class BatchPanel
             ? Loc.T("Keeps some private data") : Loc.T("Removes hidden and private data"),
         BatchStepKind.Watermark => step.Text.Length == 0 ? Loc.T("No text yet") : step.Text,
         BatchStepKind.Bates => Loc.T("Starts at {0}", new BatesSpec(step.Text, step.Suffix, step.Digits, step.Start).Format(step.Start)),
+        BatchStepKind.PageNumbers => Loc.T("{0}, printed on the pages", step.Text),
+        BatchStepKind.Rotate => TurnDetail(step),
+        BatchStepKind.Protect => step.Password.Length == 0 ? Loc.T("Password not set") : Loc.T("Password to open the file"),
+        BatchStepKind.ExportPictures => Loc.T("{0} at {1} dpi", PictureName(step.Picture), step.Dpi),
+        BatchStepKind.PdfUa => step.MarkPdfUa ? Loc.T("Checks and marks") : Loc.T("Checks only"),
         _ => step.Level.Name(),
     };
+
+    private static string PictureName(PictureFormat picture) => picture switch
+    {
+        PictureFormat.Png => "PNG",
+        PictureFormat.Jpeg => "JPEG",
+        PictureFormat.Tiff => "TIFF",
+        _ => "BMP",
+    };
+
+    private static string TurnDetail(BatchStep step)
+    {
+        string turn = step.Turn switch
+        {
+            180 => Loc.T("{0} degrees", step.Turn),
+            270 => Loc.T("{0} degrees clockwise (90 anticlockwise)", step.Turn),
+            _ => Loc.T("{0} degrees clockwise", step.Turn),
+        };
+        return step.Pages switch
+        {
+            BatchPages.Odd => turn + Loc.T(", odd pages only"),
+            BatchPages.Even => turn + Loc.T(", even pages only"),
+            _ => turn,
+        };
+    }
 
     private static string AnchorName(StampAnchor anchor) => anchor switch
     {
@@ -66,6 +102,12 @@ public partial class BatchPanel
 
     private void FillChoices()
     {
+        foreach (var (turn, text) in new[] { (90, Loc.T("Right (90 degrees)")), (180, Loc.T("Upside down (180 degrees)")), (270, Loc.T("Left (270 degrees)")) })
+            TurnBox.Items.Add(new ComboBoxItem { Content = text, Tag = turn });
+        foreach (var (pages, text) in new[] { (BatchPages.All, Loc.T("All pages")), (BatchPages.Odd, Loc.T("Odd pages")), (BatchPages.Even, Loc.T("Even pages")) })
+            RotatePagesBox.Items.Add(new ComboBoxItem { Content = text, Tag = pages });
+        foreach (var picture in Enum.GetValues<PictureFormat>()) PictureBox.Items.Add(new ComboBoxItem { Content = PictureName(picture), Tag = picture });
+        foreach (int dpi in Dpis) DpiBox.Items.Add(new ComboBoxItem { Content = $"{dpi} dpi", Tag = dpi });
         foreach (var preset in Enum.GetValues<OptimizePreset>()) PresetBox.Items.Add(new ComboBoxItem { Content = PresetName(preset), Tag = preset });
         foreach (var level in Levels) LevelBox.Items.Add(new ComboBoxItem { Content = level.Name(), Tag = level });
         foreach (var anchor in Enum.GetValues<StampAnchor>()) AnchorBox.Items.Add(new ComboBoxItem { Content = AnchorName(anchor), Tag = anchor });
@@ -97,7 +139,14 @@ public partial class BatchPanel
         PresetEditor.Visibility = Show(step.Kind == BatchStepKind.Compress);
         WatermarkEditor.Visibility = Show(step.Kind == BatchStepKind.Watermark);
         BatesEditor.Visibility = Show(step.Kind == BatchStepKind.Bates);
+        PageNumbersEditor.Visibility = Show(step.Kind == BatchStepKind.PageNumbers);
+        PlaceEditor.Visibility = Show(step.Kind is BatchStepKind.Bates or BatchStepKind.PageNumbers);
         LevelEditor.Visibility = Show(step.Kind == BatchStepKind.PdfA);
+        RotateEditor.Visibility = Show(step.Kind == BatchStepKind.Rotate);
+        ProtectEditor.Visibility = Show(step.Kind == BatchStepKind.Protect);
+        PicturesEditor.Visibility = Show(step.Kind == BatchStepKind.ExportPictures);
+        PdfUaEditor.Visibility = Show(step.Kind == BatchStepKind.PdfUa);
+        QualityRow.Visibility = Show(step.Picture == PictureFormat.Jpeg);
 
         _loading = true;
         if (step.Kind == BatchStepKind.Ocr) ShowLanguages(step);
@@ -106,17 +155,26 @@ public partial class BatchPanel
         KeepForms.IsChecked = step.KeepForms;
         KeepLinks.IsChecked = step.KeepLinks;
         KeepAttachments.IsChecked = step.KeepAttachments;
+        MarkPdfUaBox.IsChecked = step.MarkPdfUa;
         WatermarkBox.Text = step.Text;
         OpacityBox.Text = step.Opacity.ToString(CultureInfo.CurrentCulture);
         AngleBox.Text = step.Angle.ToString(CultureInfo.CurrentCulture);
         SizeBox.Text = step.Size.ToString(CultureInfo.CurrentCulture);
         AnchorBox.SelectedIndex = (int)step.Anchor;
+        PageTextBox.Text = step.Text;
+        PageSizeBox.Text = step.FontSize.ToString(CultureInfo.CurrentCulture);
         PrefixBox.Text = step.Text;
         SuffixBox.Text = step.Suffix;
         PlaceBox.SelectedIndex = (int)step.Place;
         DigitsBox.Text = step.Digits.ToString(CultureInfo.CurrentCulture);
         StartBox.Text = step.Start.ToString(CultureInfo.CurrentCulture);
         LevelBox.SelectedIndex = Array.IndexOf(Levels, step.Level);
+        TurnBox.SelectedIndex = step.Turn / 90 - 1;
+        RotatePagesBox.SelectedIndex = (int)step.Pages;
+        ProtectBox.Password = step.Password;
+        PictureBox.SelectedIndex = (int)step.Picture;
+        DpiBox.SelectedIndex = Array.IndexOf(Dpis, step.Dpi);
+        QualityBox.Value = step.Quality;
         _loading = false;
     }
 
@@ -159,8 +217,19 @@ public partial class BatchPanel
             System.Windows.Automation.AutomationProperties.SetName(item, TitleOf(kind));
             item.Click += (_, _) =>
             {
+                if (BatchRunner.CannotAdd(_set, kind) is { } refused)
+                {
+                    Host?.ShowProblem(refused);
+                    return;
+                }
+                if (_set.Steps.Any(s => s.Kind == BatchStepKind.ExportPictures))
+                {
+                    Host?.ShowProblem(BatchRunner.ExportNotLast());
+                    return;
+                }
                 var step = BatchStep.Of(kind);
-                _set.Steps.Add(step);
+                int protect = _set.Steps.FindIndex(s => s.Kind == BatchStepKind.Protect);
+                _set.Steps.Insert(protect < 0 ? _set.Steps.Count : protect, step);
                 ShowSteps(step);
             };
             menu.Items.Add(item);
@@ -177,8 +246,20 @@ public partial class BatchPanel
         if (Selected is not { } step) return;
         int to = _set.Steps.IndexOf(step) + by;
         if (to < 0 || to >= _set.Steps.Count) return;
-        _set.Steps.Remove(step);
-        _set.Steps.Insert(to, step);
+        var moved = _set.Steps.ToList();
+        moved.Remove(step);
+        moved.Insert(to, step);
+        if (moved.FindIndex(s => s.Kind == BatchStepKind.Protect) is >= 0 and var protect && protect < moved.Count - 1)
+        {
+            Host?.ShowProblem(BatchRunner.ProtectNotLast());
+            return;
+        }
+        if (moved.FindIndex(s => s.Kind == BatchStepKind.ExportPictures) is >= 0 and var export && export < moved.Count - 1)
+        {
+            Host?.ShowProblem(BatchRunner.ExportNotLast());
+            return;
+        }
+        _set.Steps = moved;
         ShowSteps(step);
     }
 
@@ -221,6 +302,27 @@ public partial class BatchPanel
                 if (PlaceBox.SelectedItem is ComboBoxItem { Tag: BatesPlace place }) step.Place = place;
                 if (int.TryParse(DigitsBox.Text, CultureInfo.CurrentCulture, out int digits)) step.Digits = Math.Clamp(digits, 1, 18);
                 if (long.TryParse(StartBox.Text, CultureInfo.CurrentCulture, out long start) && start >= 0) step.Start = start;
+                break;
+            case BatchStepKind.PageNumbers:
+                step.Text = PageTextBox.Text;
+                if (Number(PageSizeBox, 6, 48, out int fontSize)) step.FontSize = fontSize;
+                if (PlaceBox.SelectedItem is ComboBoxItem { Tag: BatesPlace pagePlace }) step.Place = pagePlace;
+                break;
+            case BatchStepKind.Rotate:
+                if (TurnBox.SelectedItem is ComboBoxItem { Tag: int turn }) step.Turn = turn;
+                if (RotatePagesBox.SelectedItem is ComboBoxItem { Tag: BatchPages pages }) step.Pages = pages;
+                break;
+            case BatchStepKind.Protect:
+                step.Password = ProtectBox.Password;
+                break;
+            case BatchStepKind.ExportPictures:
+                if (PictureBox.SelectedItem is ComboBoxItem { Tag: PictureFormat picture }) step.Picture = picture;
+                if (DpiBox.SelectedItem is ComboBoxItem { Tag: int dpi }) step.Dpi = dpi;
+                step.Quality = (int)QualityBox.Value;
+                QualityRow.Visibility = Show(step.Picture == PictureFormat.Jpeg);
+                break;
+            case BatchStepKind.PdfUa:
+                step.MarkPdfUa = MarkPdfUaBox.IsChecked == true;
                 break;
             case BatchStepKind.PdfA when LevelBox.SelectedItem is ComboBoxItem { Tag: PdfALevel level }:
                 step.Level = level;

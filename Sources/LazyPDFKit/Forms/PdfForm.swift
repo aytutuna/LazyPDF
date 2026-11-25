@@ -16,6 +16,7 @@ public final class PdfForm {
     var byName: [[UInt16]: [FormField]] = [:]
     var byDictionary: [ObjectIdentifier: FormField] = [:]
     var byWidget: [ObjectIdentifier: FormField] = [:]
+    var undrawn: Set<Int> = []
 
     /// The /XFA entry was taken out by a change to a static XFA form (see `FormText.xfaRemoved`).
     public internal(set) var xfaRemoved = false

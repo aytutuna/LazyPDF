@@ -88,6 +88,7 @@ struct TrustResult {
     var trusted: Bool
     var timeValid: Bool
     var chain: [X509Certificate]
+    var partial = false
 }
 
 enum CertificateTrust {
@@ -98,9 +99,26 @@ enum CertificateTrust {
         static let untrustedRoot = Flags(rawValue: 4)
         static let invalidBasicConstraints = Flags(rawValue: 8)
         static let notValidForUsage = Flags(rawValue: 16)
+        static let unsupportedExtension = Flags(rawValue: 32)
+        static let notSignatureValid = Flags(rawValue: 64)
     }
 
+    // What this chain builder reads or can leave unread without harm. A critical extension outside the list, or any
+    // name constraints, policy constraints, policy mappings or inhibitAnyPolicy extension, would restrict the chain in
+    // a way that is not enforced here, so the chain is not trusted (.NET reports HasNotSupportedCriticalExtension, a
+    // name constraint or InvalidPolicyConstraints for them).
+    private static let understood: Set<String> = [
+        "2.5.29.14", "2.5.29.15", "2.5.29.17", "2.5.29.18", "2.5.29.19", "2.5.29.31", "2.5.29.32", "2.5.29.35",
+        "2.5.29.37", "2.5.29.46", "1.3.6.1.5.5.7.1.1", "1.3.6.1.5.5.7.1.11",
+    ]
+    private static let checkedAlgorithms: Set<String> = [
+        "1.2.840.113549.1.1.5", "1.2.840.113549.1.1.11", "1.2.840.113549.1.1.12", "1.2.840.113549.1.1.13",
+        "1.2.840.10045.4.1", "1.2.840.10045.4.3.2", "1.2.840.10045.4.3.3", "1.2.840.10045.4.3.4",
+    ]
+    private static let restricting: Set<String> = ["2.5.29.30", "2.5.29.33", "2.5.29.36", "2.5.29.54"]
+
     private static let maxChain = 16
+    private static let maxFetches = 4
     private static let timeStamping = "1.3.6.1.5.5.7.3.8"
     private static let signingPurposes = [
         "1.3.6.1.5.5.7.3.4", // email protection, which PDF signers have long carried
@@ -111,12 +129,45 @@ enum CertificateTrust {
 
     /// The chain of `certificate`, trusted only when it is also meant for the job: signing documents, or for a time stamp authority `timestamp`.
     static func evaluate(_ certificate: X509Certificate, _ extra: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions, timestamp: Bool = false) -> TrustResult {
-        var result = build(certificate, extra, time, options.trustAnchors, system: false)
-        if !result.trusted && options.useSystemStore {
-            let viaSystem = build(certificate, extra + options.trustAnchors, time, [], system: true)
-            if viaSystem.trusted { result = viaSystem }
+        var fetched: [String: X509Certificate?] = [:]
+        return evaluate(certificate, extra, time, options, timestamp: timestamp, fetched: &fetched)
+    }
+
+    /// `fetched` holds the issuers fetched so far by the certificate they were fetched for.
+    static func evaluate(_ certificate: X509Certificate, _ extra: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions, timestamp: Bool, fetched: inout [String: X509Certificate?]) -> TrustResult {
+        var certificates = extra
+        var result = settle(certificate, certificates, time, options)
+        var round = 0
+        while round < maxFetches, !result.trusted, result.partial, let transport = options.transport {
+            guard let last = result.chain.last else { break }
+            // Kept by the caller across the whole verify, a miss included, so a signer repeated in a file is not fetched for again.
+            let issuer: X509Certificate?
+            if let known = fetched[last.thumbprint] {
+                issuer = known
+            } else {
+                issuer = CertificateLinks.fetchIssuer(last, transport)
+                fetched[last.thumbprint] = .some(issuer)
+            }
+            guard let issuer, !certificates.contains(where: { $0.thumbprint == issuer.thumbprint }) else { break }
+            certificates.append(issuer)
+            result = settle(certificate, certificates, time, options)
+            round += 1
         }
         if !suits(certificate, timestamp) { result.trusted = false }
+        return result
+    }
+
+    private static func settle(_ certificate: X509Certificate, _ certificates: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions) -> TrustResult {
+        var result = build(certificate, certificates, time, options.trustAnchors, system: false)
+        if !result.trusted && options.useSystemStore {
+            let viaSystem = build(certificate, certificates + options.trustAnchors, time, [], system: true)
+            if viaSystem.trusted { result = viaSystem } else { result.partial = result.partial || viaSystem.partial }
+        }
+        // The walk keeps going past an anchor that is not self-issued, so a signer the caller trusts by itself is settled here, last.
+        if !result.trusted && options.trustAnchors.contains(where: { $0.sameBytes(certificate) }) {
+            let at = time ?? currentTime()
+            return TrustResult(trusted: true, timeValid: certificate.notBefore <= at && at <= certificate.notAfter, chain: [certificate])
+        }
         return result
     }
 
@@ -143,18 +194,55 @@ enum CertificateTrust {
         }
         let (elements, flags) = chain(certificate, extra, anchors, at)
         let harmless: Flags = [.notTimeValid]
-        return TrustResult(trusted: flags.subtracting(harmless).isEmpty, timeValid: !flags.contains(.notTimeValid), chain: elements)
+        return TrustResult(trusted: flags.subtracting(harmless).isEmpty, timeValid: !flags.contains(.notTimeValid), chain: elements, partial: flags.contains(.partialChain))
     }
 
     /// The chain from `leaf` up to an anchor or as far as the certificates lead, and what is wrong with it.
     private static func chain(_ leaf: X509Certificate, _ extra: [X509Certificate], _ anchors: [X509Certificate], _ time: DateTimeOffset) -> ([X509Certificate], Flags) {
+        var (elements, flags) = walk(leaf, extra, anchors, time)
+        if elements.contains(where: { !supportsExtensions($0) }) { flags.insert(.unsupportedExtension) }
+        return (elements, flags)
+    }
+
+    private static func supportsExtensions(_ certificate: X509Certificate) -> Bool {
+        certificate.extensions.allSatisfy { ext in
+            !restricting.contains(ext.oid) && (!ext.critical || understood.contains(ext.oid)) && (ext.oid != "2.5.29.32" || policiesDecode(ext.value))
+        }
+    }
+
+    // certificatePolicies is SEQUENCE OF PolicyInformation, each an identifier and perhaps qualifiers. .NET refuses a
+    // chain with one that does not decode, whether it is critical or not.
+    private static func policiesDecode(_ value: [UInt8]) -> Bool {
+        do {
+            var outer = AsnReader(value)
+            var list = try outer.readSequence()
+            while list.hasData {
+                var policy = try list.readSequence()
+                _ = try policy.readObjectIdentifier()
+                if policy.hasData { _ = try policy.readSequence() }
+                if policy.hasData { return false }
+            }
+            return !outer.hasData
+        } catch {
+            return false
+        }
+    }
+
+    private static func walk(_ leaf: X509Certificate, _ extra: [X509Certificate], _ anchors: [X509Certificate], _ time: DateTimeOffset) -> ([X509Certificate], Flags) {
         var elements = [leaf]
         var flags: Flags = []
         var current = leaf
         var below = 0
         for _ in 0..<maxChain {
             if time < current.notBefore || time > current.notAfter { flags.insert(.notTimeValid) }
-            if anchors.contains(where: { $0.sameBytes(current) }) { return (elements, flags) }
+            // The chain ends at the first anchor, as X509Chain ends it: a root, whose own signature has to hold (a root whose
+            // signature cannot be checked here, such as one signed with MD5, is not trusted), and not an intermediate or a
+            // link certificate, which leave it partial.
+            // A leaf that is not self-issued is not an end of the chain, as for X509Chain: its issuers are looked for.
+            if (elements.count > 1 || current.isSelfIssued) && anchors.contains(where: { $0.sameBytes(current) }) {
+                if !current.isSelfIssued { flags.insert(.partialChain) } else if !signs(current, current) { flags.insert(.notSignatureValid) }
+                return (elements, flags)
+            }
             if current.isSelfIssued {
                 flags.insert(.untrustedRoot)
                 return (elements, flags)
@@ -181,8 +269,50 @@ enum CertificateTrust {
 
     /// Whether `issuer` made the signature on `certificate`.
     static func signs(_ issuer: X509Certificate, _ certificate: X509Certificate) -> Bool {
+        if certificate.signatureAlgorithm == Oids.rsaPss { return signsWithPss(issuer, certificate) }
+        // Any other algorithm than these, such as MD5 with RSA, is not checked here and so does not hold.
+        guard checkedAlgorithms.contains(certificate.signatureAlgorithm) else { return false }
         let algorithm = Oids.digestName(OcspResponse.digestOf(certificate.signatureAlgorithm)) ?? .sha256
         return CmsVerifier.verifyRaw(issuer, certificate.signatureAlgorithm, certificate.signatureValue, certificate.tbsCertificate, algorithm)
+    }
+
+    // RSASSA-PSS-params (RFC 4055), as for a signature in a CMS: the salt as long as the digest, which is what .NET and
+    // Security.framework check; a different salt is not checked here, so it does not hold.
+    private static func signsWithPss(_ issuer: X509Certificate, _ certificate: X509Certificate) -> Bool {
+        var algorithm = HashAlgorithmName.sha1
+        var maskHash = HashAlgorithmName.sha1
+        var salt = 20
+        do {
+            var reader = AsnReader(certificate.signatureParameters)
+            var parameters = try reader.readSequence()
+            var seen: Set<Int> = []
+            while parameters.hasData {
+                let tag = try parameters.peekTag()
+                guard tag.tagClass == 2, tag.value <= 3, seen.insert(tag.value).inserted else { return false }
+                var field = try parameters.readSequence(tag)
+                switch tag.value {
+                case 0:
+                    var identifier = try field.readSequence()
+                    guard let named = Oids.digestName(try identifier.readObjectIdentifier()) else { return false }
+                    algorithm = named
+                case 1:
+                    var mask = try field.readSequence()
+                    let function = try mask.readObjectIdentifier()
+                    var inner = try mask.readSequence()
+                    guard function == "1.2.840.113549.1.1.8", let named = Oids.digestName(try inner.readObjectIdentifier()) else { return false }
+                    maskHash = named
+                case 2:
+                    salt = try field.readInt()
+                default:
+                    guard try field.readInt() == 1 else { return false }
+                }
+            }
+        } catch {
+            return false
+        }
+        guard maskHash == algorithm else { return false }
+        let hash = CmsBuilder.hashData(algorithm, certificate.tbsCertificate)
+        return salt == hash.count && SignatureCrypto.verifyRsa(issuer, hash, algorithm, certificate.signatureValue, pss: true) == true
     }
 
     // A certificate that issues others is a CA allowed to sign certificates, and has room for the ones below it.
@@ -212,6 +342,8 @@ enum CertificateTrust {
         guard SecTrustCreateWithCertificates(certificates as CFArray, SecPolicyCreateBasicX509(), &trust) == errSecSuccess, let trust else {
             return TrustResult(trusted: false, timeValid: true, chain: [certificate])
         }
+        // Issuers named in a certificate of the file are not fetched: the C# disables downloads too.
+        SecTrustSetNetworkFetchAllowed(trust, false)
         SecTrustSetVerifyDate(trust, Date(timeIntervalSince1970: Double(time.unixSeconds)) as CFDate)
         let trusted = SecTrustEvaluateWithError(trust, nil)
         var elements: [X509Certificate] = []

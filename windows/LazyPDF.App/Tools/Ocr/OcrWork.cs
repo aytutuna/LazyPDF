@@ -1,4 +1,6 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Ocr;
@@ -12,18 +14,23 @@ public static class OcrWork
     /// Reads a copy of the file off the UI thread, so the document can be used meanwhile, and writes the layers into the
     /// document if it is still the one that was read. Null when cancelled, when the language is missing or when the document changed.
     /// </summary>
-    public static async Task<OcrResult?> MakeSearchableAsync(DocumentTab tab, IToolHost host, ITextRecognizer recognizer, OcrOptions options)
+    public static async Task<OcrResult?> MakeSearchableAsync(DocumentTab tab, IToolHost host, ITextRecognizer recognizer, OcrOptions options,
+                                                                 IReadOnlyList<string>? languages = null)
     {
-        var bytes = tab.Session.Current.ToArray();
+        byte[] bytes = [];
         int revision = tab.Revision;
         bool dropsLayers = options.Existing == OcrExisting.Replace && HasLayer(tab.Document, options.Pages);
         OcrRead? read = null;
+        var reading = new Reading(tab.Renderer, recognizer, languages ?? [options.Language]);
         try
         {
             await host.RunBusyAsync(Loc.T("Reading pages"), async cancel =>
             {
                 var progress = new Progress<OcrProgress>(p => host.SetBusyText(OcrStatusText.Status(p.Done, p.Total)));
-                read = await Task.Run(() => PdfSearchable.ReadAsync(OcrPages.Open(bytes, tab.Password, tab.Certificate), recognizer, tab.Renderer, options, progress, cancel), cancel);
+                await tab.Drawing.WaitAsync(cancel);
+                bytes = tab.Session.Current.ToArray();
+                revision = tab.Revision;
+                read = await Task.Run(() => PdfSearchable.ReadAsync(OcrPages.Open(bytes, tab.Password, tab.Certificate), reading, reading, options, progress, cancel), cancel);
             });
         }
         catch (InvalidOperationException error)
@@ -31,7 +38,26 @@ public static class OcrWork
             host.ShowProblem(new Problem(Loc.T("Language not available"), error.Message));
             return null;
         }
-        if (read is null) return null;
+        if (read is null)
+        {
+            // A cancel is swallowed by the host, so the pages read so far are all that is left of the run.
+            if (reading.Pages.Count == 0 || tab.Revision != revision) return null;
+            var document = tab.Document;
+            var had = reading.Pages.Where(p => PdfOcrLayer.Has(document, document.Pages[p.PageIndex])).ToList();
+            Write(tab, reading, options.Language);
+            if (!tab.Commit(OcrStatusText.Label)) return null;
+            int stopped = reading.Pages.Count(p => PdfOcrLayer.Has(document, document.Pages[p.PageIndex]));
+            var parts = new List<string>();
+            if (stopped > 0)
+            {
+                host.SetStatus(Loc.Plural(stopped, "Made {0} page searchable", "Made {0} pages searchable"));
+                parts.Add(Loc.Plural(stopped, "Stopped after {0} page. The page was kept. Undo takes it back.", "Stopped after {0} pages. The pages were kept. Undo takes them back."));
+            }
+            if (had.Any(p => !PdfOcrLayer.Has(document, document.Pages[p.PageIndex]))) parts.Add(Loc.T("Text read earlier on those pages was removed. Undo brings it back."));
+            if (reading.Turns.Count > 0) parts.Add(Turned(reading.Turns.Count));
+            host.ShowNotice(Loc.T("Reading stopped"), string.Join(" ", parts));
+            return null;
+        }
         if (tab.Revision != revision)
         {
             host.ShowNotice(Loc.T("The file changed"), Loc.T("Nothing was added. Run it again."));
@@ -41,14 +67,48 @@ public static class OcrWork
         var result = read.Result;
         if (read.Pages.Count > 0)
         {
-            int words = PdfOcrLayer.Add(tab.Document, read.Pages, options.Language);
+            int words = Write(tab, reading, options.Language);
             result = result with { Words = words, Committed = tab.Commit(OcrStatusText.Label) };
         }
         if (result.Committed) host.SetStatus(Loc.Plural(result.Added, "Made {0} page searchable", "Made {0} pages searchable"));
         else if (result.NoWords == 0 && result.NotRendered == 0) host.SetStatus(OcrStatusText.Nothing);
-        if (Left(result, dropsLayers) is { } text) host.ShowNotice(Loc.T("Not every page was read"), text);
+        if (Left(result, dropsLayers) is { } text) host.ShowNotice(Loc.T("Not every page was read"), reading.Turns.Count == 0 ? text : $"{text} {Turned(reading.Turns.Count)}");
+        else if (reading.Turns.Count > 0) host.ShowNotice(Loc.T("Pages turned"), Turned(reading.Turns.Count));
         return result;
     }
+
+    /// <summary>Reads like <see cref="PdfSearchable.ReadAsync"/>, and tries a page that gives no words turned by 90, 180 and 270 degrees. The turns are in quarter turns by 0-based page.</summary>
+    internal static async Task<(OcrRead Read, IReadOnlyDictionary<int, int> Turns)> ReadAsync(PdfDocument document, IPageRenderer renderer, ITextRecognizer recognizer,
+                                                                                               OcrOptions options, IProgress<OcrProgress>? progress, CancellationToken cancellation,
+                                                                                               IReadOnlyList<string>? languages = null)
+    {
+        var reading = new Reading(renderer, recognizer, languages ?? [options.Language]);
+        var read = await PdfSearchable.ReadAsync(document, reading, reading, options, progress, cancellation);
+        return (read with { Pages = reading.Pages }, reading.Turns);
+    }
+
+    // A throw from the layer would leave the turns in the live document for the next commit to pick up.
+    private static int Write(DocumentTab tab, Reading reading, string language)
+    {
+        try
+        {
+            return Write(tab.Document, reading.Pages, reading.Turns, language);
+        }
+        catch
+        {
+            tab.Session.Discard();
+            throw;
+        }
+    }
+
+    /// <summary>Turns the pages that were read sideways upright, then adds the layers in that frame. Returns the words added; the caller commits.</summary>
+    internal static int Write(PdfDocument document, IReadOnlyList<OcrPageWords> pages, IReadOnlyDictionary<int, int> turns, string language)
+    {
+        foreach (var (page, turn) in turns) PageOperations.Rotate(document, [page], turn * 90);
+        return PdfOcrLayer.Add(document, pages, language);
+    }
+
+    private static string Turned(int pages) => Loc.Plural(pages, "{0} page was turned upright.", "{0} pages were turned upright.");
 
     /// <summary>Why the file may not be changed; null when it may.</summary>
     public static Problem? Refusal(PdfDocument document) =>
@@ -90,6 +150,54 @@ public static class OcrWork
         PdfOcrLayer.Correct(document, document.Pages[page], index, text);
         tab.Commit(Loc.T("Correct word"));
         return true;
+    }
+
+    // ReadAsync renders and reads one page after the other, so the page drawn last is the one being read.
+    private const int MinTurnedWords = 3;
+
+    private sealed class Reading(IPageRenderer inner, ITextRecognizer recognizer, IReadOnlyList<string> languages) : IPageRenderer, ITextRecognizer
+    {
+        private int _last;
+        public List<OcrPageWords> Pages { get; } = [];
+        public Dictionary<int, int> Turns { get; } = [];
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi)
+        {
+            _last = pageIndex;
+            return inner.Render(pageIndex, dpi);
+        }
+
+        public async Task<IReadOnlyList<OcrWord>> RecognizeAsync(PdfRgbaImage image, string language, CancellationToken cancellation = default)
+        {
+            var words = await Best(image, cancellation).ConfigureAwait(false);
+            int turn = 0;
+            var read = image;
+            if (words.Count == 0 && !PageInk.IsBlank(image))
+            {
+                for (int t = 1; t < 4; t++)
+                {
+                    var turned = WindowsOcr.Turn(image, t);
+                    var found = await Best(turned, cancellation).ConfigureAwait(false);
+                    if (found.Count > words.Count) (words, turn, read) = (found, t, turned);
+                }
+                if (words.Count < MinTurnedWords) (words, turn, read) = (Array.Empty<OcrWord>(), 0, image);
+            }
+            if (turn != 0) Turns[_last] = turn;
+            Pages.Add(new OcrPageWords(_last, words, read.Width, read.Height));
+            return words;
+        }
+
+        // Windows reads one language at a time, so each is tried and the reading with the most words stays.
+        private async Task<IReadOnlyList<OcrWord>> Best(PdfRgbaImage image, CancellationToken cancellation)
+        {
+            IReadOnlyList<OcrWord>? best = null;
+            foreach (var tag in languages)
+            {
+                var words = await recognizer.RecognizeAsync(image, tag, cancellation).ConfigureAwait(false);
+                if (best is null || words.Count > best.Count) best = words;
+            }
+            return best ?? [];
+        }
     }
 
     private static bool HasLayer(PdfDocument document, IReadOnlyList<int>? pages) =>

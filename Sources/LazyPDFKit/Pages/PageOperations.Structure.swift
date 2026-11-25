@@ -76,14 +76,18 @@ extension PageOperations {
     }
 
     /// Copies pages of `source` into `target` so that the first is page `at`. Everything a page needs is copied once per
-    /// call, however many pages share it; the source's tree, tags, bookmarks and article threads stay behind. Links to pages
-    /// that did not come across are dropped; form fields join the target's /AcroForm and are renamed on a clash. The source
-    /// may be the target.
+    /// call, however many pages share it; the source's tree, tags and article threads stay behind. Links to pages
+    /// that did not come across are dropped; form fields join the target's /AcroForm and are renamed on a clash. The source's
+    /// bookmarks that point at the pages come across at the end of the target's top level (a parent stays when something
+    /// under it does). The source may be the target, which then gets no bookmarks.
     public static func importPages(_ target: PdfDocument, _ source: PdfDocument, _ sourcePages: [Int], _ at: Int) throws {
         precondition(at >= 0 && at <= target.pages.count, "at")
         if sourcePages.isEmpty { return }
         try insertAt(target, at, PageImporter(source, target).importPages(sourcePages))
         if source !== target {
+            var newIndex: [Int: Int] = [:]
+            for (i, page) in sourcePages.enumerated() where newIndex[page] == nil { newIndex[page] = at + i }
+            try PageCarry.bookmarks(source, target, newIndex, nil)
             let origins: [AnyObject] = target.pages.indices.map { $0 >= at && $0 < at + sourcePages.count ? source : target }
             try StampRuns.separate(target, zip(target.pages, origins).map { (page: $0, origin: $1) })
         }

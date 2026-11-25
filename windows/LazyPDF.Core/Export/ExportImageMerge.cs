@@ -7,7 +7,7 @@ namespace LazyPDF.Core;
 /// </summary>
 internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec, long pixelBudget)
 {
-    private static readonly string[] Coders = ["DCTDecode", "DCT", "JPXDecode", "JBIG2Decode"];
+    private static readonly string[] Coders = ["DCTDecode", "DCT", "JPXDecode"];
 
     private long _pixels;
 
@@ -23,7 +23,7 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
     {
         if (Present(dictionary["SMask"]) || Present(dictionary["Mask"]) || document.Bool(dictionary, "ImageMask") == true) return false;
         var decode = PdfFunction.Numbers(dictionary["Decode"], document.Resolve);
-        bool identity = decode is null || decode.Chunk(2).All(pair => pair is [0, 1]);
+        bool identity = decode is null || ImageKit.DefaultDecode(document, dictionary, decode);
         try
         {
             var space = Space(dictionary);
@@ -51,7 +51,7 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
     /// </summary>
     public PdfRgbaImage FromPixels(PdfDictionary dictionary, PdfRgbaImage pixels, string coder, byte[] coded)
     {
-        if (coder == "JPXDecode") pixels = JpxAlpha(pixels, document.Integer(dictionary, "SMaskInData") ?? 0);
+        if (coder == "JPXDecode") pixels = JpxImage.Alpha(pixels, JpxImage.MaskInData(document, dictionary));
         bool imageMask = document.Bool(dictionary, "ImageMask") == true;
         SampleColorSpace? space = null;
         bool readable = true;
@@ -76,10 +76,9 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         plain["Height"] = new PdfNumber(pixels.Height);
         // /Decode does not apply to JPEG 2000 data (ISO 32000-1 Table 89).
         if (coder == "JPXDecode" && !imageMask) plain.Remove("Decode");
-        bool bits = imageMask || coder == "JBIG2Decode";
-        if (!imageMask) plain["BitsPerComponent"] = new PdfNumber(bits ? 1 : 8);
+        if (!imageMask) plain["BitsPerComponent"] = new PdfNumber(8);
 
-        var converted = PdfImageSamples.ToRgba(plain, Pack(pixels, n, bits), document.Resolve, document.Data);
+        var converted = PdfImageSamples.ToRgba(plain, Pack(pixels, n, imageMask), document.Resolve, document.Data);
         if (coder == "JPXDecode" && document.Integer(dictionary, "SMaskInData") is > 0)
         {
             for (int i = 3; i < converted.Rgba.Length; i += 4) converted.Rgba[i] = (byte)(converted.Rgba[i] * pixels.Rgba[i] / 255);
@@ -87,27 +86,10 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         return Apply(converted, mask, stencil);
     }
 
-    // ISO 32000-1 Table 89: 0 leaves the codestream's alpha out, 1 takes it as straight alpha, 2 as premultiplied.
-    private static PdfRgbaImage JpxAlpha(PdfRgbaImage image, long mode)
-    {
-        if (mode == 1) return image;
-        var rgba = (byte[])image.Rgba.Clone();
-        for (int i = 3; i < rgba.Length; i += 4)
-        {
-            int alpha = rgba[i];
-            if (mode < 1) rgba[i] = 255;
-            else if (alpha is > 0 and < 255)
-            {
-                for (int c = 1; c <= 3; c++) rgba[i - c] = (byte)Math.Min(255, (rgba[i - c] * 255 + alpha / 2) / alpha);
-            }
-        }
-        return new PdfRgbaImage(image.Width, image.Height, rgba);
-    }
-
-    private static bool Inverts(double[]? decode) => decode is { Length: >= 8 } && decode.Chunk(2).Take(4).All(pair => pair is [1, 0]);
+    internal static bool Inverts(double[]? decode) => decode is { Length: >= 8 } && decode.Chunk(2).Take(4).All(pair => pair is [1, 0]);
 
     // The Adobe marker (APP14) tells a codec that the stored inks are inverted.
-    private static bool HasAdobeMarker(byte[] jpeg)
+    internal static bool HasAdobeMarker(byte[] jpeg)
     {
         int p = 2;
         while (p + 4 <= jpeg.Length && jpeg[p] == 0xFF && jpeg[p + 1] != 0xDA)
@@ -252,7 +234,7 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
     // Null when a codec is needed and cannot read the mask: the picture stays opaque.
     private (int Width, int Height, byte[] Alpha)? Plane(PdfStream mask, bool stencil)
     {
-        var (filter, parameters, _) = document.DecodeSpec(mask);
+        var (filter, parameters, _) = document.DecodeSpec(mask, decoding: true);
         var decoded = PdfFilters.DecodeToCodec(document.RawData(mask), filter, parameters);
         PdfRgbaImage? image;
         bool inverted = false;
@@ -263,11 +245,13 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         else
         {
             Charge(0);
-            image = codec?.Decode(decoded.Data, decoded.Codec);
+            if (decoded.Codec == "JPXDecode" && !JpxImage.Readable(document, mask.Dictionary)) return null;
+            image = codec?.Decode(decoded.Data, decoded.Codec, decoded.Codec == "JPXDecode" ? JpxImage.Components(document, mask.Dictionary) : 0);
             if (image is not null) Charge((long)image.Width * image.Height);
             inverted = PdfFunction.Numbers(mask.Dictionary["Decode"], document.Resolve) is [var low, var high, ..] && low > high;
         }
-        if (image is null || (long)image.Width * image.Height > PdfImageSamples.MaxPixels) return null;
+        if (image is null || image.Width < 1 || image.Height < 1 || (long)image.Width * image.Height > PdfImageSamples.MaxPixels
+            || image.Rgba.Length != (long)image.Width * image.Height * 4) return null;
 
         // An image mask decoded from samples already says where it paints in its alpha.
         bool painted = decoded.Codec is null && document.Bool(mask.Dictionary, "ImageMask") == true;

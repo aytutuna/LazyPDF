@@ -44,8 +44,27 @@ public class RotatedAndEncryptedTests
         var reopened = PdfDocument.Open(session.Current.ToArray(), "user");
         Assert.True(reopened.IsEncrypted);
         Assert.Contains("Hello grand world", TextPage.Create(reopened, reopened.Pages[0]).Text);
-        Assert.DoesNotContain("grand"u8.ToArray().AsSpan().ToString(), System.Text.Encoding.Latin1.GetString(session.Current.ToArray()));
+        Assert.DoesNotContain("grand", System.Text.Encoding.Latin1.GetString(session.Current.ToArray()));
+        // The stream is deflated, so the text is never plain; what encryption changes is the deflated bytes themselves.
+        foreach (var stored in StoredContents(reopened)) Assert.Equal(-1, session.Current.Span.IndexOf(stored));
         Assert.True(session.Undo());
         Assert.Contains("brave", TextPage.Create(session.Document, session.Document.Pages[0]).Text);
+    }
+
+    private static List<byte[]> StoredContents(PdfDocument document)
+    {
+        var contents = document.Resolve(document.Pages[0].Dictionary["Contents"]);
+        var stored = (contents is PdfArray array ? array.Items : [contents!]).Select(document.Resolve).OfType<PdfStream>().Select(document.RawData).ToList();
+        Assert.NotEmpty(stored);
+        return stored;
+    }
+
+    [Fact]
+    public void AnUnencryptedFileHoldsTheEditedStreamAsStored()
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (Hello brave world) Tj ET");
+        Assert.True(new PageEditor(session, 0).ReplaceText(EditKit.Find(session, "brave"), "grand").Done);
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        foreach (var stored in StoredContents(reopened)) Assert.NotEqual(-1, session.Current.Span.IndexOf(stored));
     }
 }

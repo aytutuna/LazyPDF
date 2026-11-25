@@ -83,6 +83,19 @@ public class RedactFinderTests
     }
 
     [Fact]
+    public void APatternThatRunsOutOfTimeIsReportedByPage()
+    {
+        using var document = Lines(new string('a', 40) + "!");
+        var cache = new TextCache(document);
+        var timeouts = new SearchTimeouts();
+        Assert.Empty(RedactionFinder.FindRegex(cache, "^(a+)+$", timeouts: timeouts));
+        Assert.Equal([0], timeouts.Pages);
+        var quiet = new SearchTimeouts();
+        Assert.Single(RedactionFinder.FindRegex(cache, "a+!", timeouts: quiet));
+        Assert.Empty(quiet.Pages);
+    }
+
+    [Fact]
     public void MatchesBecomeMarksThatRemoveTheText()
     {
         using var document = Lines("Mail jane@example.com please", "and bob@example.org too");

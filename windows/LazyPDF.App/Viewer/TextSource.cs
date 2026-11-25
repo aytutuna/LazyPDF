@@ -46,6 +46,9 @@ public sealed class TextSource
     /// <summary>Keeps at least the text of <paramref name="visible"/> pages at hand, so a window full of selected pages does not push its own pages out. UI thread only.</summary>
     public void Retain(int visible) => _keep = Math.Max(Recent, visible + 8);
 
+    /// <summary>How many pages stay at hand for <see cref="Peek"/>.</summary>
+    public int Capacity => _keep;
+
     /// <summary>The text of a page if it has been made already. UI thread only.</summary>
     public TextPage? Peek(int page) =>
         _pages.TryGetValue(page, out var task) && task.IsCompletedSuccessfully ? task.Result : null;
@@ -55,15 +58,28 @@ public sealed class TextSource
     {
         if ((uint)page >= (uint)PageCount) return Task.FromResult<TextPage?>(null);
         if (_pages.TryGetValue(page, out var task)) return task;
-        _pages[page] = task = Task.Run<TextPage?>(() => _cache.Get(page));
+        _pages[page] = task = Task.Run<TextPage?>(() => Read(page));
         _order.Enqueue(page);
         while (_order.Count > _keep) _pages.Remove(_order.Dequeue());
         return task;
     }
 
+    // A page that cannot be read is an empty one, so a task that failed is not asked again and a walk goes past it.
+    private TextPage Read(int page)
+    {
+        try
+        {
+            return _cache.Get(page);
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            return TextPage.Empty(page);
+        }
+    }
+
     /// <summary>Every match, page by page, as they are found; run it off the UI thread. Throws <see cref="OperationCanceledException"/>.</summary>
-    public IEnumerable<SearchMatch> Find(string query, TextSearchOptions options, CancellationToken cancel) =>
-        TextSearch.Find(_cache, query, options, 0, int.MaxValue, cancel);
+    public IEnumerable<SearchMatch> Find(string query, TextSearchOptions options, CancellationToken cancel, SearchTimeouts? timeouts = null) =>
+        TextSearch.Find(_cache, query, options, 0, int.MaxValue, cancel, timeouts);
 
     /// <summary>The text of a page for the search thread, which does not go through <see cref="GetAsync"/>.</summary>
     public TextPage Page(int page) => _cache.Get(page);

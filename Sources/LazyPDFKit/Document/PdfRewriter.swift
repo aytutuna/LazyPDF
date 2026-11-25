@@ -7,7 +7,7 @@ import Foundation
 // The deflated bytes (object streams, a cross-reference stream, a stream that is repacked) are the engine's own
 // Deflate and differ from .NET's, so a file saved here is not byte for byte the C#'s wherever one is written.
 
-final class PdfRewriter {
+public final class PdfRewriter {
     // The size qpdf and most writers pack to; an object stream is parsed whole to read one object.
     private static let objectsPerStream = 100
 
@@ -19,12 +19,15 @@ final class PdfRewriter {
     private var items: [PdfObject] = []
     private var followed = 0
 
-    init(_ document: PdfDocument, _ options: PdfSaveOptions) {
+    /// The numbers reached that the table lists and that could not be read.
+    private(set) var dropped = Set<Int>()
+
+    public init(_ document: PdfDocument, _ options: PdfSaveOptions) {
         self.document = document
         self.options = options
     }
 
-    func run() -> [UInt8] {
+    public func run() throws -> [UInt8] {
         let root = intern(document.trailer["Root"])
         let info = document.info == nil ? 0 : intern(document.trailer["Info"])
         follow()
@@ -63,6 +66,7 @@ final class PdfRewriter {
         var entries = [XrefEntry(0, 0, 0, 65535)]
 
         for n in stride(from: 1, through: items.count, by: 1) {
+            if n % 256 == 0 { try Task.checkCancellation() }
             if packedSet.contains(n) { continue }
             let at: Int
             if let stream = items[n - 1] as? PdfStream {
@@ -78,6 +82,7 @@ final class PdfRewriter {
         }
         var s = 0
         while s * Self.objectsPerStream < packed.count {
+            try Task.checkCancellation()
             let members = Array(packed.dropFirst(s * Self.objectsPerStream).prefix(Self.objectsPerStream))
             let number = firstStream + s
             let (dictionary, data) = pack(members)
@@ -134,7 +139,10 @@ final class PdfRewriter {
     private func intern(_ entry: PdfObject?) -> Int {
         if let reference = entry as? PdfReference {
             if let known = numbers[reference.number] { return known }
-            guard let value = document.get(reference.number), !(value is PdfNull) else { return 0 }
+            guard let value = document.get(reference.number), !(value is PdfNull) else {
+                if let listed = document.entries[reference.number], listed.kind == .inUse || listed.kind == .compressed { dropped.insert(reference.number) }
+                return 0
+            }
             items.append(value)
             numbers[reference.number] = items.count
             return items.count

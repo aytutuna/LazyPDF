@@ -309,6 +309,18 @@ public class RedactStrictReachTests
     }
 
     [Fact]
+    public void ObjectReferenceOnAPageThatBecamePictureIsRemoved()
+    {
+        using var document = PdfDocument.Open(File(Word));
+        var link = new PdfDictionary { ["S"] = new PdfName("Link"), ["Alt"] = new PdfString("ZQXLINK"u8.ToArray(), false) };
+        link["K"] = new PdfDictionary { ["Type"] = new PdfName("OBJR"), ["Pg"] = document.Pages[0].Reference, ["Obj"] = new PdfReference(5, 0) };
+        var root = new PdfDictionary { ["Type"] = new PdfName("StructTreeRoot"), ["K"] = link };
+        document.Catalog["StructTreeRoot"] = document.Add(root);
+        RedactionStructure.Prune(document, [], new HashSet<PdfStream>(), [document.Pages[0].Reference.Number]);
+        Assert.False(root.ContainsKey("K"));
+    }
+
+    [Fact]
     public void WordInAZipAttachedWithoutATypeIsFound()
     {
         var file = File("BT /F1 12 Tf 100 100 Td (hello) Tj ET", "", pdf =>

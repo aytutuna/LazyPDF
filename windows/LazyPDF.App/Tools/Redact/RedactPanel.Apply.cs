@@ -13,9 +13,11 @@ public partial class RedactPanel
         var tab = Tab!;
         var host = Host!;
         var state = _state!;
-        var marks = state.Marks.Items.Select(m => m.Mark).ToList();
+        var applied = state.Marks.Items.ToList();
+        var marks = applied.Where(m => m.Value is null).Select(m => m.Mark).ToList();
+        var values = applied.Where(m => m.Value is not null).Select(m => m.Value!).ToList();
         var settings = new RedactSettings((Cover)CoverBox.SelectedItem, OverlayBox.Text, FlattenBox.IsChecked == true);
-        byte[] bytes = tab.Session.Current.ToArray();
+        byte[] bytes = [];
         int revision = tab.Revision;
         bool encrypted = tab.Document.IsEncrypted;
         var stale = new Problem(Loc.T("Not redacted"), Loc.T("The file changed meanwhile. Try again."));
@@ -25,7 +27,11 @@ public partial class RedactPanel
         {
             await host.RunBusyAsync(Loc.T("Redacting"), async token =>
             {
-                result = await Task.Run(() => RedactJob.Apply(bytes, tab.Password, tab.Certificate, marks, settings, tab.Renderer, _fonts, _images)).WaitAsync(token);
+                // The renderer must draw the bytes that are redacted, so a load still running is waited for.
+                await tab.Drawing.WaitAsync(token);
+                bytes = tab.Session.Current.ToArray();
+                revision = tab.Revision;
+                result = await Task.Run(() => RedactJob.Apply(bytes, tab.Password, tab.Certificate, marks, settings, tab.Renderer, _fonts, _images, values)).WaitAsync(token);
             });
         }
         catch (Exception error) when (error is InvalidOperationException or UnauthorizedAccessException or PdfReadException)
@@ -44,13 +50,23 @@ public partial class RedactPanel
             return;
         }
 
-        // The marks are done with once the copy exists; the panel may be detached by now, so the count is set here too.
-        state.Marks.Clear();
-        tab.PendingMarks = 0;
         var summary = RedactSummary.Of(result, settings.FlattenAll);
+        var (oldIncoming, oldTitle) = (_incoming, _incomingTitle);
+        // Set before the open: the new tab picks the summary up while it attaches.
         _incoming = summary;
         _incomingTitle = Loc.T("{0} (redacted).pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title));
-        await host.OpenNewAsync(result.Bytes, _incomingTitle);
+        if (!await host.OpenNewAsync(result.Bytes, _incomingTitle))
+        {
+            (_incoming, _incomingTitle) = (oldIncoming, oldTitle);
+            return;
+        }
+
+        // The marks are done with once the copy is open; the panel may be detached by now, so the count is set here too.
+        // One drawn while the copy was opening is not in it and stays.
+        if (state.Marks.Items.SequenceEqual(applied)) state.Marks.Clear();
+        else foreach (var item in applied) state.Marks.Remove(item);
+        state.Marks.Forget();
+        tab.PendingMarks = state.Marks.Items.Count;
         host.SetStatus(summary.Clean ? Loc.T("Redacted copy opened.") : Loc.T("Redacted copy has problems."));
         if (encrypted) host.ShowNotice(Loc.T("The copy has no password"), Loc.T("Protect it before you share it."));
     }

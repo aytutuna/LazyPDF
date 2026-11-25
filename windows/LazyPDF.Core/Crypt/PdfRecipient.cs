@@ -8,4 +8,18 @@ namespace LazyPDF.Core;
 /// the encryption, the counterpart of the owner password.
 /// </summary>
 public sealed record PdfRecipient(X509Certificate2 Certificate, PdfPermissions Permissions = PdfPermissions.All,
-                                  bool CanChangeEncryption = false);
+                                  bool CanChangeEncryption = false)
+{
+    /// <summary>
+    /// Whether a file can be encrypted for <paramref name="certificate"/>: it has an RSA key, and its key usage,
+    /// if it states one, allows enciphering; or a P-256 or P-384 key whose usage, if stated, allows key agreement.
+    /// </summary>
+    public static bool CanProtect(X509Certificate2 certificate)
+    {
+        if (PdfCmsAgreement.CurveOf(certificate) is not null) return PdfCmsAgreement.CanProtect(certificate);
+        using var key = certificate.GetRSAPublicKey();
+        if (key is null) return false;
+        var usage = certificate.Extensions.OfType<X509KeyUsageExtension>().FirstOrDefault();
+        return usage is null || (usage.KeyUsages & (X509KeyUsageFlags.KeyEncipherment | X509KeyUsageFlags.DataEncipherment)) != 0;
+    }
+}

@@ -1,0 +1,192 @@
+#if canImport(SwiftUI) && canImport(CoreGraphics)
+import SwiftUI
+import LazyPDFApp
+import LazyPDFKit
+
+// The sheet that makes a signature or initials; follows windows/LazyPDF.App/Tools/FillSign/SignatureMaker.xaml. The ink and the image
+// made live in SignatureMakerModel; this draws them and passes the pen on. The owner says what Use, Cancel and Choose a
+// picture do, so Fill and Sign and the certificates panel share the sheet.
+
+struct SignatureMakerView: View {
+    let maker: SignatureMakerModel
+    let use: @MainActor () -> Void
+    let cancel: @MainActor () -> Void
+    let choosePicture: @MainActor () async -> Void
+    #if os(iOS)
+    private enum Source: String, Identifiable {
+        case photos, camera, scanner
+        var id: String { rawValue }
+    }
+    @State private var source: Source?
+    #endif
+
+    var body: some View {
+        ToolForm {
+            Picker(L10n.t("Make a new one"), selection: Binding(get: { maker.mode }, set: { maker.setMode($0) })) {
+                Text(L10n.t("Type")).tag(SignatureMakerModel.Mode.type)
+                Text(L10n.t("Draw")).tag(SignatureMakerModel.Mode.draw)
+                Text(L10n.t("Picture")).tag(SignatureMakerModel.Mode.picture)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            switch maker.mode {
+            case .type: typePane
+            case .draw: drawPane
+            case .picture: picturePane
+            }
+
+            FieldLabel(L10n.t("Preview"))
+            ZStack {
+                RoundedRectangle(cornerRadius: 6).fill(Color.white)
+                if let image = maker.image { SignaturePicture(image: image).padding(6) }
+            }
+            .frame(height: 96)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(L10n.t("Preview"))
+
+            Toggle(L10n.t("Keep for next time"), isOn: Binding(get: { maker.keep }, set: { maker.keep = $0 }))
+            HStack {
+                Button {
+                    use()
+                } label: {
+                    Label(L10n.t("Use"), systemImage: "checkmark").frame(minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(maker.image == nil)
+                Button(L10n.t("Cancel")) { cancel() }
+                    .frame(minHeight: 44)
+                    .keyboardShortcut(.cancelAction)
+            }
+        }
+    }
+
+    private var typePane: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            LabelledField(L10n.t("Name")) {
+                TextField(L10n.t("Name"), text: Binding(get: { maker.name }, set: { maker.setName($0) }))
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+            }
+            LabelledField(L10n.t("Style")) {
+                Picker(L10n.t("Style"), selection: Binding(get: { maker.faceIndex }, set: { maker.setFace($0) })) {
+                    ForEach(Array(maker.faces.enumerated()), id: \.offset) {
+                        Text($0.element).font(.custom($0.element, size: 18)).tag($0.offset)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private var drawPane: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SignaturePad(maker: maker)
+                .frame(height: 200)
+            HStack {
+                Button {
+                    maker.undoStroke()
+                } label: {
+                    Label(L10n.t("Undo stroke"), systemImage: "arrow.uturn.backward").frame(minHeight: 44)
+                }
+                .disabled(maker.strokes.isEmpty)
+                Button {
+                    maker.clearInk()
+                } label: {
+                    Label(L10n.t("Clear"), systemImage: "eraser").frame(minHeight: 44)
+                }
+                .disabled(maker.strokes.isEmpty)
+            }
+        }
+    }
+
+    private var picturePane: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Button {
+                    Task { await choosePicture() }
+                } label: {
+                    Label(L10n.t("Choose a picture"), systemImage: "photo").frame(minHeight: 44)
+                }
+                Button {
+                    maker.turnPicture()
+                } label: {
+                    Label(L10n.t("Turn"), systemImage: "rotate.right").frame(minHeight: 44)
+                }
+                .disabled(!maker.canTurn)
+                .accessibilityLabel(L10n.t("Turn the picture a quarter"))
+            }
+            #if os(iOS)
+            HStack {
+                Button { source = .photos } label: {
+                    Label(L10n.t("From Photos"), systemImage: "photo.on.rectangle").frame(minHeight: 44)
+                }
+                if CameraChooser.available {
+                    Button { source = .camera } label: {
+                        Label(L10n.t("Take a photo"), systemImage: "camera").frame(minHeight: 44)
+                    }
+                }
+                if PaperScanner.available {
+                    Button { source = .scanner } label: {
+                        Label(L10n.t("Scan the paper"), systemImage: "doc.viewfinder").frame(minHeight: 44)
+                    }
+                }
+            }
+            #endif
+            ReasonText(maker.pictureNote)
+        }
+        #if os(iOS)
+        .fullScreenCover(item: $source) { source in
+            let finish: (PictureBytes?) -> Void = { picture in
+                if let picture { maker.usePicture(picture.bytes, name: picture.name) }
+                self.source = nil
+            }
+            switch source {
+            case .photos: PhotosChooser(done: finish)
+            case .camera: CameraChooser(done: finish).ignoresSafeArea()
+            case .scanner: PaperScanner(done: finish).ignoresSafeArea()
+            }
+        }
+        #endif
+    }
+}
+
+/// The area a signature is drawn in with a finger, a Pencil or a mouse. Each stroke goes to the model a point at a time.
+struct SignaturePad: View {
+    let maker: SignatureMakerModel
+    @State private var drawing = false
+
+    var body: some View {
+        // Read here, not in the drawing closure, so the view follows the strokes.
+        let strokes = maker.strokes.strokes
+        return Canvas { context, _ in
+            for stroke in strokes {
+                guard let first = stroke.first else { continue }
+                var path = Path()
+                path.move(to: CGPoint(x: first.x, y: first.y))
+                if stroke.count == 1 { path.addLine(to: CGPoint(x: first.x, y: first.y)) }
+                for point in stroke.dropFirst() { path.addLine(to: CGPoint(x: point.x, y: point.y)) }
+                context.stroke(path, with: .color(.black), style: StrokeStyle(lineWidth: SignatureStrokes.penWidth, lineCap: .round, lineJoin: .round))
+            }
+        }
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.secondary.opacity(0.5)))
+        .gesture(DragGesture(minimumDistance: 0).onChanged { value in
+            let point = ViewPoint(Double(value.location.x), Double(value.location.y))
+            if drawing {
+                maker.extendStroke(point)
+            } else {
+                drawing = true
+                maker.beginStroke(point)
+            }
+        }.onEnded { value in
+            maker.extendStroke(ViewPoint(Double(value.location.x), Double(value.location.y)))
+            drawing = false
+            maker.endStroke()
+        })
+        .accessibilityElement()
+        .accessibilityLabel(L10n.t("Drawing area for the signature"))
+    }
+}
+#endif

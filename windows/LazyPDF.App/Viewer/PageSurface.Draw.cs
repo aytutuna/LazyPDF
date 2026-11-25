@@ -15,6 +15,20 @@ internal sealed partial class PageSurface
     /// <summary>Draws on top of a page's pictures; gets the page and the matrix from page space to the surface.</summary>
     public Action<DrawingContext, int, Matrix>? Decorate { get; set; }
 
+    /// <summary>A box dragged on the surface, in surface coordinates.</summary>
+    public Rect? Marquee
+    {
+        get => _marquee;
+        set
+        {
+            if (value == _marquee) return;
+            _marquee = value;
+            InvalidateVisual();
+        }
+    }
+
+    private Rect? _marquee;
+
     protected override void OnRender(DrawingContext dc)
     {
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize));
@@ -41,6 +55,12 @@ internal sealed partial class PageSurface
             DrawPictures(dc, page, matrix, rect);
             Decorate?.Invoke(dc, page, matrix);
             dc.Pop();
+        }
+        if (_marquee is { } box)
+        {
+            var accent = SystemColors.AccentColor;
+            var border = new Pen(new SolidColorBrush(accent), 1 / Dpi);
+            dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(40, accent.R, accent.G, accent.B)), border, box);
         }
     }
 
@@ -76,8 +96,20 @@ internal sealed partial class PageSurface
         }
         else if (_failed.Contains(preview.Key))
         {
-            DrawFailure(dc, pageRect);
+            DrawFailure(dc, pageRect, Loc.T("This page cannot be shown."), false);
         }
+        else if (NoteShown(page))
+        {
+            DrawFailure(dc, visible, Loc.T("Part of this page could not be drawn sharply."), true);
+        }
+    }
+
+    // A tile that failed under an older version or tint says nothing about what is drawn now.
+    internal bool NoteShown(int page)
+    {
+        double ppp = Scale * Dpi;
+        int version = _versions[page];
+        return _failed.Any(key => key.Page == page && !key.IsPreview && key.Scale == ppp && key.Version == version && key.Tint == _tint);
     }
 
     // Older pictures first, then the smaller ones, the current page's own preview, other zooms by how near they are, the sharp tiles last.
@@ -88,7 +120,7 @@ internal sealed partial class PageSurface
         return rank + 500 - Math.Abs(Math.Log(key.Scale / ppp)) * 10;
     }
 
-    private static Rect Destination(TileKey key, BitmapSource bitmap, Matrix matrix, Size page)
+    internal static Rect Destination(TileKey key, BitmapSource bitmap, Matrix matrix, Size page)
     {
         var points = key.IsPreview
             ? new Rect(0, 0, page.Width, page.Height)
@@ -98,32 +130,46 @@ internal sealed partial class PageSurface
 
     private static readonly int TileStep = LazyPDF.App.Services.WindowsPageRenderer.Reachable(TilePlan.TileSize);
 
+    // Away from zero, so that the edge two neighbours share lands on the same device pixel for both.
+    internal static Rect SnapRect(Rect dest, double ppd)
+    {
+        double snap(double v) => Math.Round(v * ppd, MidpointRounding.AwayFromZero) / ppd;
+        return new Rect(new Point(snap(dest.Left), snap(dest.Top)), new Point(snap(dest.Right), snap(dest.Bottom)));
+    }
+
     private void DrawBitmap(DrawingContext dc, BitmapSource bitmap, Rect dest)
     {
         double ppd = Dpi;
-        var snapped = new Rect(new Point(Math.Round(dest.Left * ppd) / ppd, Math.Round(dest.Top * ppd) / ppd),
-                               new Point(Math.Round(dest.Right * ppd) / ppd, Math.Round(dest.Bottom * ppd) / ppd));
-        if (_rotation == 0)
-        {
-            dc.DrawImage(bitmap, snapped);
-            return;
-        }
-        // The picture is of the page upright; it is turned about its own centre into the rectangle the matrix gave.
+        var snapped = SnapRect(dest, ppd);
+        // The picture is of the page upright; it is turned about the centre of the rectangle the matrix gave.
         var c = new Point(snapped.Left + snapped.Width / 2, snapped.Top + snapped.Height / 2);
-        var upright = _rotation == 180 ? snapped : new Rect(c.X - snapped.Height / 2, c.Y - snapped.Width / 2, snapped.Height, snapped.Width);
-        dc.PushTransform(new RotateTransform(_rotation, c.X, c.Y));
-        dc.DrawImage(bitmap, upright);
-        dc.Pop();
+        bool sideways = _rotation == 90 || _rotation == 270;
+        var upright = sideways ? new Rect(c.X - snapped.Height / 2, c.Y - snapped.Width / 2, snapped.Height, snapped.Width) : snapped;
+        // Aliased edges and an unscaled copy keep neighbouring tiles from showing a seam.
+        var group = new DrawingGroup();
+        RenderOptions.SetEdgeMode(group, EdgeMode.Aliased);
+        if (Math.Round(upright.Width * ppd) == bitmap.PixelWidth && Math.Round(upright.Height * ppd) == bitmap.PixelHeight)
+        {
+            RenderOptions.SetBitmapScalingMode(group, BitmapScalingMode.NearestNeighbor);
+        }
+        if (_rotation != 0) group.Transform = new RotateTransform(_rotation, c.X, c.Y);
+        using (var inner = group.Open())
+        {
+            inner.DrawImage(bitmap, upright);
+        }
+        group.Freeze();
+        dc.DrawDrawing(group);
     }
 
-    private void DrawFailure(DrawingContext dc, Rect pageRect)
+    private void DrawFailure(DrawingContext dc, Rect pageRect, string message, bool atBottom)
     {
-        var text = new FormattedText(Loc.T("This page cannot be shown."), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+        var text = new FormattedText(message, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
             new Typeface(TextElement.GetFontFamily(this), System.Windows.FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), 14, _tint == PageTint.Dark ? Brushes.Gainsboro : Brushes.DimGray, Dpi)
         {
             MaxTextWidth = Math.Max(10, pageRect.Width - 24),
             TextAlignment = System.Windows.TextAlignment.Center,
         };
-        dc.DrawText(text, new Point(pageRect.Left + 12, pageRect.Top + Math.Min(pageRect.Height / 2, 120) - text.Height / 2));
+        double top = atBottom ? pageRect.Bottom - text.Height - 8 : pageRect.Top + Math.Min(pageRect.Height / 2, 120) - text.Height / 2;
+        dc.DrawText(text, new Point(pageRect.Left + 12, top));
     }
 }

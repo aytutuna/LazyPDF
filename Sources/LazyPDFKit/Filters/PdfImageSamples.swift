@@ -8,11 +8,17 @@ public struct PdfRgbaImage {
     public let width: Int
     public let height: Int
     public let rgba: [UInt8]
+    public let dpiX: Double
+    public let dpiY: Double
+    /// A frame too big to decode: it keeps its size and has no pixels.
+    public var tooBig: Bool { rgba.isEmpty && width > 0 && height > 0 }
 
-    public init(_ width: Int, _ height: Int, _ rgba: [UInt8]) {
+    public init(_ width: Int, _ height: Int, _ rgba: [UInt8], dpiX: Double = 0, dpiY: Double = 0) {
         self.width = width
         self.height = height
         self.rgba = rgba
+        self.dpiX = dpiX
+        self.dpiY = dpiY
     }
 }
 

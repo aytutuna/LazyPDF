@@ -92,7 +92,7 @@ public sealed partial class PdfAnnotationWriter
     public PdfAnnotation AddStamp(PdfPage page, PdfRect rect, string name, AnnotationInfo? info = null, double[]? color = null)
     {
         var d = NewAnnotation("Stamp", rect, info, color);
-        d["Name"] = new PdfName(name);
+        d["Name"] = PdfName.FromText(name);
         return Place(page, d);
     }
 

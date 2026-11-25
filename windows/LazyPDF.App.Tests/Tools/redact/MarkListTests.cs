@@ -12,6 +12,34 @@ public sealed class MarkListTests
         new(RedactionMark.FromRect(page, new PdfRect(left, bottom, left + 40, bottom + 10)), label);
 
     [Fact]
+    public void TwoHitsInOneCommentAreTwoMarks()
+    {
+        var list = new MarkList();
+        var rect = RedactionMark.FromRect(0, new PdfRect(400, 100, 420, 120));
+        MarkItem Hit(int start) => new(rect, "x", Value: new RedactionValueMatch(0, 2, RedactionValueSource.Comment, start, 3, "abc", RedactionKind.Word));
+
+        Assert.Equal(2, list.Add([Hit(0), Hit(10)]));
+        Assert.Equal(0, list.Add([Hit(10)]));
+        Assert.Equal(1, list.Add([new MarkItem(rect, "Box", IsBox: true)]));
+    }
+
+    [Fact]
+    public void RemovingValuesKeepsTheOtherMarks()
+    {
+        var list = new MarkList();
+        var rect = RedactionMark.FromRect(0, new PdfRect(400, 100, 420, 120));
+        var hit = new MarkItem(rect, "x", Value: new RedactionValueMatch(0, 2, RedactionValueSource.Field, 5, 3, "abc", RedactionKind.Word));
+        list.Add([hit, new MarkItem(rect, "Box", IsBox: true)]);
+        int changes = 0;
+        list.Changed += (_, _) => changes++;
+
+        Assert.True(list.RemoveValues());
+        Assert.Equal(["Box"], list.Items.Select(m => m.Label));
+        Assert.False(list.RemoveValues());
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
     public void MarksComeInReadingOrder()
     {
         var list = new MarkList();
@@ -96,6 +124,82 @@ public sealed class MarkListTests
         Assert.Equal(-20, y3 - y0, 6);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void ABoxComesBackAsTheSameRectOnACropBoxThatDoesNotStartAtTheOrigin(int rotate)
+    {
+        var geometry = new PageGeometry(new PdfRect(30, 50, 230, 350), rotate);
+        var rect = new Rect(12.5, 20.25, 61, 24.5);
+
+        var mark = MarkShapes.Box(0, geometry, rect.TopLeft, rect.BottomRight);
+        var back = MarkShapes.Where(geometry, mark);
+
+        Assert.Equal(rect.X, back.X, 2);
+        Assert.Equal(rect.Y, back.Y, 2);
+        Assert.Equal(rect.Width, back.Width, 2);
+        Assert.Equal(rect.Height, back.Height, 2);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void ABoxComesBackAsTheSameRectOnEachRotation(int rotate)
+    {
+        var geometry = new PageGeometry(new PdfRect(0, 0, 200, 300), rotate);
+        var rect = new Rect(10, 20, 50, 25);
+
+        var back = MarkShapes.Where(geometry, MarkShapes.Box(0, geometry, rect.TopLeft, rect.BottomRight));
+
+        Assert.Equal(rect.X, back.X, 2);
+        Assert.Equal(rect.Y, back.Y, 2);
+        Assert.Equal(rect.Width, back.Width, 2);
+        Assert.Equal(rect.Height, back.Height, 2);
+    }
+
+    [Fact]
+    public void AReplacedBoxKeepsItsLabelAndFlags()
+    {
+        var list = new MarkList();
+        var box = new MarkItem(RedactionMark.FromRect(0, new PdfRect(10, 100, 50, 110)), "Box", IsBox: true);
+        list.Add([box]);
+
+        list.Replace(box, box with { Mark = RedactionMark.FromRect(0, new PdfRect(15, 100, 55, 110)) });
+
+        var now = list.Items.Single();
+        Assert.Equal("Box", now.Label);
+        Assert.True(now.IsBox);
+        Assert.False(now.IsWholePage);
+    }
+
+    [Fact]
+    public void ReplacingOntoAnExistingMarkKeepsBothAndUndoRestoresTheOldRect()
+    {
+        var list = new MarkList();
+        var fixedMark = Item(0, 10, 100, "fixed");
+        var box = Item(0, 10, 300, "box");
+        list.Add([fixedMark, box]);
+
+        list.Replace(box, Item(0, 10, 100, "box"));
+
+        Assert.Equal(2, list.Items.Count);
+        Assert.Equal(0, list.Add([Item(0, 10, 100)]));
+        list.Remove(list.Items[0]);
+        Assert.Single(list.Items);
+        Assert.Equal(0, list.Add([Item(0, 10, 100)]));
+
+        list.Undo();
+        list.Undo();
+
+        Assert.Equal(2, list.Items.Count);
+        Assert.Equal(0, list.Add([Item(0, 10, 300)]));
+        Assert.Equal(1, list.Add([Item(0, 10, 100.6)]));
+    }
+
     [Fact]
     public void MarkingThousandsOfPlacesAtOnceIsQuick()
     {
@@ -139,4 +243,145 @@ public sealed class MarkListTests
     [InlineData("1, 3, 5", new[] { 0, 2, 4 })]
     public void PagesAreWrittenAsRanges(string expected, int[] pages) =>
         Assert.Equal(expected, RedactSummary.PageRanges(pages));
+
+    [Fact]
+    public void UndoPutsBackARemovedMark()
+    {
+        var list = new MarkList();
+        var a = Item(0, 10, 100, "a");
+        var b = Item(0, 10, 200, "b");
+        list.Add([a, b]);
+
+        list.Remove(a);
+        Assert.True(list.CanUndo);
+        list.Undo();
+
+        Assert.Equal(["b", "a"], list.Items.Select(m => m.Label));
+        Assert.Equal(0, list.Add([Item(0, 10, 100)]));
+    }
+
+    [Fact]
+    public void ForgettingAfterAClearLeavesNothingToUndo()
+    {
+        var list = new MarkList();
+        list.Add([Item(4, 10, 100)]);
+        list.Clear();
+
+        list.Forget();
+
+        Assert.False(list.CanUndo);
+        Assert.Empty(list.Items);
+    }
+
+    [Fact]
+    public void UndoBringsBackAClearedList()
+    {
+        var list = new MarkList();
+        list.Add([Item(0, 10, 100), Item(0, 10, 200)]);
+        list.Clear();
+
+        list.Undo();
+
+        Assert.Equal(2, list.Items.Count);
+    }
+
+    [Fact]
+    public void UndoTakesBackAnAddOfThree()
+    {
+        var list = new MarkList();
+        list.Add([Item(0, 10, 100)]);
+        list.Add([Item(1, 10, 100), Item(1, 10, 200), Item(1, 10, 300)]);
+
+        list.Undo();
+
+        Assert.Single(list.Items);
+        Assert.Equal(1, list.Add([Item(1, 10, 100)]));
+    }
+
+    [Fact]
+    public void OnlyTwentyStepsAreKept()
+    {
+        var list = new MarkList();
+        for (int i = 0; i < 21; i++) list.Add([Item(0, 10, 100 + i * 20)]);
+
+        int undone = 0;
+        while (list.CanUndo)
+        {
+            list.Undo();
+            undone++;
+        }
+
+        Assert.Equal(20, undone);
+        Assert.Single(list.Items);
+    }
+
+    [Fact]
+    public void ForgetEmptiesTheHistory()
+    {
+        var list = new MarkList();
+        list.Add([Item(0, 10, 100)]);
+
+        list.Forget();
+
+        Assert.False(list.CanUndo);
+        Assert.Single(list.Items);
+    }
+
+    [Fact]
+    public void UndoRaisesChangedOnce()
+    {
+        var list = new MarkList();
+        list.Add([Item(0, 10, 100)]);
+        int changes = 0;
+        list.Changed += (_, _) => changes++;
+
+        list.Undo();
+
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
+    public void EveryChangeGivesANewItemsReference()
+    {
+        var list = new MarkList();
+        var seen = new List<object> { list.Items };
+        var a = Item(0, 10, 100);
+
+        list.Add([a]);
+        seen.Add(list.Items);
+        list.Add([Item(0, 10, 200)]);
+        seen.Add(list.Items);
+        list.Remove(a);
+        seen.Add(list.Items);
+        list.Clear();
+        seen.Add(list.Items);
+        list.Undo();
+        seen.Add(list.Items);
+
+        Assert.Equal(seen.Count, seen.Distinct(ReferenceEqualityComparer.Instance).Count());
+        Assert.Single(((IReadOnlyList<MarkItem>)seen[3]));
+    }
+
+    [Fact]
+    public void ReplacingAMarkKeepsTheCountSortsAndUndoesInOneStep()
+    {
+        var list = new MarkList();
+        var low = Item(0, 10, 100, "low");
+        var high = Item(0, 10, 500, "high");
+        list.Add([low, high]);
+        int changes = 0;
+        list.Changed += (_, _) => changes++;
+
+        list.Replace(high, Item(0, 10, 20, "moved"));
+
+        Assert.Equal(["low", "moved"], list.Items.Select(m => m.Label));
+        Assert.Equal(1, changes);
+        Assert.Equal(0, list.Add([Item(0, 10, 20.1)]));
+
+        list.Undo();
+
+        Assert.Equal(["high", "low"], list.Items.Select(m => m.Label));
+        Assert.Equal(0, list.Add([Item(0, 10, 500)]));
+        Assert.Equal(1, list.Add([Item(0, 10, 20)]));
+    }
 }

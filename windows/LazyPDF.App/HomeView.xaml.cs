@@ -12,11 +12,25 @@ namespace LazyPDF.App;
 public sealed class RecentCard(RecentItem item) : INotifyPropertyChanged
 {
     private ImageSource? _thumbnail;
+    private bool _exists = true;
 
     public RecentItem Item { get; } = item;
 
     /// <summary>When it was opened and where it is, or that it is gone.</summary>
-    public string Caption { get; } = item.Exists ? $"{item.Opened} · {item.Folder}" : Loc.T("Not found");
+    public string Caption => _exists ? $"{Item.Opened} · {Item.Folder}" : Loc.T("Not found");
+
+    public string HelpText => Item.Pinned ? Loc.T("Pinned. {0}", Caption) : Caption;
+
+    public bool Exists
+    {
+        get => _exists;
+        set
+        {
+            _exists = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Caption)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HelpText)));
+        }
+    }
 
     public ImageSource? Thumbnail
     {
@@ -38,6 +52,9 @@ public partial class HomeView : UserControl
 
     private readonly ObservableCollection<RecentCard> _cards = [];
     private IReadOnlyList<HomeTile> _tiles = [];
+    private double _width;
+    private readonly Dictionary<string, Task<bool>> _checks = new(StringComparer.OrdinalIgnoreCase);
+    private int _generation;
 
     public HomeView()
     {
@@ -54,6 +71,8 @@ public partial class HomeView : UserControl
 
     public event EventHandler<string>? FileForgotten;
 
+    public event EventHandler<(string Path, bool Pinned)>? FilePinChanged;
+
     public event EventHandler? RecentCleared;
 
     public void Show(IReadOnlyList<HomeTile> tiles, IReadOnlyList<RecentItem> recent)
@@ -62,6 +81,7 @@ public partial class HomeView : UserControl
         {
             _tiles = tiles;
             TileGrid.ItemsSource = tiles;
+            ArrangeGrids();
         }
         if (!_cards.Select(c => c.Item).SequenceEqual(recent))
         {
@@ -70,16 +90,52 @@ public partial class HomeView : UserControl
             {
                 var card = new RecentCard(item);
                 _cards.Add(card);
-                if (item.Exists) _ = LoadThumbnailAsync(card);
             }
+            _ = RecheckAsync();
         }
         RecentHeader.Visibility = _cards.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         NoRecent.Visibility = _cards.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    /// <summary>Looks at the cards one by one, so a share that does not answer holds at most one thread.</summary>
+    public async Task RecheckAsync()
+    {
+        int generation = ++_generation;
+        foreach (var card in _cards.ToList())
+        {
+            if (generation != _generation) return;
+            string path = card.Item.Path;
+            string root = "";
+            try { root = Path.GetPathRoot(path) ?? ""; }
+            catch { }
+            // A check that has not answered yet counts as present, and its root is not touched again until it does.
+            if (_checks.TryGetValue(root, out var check) && !check.IsCompleted)
+            {
+                card.Exists = true;
+                continue;
+            }
+            check = Task.Run(() =>
+            {
+                try { return File.Exists(path); }
+                catch { return true; }
+            });
+            _checks[root] = check;
+            if (await Task.WhenAny(check, Task.Delay(TimeSpan.FromSeconds(2))) != check)
+            {
+                card.Exists = true;
+                continue;
+            }
+            if (generation != _generation) return;
+            bool exists = await check;
+            card.Exists = exists;
+            if (exists && card.Thumbnail is null) _ = LoadThumbnailAsync(card);
+        }
+    }
+
     private async Task LoadThumbnailAsync(RecentCard card)
     {
-        if (Thumbnails is null || await Thumbnails.GetAsync(card.Item.Path) is not { } png) return;
+        string path = card.Item.Path;
+        if (Thumbnails is null || await Thumbnails.GetAsync(path) is not { } png || !_cards.Contains(card)) return;
         using var stream = new MemoryStream(png);
         var image = new BitmapImage();
         image.BeginInit();
@@ -117,11 +173,30 @@ public partial class HomeView : UserControl
         if (((FrameworkElement)sender).DataContext is RecentCard card) FileForgotten?.Invoke(this, card.Item.Path);
     }
 
+    private void PinRecent_Click(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).DataContext is RecentCard card) FilePinChanged?.Invoke(this, (card.Item.Path, true));
+    }
+
+    private void UnpinRecent_Click(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).DataContext is RecentCard card) FilePinChanged?.Invoke(this, (card.Item.Path, false));
+    }
+
     private void ClearRecent_Click(object sender, RoutedEventArgs e) => RecentCleared?.Invoke(this, EventArgs.Empty);
 
     private void Scroller_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var (cards, header) = GridInsets.For(e.NewSize.Width, slotWidth: SlotWidth);
+        _width = e.NewSize.Width;
+        ArrangeGrids();
+    }
+
+    private void ArrangeGrids()
+    {
+        var (cards, header) = GridInsets.For(_width, slotWidth: SlotWidth);
+        int perRow = GridInsets.Balanced(_tiles.Count, GridInsets.Columns(_width, SlotWidth));
+        TileGrid.Width = perRow * SlotWidth;
+        TileGrid.HorizontalAlignment = HorizontalAlignment.Left;
         TileGrid.Margin = cards;
         RecentGrid.Margin = cards;
         TitleLabel.Margin = header with { Top = 20, Bottom = 8 };
