@@ -23,14 +23,15 @@ public sealed class TextEditor
         double line = fontSize * 1.4 + 6;
         double minHeight = Math.Max(Math.Max(area.Height, 40), line);
         // The overlay clips to the page, so keep the box inside it and let a long note scroll.
-        double left = Math.Clamp(area.X, 0, Math.Max(0, overlay.Width - width));
-        double top = Math.Clamp(area.Y, 0, Math.Max(0, overlay.Height - minHeight));
+        var first = new Size(width, minHeight);
+        var placed = PageOverlay.Place(new Rect(area.X, area.Y, width, minHeight), new Size(overlay.Width, overlay.Height), rotation);
+        var room = PageOverlay.Room(placed, new Size(overlay.Width, overlay.Height), rotation);
         _box = new TextBox
         {
             Text = text,
             Width = width,
             MinHeight = minHeight,
-            MaxHeight = Math.Max(minHeight, overlay.Height - top),
+            MaxHeight = Math.Max(minHeight, room.Height),
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             FontSize = fontSize,
             AcceptsReturn = true,
@@ -39,9 +40,9 @@ public sealed class TextEditor
         };
         TextDirection.SetFollows(_box, true);
         AutomationProperties.SetName(_box, Loc.T("Text of the mark"));
-        PageOverlay.KeepUpright(_box, rotation);
-        Canvas.SetLeft(_box, left);
-        Canvas.SetTop(_box, top);
+        PageOverlay.KeepUpright(_box, rotation, first);
+        Canvas.SetLeft(_box, placed.X);
+        Canvas.SetTop(_box, placed.Y);
         _box.PreviewKeyDown += Box_PreviewKeyDown;
         _box.LostKeyboardFocus += Box_LostKeyboardFocus;
         overlay.Children.Add(_box);
@@ -59,8 +60,6 @@ public sealed class TextEditor
         }, System.Windows.Threading.DispatcherPriority.Input);
         return editor;
     }
-
-    public void Upright(int rotation) => PageOverlay.KeepUpright(_box, rotation);
 
     /// <summary>Closes the box and hands over what was typed.</summary>
     public void Finish() => Close(_box.Text);

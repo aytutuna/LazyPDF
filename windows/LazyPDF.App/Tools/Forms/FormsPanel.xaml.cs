@@ -111,6 +111,7 @@ public sealed partial class FormsPanel : ToolPanel
     // The viewer hears of a changed file before the panel does; until the panel has read it again its form is the old one.
     private void Viewer_ViewChanged(object? sender, EventArgs e)
     {
+        _fill?.Restyle();
         if (Tab!.Revision != _revision) return;
         if (!Designing) _fill?.Follow();
         _frames?.Follow();

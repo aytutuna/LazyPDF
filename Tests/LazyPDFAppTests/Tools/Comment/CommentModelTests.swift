@@ -174,6 +174,18 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.overlay(0).fields.isEmpty)
     }
 
+    func test_aNoteNearThePageCornerOpensItsFieldInsideThePage() async throws {
+        let rig = try attached()
+        rig.model.pick(.note)
+
+        click(rig, markPt(600, 780))
+
+        let area = try XCTUnwrap(rig.viewer.overlay(0).fields.first).area
+        XCTAssertEqual(area, ViewRect(612 - area.width, 792 - area.height, area.width, area.height))
+        XCTAssertGreaterThanOrEqual(area.x, 0)
+        XCTAssertGreaterThanOrEqual(area.y, 0)
+    }
+
     func test_aNoteWithNoTextOrDroppedIsNotMade() async throws {
         let rig = try attached()
         rig.model.pick(.note)
