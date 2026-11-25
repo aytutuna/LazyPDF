@@ -164,6 +164,12 @@ final class FillLayer {
         return true
     }
 
+    /// Whether focusing the widget opens a text editor over it.
+    func opensTextEditor(_ name: String, _ index: Int) -> Bool {
+        guard let widget = widgetAt(name, index), let slot = slot(of: widget) else { return false }
+        return slot.kind == .text && slot.enabled && canFill
+    }
+
     /// Does what the widget's button does; for a row of the panel.
     func press(_ name: String, _ index: Int) {
         guard let widget = widgetAt(name, index), let slot = slot(of: widget) else { return }

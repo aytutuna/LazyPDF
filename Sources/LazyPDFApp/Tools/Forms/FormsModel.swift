@@ -278,8 +278,13 @@ public final class FormsModel: ToolPanelModel {
             viewer.reveal(widget.pageIndex, FieldFrames.box(d))
             select(row.name, row.index, row.ordinal)
         } else {
-            let size = viewer.pageSize(widget.pageIndex)
-            viewer.reveal(widget.pageIndex, OverlayFieldFrame.uprightPageRect(FieldFrames.box(d), rotation: viewer.rotation, page: size))
+            // Only a text editor stands upright on a turned view; the other kinds stay where the page draws them.
+            let box = FieldFrames.box(d)
+            if fill?.opensTextEditor(row.name, row.index) == true {
+                viewer.reveal(widget.pageIndex, OverlayFieldFrame.uprightPageRect(box, rotation: viewer.rotation, page: viewer.pageSize(widget.pageIndex)))
+            } else {
+                viewer.reveal(widget.pageIndex, box)
+            }
             fill?.focus(row.name, row.index)
             activeRow = row.kind == .comboBox || row.kind == .listBox ? row.id : nil
         }

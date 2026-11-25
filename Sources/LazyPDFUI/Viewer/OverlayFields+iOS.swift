@@ -136,7 +136,7 @@ final class OverlayFieldViews: NSObject, UITextViewDelegate {
         view.layoutManager.ensureLayout(for: view.textContainer)
         let used = view.layoutManager.usedRect(for: view.textContainer)
         let sheet = viewer.pageSize(page)
-        let bounds = PageSpace.transform(matrix, ViewRect(0, 0, sheet.width, sheet.height))
+        let bounds = viewer.rotation == 0 ? nil : PageSpace.transform(matrix, ViewRect(0, 0, sheet.width, sheet.height))
         let frame = OverlayFieldFrame.of(field.area, matrix, used: ViewSize(used.width + 4, used.height), wraps: field.wraps,
                                          bounds: bounds, scrollsAcross: false)
         view.frame = CGRect(x: frame.x, y: frame.y, width: frame.width, height: frame.height)

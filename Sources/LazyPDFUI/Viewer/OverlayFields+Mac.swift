@@ -11,6 +11,15 @@ import LazyPDFKit
 // The text view sits in a scroll view without scrollers, which is the view that is placed and sized: text past a frame held
 // inside the page scrolls with the caret instead of being resized away.
 
+/// The scroll view that holds a field's text view has no scrollers; a wheel or trackpad turn over it belongs to the page
+/// unless the text is taller than the field.
+final class FieldScrollView: NSScrollView {
+    override func scrollWheel(with event: NSEvent) {
+        let overflows = (documentView?.frame.height ?? 0) > contentSize.height + 0.5
+        if overflows { super.scrollWheel(with: event) } else { nextResponder?.scrollWheel(with: event) }
+    }
+}
+
 final class FieldTextView: NSTextView {
     var field: OverlayField?
 
@@ -84,7 +93,7 @@ final class OverlayFieldViews: NSObject, NSTextViewDelegate, NSLayoutManagerDele
         view.string = field.text
         view.setAccessibilityLabel(field.label)
         if field.secure { view.layoutManager?.delegate = self }
-        let scroll = NSScrollView(frame: .zero)
+        let scroll = FieldScrollView(frame: .zero)
         scroll.hasVerticalScroller = false
         scroll.hasHorizontalScroller = false
         scroll.drawsBackground = false
@@ -131,7 +140,8 @@ final class OverlayFieldViews: NSObject, NSTextViewDelegate, NSLayoutManagerDele
             used = ViewSize(rect.width + 4, rect.height)
         }
         let sheet = viewer.pageSize(page)
-        let bounds = PageSpace.transform(matrix, ViewRect(0, 0, sheet.width, sheet.height))
+        // Only a turned view moves the editor into the page, as on Windows.
+        let bounds = viewer.rotation == 0 ? nil : PageSpace.transform(matrix, ViewRect(0, 0, sheet.width, sheet.height))
         let frame = OverlayFieldFrame.of(field.area, matrix, used: used, wraps: field.wraps, bounds: bounds)
         let offset = viewer.offset
         view.outer.frame = NSRect(x: frame.x + offset.x, y: frame.y + offset.y, width: frame.width, height: frame.height)
