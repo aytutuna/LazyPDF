@@ -29,3 +29,23 @@ jobs:
         run: dotnet build windows/LazyPDF.sln -c Release
       - name: Test
         run: dotnet test windows/LazyPDF.sln -c Release --no-build
+
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Android platform
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37.0"
+      - name: Build
+        run: ./gradlew assembleDebug --console=plain
+      - name: Test
+        run: ./gradlew testDebugUnitTest --console=plain
