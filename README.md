@@ -13,7 +13,6 @@ The app has only been tested by its automated suites and by drawing its windows 
 ## Layout
 
 ```
-CONTRACTS.md          the spec: what each module does, the names, what the tests check
 windows/              C# solution
   LazyPDF.Core        the engine, no UI and no OS calls
   LazyPDF.App         the WPF app
