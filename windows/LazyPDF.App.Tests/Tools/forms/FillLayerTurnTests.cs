@@ -404,12 +404,34 @@ public sealed class FillLayerTurnTests
         Assert.True(code.IsKeyboardFocusWithin);
         PressTab(code);
         Assert.True(agree.IsKeyboardFocusWithin);
+        // The check box is not a turning field, so the layer drops back once focus has left the text field.
+        AssertDropped(code, rig.Box(Code));
 
         Assert.True(Step(rig.Layer, agree, -1));
         Assert.True(code.IsKeyboardFocusWithin);
         Assert.True(Step(rig.Layer, code, -1));
         Assert.True(name.IsKeyboardFocusWithin);
         Assert.False(Step(rig.Layer, name, -1));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AFocusedFieldIsPlacedAgainWhenTheViewIsTurned() => Sta.Run(() =>
+    {
+        using var rig = new Rig(90);
+        var name = rig.Control("name");
+        name.Focus();
+
+        rig.Stand.Rotation = 180;
+        rig.Layer.Restyle();
+
+        Assert.True(Rig.Frame(name).RenderTransform is RotateTransform { Angle: -180 });
+
+        rig.Stand.Rotation = 0;
+        rig.Layer.Restyle();
+        Assert.True(Rig.Frame(name).RenderTransform is null || Rig.Frame(name).RenderTransform.Value.IsIdentity);
+        Assert.Equal(0, Panel.GetZIndex(Rig.Host(name)));
+        Assert.NotNull(Rig.Host(name).Clip);
         return Task.CompletedTask;
     });
 

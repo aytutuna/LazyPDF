@@ -87,6 +87,15 @@ internal sealed partial class FillLayer
         if (_viewer.Rotation == _styledFor) return;
         _styledFor = _viewer.Rotation;
         foreach (var slot in _pages.Values.SelectMany(p => p.Slots)) Decorate(slot);
+        // A field that has the keyboard was raised for the old turn.
+        foreach (var (page, (host, slots)) in _pages.ToList())
+        {
+            foreach (var slot in slots.Where(s => s.Turned).ToList())
+            {
+                if (_styledFor == 0) Release(page, host, slot);
+                else Raise(page, host, slot, _styledFor);
+            }
+        }
     }
 
     /// <summary>Builds the controls of pages that came into view.</summary>
@@ -187,6 +196,11 @@ internal sealed partial class FillLayer
             if (Mouse.LeftButton != MouseButtonState.Pressed) _viewer.Reveal(page, slot.Box);
             return;
         }
+        Raise(page, host, slot, rotation);
+    }
+
+    private void Raise(int page, Canvas host, Slot slot, int rotation)
+    {
         var size = _viewer.PageSize(page);
         var placed = PageOverlay.Place(slot.Box, size, rotation);
         Canvas.SetLeft(slot.Frame, placed.X);
@@ -210,7 +224,7 @@ internal sealed partial class FillLayer
         // The host and the layer are shared by the page's slots, so they drop back only once none of them has the
         // keyboard. A host that was rebuilt since is no longer the page's; its replacement owns the layer now.
         if (!_pages.TryGetValue(page, out var current) || current.Host != host) return;
-        if (current.Slots.Any(s => s.Control is { IsKeyboardFocusWithin: true })) return;
+        if (current.Slots.Any(s => s.Turned)) return;
         var size = _viewer.PageSize(page);
         host.Clip = new RectangleGeometry(new Rect(0, 0, size.Width, size.Height));
         host.ClearValue(Panel.ZIndexProperty);
