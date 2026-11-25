@@ -14,7 +14,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Require a green commit on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/require_green_main.sh "$GITHUB_SHA"
+
   upload:
+    needs: guard
     runs-on: macos-26
     timeout-minutes: 60
     env:

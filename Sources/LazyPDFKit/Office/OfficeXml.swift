@@ -56,7 +56,7 @@ final class OfficeXmlElement {
 }
 
 /// A small non-validating XML reader for OOXML parts, written so that the C# and Swift engines read a part alike (the platform
-/// parsers differ on the odd cases, Foundation's on Linux and Apple included). CONTRACTS.md has the rules.
+/// parsers differ on the odd cases, Foundation's on Linux and Apple included).
 enum OfficeXml {
     private static let xmlUri = Array("http://www.w3.org/XML/1998/namespace".utf16)
 
