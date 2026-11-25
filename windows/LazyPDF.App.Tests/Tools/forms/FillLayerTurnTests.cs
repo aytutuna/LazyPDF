@@ -43,12 +43,13 @@ public sealed class FillLayerTurnTests
         public List<(string Name, string? Value)> Entered { get; } = [];
         public List<(string Name, int Count)> Chosen { get; } = [];
 
-        // A left press on the control as the pointer would raise it; true when something handled it.
+        // A left press on the control as the pointer would raise it: the tunnelling PreviewMouseDown, whose class handler
+        // raises the left-button event on every element of the route. True when something handled it.
         public static bool Press(FrameworkElement control)
         {
             var press = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
             {
-                RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent,
+                RoutedEvent = Mouse.PreviewMouseDownEvent,
                 Source = control,
             };
             control.RaiseEvent(press);
@@ -170,7 +171,7 @@ public sealed class FillLayerTurnTests
         Assert.Equal([("name", (string?)"Ana")], rig.Entered);
 
         text.Text = "Ana Maria";
-        Keyboard.ClearFocus();
+        rig.Control("code").Focus();
         Assert.Equal(("name", (string?)"Ana Maria"), rig.Entered.Last());
         return Task.CompletedTask;
     });
