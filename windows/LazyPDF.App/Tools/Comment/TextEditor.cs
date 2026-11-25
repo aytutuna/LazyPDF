@@ -13,6 +13,8 @@ public sealed class TextEditor
     private readonly PageOverlay _overlay;
     private readonly TextBox _box;
     private readonly Action<string?> _done;
+    private readonly Size _first;
+    private readonly Point _at;
     private bool _closed;
 
     private TextEditor(PageOverlay overlay, Rect area, double fontSize, string text, int rotation, Action<string?> done)
@@ -22,16 +24,13 @@ public sealed class TextEditor
         double width = Math.Max(area.Width, 120);
         double line = fontSize * 1.4 + 6;
         double minHeight = Math.Max(Math.Max(area.Height, 40), line);
-        // The overlay clips to the page, so keep the box inside it and let a long note scroll.
-        var first = new Size(width, minHeight);
-        var placed = PageOverlay.Place(new Rect(area.X, area.Y, width, minHeight), new Size(overlay.Width, overlay.Height), rotation);
-        var room = PageOverlay.Room(placed, new Size(overlay.Width, overlay.Height), rotation);
+        _first = new Size(width, minHeight);
+        _at = new Point(area.X, area.Y);
         _box = new TextBox
         {
             Text = text,
             Width = width,
             MinHeight = minHeight,
-            MaxHeight = Math.Max(minHeight, room.Height),
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             FontSize = fontSize,
             AcceptsReturn = true,
@@ -40,9 +39,7 @@ public sealed class TextEditor
         };
         TextDirection.SetFollows(_box, true);
         AutomationProperties.SetName(_box, Loc.T("Text of the mark"));
-        PageOverlay.KeepUpright(_box, rotation, first);
-        Canvas.SetLeft(_box, placed.X);
-        Canvas.SetTop(_box, placed.Y);
+        Place(rotation);
         _box.PreviewKeyDown += Box_PreviewKeyDown;
         _box.LostKeyboardFocus += Box_LostKeyboardFocus;
         overlay.Children.Add(_box);
@@ -59,6 +56,24 @@ public sealed class TextEditor
             editor._box.SelectAll();
         }, System.Windows.Threading.DispatcherPriority.Input);
         return editor;
+    }
+
+    // The overlay clips to the page, so the box stays inside it and a long note scrolls.
+    private void Place(int rotation)
+    {
+        var page = new Size(_overlay.Width, _overlay.Height);
+        var placed = PageOverlay.Place(new Rect(_at.X, _at.Y, _first.Width, _first.Height), page, rotation);
+        var room = PageOverlay.Room(placed, page, rotation);
+        _box.MaxHeight = Math.Max(_first.Height, room.Height);
+        PageOverlay.KeepUpright(_box, rotation, _first);
+        Canvas.SetLeft(_box, placed.X);
+        Canvas.SetTop(_box, placed.Y);
+    }
+
+    /// <summary>Puts the box where it belongs after the view was turned.</summary>
+    public void Turn(int rotation)
+    {
+        if (!_closed) Place(rotation);
     }
 
     /// <summary>Closes the box and hands over what was typed.</summary>

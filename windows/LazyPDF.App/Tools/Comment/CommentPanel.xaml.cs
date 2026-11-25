@@ -320,6 +320,7 @@ public partial class CommentPanel : ToolPanel
     private void Viewer_ViewChanged(object? sender, EventArgs e)
     {
         _edit?.Redraw();
+        _editor?.Turn(Viewer!.Rotation);
         _bar?.Move();
     }
 
