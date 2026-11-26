@@ -29,6 +29,7 @@ jobs:
   upload:
     needs: guard
     runs-on: macos-26
+    environment: appstore
     timeout-minutes: 60
     env:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
